@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: ReactNode;
@@ -7,6 +7,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -91,6 +92,23 @@ export default function Layout({ children }: LayoutProps) {
                   <path d="M5.5 20a6.5 6.5 0 0113 0" />
                 </svg>
               </div>
+              <button
+                onClick={() => {
+                  try {
+                    window.localStorage.removeItem('access_token');
+                    window.sessionStorage.removeItem('access_token');
+                  } catch {}
+                  navigate('/login');
+                }}
+                className="inline-flex items-center justify-center h-9 w-9 rounded-full border border-red-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
