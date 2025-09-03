@@ -1,5 +1,3 @@
-import React from "react";
-
 // Mock data del libro digital
 const libroData = {
   "libroId": "6a8f3c7e-0a19-4d92-9b7f-1a52a5a3b0f9",
