@@ -29,4 +29,15 @@ export async function signupRequest(payload: SignupPayload): Promise<{ message?:
   });
 }
 
+export interface MeResponse {
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
+
+export async function fetchMe(): Promise<MeResponse> {
+  return apiFetch('/auth/me', { method: 'GET' });
+}
+
 

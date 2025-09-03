@@ -8,6 +8,13 @@ export async function apiFetch(path: string, options: RequestInit = {}, timeoutM
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
+  // Adjunta token si existe
+  try {
+    const token = window.localStorage.getItem('access_token') || window.sessionStorage.getItem('access_token');
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  } catch {}
 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);

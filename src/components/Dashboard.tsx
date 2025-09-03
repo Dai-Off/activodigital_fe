@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -9,6 +9,7 @@ import {
 import { Doughnut } from 'react-chartjs-2';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { fetchMe } from '../services/auth';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -21,6 +22,20 @@ L.Icon.Default.mergeOptions({
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
+  const [me, setMe] = useState<{ full_name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const resp = await fetchMe();
+        if (mounted) setMe({ full_name: resp.full_name, role: resp.role });
+      } catch {
+        // Silencioso: si falla, no bloquea el dashboard
+      }
+    })();
+    return () => { mounted = false };
+  }, []);
   // SVGs para iconos
   const icons = {
     shieldCheck: (
@@ -79,6 +94,25 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {me && (
+        <div className="mt-0 mb-4 animate-fadeInUp">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M5.5 20a6.5 6.5 0 0113 0" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Bienvenido</div>
+                <div className="text-base font-semibold text-gray-900 leading-tight">{me.full_name}</div>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-sm border border-gray-200 text-gray-700 capitalize bg-gray-50">{me.role}</span>
+          </div>
+        </div>
+      )}
       {/* Building Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between">
