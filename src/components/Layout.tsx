@@ -1,0 +1,116 @@
+import type { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
+interface LayoutProps {
+  children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  return (
+    <div className="bg-gray-50 text-gray-900 min-h-screen">
+      {/* Header/Navbar */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 animate-slideDown">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm tracking-tight">LE</span>
+                </div>
+                <h1 className="text-xl font-semibold text-gray-900">Libro del Edificio</h1>
+              </div>
+              <nav className="hidden md:flex space-x-6">
+                <Link 
+                  to="/" 
+                  className={`nav-item pb-4 ${
+                    isActive('/') 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/documentos" 
+                  className={`nav-item pb-4 ${
+                    isActive('/documentos') 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Documentación
+                </Link>
+                <Link 
+                  to="/mantenimiento" 
+                  className={`nav-item pb-4 ${
+                    isActive('/mantenimiento') 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Mantenimiento
+                </Link>
+                <Link 
+                  to="/cumplimiento" 
+                  className={`nav-item pb-4 ${
+                    isActive('/cumplimiento') 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Cumplimiento
+                </Link>
+                <Link 
+                  to="/unidades" 
+                  className={`nav-item pb-4 ${
+                    isActive('/unidades') 
+                      ? 'text-blue-600 border-b-2 border-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Unidades
+                </Link>
+              </nav>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Notificaciones">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 01-3.46 0" />
+                </svg>
+              </button>
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M5.5 20a6.5 6.5 0 0113 0" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+      
+      <style>{`
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slideDown { animation: slideDown 0.6s ease-out; }
+        @keyframes fadeInUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
+      `}</style>
+    </div>
+  );
+}
