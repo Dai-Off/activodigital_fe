@@ -26,7 +26,7 @@ export default function Register() {
       // Auto-login inmediato y navegación al dashboard
       const resp = await loginRequest({ email, password });
       window.localStorage.setItem('access_token', resp.access_token);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err?.message || 'Error al crear la cuenta');
     } finally {

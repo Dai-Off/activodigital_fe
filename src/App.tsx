@@ -8,6 +8,7 @@ import Unidades from './components/Unidades'
 import { LibroDigital } from './components/LibroDigital'
 import Login from './components/Login'
 import Register from './components/Register'
+import Landing from './components/Landing'
 
 function App() {
   return (
@@ -15,12 +16,13 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<Landing />} />
         <Route
           path="*"
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/documentos" element={<Documentos />} />
                 <Route path="/mantenimiento" element={<Mantenimiento />} />
                 <Route path="/cumplimiento" element={<Cumplimiento />} />
