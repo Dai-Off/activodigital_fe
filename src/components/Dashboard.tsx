@@ -7,6 +7,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { RatingCircle, RatingStars } from './RatingCircle';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { fetchMe } from '../services/auth';
@@ -114,42 +115,142 @@ export default function Dashboard() {
         </div>
       )}
       {/* Building Header */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-          <div className="flex-1">
-            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-2">Edificio Residencial Kardeo</h2>
-            <p className="text-gray-600 mb-4">Barrio de Kardeo 14, Zierbena • Ref. Cat: 1234567890</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <span className="text-sm text-gray-500">Año construcción</span>
-                <p className="font-medium">2019</p>
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
+        <div className="grid grid-cols-12 gap-4 items-start">
+          <div className="col-span-12 lg:col-span-8">
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Edificio Residencial Kardeo</h2>
+            <p className="text-gray-600 text-sm mt-0.5">Barrio de Kardeo 14, Zierbena • Ref. Cat: 1234567890</p>
+
+            {/* Meta compacta */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+              <div className="flex items-baseline gap-2">
+                <span className="text-gray-500">Año construcción</span>
+                <span className="font-medium text-gray-900">2019</span>
               </div>
-              <div>
-                <span className="text-sm text-gray-500">Superficie</span>
-                <p className="font-medium">2,450 m²</p>
+              <div className="hidden sm:block h-4 w-px bg-gray-200" />
+              <div className="flex items-baseline gap-2">
+                <span className="text-gray-500">Superficie</span>
+                <span className="font-medium text-gray-900">2,450 m²</span>
               </div>
-              <div>
-                <span className="text-sm text-gray-500">Unidades</span>
-                <p className="font-medium">24 viviendas</p>
+              <div className="hidden sm:block h-4 w-px bg-gray-200" />
+              <div className="flex items-baseline gap-2">
+                <span className="text-gray-500">Unidades</span>
+                <span className="font-medium text-gray-900">24 viviendas</span>
               </div>
-              <div>
-                <span className="text-sm text-gray-500">Estado</span>
-                <p className="font-medium text-green-600">Excelente</p>
+            </div>
+
+            {/* KPIs compactos */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-gray-200 p-3">
+                <span className="block text-xs text-gray-500">Rating energético-ambiental</span>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <RatingCircle rating="A" size="sm" />
+                  <RatingStars stars={5} />
+                </div>
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <span className="block text-xs text-gray-500">Huella de carbono</span>
+                <p className="mt-1 font-medium text-gray-900">12.5 kg CO₂eq/m²·año</p>
+              </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <span className="block text-xs text-gray-500">Acceso a financiación verde</span>
+                <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">Alta</span>
+              </div>
+            </div>
+
+            {/* Bloques adicionales en la misma card */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Cumplimiento por tipología */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Cumplimiento por tipología</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>Residencial</span>
+                        <span className="font-medium text-gray-900">92%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full">
+                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '92%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>Terciario</span>
+                        <span className="font-medium text-gray-900">81%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full">
+                        <div className="h-2 bg-blue-500 rounded-full" style={{ width: '81%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>Público</span>
+                        <span className="font-medium text-gray-900">74%</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full">
+                        <div className="h-2 bg-yellow-500 rounded-full" style={{ width: '74%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Libro del Edificio Digital (estado) */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Libro del Edificio Digital</h4>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Publicado</span>
+                    <span className="text-xs text-gray-500">Versión 1.2 • Actualizado Sep 2025</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                      <span>Completado</span>
+                      <span className="font-medium text-gray-900">6/8</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full">
+                      <div className="h-2 bg-green-500 rounded-l-full" style={{ width: '75%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progreso de secciones + Estado por sección */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Estado por sección</h4>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="p-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">OK</div>
+                    <div className="p-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">Pendiente</div>
+                    <div className="p-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">Vence</div>
+                  </div>
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-gray-600">
+                      <span>Instalaciones</span><span className="font-medium text-green-700">OK</span>
+                    </div>
+                    <div className="flex items-center justify-between text-gray-600">
+                      <span>Certificados</span><span className="font-medium text-yellow-700">Pendiente</span>
+                    </div>
+                    <div className="flex items-center justify-between text-gray-600">
+                      <span>Mantenimiento</span><span className="font-medium text-green-700">OK</span>
+                    </div>
+                    <div className="flex items-center justify-between text-gray-600">
+                      <span>Inspecciones</span><span className="font-medium text-red-700">Vence</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="mt-6 lg:mt-0 lg:ml-6">
+          <div className="col-span-12 lg:col-span-4 lg:self-stretch">
             <img 
-              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=300&h=200&fit=crop&crop=building" 
+              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&h=800&fit=crop&crop=edges" 
               alt="Building" 
-              className="w-full lg:w-48 h-32 object-cover rounded-lg" 
+              className="w-full h-full object-cover rounded-lg" 
             />
           </div>
         </div>
       </div>
 
       {/* Libro Digital Button */}
-      <div className="mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
+      <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -176,7 +277,7 @@ export default function Dashboard() {
       </div>
 
       {/* Status Cards */}
-      <div className="grid mt-10 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid mt-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">{icons.shieldCheck}</div>
