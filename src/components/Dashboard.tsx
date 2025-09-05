@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -10,7 +9,6 @@ import { Doughnut } from 'react-chartjs-2';
 import { RatingCircle, RatingStars } from './RatingCircle';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { fetchMe } from '../services/auth';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -23,20 +21,6 @@ L.Icon.Default.mergeOptions({
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
-  const [me, setMe] = useState<{ full_name: string; role: string } | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const resp = await fetchMe();
-        if (mounted) setMe({ full_name: resp.full_name, role: resp.role });
-      } catch {
-        // Silencioso: si falla, no bloquea el dashboard
-      }
-    })();
-    return () => { mounted = false };
-  }, []);
   // SVGs para iconos
   const icons = {
     shieldCheck: (
@@ -95,47 +79,28 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {me && (
-        <div className="mt-0 mb-4 animate-fadeInUp">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-600/10 text-blue-700 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="7" r="4" />
-                  <path d="M5.5 20a6.5 6.5 0 0113 0" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Bienvenido</div>
-                <div className="text-base font-semibold text-gray-900 leading-tight">{me.full_name}</div>
-              </div>
-            </div>
-            <span className="px-3 py-1 rounded-full text-sm border border-gray-200 text-gray-700 capitalize bg-gray-50">{me.role}</span>
-          </div>
-        </div>
-      )}
       {/* Building Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
         <div className="grid grid-cols-12 gap-4 items-start">
           <div className="col-span-12 lg:col-span-8">
-            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Edificio Residencial Kardeo</h2>
-            <p className="text-gray-600 text-sm mt-0.5">Barrio de Kardeo 14, Zierbena • Ref. Cat: 1234567890</p>
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Hotel RIU PLAZA España</h2>
+            <p className="text-gray-600 text-sm mt-0.5">Calle Gran Vía, 84, 28013 Madrid • Ref. Cat: 1234567890</p>
 
             {/* Meta compacta */}
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div className="flex items-baseline gap-2">
                 <span className="text-gray-500">Año construcción</span>
-                <span className="font-medium text-gray-900">2019</span>
+                <span className="font-medium text-gray-900">1953</span>
               </div>
               <div className="hidden sm:block h-4 w-px bg-gray-200" />
               <div className="flex items-baseline gap-2">
                 <span className="text-gray-500">Superficie</span>
-                <span className="font-medium text-gray-900">2,450 m²</span>
+                <span className="font-medium text-gray-900">45,000 m²</span>
               </div>
               <div className="hidden sm:block h-4 w-px bg-gray-200" />
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">Unidades</span>
-                <span className="font-medium text-gray-900">24 viviendas</span>
+                <span className="text-gray-500">Habitaciones</span>
+                <span className="font-medium text-gray-900">550 habitaciones</span>
               </div>
             </div>
 
@@ -153,7 +118,7 @@ export default function Dashboard() {
                 <p className="mt-1 font-medium text-gray-900">12.5 kg CO₂eq/m²·año</p>
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">Acceso a financiación verde</span>
+                <span className="block text-xs text-gray-500">Acceso a financiación</span>
                 <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">Alta</span>
               </div>
             </div>
@@ -167,29 +132,11 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>Residencial</span>
-                        <span className="font-medium text-gray-900">92%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '92%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                         <span>Terciario</span>
                         <span className="font-medium text-gray-900">81%</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full">
                         <div className="h-2 bg-blue-500 rounded-full" style={{ width: '81%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>Público</span>
-                        <span className="font-medium text-gray-900">74%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-yellow-500 rounded-full" style={{ width: '74%' }} />
                       </div>
                     </div>
                   </div>
@@ -241,8 +188,8 @@ export default function Dashboard() {
           </div>
           <div className="col-span-12 lg:col-span-4 lg:self-stretch">
             <img 
-              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&h=800&fit=crop&crop=edges" 
-              alt="Building" 
+              src="/image.png" 
+              alt="Hotel RIU PLAZA España" 
               className="w-full h-full object-cover rounded-lg" 
             />
           </div>

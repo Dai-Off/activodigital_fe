@@ -9,6 +9,7 @@ import { LibroDigital } from './components/LibroDigital'
 import Login from './components/Login'
 import Register from './components/Register'
 import Landing from './components/Landing'
+import AssetsList from './components/AssetsList'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           element={
             <Layout>
               <Routes>
+                <Route path="/assets" element={<AssetsList />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/documentos" element={<Documentos />} />
                 <Route path="/mantenimiento" element={<Mantenimiento />} />
