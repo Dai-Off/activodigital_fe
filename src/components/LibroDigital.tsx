@@ -1,158 +1,147 @@
+import QRCode from 'react-qr-code';
+
 // Mock data del libro digital
 const libroData = {
-  "libroId": "6a8f3c7e-0a19-4d92-9b7f-1a52a5a3b0f9",
-  "edificioId": "b6e3c1f2-1a6a-4e0a-9a0a-12f4c9a4e1aa",
-  "version": "1.2.0",
-  "estado": "aprobado",
-  "fechaCreacion": "2025-07-10",
-  "fechaUltimaActualizacion": "2025-09-01",
-  "responsable": { "usuarioId": "e1a2b3c4-d5e6-7890-abcd-ef1234567890", "nombre": "María López" },
-  "normativaReferencia": [
-    { "ambito": "nacional", "norma": "CTE", "version": "2024" },
-    { "ambito": "UE", "norma": "EPBD", "version": "2024" },
-    { "ambito": "local", "norma": "Ordenanza ITE Madrid", "version": "2023" }
+  // Se sustituyen los IDs UUID por códigos más legibles para mock/demo
+  libroId: 'LDE-0001',
+  edificioId: 'EDIF-1024',
+  version: '1.2.0',
+  estado: 'aprobado',
+  fechaCreacion: '2025-07-10',
+  fechaUltimaActualizacion: '2025-09-01',
+  responsable: { usuarioId: 'USR-00045', nombre: 'María López' },
+  normativaReferencia: [
+    { ambito: 'nacional', norma: 'CTE', version: '2024' },
+    { ambito: 'UE', norma: 'EPBD', version: '2024' },
+    { ambito: 'local', norma: 'Ordenanza ITE Madrid', version: '2023' }
   ],
-  "progreso": {
-    "totalSecciones": 9,
-    "seccionesCompletas": 7,
-    "porcentaje": 77
+  progreso: { totalSecciones: 9, seccionesCompletas: 7, porcentaje: 77 },
+  snapshot: {
+    certificadosIds: ['CERT-ENER-001'],
+    intervencionesIds: ['INT-2023-014', 'INT-2024-002'],
+    instalacionesIds: ['INST-HVAC-01', 'INST-SOLAR-02'],
+    documentosIds: ['DOC-001', 'DOC-002', 'DOC-003', 'DOC-010', 'DOC-020', 'DOC-040']
   },
-  "snapshot": {
-    "certificadosIds": [
-      "2f0d0a7b-7a9c-4b71-8c3a-54d6f7e9a100"
-    ],
-    "intervencionesIds": [
-      "b1c22344-5566-4e77-9a88-0d11aa22bb33",
-      "c2d33455-6677-4f88-9b99-1e22bb33cc44"
-    ],
-    "instalacionesIds": [
-      "8aa6a2fe-93e7-4b8d-b1b3-97f2a6c0f111",
-      "9bb7b3ef-a4f8-4c9e-c2c4-a8f3b7d0e222"
-    ],
-    "documentosIds": ["doc-001", "doc-002", "doc-003", "doc-010", "doc-020", "doc-040"]
-  },
-  "firmas": [
+  firmas: [
     {
-      "firmaId": "sig-001",
-      "seccion": "proyecto_y_documentacion_tecnica",
-      "usuarioId": "0a1b2c3d-4e5f-6789-abcd-0123456789ab",
-      "rol": "tecnico",
-      "fecha": "2025-08-30T14:20:00Z",
-      "hash": "SHA256:abf9…"
+      firmaId: 'SIG-001',
+      seccion: 'proyecto_y_documentacion_tecnica',
+      usuarioId: 'TCO-001',
+      rol: 'tecnico',
+      fecha: '2025-08-30T14:20:00Z',
+      hash: 'SHA256:abf9…'
     },
     {
-      "firmaId": "sig-002",
-      "seccion": "versionado_y_firmas",
-      "usuarioId": "e1a2b3c4-d5e6-7890-abcd-ef1234567890",
-      "rol": "responsable",
-      "fecha": "2025-09-01T11:05:00Z",
-      "hash": "SHA256:cd99…"
+      firmaId: 'SIG-002',
+      seccion: 'versionado_y_firmas',
+      usuarioId: 'USR-00045',
+      rol: 'responsable',
+      fecha: '2025-09-01T11:05:00Z',
+      hash: 'SHA256:cd99…'
     }
   ],
-  "documentosAdjuntos": [
-    { "documentoId": "doc-001", "tipo": "proyecto_ejecucion", "formato": "PDF", "firmado": true },
-    { "documentoId": "doc-002", "tipo": "certificado_final_obra", "formato": "PDF", "firmado": true },
-    { "documentoId": "doc-040", "tipo": "CEE", "formato": "PDF", "firmado": true }
+  documentosAdjuntos: [
+    { documentoId: 'DOC-001', tipo: 'proyecto_ejecucion', formato: 'PDF', firmado: true },
+    { documentoId: 'DOC-002', tipo: 'certificado_final_obra', formato: 'PDF', firmado: true },
+    { documentoId: 'DOC-040', tipo: 'CEE', formato: 'PDF', firmado: true }
   ],
-  "routes": {
-    "volverAlEdificio": "/tenedor/edificios/b6e3c1f2-1a6a-4e0a-9a0a-12f4c9a4e1aa",
-    "descargarPdf": "/api/mock/lde/6a8f3c7e/pdf"
+  routes: {
+    volverAlEdificio: '/tenedor/edificios/EDIF-1024',
+    descargarPdf: '/api/mock/lde/LDE-0001/pdf'
   },
-  "secciones": [
+  secciones: [
     {
-      "nombre": "proyecto_y_documentacion_tecnica",
-      "titulo": "Proyecto y Documentación Técnica",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Proyecto de ejecución visado", "ok": true, "evidenciaDocId": "doc-001" },
-        { "item": "Certificado final de obra", "ok": true, "evidenciaDocId": "doc-002" },
-        { "item": "Licencias y autorizaciones", "ok": true, "evidenciaDocId": "doc-003" }
+      nombre: 'proyecto_y_documentacion_tecnica',
+      titulo: 'Proyecto y Documentación Técnica',
+      estado: 'completo',
+      checklist: [
+        { item: 'Proyecto de ejecución visado', ok: true, evidenciaDocId: 'doc-001' },
+        { item: 'Certificado final de obra', ok: true, evidenciaDocId: 'doc-002' },
+        { item: 'Licencias y autorizaciones', ok: true, evidenciaDocId: 'doc-003' }
       ],
-      "observaciones": ""
+      observaciones: ''
     },
     {
-      "nombre": "manual_uso_y_mantenimiento",
-      "titulo": "Manual de Uso y Mantenimiento",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Manual de uso general", "ok": true, "evidenciaDocId": "doc-010" },
-        { "item": "Recomendaciones de conservación", "ok": true, "evidenciaDocId": "doc-011" }
+      nombre: 'manual_uso_y_mantenimiento',
+      titulo: 'Manual de Uso y Mantenimiento',
+      estado: 'completo',
+      checklist: [
+        { item: 'Manual de uso general', ok: true, evidenciaDocId: 'doc-010' },
+        { item: 'Recomendaciones de conservación', ok: true, evidenciaDocId: 'doc-011' }
       ]
     },
     {
-      "nombre": "plan_mantenimiento",
-      "titulo": "Plan de Mantenimiento",
-      "estado": "parcial",
-      "checklist": [
-        { "item": "Plan preventivo anual", "ok": true, "evidenciaDocId": "doc-020" },
-        { "item": "Calendario y responsables", "ok": false, "evidenciaDocId": null }
+      nombre: 'plan_mantenimiento',
+      titulo: 'Plan de Mantenimiento',
+      estado: 'parcial',
+      checklist: [
+        { item: 'Plan preventivo anual', ok: true, evidenciaDocId: 'doc-020' },
+        { item: 'Calendario y responsables', ok: false, evidenciaDocId: null }
       ],
-      "observaciones": "Falta adjuntar calendario firmado."
+      observaciones: 'Falta adjuntar calendario firmado.'
     },
     {
-      "nombre": "instalaciones",
-      "titulo": "Instalaciones",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Inventario de instalaciones", "ok": true, "evidenciaDocId": "doc-030" }
+      nombre: 'instalaciones',
+      titulo: 'Instalaciones',
+      estado: 'completo',
+      checklist: [
+        { item: 'Inventario de instalaciones', ok: true, evidenciaDocId: 'doc-030' }
       ]
     },
     {
-      "nombre": "certificados_y_garantias",
-      "titulo": "Certificados y Garantías",
-      "estado": "completo",
-      "checklist": [
-        { "item": "CEE vigente", "ok": true, "evidenciaDocId": "doc-040" },
-        { "item": "Seguro decenal (si aplica)", "ok": true, "evidenciaDocId": "doc-041" }
+      nombre: 'certificados_y_garantias',
+      titulo: 'Certificados y Garantías',
+      estado: 'completo',
+      checklist: [
+        { item: 'CEE vigente', ok: true, evidenciaDocId: 'doc-040' },
+        { item: 'Seguro decenal (si aplica)', ok: true, evidenciaDocId: 'doc-041' }
       ]
     },
     {
-      "nombre": "intervenciones_incidencias",
-      "titulo": "Intervenciones e Incidencias",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Registro de intervenciones últimos 10 años", "ok": true, "evidenciaDocId": "doc-050" }
+      nombre: 'intervenciones_incidencias',
+      titulo: 'Intervenciones e Incidencias',
+      estado: 'completo',
+      checklist: [
+        { item: 'Registro de intervenciones últimos 10 años', ok: true, evidenciaDocId: 'doc-050' }
       ]
     },
     {
-      "nombre": "agentes_intervinientes",
-      "titulo": "Agentes Intervinientes",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Promotor/Constructor/Dirección Facultativa", "ok": true, "evidenciaDocId": "doc-060" }
+      nombre: 'agentes_intervinientes',
+      titulo: 'Agentes Intervinientes',
+      estado: 'completo',
+      checklist: [
+        { item: 'Promotor/Constructor/Dirección Facultativa', ok: true, evidenciaDocId: 'doc-060' }
       ]
     },
     {
-      "nombre": "versionado_y_firmas",
-      "titulo": "Versionado y Firmas",
-      "estado": "completo",
-      "checklist": [
-        { "item": "Historial de versiones", "ok": true },
-        { "item": "Firmas por sección", "ok": true }
+      nombre: 'versionado_y_firmas',
+      titulo: 'Versionado y Firmas',
+      estado: 'completo',
+      checklist: [
+        { item: 'Historial de versiones', ok: true },
+        { item: 'Firmas por sección', ok: true }
       ]
     },
     {
-      "nombre": "publicacion_y_accesos",
-      "titulo": "Publicación y Accesos",
-      "estado": "parcial",
-      "checklist": [
-        { "item": "URL pública activa", "ok": true },
-        { "item": "QR visible", "ok": false }
+      nombre: 'publicacion_y_accesos',
+      titulo: 'Publicación y Accesos',
+      estado: 'parcial',
+      checklist: [
+        { item: 'URL pública activa', ok: true },
+        { item: 'QR visible', ok: false }
       ],
-      "observaciones": "Generar QR final tras publicación definitiva."
+      observaciones: 'Generar QR final tras publicación definitiva.'
     }
   ],
-  "publicacion": {
-    "estadoPublicacion": "publicado",
-    "qr": { "codigo": "QR-LDE-1.2.0", "urlImagen": "/mock/qr/lde-1.2.0.png" },
-    "urlPublica": "https://ad.example/lde/6a8f3c7e",
-    "nivelAcceso": "publico",
-    "vigenteDesde": "2025-09-01",
-    "vigenteHasta": null
+  publicacion: {
+    estadoPublicacion: 'publicado',
+    qr: { codigo: 'QR-LDE-1.2.0', urlImagen: '/mock/qr/lde-1.2.0.png' },
+    urlPublica: 'https://ad.example/lde/LDE-0001',
+    nivelAcceso: 'publico',
+    vigenteDesde: '2025-09-01',
+    vigenteHasta: null
   },
-  "alertas": [
-    { "tipo": "pendiente_qr", "criticidad": "baja", "mensaje": "Generar QR final al publicar." }
-  ]
+  alertas: [ { tipo: 'pendiente_qr', criticidad: 'baja', mensaje: 'Generar QR final al publicar.' } ]
 };
 
 export function LibroDigital() {
@@ -206,11 +195,11 @@ export function LibroDigital() {
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-              <span className="text-gray-400 text-xs">QR Code</span>
+          <div className="text-right flex flex-col items-center">
+            <div className="bg-white p-2 rounded-lg border border-gray-200 flex items-center justify-center mb-2">
+              <QRCode value={libroData.publicacion.urlPublica} size={96} />
             </div>
-            <p className="text-xs text-gray-500">{libroData.publicacion.qr.codigo}</p>
+            <p className="text-xs text-gray-500 font-mono">{libroData.publicacion.qr.codigo}</p>
           </div>
         </div>
 
