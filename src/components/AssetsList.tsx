@@ -107,8 +107,8 @@ export default function AssetsList() {
         </div>
 
         {/* User Profile Card */}
-        {me && (
-          <div className="mb-8 animate-fadeInUp">
+        <div className="mb-8" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
+          {me ? (
             <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-blue-600/10 text-blue-700 flex items-center justify-center">
@@ -124,8 +124,19 @@ export default function AssetsList() {
               </div>
               <span className="px-3 py-1 rounded-full text-sm border border-gray-200 text-gray-700 capitalize bg-gray-50">{me.role}</span>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse"></div>
+                <div>
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-1"></div>
+                  <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+          )}
+        </div>
 
         {/* Portfolio Summary */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>

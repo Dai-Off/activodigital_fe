@@ -316,7 +316,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación del Edificio</h3>
           <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
             <MapContainer
-              center={[43.3255, -3.0123]} // Coordenadas de Zierbena, País Vasco
+              center={[40.424167, -3.711944]} // Coordenadas del Hotel RIU PLAZA España, Madrid
               zoom={15}
               style={{ height: '100%', width: '100%' }}
               scrollWheelZoom={false}
@@ -325,12 +325,17 @@ export default function Dashboard() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={[43.3255, -3.0123]}>
+              <Marker position={[40.424167, -3.711944]}>
                 <Popup>
                   <div className="text-center">
-                    <strong>Edificio Residencial Kardeo</strong><br/>
-                    Barrio de Kardeo 14, Zierbena<br/>
-                    Vizcaya, País Vasco, España
+                    <strong>Hotel RIU PLAZA España</strong><br/>
+                    Calle Gran Vía, 84, 28013 Madrid<br/>
+                    España<br/>
+                    <div className="mt-2 text-sm text-gray-600">
+                      <div>📞 +34 919 193 393</div>
+                      <div>✉️ reservas@riu.com</div>
+                      <div>🌐 www.riu.com</div>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -339,19 +344,19 @@ export default function Dashboard() {
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Municipio:</span>
-              <p className="font-medium text-gray-900">Zierbena</p>
+              <p className="font-medium text-gray-900">Madrid</p>
             </div>
             <div>
               <span className="text-gray-500">Provincia:</span>
-              <p className="font-medium text-gray-900">Vizcaya</p>
+              <p className="font-medium text-gray-900">Madrid</p>
             </div>
             <div>
               <span className="text-gray-500">Coordenadas:</span>
-              <p className="font-mono text-xs text-gray-700">43.3255, -3.0123</p>
+              <p className="font-mono text-xs text-gray-700">40.424167, -3.711944</p>
             </div>
             <div>
               <span className="text-gray-500">Código postal:</span>
-              <p className="font-medium text-gray-900">48508</p>
+              <p className="font-medium text-gray-900">28013</p>
             </div>
           </div>
         </div>
