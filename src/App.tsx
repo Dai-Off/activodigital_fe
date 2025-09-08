@@ -23,7 +23,7 @@ function App() {
         {/* Rutas protegidas bajo Layout */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/assets" element={<AssetsList />} />
+            <Route path="/activos" element={<AssetsList />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/documentos" element={<Documentos />} />
             <Route path="/mantenimiento" element={<Mantenimiento />} />

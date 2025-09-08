@@ -18,7 +18,7 @@ export default function Login() {
       const resp = await loginRequest({ email, password });
       const storage = remember ? window.localStorage : window.sessionStorage;
       storage.setItem('access_token', resp.access_token);
-      navigate('/assets');
+      navigate('/activos');
     } catch (err: any) {
       setError(err?.message || 'Error al iniciar sesión');
     } finally {
