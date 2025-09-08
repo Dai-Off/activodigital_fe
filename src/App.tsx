@@ -10,6 +10,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import Landing from './components/Landing'
 import AssetsList from './components/AssetsList'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -18,22 +19,22 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Landing />} />
-        <Route
-          path="*"
-          element={
-            <Layout>
-              <Routes>
-                <Route path="/assets" element={<AssetsList />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/documentos" element={<Documentos />} />
-                <Route path="/mantenimiento" element={<Mantenimiento />} />
-                <Route path="/cumplimiento" element={<Cumplimiento />} />
-                <Route path="/unidades" element={<Unidades />} />
-                <Route path="/libro-digital" element={<LibroDigital />} />
-              </Routes>
-            </Layout>
-          }
-        />
+
+        {/* Rutas protegidas bajo Layout */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/assets" element={<AssetsList />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/documentos" element={<Documentos />} />
+            <Route path="/mantenimiento" element={<Mantenimiento />} />
+            <Route path="/cumplimiento" element={<Cumplimiento />} />
+            <Route path="/unidades" element={<Unidades />} />
+            <Route path="/libro-digital" element={<LibroDigital />} />
+          </Route>
+        </Route>
+
+        {/* Fallback: cualquier otra ruta al landing o 404 futura */}
+        <Route path="*" element={<Landing />} />
       </Routes>
     </Router>
   )

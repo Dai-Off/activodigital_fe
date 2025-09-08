@@ -1,11 +1,6 @@
-import type { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export default function Layout({ children }: LayoutProps) {
+export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -124,7 +119,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-6">
-        {children}
+        <Outlet />
       </main>
       
       <style>{`
