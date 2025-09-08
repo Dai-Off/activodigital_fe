@@ -204,6 +204,29 @@ export function LibroDigital() {
       pdf.text('Hotel RIU PLAZA España', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
 
+      // Imagen del edificio (debajo del título)
+      const loadImageAsDataURL = async (url: string): Promise<string> => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('No se pudo cargar la imagen');
+        const blob = await response.blob();
+        return await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      };
+
+      try {
+        const imgData = await loadImageAsDataURL('/image.png');
+        const imgWidth = pageWidth - 2 * margin;
+        const imgHeight = 45; // altura fija razonable manteniendo margen visual
+        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+        yPosition += imgHeight + 8;
+      } catch (e) {
+        console.warn('No se pudo insertar la imagen del edificio en el PDF', e);
+      }
+
       // GENERAR QR CODE - Crear uno simple sin estilos CSS modernos
       let qrImgData = '';
       
@@ -456,8 +479,8 @@ export function LibroDigital() {
             </div>
           </div>
           <div className="text-right flex flex-col items-center">
-            <div className="bg-white p-2 rounded-lg border border-gray-200 flex items-center justify-center mb-2">
-              <QRCode value={libroData.publicacion.urlPublica} size={96} />
+            <div className="bg-white rounded-lg border border-gray-200 flex items-center justify-center mb-2 w-28 h-28">
+              <QRCode value={libroData.publicacion.urlPublica} style={{ width: '100%', height: '100%' }} />
             </div>
             <p className="text-xs text-gray-500 font-mono">{libroData.publicacion.qr.codigo}</p>
           </div>

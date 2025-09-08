@@ -164,9 +164,9 @@ export default function Dashboard() {
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Estado por sección</h4>
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="p-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">OK</div>
-                    <div className="p-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">Pendiente</div>
-                    <div className="p-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">Vence</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">OK</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">Pendiente</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">Vence</div>
                   </div>
                   <div className="mt-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between text-gray-600">
