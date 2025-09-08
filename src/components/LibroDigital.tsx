@@ -19,7 +19,7 @@ const libroData = {
     { ambito: 'UE', norma: 'EPBD', version: '2024' },
     { ambito: 'local', norma: 'Ordenanza ITE Madrid', version: '2023' }
   ],
-  progreso: { totalSecciones: 9, seccionesCompletas: 7, porcentaje: 77 },
+  progreso: { totalSecciones: 9, seccionesCompletas: 8, porcentaje: 92 },
   snapshot: {
     certificadosIds: ['CERT-ENER-001'],
     intervencionesIds: ['INT-2023-014', 'INT-2024-002'],

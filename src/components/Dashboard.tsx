@@ -205,7 +205,7 @@ export default function Dashboard() {
               <p className="text-blue-100 mb-4">Accede a toda la documentación técnica, certificados y normativas del edificio</p>
               <div className="flex items-center gap-2 text-sm text-blue-100">
                 <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                <span>77% completado • Versión 1.2.0 • Actualizado 2025-09-01</span>
+                <span>92% completado • Versión 1.2.0 • Actualizado 2025-09-01</span>
               </div>
             </div>
             <div className="ml-6">
