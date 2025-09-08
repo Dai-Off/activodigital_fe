@@ -25,7 +25,7 @@ export default function Landing() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               <div className="animate-fadeInUp">
                 <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">Plataforma para edificios</span>
-                <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Gestión de activos, descarbonización y Libro del Edificio, todo en uno!</h1>
+                <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Plataforma Gestión Activos Inmbiliarios</h1>
                 <p className="mt-4 text-gray-600">Organiza documentación, mantenimiento y cumplimiento en un solo lugar. Enfocado en usabilidad y claridad.</p>
                 <div className="mt-6 flex items-center gap-3">
                   <Link to="/register" className="inline-flex items-center rounded-lg bg-blue-600 text-white font-semibold px-5 py-2.5 hover:bg-blue-700 transition-colors">Crear cuenta</Link>
