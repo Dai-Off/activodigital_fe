@@ -8,25 +8,39 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [role, setRole] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const availableRoles = [
+    { value: 'tenedor', label: 'Tenedor' },
+    { value: 'administrador', label: 'Administrador' },
+    { value: 'tecnico', label: 'Técnico' }
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    
     if (password !== password2) {
       setError('Las contraseñas no coinciden');
       return;
     }
+    
+    if (!role) {
+      setError('Por favor selecciona un tipo de usuario');
+      return;
+    }
+    
     setLoading(true);
     try {
-      await signupRequest({ email, password, full_name: name });
-      // Auto-login inmediato y navegación al dashboard
+      await signupRequest({ email, password, full_name: name, role });
+      // Auto-login inmediato y navegación a activos
       const resp = await loginRequest({ email, password });
       window.localStorage.setItem('access_token', resp.access_token);
-      navigate('/dashboard');
+      navigate('/activos');
     } catch (err: any) {
       setError(err?.message || 'Error al crear la cuenta');
     } finally {
@@ -55,6 +69,30 @@ export default function Register() {
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
               <input id="name" type="text" autoComplete="name" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Tipo de usuario</label>
+              <div className="relative">
+                <select 
+                  id="role" 
+                  className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 appearance-none bg-white pr-10 text-gray-900" 
+                  value={role} 
+                  onChange={(e) => setRole(e.target.value)} 
+                  required
+                >
+                  <option value="">Selecciona tu tipo de usuario</option>
+                  {availableRoles.map((roleOption) => (
+                    <option key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>

@@ -1,6 +1,6 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE || 'https://activodigital-be.fly.dev';
 
-const DEFAULT_TIMEOUT_MS = 25000; // 25s para servicios en frío (Render)
+const DEFAULT_TIMEOUT_MS = 25000; // 25s para servicios en frío (Fly.io)
 
 export async function apiFetch(path: string, options: RequestInit = {}, timeoutMs: number = DEFAULT_TIMEOUT_MS) {
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
