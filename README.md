@@ -38,7 +38,7 @@ npm install
 Crea un archivo `.env.local` en la raíz del proyecto:
 
 ```env
-VITE_API_BASE=https://activodigital-be.onrender.com
+VITE_API_BASE=https:https://activodigital-be.fly.dev
 ```
 
 ### 4. Ejecutar en desarrollo
