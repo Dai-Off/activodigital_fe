@@ -101,9 +101,34 @@ export default function AssetsList() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Cartera de Activos</h1>
-          <p className="text-gray-600">Gestiona y monitorea todos tus activos inmobiliarios</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Cartera de Activos</h1>
+            <p className="text-gray-600">Gestiona y monitorea todos tus activos inmobiliarios</p>
+          </div>
+          
+          {/* Botones de acción */}
+          <div className="flex gap-3">
+            <Link
+              to="/edificios/crear"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Crear Edificio
+            </Link>
+            
+            <Link
+              to="/libro-digital/hub"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Libro Digital (Demo)
+            </Link>
+          </div>
         </div>
 
         {/* User Profile Card */}
@@ -228,16 +253,33 @@ export default function AssetsList() {
         </div>
 
         {/* Info Note */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <svg className="w-5 h-5 text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> Actualmente solo el Hotel RIU PLAZA España está disponible para acceso detallado. 
-                Los demás activos están en desarrollo.
-              </p>
+        <div className="mt-6 space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-blue-400 mt-0.5 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> Actualmente solo el Hotel RIU PLAZA España está disponible para acceso detallado. 
+                  Los demás activos están en desarrollo.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-green-400 mt-0.5 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm text-green-800">
+                  <strong>¡Nuevo!</strong> Ya puedes crear nuevos edificios con el wizard de 3 pasos: 
+                  datos generales, ubicación con mapa interactivo y fotos, y resumen final. 
+                  Después podrás completar el Libro Digital con 8 secciones especializadas.
+                </p>
+              </div>
             </div>
           </div>
         </div>
