@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { logoutRequest } from '../services/logout';
 
 export default function Layout() {
   const location = useLocation();
@@ -98,7 +99,12 @@ export default function Layout() {
                 </svg>
               </div>
               <button
-                onClick={() => {
+                onClick={async () => {
+                  try {
+                    await logoutRequest();
+                  } catch (e) {
+                    // ignore network/logout errors
+                  }
                   try {
                     window.localStorage.removeItem('access_token');
                     window.sessionStorage.removeItem('access_token');

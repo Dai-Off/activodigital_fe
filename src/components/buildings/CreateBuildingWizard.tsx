@@ -4,15 +4,19 @@ import Wizard from '../ui/Wizard';
 import CreateBuildingStep1 from './CreateBuildingStep1';
 import CreateBuildingStep2 from './CreateBuildingStep2';
 import CreateBuildingStep3 from './CreateBuildingStep3';
+import { buildingService } from '../../services/buildings';
 
 // Tipos para los datos del formulario
 interface BuildingStep1Data {
   name: string;
   address: string;
+  cadastralReference: string;
   constructionYear: string;
   typology: 'residential' | 'mixed' | 'commercial' | '';
   floors: string;
   units: string;
+  price: string;
+  technicianEmail: string;
 }
 
 interface BuildingStep2Data {
@@ -25,10 +29,13 @@ interface BuildingStep2Data {
 interface CompleteBuildingData {
   name: string;
   address: string;
+  cadastralReference: string;
   constructionYear: string;
-  typology: 'residential' | 'mixed' | 'commercial'; // Sin string vacío
+  typology: 'residential' | 'mixed' | 'commercial';
   floors: string;
   units: string;
+  price: string;
+  technicianEmail: string;
   latitude: number;
   longitude: number;
   photos: File[];
@@ -41,6 +48,7 @@ const CreateBuildingWizard: React.FC = () => {
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
 
   // Pasos del wizard
   const wizardSteps = [
@@ -99,28 +107,37 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleSaveFinal = async () => {
     if (!step1Data || !step2Data) return;
-
-    setIsSubmitting(true);
-    
+  setIsSubmitting(true);
+  setBackendError(null);
     try {
-      // Simular guardado en el backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const completeData: CompleteBuildingData = {
         ...step1Data,
         typology: step1Data.typology as 'residential' | 'mixed' | 'commercial',
         ...step2Data
       };
-
-      console.log('Edificio guardado:', completeData);
-      
-      // Mostrar mensaje de éxito y navegar
+      const payload = {
+        name: completeData.name,
+        address: completeData.address,
+        cadastralReference: completeData.cadastralReference && completeData.cadastralReference.trim() !== ''
+          ? completeData.cadastralReference.trim()
+          : 'SIN_REFERENCIA',
+        constructionYear: parseInt(completeData.constructionYear),
+        typology: completeData.typology,
+        numFloors: parseInt(completeData.floors),
+        numUnits: parseInt(completeData.units),
+        price: parseFloat(completeData.price),
+        technicianEmail: completeData.technicianEmail,
+        lat: completeData.latitude,
+        lng: completeData.longitude
+        // TODO: enviar fotos si el backend lo soporta
+      };
+      console.log('[DEBUG] Payload enviado a backend (crear edificio):', payload);
+      await buildingService.create(payload);
       alert('Edificio guardado exitosamente. Puedes completar el libro digital más tarde.');
-      navigate('/activos'); // O donde corresponda
-      
-    } catch (error) {
+      navigate('/activos');
+    } catch (error: any) {
       console.error('Error guardando edificio:', error);
-      alert('Error al guardar el edificio. Por favor intenta de nuevo.');
+      setBackendError(error?.message || 'Error al guardar el edificio. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,32 +145,41 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleGoToDigitalBook = async () => {
     if (!step1Data || !step2Data) return;
-
-    setIsSubmitting(true);
-    
+  setIsSubmitting(true);
+  setBackendError(null);
     try {
-      // Simular guardado en el backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const completeData: CompleteBuildingData = {
         ...step1Data,
         typology: step1Data.typology as 'residential' | 'mixed' | 'commercial',
         ...step2Data
       };
-
-      console.log('Edificio guardado, navegando al libro digital:', completeData);
-      
-      // Navegar al hub del libro digital (WF-30)
+      const payload = {
+        name: completeData.name,
+        address: completeData.address,
+        cadastralReference: completeData.cadastralReference && completeData.cadastralReference.trim() !== ''
+          ? completeData.cadastralReference.trim()
+          : 'SIN_REFERENCIA',
+        constructionYear: parseInt(completeData.constructionYear),
+        typology: completeData.typology,
+        numFloors: parseInt(completeData.floors),
+        numUnits: parseInt(completeData.units),
+        price: parseFloat(completeData.price),
+        technicianEmail: completeData.technicianEmail,
+        lat: completeData.latitude,
+        lng: completeData.longitude
+        // TODO: enviar fotos si el backend lo soporta
+      };
+      console.log('[DEBUG] Payload enviado a backend (crear edificio):', payload);
+      const building = await buildingService.create(payload);
       navigate('/libro-digital/hub', { 
         state: { 
-          buildingData: completeData,
+          buildingData: building,
           isNewBuilding: true 
         } 
       });
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error guardando edificio:', error);
-      alert('Error al guardar el edificio. Por favor intenta de nuevo.');
+      setBackendError(error?.message || 'Error al guardar el edificio. Por favor intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -248,6 +274,11 @@ const CreateBuildingWizard: React.FC = () => {
           currentStep={currentStep}
           className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
         >
+          {backendError && (
+            <div className="mb-4 p-3 rounded bg-red-100 border border-red-300 text-red-700 text-sm">
+              <strong>Error:</strong> {backendError}
+            </div>
+          )}
           {/* Overlay de carga durante el envío */}
           {isSubmitting && (
             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 rounded-lg">

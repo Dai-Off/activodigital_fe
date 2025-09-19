@@ -3,10 +3,13 @@ import React, { useState } from 'react';
 interface BuildingFormData {
   name: string;
   address: string;
+  cadastralReference: string;
   constructionYear: string;
   typology: 'residential' | 'mixed' | 'commercial' | '';
   floors: string;
   units: string;
+  price: string;
+  technicianEmail: string;
 }
 
 interface CreateBuildingStep1Props {
@@ -23,10 +26,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   const [formData, setFormData] = useState<BuildingFormData>({
     name: initialData.name || '',
     address: initialData.address || '',
+    cadastralReference: initialData.cadastralReference || '',
     constructionYear: initialData.constructionYear || '',
     typology: initialData.typology || '',
     floors: initialData.floors || '',
-    units: initialData.units || ''
+    units: initialData.units || '',
+    price: initialData.price || '',
+    technicianEmail: initialData.technicianEmail || '',
   });
 
   const [errors, setErrors] = useState<Partial<BuildingFormData>>({});
@@ -78,6 +84,23 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       if (isNaN(units) || units < 1 || units > 1000) {
         newErrors.units = 'Ingresa un número válido de unidades (1-1000)';
       }
+    }
+
+    // Precio obligatorio y debe ser número positivo
+    if (!formData.price) {
+      newErrors.price = 'El precio es obligatorio';
+    } else {
+      const price = parseFloat(formData.price);
+      if (isNaN(price) || price <= 0) {
+        newErrors.price = 'Ingresa un precio válido (mayor a 0)';
+      }
+    }
+
+    // Email del técnico obligatorio y formato básico
+    if (!formData.technicianEmail) {
+      newErrors.technicianEmail = 'El email del técnico es obligatorio';
+    } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.technicianEmail)) {
+      newErrors.technicianEmail = 'Ingresa un email válido';
     }
 
     setErrors(newErrors);
@@ -163,6 +186,21 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
         {/* Año de construcción */}
         <div>
+
+          {/* Referencia Catastral (opcional) */}
+          <div>
+            <label htmlFor="cadastralReference" className="block text-sm font-medium text-gray-700 mb-2">
+              Referencia catastral (opcional)
+            </label>
+            <input
+              type="text"
+              id="cadastralReference"
+              value={formData.cadastralReference}
+              onChange={(e) => handleInputChange('cadastralReference', e.target.value)}
+              placeholder="Ej: 1234567890"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+            />
+          </div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
             Año de construcción *
           </label>
@@ -206,8 +244,49 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           )}
         </div>
 
-        {/* Grid para plantas y unidades */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Grid para plantas y unidades */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Precio */}
+        <div>
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+            Precio del edificio (€) *
+          </label>
+          <input
+            type="number"
+            id="price"
+            value={formData.price}
+            onChange={(e) => handleInputChange('price', e.target.value)}
+            placeholder="250000"
+            min="1"
+            step="0.01"
+            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.price ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.price && (
+            <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+          )}
+        </div>
+
+        {/* Email del técnico */}
+        <div>
+          <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
+            Email del técnico asignado *
+          </label>
+          <input
+            type="email"
+            id="technicianEmail"
+            value={formData.technicianEmail}
+            onChange={(e) => handleInputChange('technicianEmail', e.target.value)}
+            placeholder="tecnico@ejemplo.com"
+            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.technicianEmail ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.technicianEmail && (
+            <p className="mt-1 text-sm text-red-600">{errors.technicianEmail}</p>
+          )}
+        </div>
           {/* Número de plantas */}
           <div>
             <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">

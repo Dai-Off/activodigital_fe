@@ -2,16 +2,21 @@ export interface Building {
   id: string;
   name: string;
   address: string;
+  cadastralReference?: string;
   constructionYear: number;
   typology: 'residential' | 'mixed' | 'commercial';
-  floors: number;
-  units: number;
-  latitude?: number;
-  longitude?: number;
-  status: 'draft' | 'created' | 'ready_for_book';
-  createdAt: Date;
-  updatedAt: Date;
-  mainPhotoId?: string;
+  numFloors: number;
+  numUnits: number;
+  price: number;
+  technicianEmail: string;
+  lat?: number;
+  lng?: number;
+  status: 'draft' | 'ready_book' | 'with_book';
+  createdAt: string;
+  updatedAt: string;
+  images?: BuildingPhoto[];
+  ownerId?: string;
+  userId?: string;
 }
 
 export interface BuildingPhoto {

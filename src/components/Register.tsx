@@ -8,6 +8,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [role, setRole] = useState<'tenedor' | 'tecnico' | 'administrador'>('tenedor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await signupRequest({ email, password, full_name: name });
+      await signupRequest({ email, password, full_name: name, role });
       // Auto-login inmediato y navegación al dashboard
       const resp = await loginRequest({ email, password });
       window.localStorage.setItem('access_token', resp.access_token);
@@ -59,6 +60,14 @@ export default function Register() {
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
               <input id="email" type="email" autoComplete="email" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+              <select id="role" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" value={role} onChange={e => setRole(e.target.value as any)} required>
+                <option value="tenedor">Tenedor (Propietario)</option>
+                <option value="tecnico">Técnico</option>
+                <option value="administrador">Administrador</option>
+              </select>
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>

@@ -19,7 +19,8 @@ interface BuildingSummaryData {
   typology: 'residential' | 'mixed' | 'commercial';
   floors: string;
   units: string;
-  
+  price: string;
+  technicianEmail: string;
   // Ubicación y fotos
   latitude: number;
   longitude: number;
@@ -138,6 +139,14 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <div className="py-2">
                   <span className="text-sm font-medium text-gray-600 block mb-2">Dirección:</span>
                   <p className="text-sm text-gray-900">{buildingData.address}</p>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Precio:</span>
+                  <span className="text-sm text-gray-900">{Number(buildingData.price).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Email del técnico:</span>
+                  <span className="text-sm text-gray-900">{buildingData.technicianEmail}</span>
                 </div>
               </div>
             </div>

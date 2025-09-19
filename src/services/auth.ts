@@ -20,6 +20,7 @@ export interface SignupPayload {
   email: string;
   password: string;
   full_name: string;
+  role: 'tenedor' | 'tecnico' | 'administrador';
 }
 
 export async function signupRequest(payload: SignupPayload): Promise<{ message?: string }> {
