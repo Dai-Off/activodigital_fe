@@ -9,6 +9,11 @@ export interface Building {
   latitude?: number;
   longitude?: number;
   status: 'draft' | 'created' | 'ready_for_book';
+  price?: number;
+  technicianEmail?: string;
+  // Campos financieros
+  rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
+  potentialValue?: number;     // Valor potencial (por defecto 0)
   createdAt: Date;
   updatedAt: Date;
   mainPhotoId?: string;
@@ -81,6 +86,11 @@ export interface BuildingFormStep1 {
   typology: Building['typology'];
   floors: string;
   units: string;
+  price: string;
+  technicianEmail: string;
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
 }
 
 export interface BuildingFormStep2 {

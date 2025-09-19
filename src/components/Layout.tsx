@@ -33,16 +33,6 @@ export default function Layout() {
                   Activos
                 </Link>
                 <Link 
-                  to="/dashboard" 
-                  className={`nav-item pb-4 ${
-                    isActive('/dashboard') 
-                      ? 'text-blue-600 border-b-2 border-blue-600' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link 
                   to="/documentos" 
                   className={`nav-item pb-4 ${
                     isActive('/documentos') 

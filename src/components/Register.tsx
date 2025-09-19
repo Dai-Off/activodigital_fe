@@ -1,17 +1,24 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { signupRequest, loginRequest } from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [role, setRole] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, error, startLoading, stopLoading } = useLoadingState();
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Helper function para mostrar errores
+  const setError = (message: string) => {
+    stopLoading(message);
+  };
 
   const availableRoles = [
     { value: 'tenedor', label: 'Tenedor' },
@@ -21,7 +28,6 @@ export default function Register() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setSuccess(null);
     
     if (password !== password2) {
@@ -34,17 +40,22 @@ export default function Register() {
       return;
     }
     
-    setLoading(true);
+    startLoading();
     try {
       await signupRequest({ email, password, full_name: name, role });
-      // Auto-login inmediato y navegación a activos
+      
+      // Auto-login inmediato usando el contexto de autenticación
       const resp = await loginRequest({ email, password });
-      window.localStorage.setItem('access_token', resp.access_token);
+      await login(resp.access_token);
+      
+      // Guardar token en localStorage
+      localStorage.setItem('access_token', resp.access_token);
+      
+      // Redirigir a activos
       navigate('/activos');
+      stopLoading();
     } catch (err: any) {
-      setError(err?.message || 'Error al crear la cuenta');
-    } finally {
-      setLoading(false);
+      stopLoading(err?.message || 'Error al crear la cuenta');
     }
   }
   return (
@@ -107,8 +118,12 @@ export default function Register() {
               <input id="password2" type="password" autoComplete="new-password" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="••••••••" value={password2} onChange={(e) => setPassword2(e.target.value)} required />
             </div>
 
-            <button type="submit" disabled={loading} className={`w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 transition-colors ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
-              {loading ? 'Creando…' : 'Crear cuenta'}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className={`w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 transition-colors ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            >
+              {loading ? <FormLoader message="Creando cuenta..." /> : 'Crear cuenta'}
             </button>
           </form>
 

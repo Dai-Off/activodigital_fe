@@ -1,28 +1,38 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { loginRequest } from '../services/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, error, startLoading, stopLoading } = useLoadingState();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    startLoading();
     try {
       const resp = await loginRequest({ email, password });
-      const storage = remember ? window.localStorage : window.sessionStorage;
-      storage.setItem('access_token', resp.access_token);
+      
+      // Usar el contexto de autenticación para hacer login
+      await login(resp.access_token);
+      
+      // Guardar en storage según preferencia del usuario
+      if (remember) {
+        localStorage.setItem('access_token', resp.access_token);
+      } else {
+        sessionStorage.setItem('access_token', resp.access_token);
+      }
+      
+      // Redirigir a activos
       navigate('/activos');
+      stopLoading();
     } catch (err: any) {
-      setError(err?.message || 'Error al iniciar sesión');
-    } finally {
-      setLoading(false);
+      stopLoading(err?.message || 'Error al iniciar sesión');
     }
   }
 
@@ -63,8 +73,12 @@ export default function Login() {
               </label>
             </div>
 
-            <button type="submit" disabled={loading} className={`w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 transition-colors ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
-              {loading ? 'Ingresando…' : 'Entrar'}
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className={`w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 transition-colors ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            >
+              {loading ? <FormLoader message="Ingresando..." /> : 'Entrar'}
             </button>
           </form>
 
