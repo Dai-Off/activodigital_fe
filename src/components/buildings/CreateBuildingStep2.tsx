@@ -1,5 +1,13 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+// Utilidad debounce simple
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), delay);
+  };
+}
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import FileUpload from '../ui/FileUpload';
@@ -51,19 +59,105 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       ? { lat: initialData.latitude, lng: initialData.longitude }
       : null
   );
+  const [address, setAddress] = useState<string>("");
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false);
+   // Centrar el mapa automáticamente cuando cambia location
+  const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (location && mapRef.current) {
+      mapRef.current.flyTo([location.lat, location.lng], 16, { animate: true });
+    }
+  }, [location]);
+
+  // Buscar lat/lng por dirección usando Nominatim (botón buscar)
+  const handleGeocode = async () => {
+    if (!address.trim()) {
+      setLocation(null);
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError(null);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setLocation({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+      } else {
+        setLocation(null);
+        setGeoError('No se encontró la ubicación.');
+      }
+    } catch (err) {
+      setLocation(null);
+      setGeoError('Error buscando la ubicación.');
+    } finally {
+      setGeoLoading(false);
+    }
+  };
+
+  // Autocompletado: buscar sugerencias mientras se escribe
+  const fetchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await resp.json();
+      setSuggestions(data);
+    } catch {
+      setSuggestions([]);
+    }
+  };
+  // Debounced version
+  const debouncedFetchSuggestions = React.useRef(debounce(fetchSuggestions, 400)).current;
+
+  useEffect(() => {
+    if (address.trim() && !hasSelectedSuggestion) {
+      debouncedFetchSuggestions(address);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [address, debouncedFetchSuggestions, hasSelectedSuggestion]);
+
+  // Al seleccionar una sugerencia
+  const handleSuggestionSelect = (suggestion: any) => {
+    const lat = parseFloat(suggestion.lat);
+    const lng = parseFloat(suggestion.lon);
+    setAddress(suggestion.display_name);
+    setLocation({ lat, lng });
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setHasSelectedSuggestion(true);
+    if (mapRef.current) {
+      mapRef.current.flyTo([lat, lng], 16, { animate: true });
+    }
+  };
   
   const [photos, setPhotos] = useState<File[]>(initialData.photos || []);
   const [mainPhotoIndex, setMainPhotoIndex] = useState(initialData.mainPhotoIndex || 0);
   const [errors, setErrors] = useState<{ location?: string; photos?: string }>({});
   
-  const mapRef = useRef<L.Map | null>(null);
-
   // Función para manejar la selección de ubicación
-  const handleLocationSelect = useCallback((lat: number, lng: number) => {
+  const handleLocationSelect = useCallback(async (lat: number, lng: number) => {
     setLocation({ lat, lng });
     if (errors.location) {
       setErrors(prev => ({ ...prev, location: undefined }));
     }
+    // Reverse geocoding para actualizar el input de dirección
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const data = await resp.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch {}
   }, [errors.location]);
 
   // Función para manejar la subida de fotos
@@ -138,6 +232,22 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     onSaveDraft(data);
   };
 
+  // Cerrar el dropdown si el input pierde el foco y no se está haciendo click en una sugerencia
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest('ul')
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -151,16 +261,64 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Panel izquierdo: Mapa */}
+        {/* Panel izquierdo: Dirección y Mapa */}
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Ubicación del Edificio *
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Haz clic en el mapa para marcar la ubicación exacta del edificio.
+              Puedes buscar la ubicación escribiendo la dirección o haciendo clic en el mapa.
             </p>
           </div>
+
+          {/* Input de dirección y botón buscar */}
+          <div className="relative mb-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={address}
+                onChange={e => {
+                  setAddress(e.target.value);
+                  setHasSelectedSuggestion(false);
+                }}
+                onFocus={() => address.trim() && setShowSuggestions(true)}
+                placeholder="Ej: Calle Mayor 123, Madrid"
+                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                autoComplete="off"
+                ref={inputRef}
+              />
+              <button
+                type="button"
+                onClick={handleGeocode}
+                disabled={geoLoading || !address.trim()}
+                className="px-3 py-2 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {geoLoading ? 'Buscando...' : 'Buscar ubicación'}
+              </button>
+            </div>
+            {/* Dropdown de sugerencias sobre el mapa */}
+            {showSuggestions && (
+              <ul className="absolute left-0 top-full w-full bg-white border border-blue-400 rounded-lg shadow-2xl mt-1 max-h-56 overflow-auto" style={{zIndex: 9999}}>
+                {suggestions.length === 0 && address.trim() && (
+                  <li className="px-3 py-2 text-gray-500 text-sm select-none">No se encontraron resultados</li>
+                )}
+                {suggestions.map((s) => (
+                  <li
+                    key={s.place_id}
+                    className="px-3 py-2 cursor-pointer hover:bg-blue-100 text-sm"
+                    onMouseDown={() => handleSuggestionSelect(s)}
+                  >
+                    {s.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {geoError && (
+            <p className="mt-1 text-sm text-red-600">{geoError}</p>
+          )}
 
           {/* Mapa */}
           <div className="h-96 rounded-lg overflow-hidden border-2 border-gray-300">
@@ -174,11 +332,18 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              
               <LocationPicker onLocationSelect={handleLocationSelect} />
-              
               {location && (
-                <Marker position={[location.lat, location.lng]} />
+                <Marker
+                  key={`${location.lat},${location.lng}`}
+                  position={[location.lat, location.lng]}
+                >
+                  {address.trim() && (
+                    <Popup>
+                      {address}
+                    </Popup>
+                  )}
+                </Marker>
               )}
             </MapContainer>
           </div>
@@ -188,6 +353,9 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
             <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
                 <strong>Ubicación seleccionada:</strong><br />
+                {address && (
+                  <span className="block font-semibold text-green-900 mb-1">{address}</span>
+                )}
                 Latitud: {location.lat.toFixed(6)}<br />
                 Longitud: {location.lng.toFixed(6)}
               </p>

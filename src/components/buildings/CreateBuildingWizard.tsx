@@ -10,7 +10,7 @@ import type { CreateBuildingPayload } from '../../services/buildingsApi';
 import { useLoadingState } from '../ui/LoadingSystem';
 
 // Tipos para los datos del formulario
-interface BuildingStep1Data {
+export interface BuildingStep1Data {
   name: string;
   address: string;
   constructionYear: string;

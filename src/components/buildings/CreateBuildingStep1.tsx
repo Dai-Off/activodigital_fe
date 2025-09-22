@@ -1,23 +1,13 @@
 import React, { useState } from 'react';
 
-interface BuildingFormData {
-  name: string;
-  address: string;
-  constructionYear: string;
-  typology: 'residential' | 'mixed' | 'commercial' | '';
-  floors: string;
-  units: string;
-  price: string;
-  technicianEmail: string;
-  // Campos financieros
-  rehabilitationCost: string; // Coste de rehabilitación
-  potentialValue: string;     // Valor potencial
-}
+
+// Import BuildingStep1Data from CreateBuildingWizard
+import type { BuildingStep1Data } from './CreateBuildingWizard';
 
 interface CreateBuildingStep1Props {
-  onNext: (data: BuildingFormData) => void;
-  onSaveDraft: (data: BuildingFormData) => void;
-  initialData?: Partial<BuildingFormData>;
+  onNext: (data: BuildingStep1Data) => void;
+  onSaveDraft: (data: BuildingStep1Data) => void;
+  initialData?: Partial<BuildingStep1Data>;
 }
 
 const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
@@ -25,34 +15,30 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   onSaveDraft,
   initialData = {}
 }) => {
-  const [formData, setFormData] = useState<BuildingFormData>({
+  const [formData, setFormData] = useState<BuildingStep1Data>({
     name: initialData.name || '',
-    address: initialData.address || '',
+    address: '', // address is not used in step 1, but required by type, so set as empty
     constructionYear: initialData.constructionYear || '',
     typology: initialData.typology || '',
     floors: initialData.floors || '',
     units: initialData.units || '',
     price: initialData.price || '',
     technicianEmail: initialData.technicianEmail || '',
-    // Campos financieros
     rehabilitationCost: initialData.rehabilitationCost || '',
     potentialValue: initialData.potentialValue || ''
   });
+  // Estado para loading y error de geocodificación
 
-  const [errors, setErrors] = useState<Partial<BuildingFormData>>({});
+  const [errors, setErrors] = useState<Partial<BuildingStep1Data>>({});
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<BuildingFormData> = {};
+    const newErrors: Partial<BuildingStep1Data> = {};
 
     // Nombre obligatorio
     if (!formData.name.trim()) {
       newErrors.name = 'El nombre del edificio es obligatorio';
     }
 
-    // Dirección obligatoria
-    if (!formData.address.trim()) {
-      newErrors.address = 'La dirección es obligatoria';
-    }
 
     // Año de construcción - validar formato
     if (!formData.constructionYear) {
@@ -126,24 +112,27 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: keyof BuildingFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof BuildingStep1Data, value: string) => {
+    setFormData((prev: BuildingStep1Data) => ({ ...prev, [field]: value }));
     // Limpiar error del campo al escribir
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev: Partial<BuildingStep1Data>) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleNext = () => {
     if (validateForm()) {
-      onNext(formData);
+      // Omit address when passing to parent (step 1 doesn't use it)
+      const { address, ...rest } = formData;
+      onNext({ ...rest } as BuildingStep1Data);
     }
   };
 
   const handleSaveDraft = () => {
     // Para borrador, solo validamos que tenga al menos el nombre
     if (formData.name.trim()) {
-      onSaveDraft(formData);
+      const { address, ...rest } = formData;
+      onSaveDraft({ ...rest } as BuildingStep1Data);
     } else {
       setErrors({ name: 'El nombre es necesario para guardar el borrador' });
     }
@@ -183,25 +172,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           )}
         </div>
 
-        {/* Dirección */}
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-            Dirección / Referencia catastral *
-          </label>
-          <textarea
-            id="address"
-            value={formData.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            placeholder="Dirección completa, referencias catastrales o ubicación..."
-            rows={3}
-            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.address ? 'border-red-300' : 'border-gray-300'
-            }`}
-          />
-          {errors.address && (
-            <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-          )}
-        </div>
+
 
         {/* Año de construcción */}
         <div>
