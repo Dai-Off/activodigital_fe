@@ -78,6 +78,101 @@ export interface BookPageMapping {
   pages: number[]; // Páginas del PDF asignadas a esta sección
 }
 
+// ==============================
+// Certificados Energéticos (CEE)
+// ==============================
+
+export type EnergyCertificateKind =
+  | 'building'
+  | 'dwelling'
+  | 'commercial_unit';
+
+export type EnergyRatingLetter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'ND';
+
+export interface EnergyCertificateDocument {
+  id: string;
+  buildingId: string;
+  kind: EnergyCertificateKind;
+  filename: string;
+  url: string;
+  mimeType: string;
+  uploadedAt: Date;
+}
+
+export type AIExtractionStatus =
+  | 'uploaded'      // Archivos subidos por el técnico
+  | 'processing'    // IA procesando OCR/visión
+  | 'extracted'     // IA extrajo datos, pendientes de revisión
+  | 'reviewed'      // Técnico revisó/ajustó
+  | 'confirmed'     // Técnico dio el check final para guardar
+  | 'failed';       // Error en extracción
+
+export interface ExtractedField<T> {
+  value: T | null;
+  confidence: number; // 0-1
+  source?: string;    // página, bbox, modelo, etc.
+  suggestions?: T[];  // alternativas propuestas por IA
+}
+
+export interface AIExtractedEnergyCertificateData {
+  rating: ExtractedField<EnergyRatingLetter>;
+  primaryEnergyKwhPerM2Year: ExtractedField<number>;   // kWh/m²·año
+  emissionsKgCo2PerM2Year: ExtractedField<number>;     // kgCO₂/m²·año
+  certificateNumber: ExtractedField<string>;
+  scope: ExtractedField<EnergyCertificateKind>;        // ámbito evaluado
+  issuerName: ExtractedField<string>;                  // técnico certificador
+  issueDate: ExtractedField<string>;                   // ISO date string
+  expiryDate: ExtractedField<string>;                  // ISO date string
+  propertyReference: ExtractedField<string>;           // referencia catastral u otra
+  notes?: ExtractedField<string>;
+}
+
+export interface EnergyCertificateReviewEditable {
+  rating?: EnergyRatingLetter;
+  primaryEnergyKwhPerM2Year?: number;
+  emissionsKgCo2PerM2Year?: number;
+  certificateNumber?: string;
+  scope?: EnergyCertificateKind;
+  issuerName?: string;
+  issueDate?: string;  // ISO
+  expiryDate?: string; // ISO
+  propertyReference?: string;
+  notes?: string;
+}
+
+export interface EnergyCertificateUploadSession {
+  id: string;
+  buildingId: string;
+  kind: EnergyCertificateKind;
+  status: AIExtractionStatus;
+  documents: EnergyCertificateDocument[];
+  extracted?: AIExtractedEnergyCertificateData; // rellenado cuando status = 'extracted'
+  edited?: EnergyCertificateReviewEditable;      // modificaciones del técnico
+  reviewerUserId?: string;                       // técnico que revisa
+  createdAt: Date;
+  updatedAt: Date;
+  errorMessage?: string;
+}
+
+export interface PersistedEnergyCertificate {
+  id: string;
+  buildingId: string;
+  kind: EnergyCertificateKind;
+  rating: EnergyRatingLetter;
+  primaryEnergyKwhPerM2Year: number;
+  emissionsKgCo2PerM2Year: number;
+  certificateNumber: string;
+  scope: EnergyCertificateKind;
+  issuerName: string;
+  issueDate: string;  // ISO
+  expiryDate: string; // ISO
+  propertyReference?: string;
+  notes?: string;
+  sourceSessionId?: string; // de qué sesión de subida provino
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Estados para los formularios de creación
 export interface BuildingFormStep1 {
   name: string;
