@@ -21,6 +21,11 @@ interface BuildingSummaryData {
   units: string;
   price: string;
   technicianEmail: string;
+  
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
+  
   // Ubicación y fotos
   latitude: number;
   longitude: number;
@@ -32,7 +37,6 @@ interface CreateBuildingStep3Props {
   buildingData: BuildingSummaryData;
   onEditData: () => void;
   onEditLocation: () => void;
-  onGoToDigitalBook: () => void;
   onSaveFinal: () => void;
 }
 
@@ -40,7 +44,6 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   buildingData,
   onEditData,
   onEditLocation,
-  onGoToDigitalBook,
   onSaveFinal
 }) => {
   const mainPhoto = buildingData.photos[buildingData.mainPhotoIndex];
@@ -60,10 +63,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Resumen del Edificio
+          Resumen del Activo
         </h1>
         <p className="text-gray-600">
-          Revisa toda la información antes de proceder al Libro Digital.
+          Revisa toda la información antes de crear el activo.
         </p>
       </div>
 
@@ -136,17 +139,38 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   <span className="text-sm text-gray-900">{buildingData.units}</span>
                 </div>
                 
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Precio:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.price ? `€${parseInt(buildingData.price).toLocaleString('es-ES')}` : 'No especificado'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Técnico asignado:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.technicianEmail || 'Sin asignar'}
+                  </span>
+                </div>
+                
+                {/* Campos financieros */}
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Coste rehabilitación:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.rehabilitationCost ? `€${parseInt(buildingData.rehabilitationCost).toLocaleString('es-ES')}` : 'No especificado'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Valor potencial:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : 'No especificado'}
+                  </span>
+                </div>
+                
                 <div className="py-2">
                   <span className="text-sm font-medium text-gray-600 block mb-2">Dirección:</span>
                   <p className="text-sm text-gray-900">{buildingData.address}</p>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Precio:</span>
-                  <span className="text-sm text-gray-900">{Number(buildingData.price).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Email del técnico:</span>
-                  <span className="text-sm text-gray-900">{buildingData.technicianEmail}</span>
                 </div>
               </div>
             </div>
@@ -231,61 +255,55 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             </div>
           )}
 
-          {/* Estado del edificio */}
-          <div className="border-t border-gray-200 pt-6 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-green-800">
-                  Edificio creado exitosamente
-                </h3>
-                <p className="text-green-600">
-                  Todos los datos han sido registrados correctamente.
-                </p>
+          {/* Información sobre el técnico asignado */}
+          {buildingData.technicianEmail && (
+            <div className="border-t border-gray-200 pt-6 mb-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                    <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-800">
+                      Técnico Asignado
+                    </h3>
+                    <p className="text-blue-600">
+                      {buildingData.technicianEmail} podrá gestionar el libro digital de este activo.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Próximos pasos */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h4 className="font-semibold text-blue-900 mb-2">
-              ¿Qué sigue ahora?
-            </h4>
-            <p className="text-sm text-blue-800 mb-3">
-              Para completar la gestión del edificio, necesitas crear el Libro Digital 
-              con información técnica detallada, certificados, mantenimiento y más.
-            </p>
-            <div className="flex items-center gap-2 text-sm text-blue-700">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <span>El Libro Digital consta de 8 secciones que puedes completar manualmente o importar desde PDF</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Botones de acción */}
       <div className="flex flex-col sm:flex-row gap-3 pt-6">
         <button
-          onClick={onSaveFinal}
+          onClick={onEditData}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Finalizar más tarde
+          Editar Datos
         </button>
         
         <button
-          onClick={onGoToDigitalBook}
-          className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto flex items-center gap-2"
+          onClick={onEditLocation}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          <span>Ir al Libro Digital</span>
+          Editar Ubicación
+        </button>
+        
+        <button
+          onClick={onSaveFinal}
+          className="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-auto flex items-center gap-2"
+        >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
+          <span>Crear Activo</span>
         </button>
       </div>
     </div>

@@ -20,7 +20,7 @@ export interface SignupPayload {
   email: string;
   password: string;
   full_name: string;
-  role: 'tenedor' | 'tecnico' | 'administrador';
+  role: string;
 }
 
 export async function signupRequest(payload: SignupPayload): Promise<{ message?: string }> {
@@ -31,10 +31,18 @@ export async function signupRequest(payload: SignupPayload): Promise<{ message?:
 }
 
 export interface MeResponse {
-  user_id: string;
+  id: string;
+  userId: string;
   email: string;
-  full_name: string;
-  role: string;
+  fullName: string;
+  roleId: string;
+  role: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export async function fetchMe(): Promise<MeResponse> {

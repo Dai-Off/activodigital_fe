@@ -170,7 +170,7 @@ const SectionEditor: React.FC = () => {
     }, 500);
   };
 
-  const renderField = (field: any) => {
+  const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: string[] }) => {
     const value = formData[field.name] || '';
 
     switch (field.type) {
@@ -238,7 +238,7 @@ const SectionEditor: React.FC = () => {
     const requiredFields = sectionConfig.fields.filter(field => field.required);
     return requiredFields.every(field => {
       const value = formData[field.name];
-      return value && value.toString().trim().length > 0;
+      return value && typeof value === 'string' && value.trim().length > 0;
     });
   };
 

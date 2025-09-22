@@ -1,5 +1,4 @@
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { logoutRequest } from '../services/logout';
 
 export default function Layout() {
   const location = useLocation();
@@ -32,16 +31,6 @@ export default function Layout() {
                   }`}
                 >
                   Activos
-                </Link>
-                <Link 
-                  to="/dashboard" 
-                  className={`nav-item pb-4 ${
-                    isActive('/dashboard') 
-                      ? 'text-blue-600 border-b-2 border-blue-600' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Dashboard
                 </Link>
                 <Link 
                   to="/documentos" 
@@ -99,12 +88,7 @@ export default function Layout() {
                 </svg>
               </div>
               <button
-                onClick={async () => {
-                  try {
-                    await logoutRequest();
-                  } catch (e) {
-                    // ignore network/logout errors
-                  }
+                onClick={() => {
                   try {
                     window.localStorage.removeItem('access_token');
                     window.sessionStorage.removeItem('access_token');

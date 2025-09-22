@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 interface BuildingFormData {
   name: string;
   address: string;
-  cadastralReference: string;
   constructionYear: string;
   typology: 'residential' | 'mixed' | 'commercial' | '';
   floors: string;
   units: string;
   price: string;
   technicianEmail: string;
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
 }
 
 interface CreateBuildingStep1Props {
@@ -26,13 +28,15 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   const [formData, setFormData] = useState<BuildingFormData>({
     name: initialData.name || '',
     address: initialData.address || '',
-    cadastralReference: initialData.cadastralReference || '',
     constructionYear: initialData.constructionYear || '',
     typology: initialData.typology || '',
     floors: initialData.floors || '',
     units: initialData.units || '',
     price: initialData.price || '',
     technicianEmail: initialData.technicianEmail || '',
+    // Campos financieros
+    rehabilitationCost: initialData.rehabilitationCost || '',
+    potentialValue: initialData.potentialValue || ''
   });
 
   const [errors, setErrors] = useState<Partial<BuildingFormData>>({});
@@ -86,21 +90,36 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       }
     }
 
-    // Precio obligatorio y debe ser número positivo
-    if (!formData.price) {
-      newErrors.price = 'El precio es obligatorio';
-    } else {
+    // Precio - opcional pero si se proporciona debe ser válido
+    if (formData.price && formData.price.trim()) {
       const price = parseFloat(formData.price);
-      if (isNaN(price) || price <= 0) {
-        newErrors.price = 'Ingresa un precio válido (mayor a 0)';
+      if (isNaN(price) || price < 0) {
+        newErrors.price = 'Ingresa un precio válido';
       }
     }
 
-    // Email del técnico obligatorio y formato básico
-    if (!formData.technicianEmail) {
-      newErrors.technicianEmail = 'El email del técnico es obligatorio';
-    } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.technicianEmail)) {
-      newErrors.technicianEmail = 'Ingresa un email válido';
+    // Email del técnico - opcional pero si se proporciona debe ser válido
+    if (formData.technicianEmail && formData.technicianEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.technicianEmail)) {
+        newErrors.technicianEmail = 'Ingresa un email válido';
+      }
+    }
+
+    // Coste de rehabilitación - opcional pero si se proporciona debe ser válido
+    if (formData.rehabilitationCost && formData.rehabilitationCost.trim()) {
+      const cost = parseFloat(formData.rehabilitationCost);
+      if (isNaN(cost) || cost < 0) {
+        newErrors.rehabilitationCost = 'Ingresa un coste válido';
+      }
+    }
+
+    // Valor potencial - opcional pero si se proporciona debe ser válido
+    if (formData.potentialValue && formData.potentialValue.trim()) {
+      const value = parseFloat(formData.potentialValue);
+      if (isNaN(value) || value < 0) {
+        newErrors.potentialValue = 'Ingresa un valor válido';
+      }
     }
 
     setErrors(newErrors);
@@ -186,21 +205,6 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
         {/* Año de construcción */}
         <div>
-
-          {/* Referencia Catastral (opcional) */}
-          <div>
-            <label htmlFor="cadastralReference" className="block text-sm font-medium text-gray-700 mb-2">
-              Referencia catastral (opcional)
-            </label>
-            <input
-              type="text"
-              id="cadastralReference"
-              value={formData.cadastralReference}
-              onChange={(e) => handleInputChange('cadastralReference', e.target.value)}
-              placeholder="Ej: 1234567890"
-              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-            />
-          </div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
             Año de construcción *
           </label>
@@ -244,49 +248,8 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           )}
         </div>
 
-  {/* Grid para plantas y unidades */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Precio */}
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-            Precio del edificio (€) *
-          </label>
-          <input
-            type="number"
-            id="price"
-            value={formData.price}
-            onChange={(e) => handleInputChange('price', e.target.value)}
-            placeholder="250000"
-            min="1"
-            step="0.01"
-            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.price ? 'border-red-300' : 'border-gray-300'
-            }`}
-          />
-          {errors.price && (
-            <p className="mt-1 text-sm text-red-600">{errors.price}</p>
-          )}
-        </div>
-
-        {/* Email del técnico */}
-        <div>
-          <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
-            Email del técnico asignado *
-          </label>
-          <input
-            type="email"
-            id="technicianEmail"
-            value={formData.technicianEmail}
-            onChange={(e) => handleInputChange('technicianEmail', e.target.value)}
-            placeholder="tecnico@ejemplo.com"
-            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.technicianEmail ? 'border-red-300' : 'border-gray-300'
-            }`}
-          />
-          {errors.technicianEmail && (
-            <p className="mt-1 text-sm text-red-600">{errors.technicianEmail}</p>
-          )}
-        </div>
+        {/* Grid para plantas y unidades */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Número de plantas */}
           <div>
             <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
@@ -329,6 +292,111 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {errors.units && (
               <p className="mt-1 text-sm text-red-600">{errors.units}</p>
             )}
+          </div>
+        </div>
+
+        {/* Grid para precio y email del técnico */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Precio */}
+          <div>
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+              Precio del activo (€)
+            </label>
+            <input
+              type="number"
+              id="price"
+              value={formData.price}
+              onChange={(e) => handleInputChange('price', e.target.value)}
+              placeholder="250000"
+              min="0"
+              step="1000"
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.price ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.price && (
+              <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Opcional. Valor estimado del activo</p>
+          </div>
+
+          {/* Email del técnico */}
+          <div>
+            <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
+              Email del técnico asignado
+            </label>
+            <input
+              type="email"
+              id="technicianEmail"
+              value={formData.technicianEmail}
+              onChange={(e) => handleInputChange('technicianEmail', e.target.value)}
+              placeholder="tecnico@ejemplo.com"
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.technicianEmail ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.technicianEmail && (
+              <p className="mt-1 text-sm text-red-600">{errors.technicianEmail}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Opcional. El técnico podrá gestionar los libros digitales</p>
+          </div>
+        </div>
+
+        {/* Sección de datos financieros */}
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Información Financiera
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Campos opcionales que pueden completarse más adelante según la información disponible.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Coste de rehabilitación */}
+            <div>
+              <label htmlFor="rehabilitationCost" className="block text-sm font-medium text-gray-700 mb-2">
+                Coste de Rehabilitación (€)
+              </label>
+              <input
+                type="number"
+                id="rehabilitationCost"
+                value={formData.rehabilitationCost}
+                onChange={(e) => handleInputChange('rehabilitationCost', e.target.value)}
+                placeholder="125000"
+                min="0"
+                step="1000"
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.rehabilitationCost ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.rehabilitationCost && (
+                <p className="mt-1 text-sm text-red-600">{errors.rehabilitationCost}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Opcional. Coste estimado para rehabilitar el edificio</p>
+            </div>
+
+            {/* Valor potencial */}
+            <div>
+              <label htmlFor="potentialValue" className="block text-sm font-medium text-gray-700 mb-2">
+                Valor Potencial (€)
+              </label>
+              <input
+                type="number"
+                id="potentialValue"
+                value={formData.potentialValue}
+                onChange={(e) => handleInputChange('potentialValue', e.target.value)}
+                placeholder="950000"
+                min="0"
+                step="1000"
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.potentialValue ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.potentialValue && (
+                <p className="mt-1 text-sm text-red-600">{errors.potentialValue}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Opcional. Valor estimado tras rehabilitación o mejoras</p>
+            </div>
           </div>
         </div>
 

@@ -1,22 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../contexts/ToastContext';
 import Wizard from '../ui/Wizard';
 import CreateBuildingStep1 from './CreateBuildingStep1';
 import CreateBuildingStep2 from './CreateBuildingStep2';
 import CreateBuildingStep3 from './CreateBuildingStep3';
-import { buildingService } from '../../services/buildings';
+import { BuildingsApiService } from '../../services/buildingsApi';
+import type { CreateBuildingPayload } from '../../services/buildingsApi';
+import { useLoadingState } from '../ui/LoadingSystem';
 
 // Tipos para los datos del formulario
 interface BuildingStep1Data {
   name: string;
   address: string;
-  cadastralReference: string;
   constructionYear: string;
   typology: 'residential' | 'mixed' | 'commercial' | '';
   floors: string;
   units: string;
   price: string;
   technicianEmail: string;
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
 }
 
 interface BuildingStep2Data {
@@ -29,13 +34,15 @@ interface BuildingStep2Data {
 interface CompleteBuildingData {
   name: string;
   address: string;
-  cadastralReference: string;
   constructionYear: string;
-  typology: 'residential' | 'mixed' | 'commercial';
+  typology: 'residential' | 'mixed' | 'commercial'; // Sin string vacío
   floors: string;
   units: string;
   price: string;
   technicianEmail: string;
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
   latitude: number;
   longitude: number;
   photos: File[];
@@ -44,11 +51,11 @@ interface CompleteBuildingData {
 
 const CreateBuildingWizard: React.FC = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useToast();
+  const { loading: isSubmitting, startLoading, stopLoading } = useLoadingState();
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [backendError, setBackendError] = useState<string | null>(null);
 
   // Pasos del wizard
   const wizardSteps = [
@@ -74,8 +81,8 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleStep1SaveDraft = (data: BuildingStep1Data) => {
     setStep1Data(data);
-    // Mostrar mensaje de borrador guardado
-    alert('Borrador guardado correctamente');
+    // Mostrar notificación de borrador guardado
+    showInfo('Borrador guardado', 'Los datos se han guardado temporalmente');
   };
 
   // Manejar paso 2 - Ubicación y fotos
@@ -93,7 +100,7 @@ const CreateBuildingWizard: React.FC = () => {
     if (data.photos && data.photos.length > 0) {
       setStep2Data(prev => ({ ...prev, ...data } as BuildingStep2Data));
     }
-    alert('Borrador guardado correctamente');
+    showInfo('Borrador guardado', 'Ubicación y fotos guardadas temporalmente');
   };
 
   // Manejar paso 3 - Resumen
@@ -107,83 +114,54 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleSaveFinal = async () => {
     if (!step1Data || !step2Data) return;
-  setIsSubmitting(true);
-  setBackendError(null);
+
+    startLoading();
+    
     try {
-      const completeData: CompleteBuildingData = {
-        ...step1Data,
+      // Preparar datos para el backend
+      const buildingPayload: CreateBuildingPayload = {
+        name: step1Data.name,
+        address: step1Data.address,
+        constructionYear: parseInt(step1Data.constructionYear),
         typology: step1Data.typology as 'residential' | 'mixed' | 'commercial',
-        ...step2Data
+        numFloors: parseInt(step1Data.floors),
+        numUnits: parseInt(step1Data.units),
+        price: step1Data.price ? parseFloat(step1Data.price) : undefined,
+        technicianEmail: step1Data.technicianEmail || undefined,
+        // Campos financieros
+        rehabilitationCost: step1Data.rehabilitationCost ? parseFloat(step1Data.rehabilitationCost) : 0,
+        potentialValue: step1Data.potentialValue ? parseFloat(step1Data.potentialValue) : 0,
+        lat: step2Data.latitude,
+        lng: step2Data.longitude,
+        // TODO: Procesar imágenes - por ahora las omitimos
+        images: []
       };
-      const payload = {
-        name: completeData.name,
-        address: completeData.address,
-        cadastralReference: completeData.cadastralReference && completeData.cadastralReference.trim() !== ''
-          ? completeData.cadastralReference.trim()
-          : 'SIN_REFERENCIA',
-        constructionYear: parseInt(completeData.constructionYear),
-        typology: completeData.typology,
-        numFloors: parseInt(completeData.floors),
-        numUnits: parseInt(completeData.units),
-        price: parseFloat(completeData.price),
-        technicianEmail: completeData.technicianEmail,
-        lat: completeData.latitude,
-        lng: completeData.longitude
-        // TODO: enviar fotos si el backend lo soporta
-      };
-      console.log('[DEBUG] Payload enviado a backend (crear edificio):', payload);
-      await buildingService.create(payload);
-      alert('Edificio guardado exitosamente. Puedes completar el libro digital más tarde.');
+
+      console.log('Enviando al backend:', buildingPayload);
+      
+      // Guardar en el backend real
+      const savedBuilding = await BuildingsApiService.createBuilding(buildingPayload);
+      
+      console.log('Edificio guardado exitosamente:', savedBuilding);
+      
+      // Mostrar notificación de éxito
+      showSuccess('Edificio creado exitosamente');
+      
+      // Navegar de vuelta a la lista
       navigate('/activos');
-    } catch (error: any) {
+      
+    } catch (error) {
       console.error('Error guardando edificio:', error);
-      setBackendError(error?.message || 'Error al guardar el edificio. Por favor intenta de nuevo.');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      showError(
+        'Error al crear el activo',
+        errorMessage
+      );
     } finally {
-      setIsSubmitting(false);
+      stopLoading();
     }
   };
 
-  const handleGoToDigitalBook = async () => {
-    if (!step1Data || !step2Data) return;
-  setIsSubmitting(true);
-  setBackendError(null);
-    try {
-      const completeData: CompleteBuildingData = {
-        ...step1Data,
-        typology: step1Data.typology as 'residential' | 'mixed' | 'commercial',
-        ...step2Data
-      };
-      const payload = {
-        name: completeData.name,
-        address: completeData.address,
-        cadastralReference: completeData.cadastralReference && completeData.cadastralReference.trim() !== ''
-          ? completeData.cadastralReference.trim()
-          : 'SIN_REFERENCIA',
-        constructionYear: parseInt(completeData.constructionYear),
-        typology: completeData.typology,
-        numFloors: parseInt(completeData.floors),
-        numUnits: parseInt(completeData.units),
-        price: parseFloat(completeData.price),
-        technicianEmail: completeData.technicianEmail,
-        lat: completeData.latitude,
-        lng: completeData.longitude
-        // TODO: enviar fotos si el backend lo soporta
-      };
-      console.log('[DEBUG] Payload enviado a backend (crear edificio):', payload);
-      const building = await buildingService.create(payload);
-      navigate('/libro-digital/hub', { 
-        state: { 
-          buildingData: building,
-          isNewBuilding: true 
-        } 
-      });
-    } catch (error: any) {
-      console.error('Error guardando edificio:', error);
-      setBackendError(error?.message || 'Error al guardar el edificio. Por favor intenta de nuevo.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Datos completos para el resumen
   const getCompleteData = (): CompleteBuildingData | null => {
@@ -230,7 +208,6 @@ const CreateBuildingWizard: React.FC = () => {
             buildingData={completeData}
             onEditData={handleEditData}
             onEditLocation={handleEditLocation}
-            onGoToDigitalBook={handleGoToDigitalBook}
             onSaveFinal={handleSaveFinal}
           />
         );
@@ -274,11 +251,6 @@ const CreateBuildingWizard: React.FC = () => {
           currentStep={currentStep}
           className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
         >
-          {backendError && (
-            <div className="mb-4 p-3 rounded bg-red-100 border border-red-300 text-red-700 text-sm">
-              <strong>Error:</strong> {backendError}
-            </div>
-          )}
           {/* Overlay de carga durante el envío */}
           {isSubmitting && (
             <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 rounded-lg">

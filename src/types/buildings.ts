@@ -2,21 +2,21 @@ export interface Building {
   id: string;
   name: string;
   address: string;
-  cadastralReference?: string;
   constructionYear: number;
   typology: 'residential' | 'mixed' | 'commercial';
-  numFloors: number;
-  numUnits: number;
-  price: number;
-  technicianEmail: string;
-  lat?: number;
-  lng?: number;
-  status: 'draft' | 'ready_book' | 'with_book';
-  createdAt: string;
-  updatedAt: string;
-  images?: BuildingPhoto[];
-  ownerId?: string;
-  userId?: string;
+  floors: number;
+  units: number;
+  latitude?: number;
+  longitude?: number;
+  status: 'draft' | 'created' | 'ready_for_book';
+  price?: number;
+  technicianEmail?: string;
+  // Campos financieros
+  rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
+  potentialValue?: number;     // Valor potencial (por defecto 0)
+  createdAt: Date;
+  updatedAt: Date;
+  mainPhotoId?: string;
 }
 
 export interface BuildingPhoto {
@@ -86,6 +86,11 @@ export interface BuildingFormStep1 {
   typology: Building['typology'];
   floors: string;
   units: string;
+  price: string;
+  technicianEmail: string;
+  // Campos financieros
+  rehabilitationCost: string; // Coste de rehabilitación
+  potentialValue: string;     // Valor potencial
 }
 
 export interface BuildingFormStep2 {
