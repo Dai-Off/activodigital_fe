@@ -4,7 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { BuildingsApiService } from '../services/buildingsApi';
 import type { Building } from '../services/buildingsApi';
+import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
 import { PageLoader, useLoadingState } from './ui/LoadingSystem';
+import FileUpload from './ui/FileUpload';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -31,12 +33,54 @@ const BuildingDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, hasPermission } = useAuth();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   
   const [building, setBuilding] = useState<Building | null>(null);
   const { loading, startLoading, stopLoading } = useLoadingState(true);
   const [hasDigitalBook] = useState(false); // TODO: Conectar con API real
   const [mapReady, setMapReady] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadStep, setUploadStep] = useState<'select' | 'review'>('select');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [aiServiceAvailable, setAiServiceAvailable] = useState<boolean | null>(null);
+  const [reviewData, setReviewData] = useState({
+    rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
+    primaryEnergyKwhPerM2Year: '' as string | number,
+    emissionsKgCo2PerM2Year: '' as string | number,
+    certificateNumber: '',
+    scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
+    issuerName: '',
+    issueDate: '',
+    expiryDate: '',
+    propertyReference: '',
+    notes: '',
+  });
+
+  // Certificados energéticos (mock - solo UI)
+  const energyCertificates = [
+    {
+      id: 'cee-001',
+      rating: 'B' as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
+      primary: 85.42, // kWh/m²·año
+      emissions: 16.74, // kgCO₂/m²·año
+      number: 'PRV/0006867706/03/2025',
+      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
+      issueDate: '2025-07-13',
+      expiryDate: '2035-07-13',
+    },
+    {
+      id: 'cee-002',
+      rating: 'C' as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
+      primary: 102.1,
+      emissions: 22.3,
+      number: 'PRV/0001234567/05/2024',
+      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
+      issueDate: '2024-05-10',
+      expiryDate: '2034-05-10',
+    },
+  ];
 
   useEffect(() => {
     const loadBuilding = async () => {
@@ -62,6 +106,32 @@ const BuildingDetail: React.FC = () => {
     loadBuilding();
   }, [id, navigate, showError]);
 
+  // Verificar disponibilidad del servicio de IA
+  useEffect(() => {
+    const checkAIService = async () => {
+      try {
+        const isAvailable = await checkCertificateExtractorHealth();
+        setAiServiceAvailable(isAvailable);
+      } catch (error) {
+        console.warn('AI service check failed:', error);
+        setAiServiceAvailable(false);
+      }
+    };
+
+    checkAIService();
+  }, []);
+
+  // Bloquear scroll de fondo cuando la modal está abierta
+  useEffect(() => {
+    if (isUploadModalOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [isUploadModalOpen]);
+
   const handleCreateDigitalBook = () => {
     navigate(`/libro-digital/hub`, {
       state: {
@@ -81,6 +151,86 @@ const BuildingDetail: React.FC = () => {
       }
     });
   };
+
+  const handleOpenUpload = () => {
+    setSelectedFile(null);
+    setSelectedFileUrl(null);
+    setUploadStep('select');
+    setIsUploadModalOpen(true);
+  };
+
+  const handleCloseUpload = () => {
+    setIsUploadModalOpen(false);
+    setUploadStep('select');
+    setSelectedFile(null);
+    if (selectedFileUrl) {
+      try { URL.revokeObjectURL(selectedFileUrl); } catch {}
+    }
+    setSelectedFileUrl(null);
+  };
+
+  const handleFilesSelected = (files: File[]) => {
+    // Solo una imagen
+    const file = files[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setSelectedFileUrl(url);
+    }
+  };
+
+  const handleContinueToReview = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setIsProcessingAI(true);
+      
+      // Verificar si el servicio de IA está disponible
+      if (aiServiceAvailable === false) {
+        showError('Servicio de IA no disponible', 'El servicio de extracción de certificados no está disponible en este momento.');
+        return;
+      }
+
+      // Extraer datos con IA
+      const aiResponse = await extractCertificateData(selectedFile);
+      const mappedData = mapAIResponseToReviewData(aiResponse);
+      
+      // Actualizar datos de revisión (asegurando defaults)
+      setReviewData({
+        rating: (mappedData.rating as any) ?? '',
+        primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? '',
+        emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? '',
+        certificateNumber: mappedData.certificateNumber ?? '',
+        scope: mappedData.scope ?? 'building',
+        issuerName: mappedData.issuerName ?? '',
+        issueDate: mappedData.issueDate ?? '',
+        expiryDate: mappedData.expiryDate ?? '',
+        propertyReference: mappedData.propertyReference ?? '',
+        notes: mappedData.notes ?? '',
+      });
+      setUploadStep('review');
+      
+      showSuccess('Datos extraídos', 'Los datos del certificado han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
+      
+    } catch (error) {
+      console.error('Error processing certificate:', error);
+      showError('Error al procesar certificado', error instanceof Error ? error.message : 'Error desconocido al procesar el certificado');
+    } finally {
+      setIsProcessingAI(false);
+    }
+  };
+
+  const handleBackToUpload = () => {
+    setUploadStep('select');
+  };
+
+  const handleConfirmAndSave = () => {
+    // TODO: Implementar guardado en backend
+    showSuccess('Certificado guardado', 'El certificado energético ha sido guardado correctamente.');
+    handleCloseUpload();
+  };
+
+  // (eliminado) funciones antiguas sin uso
 
   if (loading) {
     return <PageLoader message="Cargando edificio..." />;
@@ -163,6 +313,8 @@ const BuildingDetail: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Botón superior eliminado por petición: se deja solo el de la sección */}
+
       {/* Building Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
         <div className="grid grid-cols-12 gap-4 items-start">
@@ -189,7 +341,7 @@ const BuildingDetail: React.FC = () => {
             </div>
 
             {/* KPIs compactos */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="rounded-lg border border-gray-200 p-3">
                 <span className="block text-xs text-gray-500">Rating energético-ambiental</span>
                 <div className="mt-1.5 flex items-center gap-2">
@@ -201,32 +353,10 @@ const BuildingDetail: React.FC = () => {
                 <span className="block text-xs text-gray-500">Huella de carbono</span>
                 <p className="mt-1 font-medium text-gray-900">12.5 kg CO₂eq/m²·año</p>
               </div>
-              
-              {/* Campos financieros en KPIs - visible para ambos roles */}
-              {building.rehabilitationCost && building.rehabilitationCost > 0 && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                  <span className="block text-xs text-blue-600">Coste rehabilitación</span>
-                  <p className="mt-1 font-medium text-blue-900">
-                    €{building.rehabilitationCost.toLocaleString('es-ES')}
-                  </p>
-                </div>
-              )}
-              {building.potentialValue && building.potentialValue > 0 && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                  <span className="block text-xs text-green-600">Valor potencial</span>
-                  <p className="mt-1 font-medium text-green-900">
-                    €{building.potentialValue.toLocaleString('es-ES')}
-                  </p>
-                </div>
-              )}
-              
-              {/* Solo mostrar acceso a financiación si no hay campos financieros o como último elemento */}
-              {(!building.rehabilitationCost && !building.potentialValue) && (
-                <div className="rounded-lg border border-gray-200 p-3">
-                  <span className="block text-xs text-gray-500">Acceso a financiación</span>
-                  <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">Alta</span>
-                </div>
-              )}
+              <div className="rounded-lg border border-gray-200 p-3">
+                <span className="block text-xs text-gray-500">Acceso a financiación</span>
+                <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">Alta</span>
+              </div>
             </div>
 
             {/* Bloques adicionales en la misma card */}
@@ -464,6 +594,59 @@ const BuildingDetail: React.FC = () => {
               <p className="text-2xl font-semibold text-gray-900">2</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Certificados energéticos - listado (mock) */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm" style={{animation: 'fadeInUp 0.6s ease-out 0.55s both'}}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 tracking-tight">Certificados energéticos</h3>
+            <p className="text-sm text-gray-600">Listado de certificados cargados y sus datos</p>
+          </div>
+          {user?.role === 'tecnico' && (
+            <button
+              onClick={handleOpenUpload}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo certificado
+            </button>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr className="text-left text-gray-600">
+                <th className="py-2.5 pr-4 font-medium">N° certificado</th>
+                <th className="py-2.5 pr-4 font-medium">Rating</th>
+                <th className="py-2.5 pr-4 font-medium">Energía (kWh/m²·año)</th>
+                <th className="py-2.5 pr-4 font-medium">Emisiones (kgCO₂/m²·año)</th>
+                <th className="py-2.5 pr-4 font-medium">Ámbito</th>
+                <th className="py-2.5 pr-4 font-medium">Emisión</th>
+                <th className="py-2.5 pr-4 font-medium">Vencimiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              {energyCertificates.map((c) => (
+                <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60">
+                  <td className="py-3.5 pr-4 font-medium text-gray-900">{c.number}</td>
+                  <td className="py-3.5 pr-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border ${c.rating <= 'C' ? 'border-green-200 text-green-800 bg-green-50' : 'border-gray-200 text-gray-800 bg-gray-50'}`}>
+                      {c.rating}
+                    </span>
+                  </td>
+                  <td className="py-3.5 pr-4">{c.primary}</td>
+                  <td className="py-3.5 pr-4">{c.emissions}</td>
+                  <td className="py-3.5 pr-4 capitalize">{c.scope === 'building' ? 'Edificio' : c.scope === 'dwelling' ? 'Vivienda' : 'Local'}</td>
+                  <td className="py-3.5 pr-4">{new Date(c.issueDate).toLocaleDateString('es-ES')}</td>
+                  <td className="py-3.5 pr-4">{new Date(c.expiryDate).toLocaleDateString('es-ES')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -708,6 +891,206 @@ const BuildingDetail: React.FC = () => {
           }
         `}
       </style>
+
+      {/* Modal de Carga (solo imagen) */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={handleCloseUpload} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {uploadStep === 'select' ? 'Cargar certificado energético' : 'Revisar datos extraídos'}
+              </h3>
+              <button onClick={handleCloseUpload} className="p-2 text-gray-500 hover:text-gray-700">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {uploadStep === 'select' ? (
+              <div className="p-6 overflow-y-auto">
+                <FileUpload
+                  onFilesSelected={handleFilesSelected}
+                  acceptedTypes={["image/*"]}
+                  multiple={false}
+                  maxFiles={1}
+                  maxSizeInMB={10}
+                  label="Subir imagen del certificado"
+                  description="Arrastra una imagen o haz clic para seleccionar"
+                />
+
+                {/* Estado del servicio de IA */}
+                {aiServiceAvailable !== null && (
+                  <div className="mt-3 p-3 rounded-lg border text-sm">
+                    {aiServiceAvailable ? (
+                      <div className="flex items-center text-green-700">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Servicio de IA disponible - Los datos se extraerán automáticamente
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-orange-700">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Servicio de IA no disponible - Los datos deberán introducirse manualmente
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedFile && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Imagen seleccionada</h4>
+                    <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
+                      <span className="truncate mr-2">{selectedFile.name}</span>
+                      <span className="text-gray-500 text-xs">{(selectedFile.size / (1024*1024)).toFixed(1)}MB</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
+                {/* Previsualización */}
+                <div>
+                  {selectedFileUrl ? (
+                    <img src={selectedFileUrl} alt="Previsualización certificado" className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200" />
+                  ) : (
+                    <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                      Sin previsualización
+                    </div>
+                  )}
+                </div>
+                {/* Datos extraídos (editables) */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Datos detectados (puedes editar)</h4>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Rating</label>
+                        <select
+                          value={reviewData.rating}
+                          onChange={e => setReviewData(v => ({ ...v, rating: e.target.value as any }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        >
+                          <option value="">-</option>
+                          {['A','B','C','D','E','F','G'].map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Ámbito</label>
+                        <select
+                          value={reviewData.scope}
+                          onChange={e => setReviewData(v => ({ ...v, scope: e.target.value as any }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        >
+                          <option value="building">Edificio</option>
+                          <option value="dwelling">Vivienda</option>
+                          <option value="commercial_unit">Local</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Energía primaria kWh/m²·año</label>
+                        <input
+                          type="number"
+                          value={reviewData.primaryEnergyKwhPerM2Year}
+                          onChange={e => setReviewData(v => ({ ...v, primaryEnergyKwhPerM2Year: e.target.value }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Emisiones kgCO₂/m²·año</label>
+                        <input
+                          type="number"
+                          value={reviewData.emissionsKgCo2PerM2Year}
+                          onChange={e => setReviewData(v => ({ ...v, emissionsKgCo2PerM2Year: e.target.value }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Nº de certificado</label>
+                      <input
+                        type="text"
+                        value={reviewData.certificateNumber}
+                        onChange={e => setReviewData(v => ({ ...v, certificateNumber: e.target.value }))}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Fecha emisión</label>
+                        <input
+                          type="date"
+                          value={reviewData.issueDate}
+                          onChange={e => setReviewData(v => ({ ...v, issueDate: e.target.value }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Fecha vencimiento</label>
+                        <input
+                          type="date"
+                          value={reviewData.expiryDate}
+                          onChange={e => setReviewData(v => ({ ...v, expiryDate: e.target.value }))}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Referencia catastral</label>
+                      <input
+                        type="text"
+                        value={reviewData.propertyReference}
+                        onChange={e => setReviewData(v => ({ ...v, propertyReference: e.target.value }))}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Notas</label>
+                      <textarea
+                        value={reviewData.notes}
+                        onChange={e => setReviewData(v => ({ ...v, notes: e.target.value }))}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={uploadStep === 'select' ? handleCloseUpload : handleBackToUpload}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={isProcessingAI}
+              >
+                {uploadStep === 'select' ? 'Cancelar' : 'Volver'}
+              </button>
+              {uploadStep === 'select' ? (
+                <button
+                  onClick={handleContinueToReview}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedFile || isProcessingAI}
+                >
+                  {isProcessingAI ? 'Procesando...' : 'Continuar'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleConfirmAndSave}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  Confirmar y guardar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,3 +2,20 @@
 @import 'leaflet/dist/leaflet.css';
 
 /* Your custom styles here */
+
+/* Ocultar barra de scroll global pero mantener el scroll funcional */
+html, body {
+  /* Mantener scroll activo */
+  overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: none;
+  /* Edge/IE */
+  -ms-overflow-style: none;
+}
+
+/* WebKit (Chrome, Safari, Opera) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
