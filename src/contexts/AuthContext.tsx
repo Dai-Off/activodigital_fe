@@ -4,7 +4,7 @@ import { fetchMe } from '../services/auth';
 import type { MeResponse } from '../services/auth';
 
 // Tipos de roles del sistema
-export type UserRole = 'tenedor' | 'tecnico' | 'administrador';
+export type UserRole = 'tenedor' | 'tecnico' | 'administrador' | 'cfo';
 
 // Permisos del sistema
 export interface UserPermissions {

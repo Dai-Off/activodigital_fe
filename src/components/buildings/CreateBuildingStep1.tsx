@@ -24,6 +24,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     units: initialData.units || '',
     price: initialData.price || '',
     technicianEmail: initialData.technicianEmail || '',
+    cfoEmail: initialData.cfoEmail || '',
     rehabilitationCost: initialData.rehabilitationCost || '',
     potentialValue: initialData.potentialValue || ''
   });
@@ -89,6 +90,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.technicianEmail)) {
         newErrors.technicianEmail = 'Ingresa un email válido';
+      }
+    }
+
+    // Email del CFO - opcional pero si se proporciona debe ser válido
+    if (formData.cfoEmail && formData.cfoEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.cfoEmail)) {
+        newErrors.cfoEmail = 'Ingresa un email válido';
       }
     }
 
@@ -310,6 +319,27 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               <p className="mt-1 text-sm text-red-600">{errors.technicianEmail}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">Opcional. El técnico podrá gestionar los libros digitales</p>
+          </div>
+
+          {/* Email del CFO */}
+          <div>
+            <label htmlFor="cfoEmail" className="block text-sm font-medium text-gray-700 mb-2">
+              Email del CFO asignado
+            </label>
+            <input
+              type="email"
+              id="cfoEmail"
+              value={formData.cfoEmail}
+              onChange={(e) => handleInputChange('cfoEmail', e.target.value)}
+              placeholder="cfo@ejemplo.com"
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.cfoEmail ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.cfoEmail && (
+              <p className="mt-1 text-sm text-red-600">{errors.cfoEmail}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Opcional. El CFO podrá acceder a información financiera del edificio</p>
           </div>
         </div>
 

@@ -23,7 +23,8 @@ export default function Register() {
   const availableRoles = [
     { value: 'tenedor', label: 'Tenedor' },
     { value: 'administrador', label: 'Administrador' },
-    { value: 'tecnico', label: 'Técnico' }
+    { value: 'tecnico', label: 'Técnico' },
+    { value: 'cfo', label: 'CFO' }
   ];
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,8 +52,12 @@ export default function Register() {
       // Guardar token en localStorage
       localStorage.setItem('access_token', resp.access_token);
       
-      // Redirigir a activos
-      navigate('/activos');
+      // Redirigir según el rol
+      if (role === 'cfo') {
+        navigate('/cfo-dashboard');
+      } else {
+        navigate('/activos');
+      }
       stopLoading();
     } catch (err: any) {
       stopLoading(err?.message || 'Error al crear la cuenta');

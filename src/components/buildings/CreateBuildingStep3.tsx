@@ -21,6 +21,7 @@ interface BuildingSummaryData {
   units: string;
   price: string;
   technicianEmail: string;
+  cfoEmail: string;
   
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
@@ -150,6 +151,13 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   <span className="text-sm font-medium text-gray-600">Técnico asignado:</span>
                   <span className="text-sm text-gray-900">
                     {buildingData.technicianEmail || 'Sin asignar'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">CFO asignado:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.cfoEmail || 'Sin asignar'}
                   </span>
                 </div>
                 

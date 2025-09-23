@@ -23,6 +23,7 @@ L.Icon.Default.mergeOptions({
 interface LocationData {
   latitude: number;
   longitude: number;
+  address: string;
   photos: File[];
   mainPhotoIndex: number;
 }
@@ -208,6 +209,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       const data: LocationData = {
         latitude: location.lat,
         longitude: location.lng,
+        address: address.trim(),
         photos,
         mainPhotoIndex
       };
@@ -222,6 +224,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     if (location) {
       data.latitude = location.lat;
       data.longitude = location.lng;
+    }
+    
+    if (address.trim()) {
+      data.address = address.trim();
     }
     
     if (photos.length > 0) {

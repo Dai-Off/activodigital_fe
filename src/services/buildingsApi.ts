@@ -16,6 +16,7 @@ export interface Building {
   status: 'draft' | 'ready_book' | 'with_book';
   price?: number;
   technicianEmail?: string;
+  cfoEmail?: string;
   ownerId: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
@@ -44,6 +45,7 @@ export interface CreateBuildingPayload {
   images?: BuildingImage[];
   price?: number;
   technicianEmail?: string;
+  cfoEmail?: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)

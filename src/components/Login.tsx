@@ -6,7 +6,7 @@ import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
@@ -28,8 +28,12 @@ export default function Login() {
         sessionStorage.setItem('access_token', resp.access_token);
       }
       
-      // Redirigir a activos
-      navigate('/activos');
+      // Redirigir según el rol
+      if (user?.role === 'cfo') {
+        navigate('/cfo-dashboard');
+      } else {
+        navigate('/activos');
+      }
       stopLoading();
     } catch (err: any) {
       stopLoading(err?.message || 'Error al iniciar sesión');

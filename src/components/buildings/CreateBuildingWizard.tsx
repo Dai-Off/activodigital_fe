@@ -19,6 +19,7 @@ export interface BuildingStep1Data {
   units: string;
   price: string;
   technicianEmail: string;
+  cfoEmail: string;
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
@@ -27,6 +28,7 @@ export interface BuildingStep1Data {
 interface BuildingStep2Data {
   latitude: number;
   longitude: number;
+  address: string;
   photos: File[];
   mainPhotoIndex: number;
 }
@@ -40,6 +42,7 @@ interface CompleteBuildingData {
   units: string;
   price: string;
   technicianEmail: string;
+  cfoEmail: string;
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
@@ -121,13 +124,14 @@ const CreateBuildingWizard: React.FC = () => {
       // Preparar datos para el backend
       const buildingPayload: CreateBuildingPayload = {
         name: step1Data.name,
-        address: step1Data.address,
+        address: step2Data.address, // Usar address del paso 2
         constructionYear: parseInt(step1Data.constructionYear),
         typology: step1Data.typology as 'residential' | 'mixed' | 'commercial',
         numFloors: parseInt(step1Data.floors),
         numUnits: parseInt(step1Data.units),
         price: step1Data.price ? parseFloat(step1Data.price) : undefined,
         technicianEmail: step1Data.technicianEmail || undefined,
+        cfoEmail: step1Data.cfoEmail || undefined,
         // Campos financieros
         rehabilitationCost: step1Data.rehabilitationCost ? parseFloat(step1Data.rehabilitationCost) : 0,
         potentialValue: step1Data.potentialValue ? parseFloat(step1Data.potentialValue) : 0,

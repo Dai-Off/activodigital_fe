@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE || 'https://activodigital-be.fly.dev';
+export const API_BASE_URL = 'http://localhost:3000';
 export const CERTIFICATE_EXTRACTOR_URL = import.meta.env.VITE_CERTIFICATE_EXTRACTOR_URL || 'https://energy-certificate-extractor.fly.dev';
 
 const DEFAULT_TIMEOUT_MS = 25000; // 25s para servicios en frío (Fly.io)

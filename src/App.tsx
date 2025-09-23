@@ -15,6 +15,7 @@ import AssetsList from './components/AssetsList'
 import BuildingDetail from './components/BuildingDetail'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import CFODashboard from './components/CFODashboard'
 
 // Nuevos componentes para edificios y libro digital
 import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
@@ -89,6 +90,11 @@ function App() {
               <ErrorBoundary>
                 <AssetsList />
               </ErrorBoundary>
+            </ProtectedRoute>
+          } />
+          <Route path="/cfo-dashboard" element={
+            <ProtectedRoute>
+              <CFODashboard />
             </ProtectedRoute>
           } />
           <Route path="/documentos" element={

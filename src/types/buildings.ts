@@ -11,6 +11,7 @@ export interface Building {
   status: 'draft' | 'created' | 'ready_for_book';
   price?: number;
   technicianEmail?: string;
+  cfoEmail?: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)
@@ -183,6 +184,7 @@ export interface BuildingFormStep1 {
   units: string;
   price: string;
   technicianEmail: string;
+  cfoEmail: string;
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
