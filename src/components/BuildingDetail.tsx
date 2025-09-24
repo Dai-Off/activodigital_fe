@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { BuildingsApiService } from '../services/buildingsApi';
-import type { Building } from '../services/buildingsApi';
+import type { Building, BuildingImage } from '../services/buildingsApi';
+import ImageManager from './ui/ImageManager';
 import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
 import { PageLoader, useLoadingState } from './ui/LoadingSystem';
 import FileUpload from './ui/FileUpload';
@@ -39,12 +40,14 @@ const BuildingDetail: React.FC = () => {
   const { loading, startLoading, stopLoading } = useLoadingState(true);
   const [hasDigitalBook] = useState(false); // TODO: Conectar con API real
   const [mapReady, setMapReady] = useState(false);
+  const [showImageManager, setShowImageManager] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadStep, setUploadStep] = useState<'select' | 'review'>('select');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiServiceAvailable, setAiServiceAvailable] = useState<boolean | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reviewData, setReviewData] = useState({
     rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
     primaryEnergyKwhPerM2Year: '' as string | number,
@@ -230,6 +233,16 @@ const BuildingDetail: React.FC = () => {
     handleCloseUpload();
   };
 
+  // Manejar actualización de imágenes
+  const handleImagesUpdated = (updatedImages: BuildingImage[]) => {
+    if (building) {
+      setBuilding({
+        ...building,
+        images: updatedImages
+      });
+    }
+  };
+
   // (eliminado) funciones antiguas sin uso
 
   if (loading) {
@@ -310,6 +323,7 @@ const BuildingDetail: React.FC = () => {
   };
 
   const mainImage = building.images?.find(img => img.isMain) || building.images?.[0];
+  const currentImage = building.images?.[currentImageIndex] || mainImage;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -433,11 +447,83 @@ const BuildingDetail: React.FC = () => {
             </div>
           </div>
           <div className="col-span-12 lg:col-span-4 lg:self-stretch">
-            <img 
-              src={mainImage?.url || "/image.png"} 
-              alt={building.name} 
-              className="w-full h-full object-cover rounded-lg" 
-            />
+            <div className="relative group h-full min-h-[400px]">
+              {/* Imagen principal */}
+              <img 
+                src={currentImage?.url || "/image.png"} 
+                alt={building.name} 
+                className="w-full h-full object-cover rounded-lg" 
+              />
+              
+              {/* Botón para gestionar imágenes */}
+              {hasPermission('canManageBuildings') && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => setShowImageManager(true)}
+                    className="p-2 bg-white bg-opacity-90 rounded-lg shadow-sm hover:bg-opacity-100 transition-colors"
+                    title="Gestionar imágenes"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              
+              {/* Navegación de imágenes (solo si hay más de una) */}
+              {building.images && building.images.length > 1 && (
+                <>
+                  {/* Botón anterior */}
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev === 0 ? building.images!.length - 1 : prev - 1
+                    )}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-opacity"
+                    title="Imagen anterior"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Botón siguiente */}
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev === building.images!.length - 1 ? 0 : prev + 1
+                    )}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-opacity"
+                    title="Imagen siguiente"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Contador de imágenes */}
+                  <div className="absolute bottom-2 right-2">
+                    <span className="px-2 py-1 text-xs font-medium text-white bg-black bg-opacity-50 rounded">
+                      {currentImageIndex + 1} / {building.images.length}
+                    </span>
+                  </div>
+                  
+                  {/* Indicadores de puntos */}
+                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                    {building.images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          index === currentImageIndex 
+                            ? 'bg-white' 
+                            : 'bg-white bg-opacity-50'
+                        }`}
+                        title={`Ver imagen ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1087,6 +1173,37 @@ const BuildingDetail: React.FC = () => {
                   Confirmar y guardar
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de gestión de imágenes */}
+      {showImageManager && building && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowImageManager(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Gestionar imágenes de {building.name}
+              </h3>
+              <button 
+                onClick={() => setShowImageManager(false)} 
+                className="p-2 text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <ImageManager
+                buildingId={building.id}
+                existingImages={building.images || []}
+                onImagesUpdated={handleImagesUpdated}
+                maxImages={10}
+                allowMainImageSelection={true}
+              />
             </div>
           </div>
         </div>

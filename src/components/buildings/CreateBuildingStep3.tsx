@@ -48,7 +48,27 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   onSaveFinal
 }) => {
   const mainPhoto = buildingData.photos[buildingData.mainPhotoIndex];
-  const mainPhotoUrl = mainPhoto ? URL.createObjectURL(mainPhoto) : null;
+  const [mainPhotoUrl, setMainPhotoUrl] = React.useState<string | null>(null);
+  
+  // Crear URL del objeto de forma segura
+  React.useEffect(() => {
+    if (mainPhoto) {
+      try {
+        const url = URL.createObjectURL(mainPhoto);
+        setMainPhotoUrl(url);
+        
+        // Limpiar URL cuando el componente se desmonte
+        return () => {
+          URL.revokeObjectURL(url);
+        };
+      } catch (error) {
+        console.error('Error creando URL del objeto:', error);
+        setMainPhotoUrl(null);
+      }
+    } else {
+      setMainPhotoUrl(null);
+    }
+  }, [mainPhoto]);
 
   const getTypologyLabel = (typology: string) => {
     const labels = {
@@ -75,20 +95,60 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         
         {/* Header de la card con foto principal */}
-        {mainPhotoUrl && (
+        {mainPhotoUrl ? (
           <div className="relative h-64 bg-gray-200">
             <img
               src={mainPhotoUrl}
               alt={`Foto principal de ${buildingData.name}`}
               className="w-full h-full object-cover"
-              onLoad={() => URL.revokeObjectURL(mainPhotoUrl)}
+              onError={(e) => {
+                console.error('Error cargando imagen:', e);
+                // Si hay error, mostrar placeholder
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+              onLoad={() => {
+                console.log('Imagen cargada correctamente');
+              }}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+            {/* Placeholder en caso de error */}
+            <div className="hidden absolute inset-0 bg-gray-200 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-sm">Error cargando imagen</p>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-end">
               <div className="p-6">
-                <h2 className="text-2xl font-bold text-white mb-2">
+                <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                   {buildingData.name}
                 </h2>
-                <p className="text-gray-200">
+                <p className="text-gray-200 drop-shadow-lg">
+                  {buildingData.address}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="relative h-64 bg-gray-200 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 text-sm">Sin imagen principal</p>
+            </div>
+            <div className="absolute inset-0 flex items-end">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
+                  {buildingData.name}
+                </h2>
+                <p className="text-gray-200 drop-shadow-lg">
                   {buildingData.address}
                 </p>
               </div>
@@ -227,34 +287,45 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             </div>
           </div>
 
-          {/* Sección de fotos adicionales */}
-          {buildingData.photos.length > 1 && (
+          {/* Sección de todas las fotos */}
+          {buildingData.photos.length > 0 && (
             <div className="border-t border-gray-200 pt-6 mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Fotos adicionales ({buildingData.photos.length - 1})
+                Todas las fotos ({buildingData.photos.length})
               </h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {buildingData.photos.map((photo, index) => {
-                  // Saltar la foto principal
-                  if (index === buildingData.mainPhotoIndex) return null;
-                  
                   const photoUrl = URL.createObjectURL(photo);
+                  const isMain = index === buildingData.mainPhotoIndex;
                   
                   return (
                     <div key={index} className="relative group">
-                      <img
-                        src={photoUrl}
-                        alt={`Foto ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border border-gray-200"
-                        onLoad={() => URL.revokeObjectURL(photoUrl)}
-                      />
-                      
-                      {/* Overlay con información */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
-                        <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                          {photo.name}
-                        </p>
+                      <div className={`relative rounded-lg overflow-hidden border-2 ${
+                        isMain ? 'border-blue-500' : 'border-gray-200'
+                      }`}>
+                        <img
+                          src={photoUrl}
+                          alt={`Foto ${index + 1}`}
+                          className="w-full h-24 object-cover"
+                          onLoad={() => URL.revokeObjectURL(photoUrl)}
+                        />
+                        
+                        {/* Badge de foto principal */}
+                        {isMain && (
+                          <div className="absolute top-1 left-1">
+                            <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
+                              Principal
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Overlay con información */}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+                          <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity text-center px-2">
+                            {photo.name}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   );

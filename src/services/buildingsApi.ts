@@ -29,7 +29,9 @@ export interface BuildingImage {
   id: string;
   url: string;
   title: string;
+  filename: string;
   isMain: boolean;
+  uploadedAt: string;
 }
 
 export interface CreateBuildingPayload {
@@ -96,6 +98,22 @@ export class BuildingsApiService {
       body: JSON.stringify(payload),
     });
     return response.data || response;
+  }
+
+  // Subir imágenes para un edificio
+  static async uploadBuildingImages(buildingId: string, images: BuildingImage[]): Promise<BuildingImage[]> {
+    const response = await apiFetch(`/edificios/${buildingId}/images`, {
+      method: 'POST',
+      body: JSON.stringify({ images }),
+    });
+    return response.data || response;
+  }
+
+  // Eliminar una imagen de un edificio
+  static async deleteBuildingImage(buildingId: string, imageId: string): Promise<void> {
+    await apiFetch(`/edificios/${buildingId}/images/${imageId}`, {
+      method: 'DELETE',
+    });
   }
 
   // Actualizar un edificio existente

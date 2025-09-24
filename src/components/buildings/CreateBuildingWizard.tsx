@@ -6,8 +6,9 @@ import CreateBuildingStep1 from './CreateBuildingStep1';
 import CreateBuildingStep2 from './CreateBuildingStep2';
 import CreateBuildingStep3 from './CreateBuildingStep3';
 import { BuildingsApiService } from '../../services/buildingsApi';
-import type { CreateBuildingPayload } from '../../services/buildingsApi';
+import type { CreateBuildingPayload, BuildingImage } from '../../services/buildingsApi';
 import { useLoadingState } from '../ui/LoadingSystem';
+import { uploadBuildingImages } from '../../services/imageUpload';
 
 // Tipos para los datos del formulario
 export interface BuildingStep1Data {
@@ -137,7 +138,7 @@ const CreateBuildingWizard: React.FC = () => {
         potentialValue: step1Data.potentialValue ? parseFloat(step1Data.potentialValue) : 0,
         lat: step2Data.latitude,
         lng: step2Data.longitude,
-        // TODO: Procesar imágenes - por ahora las omitimos
+        // Inicialmente sin imágenes, las subiremos después
         images: []
       };
 
@@ -147,6 +148,44 @@ const CreateBuildingWizard: React.FC = () => {
       const savedBuilding = await BuildingsApiService.createBuilding(buildingPayload);
       
       console.log('Edificio guardado exitosamente:', savedBuilding);
+      
+      // Si hay imágenes, subirlas a Supabase
+      if (step2Data.photos && step2Data.photos.length > 0) {
+        showInfo('Subiendo imágenes...', 'Las imágenes se están procesando');
+        
+        const uploadResults = await uploadBuildingImages(
+          step2Data.photos,
+          savedBuilding.id,
+          step2Data.mainPhotoIndex
+        );
+
+        // Verificar si todas las subidas fueron exitosas
+        const failedUploads = uploadResults.filter(result => !result.success);
+        if (failedUploads.length > 0) {
+          console.warn('Algunas imágenes no se pudieron subir:', failedUploads);
+          showError(
+            'Advertencia',
+            `${failedUploads.length} de ${uploadResults.length} imágenes no se pudieron subir. El edificio se creó correctamente.`
+          );
+        }
+
+        // Preparar imágenes para el backend
+        const buildingImages: BuildingImage[] = uploadResults
+          .filter(result => result.success && result.image)
+          .map(result => ({
+            id: result.image!.id,
+            url: result.image!.url,
+            title: result.image!.filename,
+            filename: result.image!.filename,
+            isMain: result.image!.isMain,
+            uploadedAt: result.image!.uploadedAt.toISOString()
+          }));
+
+        // Actualizar el edificio con las URLs de las imágenes
+        if (buildingImages.length > 0) {
+          await BuildingsApiService.uploadBuildingImages(savedBuilding.id, buildingImages);
+        }
+      }
       
       // Mostrar notificación de éxito
       showSuccess('Edificio creado exitosamente');
