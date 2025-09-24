@@ -456,7 +456,7 @@ const BuildingDetail: React.FC = () => {
               />
               
               {/* Botón para gestionar imágenes */}
-              {hasPermission('canManageBuildings') && (
+              {hasPermission('canCreateBuildings') && (
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => setShowImageManager(true)}

@@ -77,7 +77,7 @@ export async function uploadBuildingImage(
 
     // Subir archivo a Supabase Storage
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('building-images')
       .upload(filename, file, {
         cacheControl: '3600',

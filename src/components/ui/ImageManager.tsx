@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useToast } from '../../contexts/ToastContext';
-import { uploadBuildingImage, deleteBuildingImage, type UploadedImage } from '../../services/imageUpload';
+import { uploadBuildingImage, deleteBuildingImage } from '../../services/imageUpload';
 import { BuildingsApiService, type BuildingImage } from '../../services/buildingsApi';
 import FileUpload from './FileUpload';
 
@@ -178,7 +178,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
     }
   }, [allowMainImageSelection, buildingId, existingImages, onImagesUpdated, showError, showSuccess]);
 
-  const mainImage = existingImages.find(img => img.isMain) || existingImages[0];
+  // Nota: no usamos mainImage directamente; calculamos por imagen al renderizar
   const canUploadMore = existingImages.length < maxImages;
 
   return (

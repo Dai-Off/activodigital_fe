@@ -9,6 +9,7 @@ interface FileUploadProps {
   className?: string;
   label?: string;
   description?: string;
+  disabled?: boolean;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -19,7 +20,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   maxSizeInMB = 5,
   className = '',
   label = 'Subir archivos',
-  description = 'Arrastra archivos aquí o haz clic para seleccionar'
+  description = 'Arrastra archivos aquí o haz clic para seleccionar',
+  disabled = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -97,6 +99,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleClick = () => {
+    if (disabled) return;
     fileInputRef.current?.click();
   };
 
@@ -115,6 +118,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             : 'border-gray-300 hover:border-gray-400'
           }
           ${error ? 'border-red-300 bg-red-50' : ''}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -160,6 +164,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         accept={acceptedTypes.join(',')}
         multiple={multiple}
         onChange={handleInputChange}
+        disabled={disabled}
       />
 
       {/* Error message */}
