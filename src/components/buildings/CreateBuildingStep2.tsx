@@ -141,7 +141,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     }
   };
   
-  const [photos, setPhotos] = useState<File[]>(initialData.photos || []);
+  const [photos, setPhotos] = useState<File[]>(initialData.photos?.slice(0, 5) || []);
   const [mainPhotoIndex, setMainPhotoIndex] = useState(initialData.mainPhotoIndex || 0);
   const [errors, setErrors] = useState<{ location?: string; photos?: string }>({});
   
@@ -163,7 +163,11 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
 
   // Función para manejar la subida de fotos
   const handlePhotosSelected = (newFiles: File[]) => {
-    setPhotos(newFiles);
+    const limited = newFiles.slice(0, 5);
+    setPhotos(limited);
+    if (limited.length > 0 && mainPhotoIndex >= limited.length) {
+      setMainPhotoIndex(0);
+    }
     if (errors.photos) {
       setErrors(prev => ({ ...prev, photos: undefined }));
     }
@@ -195,8 +199,9 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       newErrors.location = 'Debes seleccionar una ubicación en el mapa';
     }
 
-    if (photos.length === 0) {
-      newErrors.photos = 'Debes subir al menos una foto del edificio';
+    // Fotos opcionales, máximo 5
+    if (photos.length > 5) {
+      newErrors.photos = 'Máximo 5 fotos';
     }
 
     setErrors(newErrors);
@@ -386,11 +391,11 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           </div>
 
           {/* Subida de archivos */}
-          {photos.length < 10 && (
+          {photos.length < 5 && (
             <FileUpload
               onFilesSelected={handlePhotosSelected}
               acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
-              maxFiles={10}
+              maxFiles={5}
               maxSizeInMB={5}
               label="Subir fotos"
               description="Arrastra fotos aquí o haz clic para seleccionar"
@@ -407,7 +412,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {photos.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-gray-900">
-                Fotos subidas ({photos.length}/10)
+                Fotos subidas ({photos.length}/5)
               </h3>
               
               <div className="grid grid-cols-2 gap-4">

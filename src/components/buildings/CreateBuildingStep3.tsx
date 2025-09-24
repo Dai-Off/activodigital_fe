@@ -39,15 +39,21 @@ interface CreateBuildingStep3Props {
   onEditData: () => void;
   onEditLocation: () => void;
   onSaveFinal: () => void;
+  isSaving?: boolean;
 }
 
 const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   buildingData,
   onEditData,
   onEditLocation,
-  onSaveFinal
+  onSaveFinal,
+  isSaving = false
 }) => {
-  const mainPhoto = buildingData.photos[buildingData.mainPhotoIndex];
+  const safePhotos = Array.isArray(buildingData.photos) ? buildingData.photos : [];
+  const safeMainIndex = Number.isInteger(buildingData.mainPhotoIndex) && buildingData.mainPhotoIndex >= 0
+    ? buildingData.mainPhotoIndex
+    : 0;
+  const mainPhoto = safePhotos[safeMainIndex];
   const [mainPhotoUrl, setMainPhotoUrl] = React.useState<string | null>(null);
   
   // Crear URL del objeto de forma segura
@@ -96,7 +102,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
         
         {/* Header de la card con foto principal */}
         {mainPhotoUrl ? (
-          <div className="relative h-64 bg-gray-200">
+          <div className="relative h-72 bg-gray-200">
             <img
               src={mainPhotoUrl}
               alt={`Foto principal de ${buildingData.name}`}
@@ -122,7 +128,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <p className="text-gray-500 text-sm">Error cargando imagen</p>
               </div>
             </div>
-            <div className="absolute inset-0 flex items-end">
+            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 via-black/20 to-transparent">
               <div className="p-6">
                 <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                   {buildingData.name}
@@ -134,7 +140,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             </div>
           </div>
         ) : (
-          <div className="relative h-64 bg-gray-200 flex items-center justify-center">
+          <div className="relative h-72 bg-gray-200 flex items-center justify-center">
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +149,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
               </div>
               <p className="text-gray-500 text-sm">Sin imagen principal</p>
             </div>
-            <div className="absolute inset-0 flex items-end">
+            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 via-black/20 to-transparent">
               <div className="p-6">
                 <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
                   {buildingData.name}
@@ -287,75 +293,9 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             </div>
           </div>
 
-          {/* Sección de todas las fotos */}
-          {buildingData.photos.length > 0 && (
-            <div className="border-t border-gray-200 pt-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Todas las fotos ({buildingData.photos.length})
-              </h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {buildingData.photos.map((photo, index) => {
-                  const photoUrl = URL.createObjectURL(photo);
-                  const isMain = index === buildingData.mainPhotoIndex;
-                  
-                  return (
-                    <div key={index} className="relative group">
-                      <div className={`relative rounded-lg overflow-hidden border-2 ${
-                        isMain ? 'border-blue-500' : 'border-gray-200'
-                      }`}>
-                        <img
-                          src={photoUrl}
-                          alt={`Foto ${index + 1}`}
-                          className="w-full h-24 object-cover"
-                          onLoad={() => URL.revokeObjectURL(photoUrl)}
-                        />
-                        
-                        {/* Badge de foto principal */}
-                        {isMain && (
-                          <div className="absolute top-1 left-1">
-                            <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
-                              Principal
-                            </span>
-                          </div>
-                        )}
-                        
-                        {/* Overlay con información */}
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-                          <p className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity text-center px-2">
-                            {photo.name}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Galería removida según requerimiento */}
 
-          {/* Información sobre el técnico asignado */}
-          {buildingData.technicianEmail && (
-            <div className="border-t border-gray-200 pt-6 mb-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                    <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-800">
-                      Técnico Asignado
-                    </h3>
-                    <p className="text-blue-600">
-                      {buildingData.technicianEmail} podrá gestionar el libro digital de este activo.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Sección de técnico asignado removida por requerimiento */}
         </div>
       </div>
 
@@ -363,26 +303,38 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
       <div className="flex flex-col sm:flex-row gap-3 pt-6">
         <button
           onClick={onEditData}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          disabled={isSaving}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Editar Datos
         </button>
         
         <button
           onClick={onEditLocation}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          disabled={isSaving}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Editar Ubicación
         </button>
         
         <button
           onClick={onSaveFinal}
-          className="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-auto flex items-center gap-2"
+          disabled={isSaving}
+          className="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-70 disabled:cursor-wait focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:ml-auto flex items-center gap-2"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          <span>Crear Activo</span>
+          {isSaving ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Creando...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>Crear Activo</span>
+            </>
+          )}
         </button>
       </div>
     </div>

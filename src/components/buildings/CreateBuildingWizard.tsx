@@ -151,7 +151,7 @@ const CreateBuildingWizard: React.FC = () => {
       
       // Si hay imágenes, subirlas a Supabase
       if (step2Data.photos && step2Data.photos.length > 0) {
-        showInfo('Subiendo imágenes...', 'Las imágenes se están procesando');
+        // Ya no mostramos toast; el botón mostrará spinner
         
         const uploadResults = await uploadBuildingImages(
           step2Data.photos,
@@ -252,6 +252,7 @@ const CreateBuildingWizard: React.FC = () => {
             onEditData={handleEditData}
             onEditLocation={handleEditLocation}
             onSaveFinal={handleSaveFinal}
+            isSaving={isSubmitting}
           />
         );
       
