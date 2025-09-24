@@ -50,7 +50,7 @@ const libroData = {
     { documentoId: 'DOC-040', tipo: 'CEE', formato: 'PDF', firmado: true }
   ],
   routes: {
-    volverAlEdificio: '/tenedor/edificios/EDIF-1024',
+    volverAlEdificio: '/propietario/edificios/EDIF-1024',
     descargarPdf: '/api/mock/lde/LDE-0001/pdf'
   },
   secciones: [

@@ -47,10 +47,10 @@ export default function AssetsList() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {user?.role === 'tenedor' ? 'Mis Activos' : 'Activos Asignados'}
+              {user?.role === 'propietario' ? 'Mis Activos' : 'Activos Asignados'}
             </h1>
             <p className="text-gray-600">
-              {user?.role === 'tenedor' 
+              {user?.role === 'propietario' 
                 ? 'Gestiona tu cartera de activos inmobiliarios y asigna técnicos'
                 : 'Activos que tienes asignados para gestionar libros digitales'
               }
@@ -121,10 +121,10 @@ export default function AssetsList() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-1">
-                  {user?.role === 'tenedor' ? 'Valor Total de la Cartera' : 'Activos Asignados'}
+                  {user?.role === 'propietario' ? 'Valor Total de la Cartera' : 'Activos Asignados'}
                 </h2>
                 <p className="text-3xl font-bold text-green-600">
-                  {user?.role === 'tenedor' 
+                  {user?.role === 'propietario' 
                     ? formatBuildingValue(buildings.reduce((total, building) => total + (building.price || 0), 0))
                     : buildings.length.toString()
                   }
@@ -132,7 +132,7 @@ export default function AssetsList() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-500">
-                  {user?.role === 'tenedor' ? 'Total de Activos' : 'Para Gestionar'}
+                  {user?.role === 'propietario' ? 'Total de Activos' : 'Para Gestionar'}
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">{buildings.length}</p>
               </div>
@@ -182,10 +182,10 @@ export default function AssetsList() {
                         {/* Valor o Tipología */}
                         <div className="md:col-span-1">
                           <span className="text-sm text-gray-500">
-                            {user?.role === 'tenedor' ? 'Valor' : 'Tipología'}
+                            {user?.role === 'propietario' ? 'Valor' : 'Tipología'}
                           </span>
                           <p className="font-medium text-gray-900">
-                            {user?.role === 'tenedor' 
+                            {user?.role === 'propietario' 
                               ? formatBuildingValue(building.price)
                               : getBuildingTypologyLabel(building.typology)
                             }
@@ -219,10 +219,10 @@ export default function AssetsList() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {user?.role === 'tenedor' ? 'No tienes activos aún' : 'No tienes activos asignados'}
+                  {user?.role === 'propietario' ? 'No tienes activos aún' : 'No tienes activos asignados'}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {user?.role === 'tenedor' 
+                  {user?.role === 'propietario' 
                     ? 'Comienza creando tu primer activo para gestionar tu cartera.'
                     : 'Contacta con tu administrador para que te asigne activos.'
                   }

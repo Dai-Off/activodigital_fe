@@ -535,7 +535,7 @@ const BuildingDetail: React.FC = () => {
             <div>
               <h3 className="text-xl font-semibold mb-2">Libro Digital del Edificio</h3>
               <p className="text-blue-100 mb-4">
-                {user?.role === 'tenedor' ? (
+                {user?.role === 'propietario' ? (
                   hasDigitalBook 
                     ? 'Accede a toda la documentación técnica, certificados y normativas del edificio'
                     : 'El técnico estará trabajando para crear el libro digital. En cuanto esté listo podrás verlo accediendo aquí'
@@ -550,7 +550,7 @@ const BuildingDetail: React.FC = () => {
                 <span>
                   {hasDigitalBook 
                     ? '92% completado • Versión 1.2.0 • Actualizado 2025-09-01'
-                    : user?.role === 'tenedor' 
+                    : user?.role === 'propietario' 
                       ? (building.technicianEmail 
                           ? `Técnico asignado: ${building.technicianEmail}` 
                           : 'Sin técnico asignado aún')
@@ -568,10 +568,10 @@ const BuildingDetail: React.FC = () => {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                   </svg>
-                  {user?.role === 'tenedor' ? 'Ver Libro Digital' : 'Ver Libro Digital'}
+                  {user?.role === 'propietario' ? 'Ver Libro Digital' : 'Ver Libro Digital'}
                 </button>
               ) : (
-                user?.role === 'tenedor' ? (
+                user?.role === 'propietario' ? (
                   <button
                     disabled
                     className="inline-flex items-center px-6 py-3 bg-white/20 text-blue-100 font-semibold rounded-lg cursor-not-allowed"
@@ -600,8 +600,8 @@ const BuildingDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Financial Overview - Solo para Tenedores */}
-      {user?.role === 'tenedor' && (
+      {/* Financial Overview - Solo para Propietarios */}
+      {user?.role === 'propietario' && (
         <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">

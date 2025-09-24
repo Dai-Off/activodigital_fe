@@ -4,7 +4,7 @@ import { fetchMe } from '../services/auth';
 import type { MeResponse } from '../services/auth';
 
 // Tipos de roles del sistema
-export type UserRole = 'tenedor' | 'tecnico' | 'administrador' | 'cfo';
+export type UserRole = 'propietario' | 'tecnico' | 'administrador' | 'cfo';
 
 // Permisos del sistema
 export interface UserPermissions {
@@ -51,7 +51,7 @@ export const useAuth = (): AuthContextType => {
 // Función para calcular permisos basados en el rol
 const calculatePermissions = (role: UserRole): UserPermissions => {
   switch (role) {
-    case 'tenedor':
+    case 'propietario':
       return {
         canCreateBuildings: true,
         canAssignTechnicians: true,

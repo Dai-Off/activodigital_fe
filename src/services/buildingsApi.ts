@@ -91,7 +91,7 @@ export class BuildingsApiService {
     return response.data || response;
   }
 
-  // Crear un nuevo edificio (solo TENEDORES)
+  // Crear un nuevo edificio (solo PROPIETARIOS)
   static async createBuilding(payload: CreateBuildingPayload): Promise<Building> {
     const response = await apiFetch('/edificios', {
       method: 'POST',
@@ -125,13 +125,13 @@ export class BuildingsApiService {
     return response.data || response;
   }
 
-  // Obtener lista de técnicos disponibles (solo TENEDORES)
+  // Obtener lista de técnicos disponibles (solo PROPIETARIOS)
   static async getTechnicians(): Promise<Technician[]> {
     const response = await apiFetch('/users/technicians', { method: 'GET' });
     return Array.isArray(response) ? response : response.data || [];
   }
 
-  // Asignar técnico a un edificio (solo TENEDORES)
+  // Asignar técnico a un edificio (solo PROPIETARIOS)
   static async assignTechnician(payload: TechnicianAssignmentPayload): Promise<void> {
     await apiFetch('/users/assign-technician', {
       method: 'POST',
