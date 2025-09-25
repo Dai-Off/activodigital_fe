@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { fetchMe } from '../services/auth';
+import { fetchMe, processPendingAssignments } from '../services/auth';
 import type { MeResponse } from '../services/auth';
 
 // Tipos de roles del sistema
@@ -148,6 +148,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Cargar datos del usuario
     await loadUser();
+    
+    // Procesar asignaciones pendientes si existen
+    try {
+      const pendingAssignmentData = localStorage.getItem('pendingAssignment');
+      if (pendingAssignmentData) {
+        const pendingAssignment = JSON.parse(pendingAssignmentData);
+        
+        // Verificar que la asignación no sea muy antigua (máximo 1 hora)
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        if (pendingAssignment.timestamp > oneHourAgo) {
+          console.log('Procesando asignación pendiente:', pendingAssignment);
+          
+          const result = await processPendingAssignments(
+            pendingAssignment.email,
+            pendingAssignment.buildingId
+          );
+          
+          if (result.success) {
+            console.log('Asignación procesada exitosamente:', result.message);
+            // Limpiar la asignación pendiente
+            localStorage.removeItem('pendingAssignment');
+          } else {
+            console.error('Error procesando asignación:', result.message);
+          }
+        } else {
+          // Asignación muy antigua, limpiarla
+          localStorage.removeItem('pendingAssignment');
+        }
+      }
+    } catch (error) {
+      console.error('Error procesando asignaciones pendientes:', error);
+      // No lanzar error para no interrumpir el login
+    }
   };
 
   // Función de logout

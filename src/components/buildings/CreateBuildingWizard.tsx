@@ -117,7 +117,16 @@ const CreateBuildingWizard: React.FC = () => {
   };
 
   const handleSaveFinal = async () => {
-    if (!step1Data || !step2Data) return;
+    if (!step1Data || !step2Data) {
+      showError('Error', 'Faltan datos del formulario. Por favor, completa todos los pasos.');
+      return;
+    }
+
+    // Validar que la dirección no esté vacía
+    if (!step2Data.address || step2Data.address.trim() === '') {
+      showError('Error', 'La dirección es requerida. Por favor, selecciona una ubicación en el mapa.');
+      return;
+    }
 
     startLoading();
     
@@ -142,6 +151,8 @@ const CreateBuildingWizard: React.FC = () => {
         images: []
       };
 
+      console.log('Datos del paso 1:', step1Data);
+      console.log('Datos del paso 2:', step2Data);
       console.log('Enviando al backend:', buildingPayload);
       
       // Guardar en el backend real

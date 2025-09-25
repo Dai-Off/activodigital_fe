@@ -1,12 +1,15 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { signupRequest, loginRequest, fetchMe } from '../services/auth';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { signupRequest, loginRequest, fetchMe, validateInvitation, signupWithInvitation } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +17,24 @@ export default function Register() {
   // Rol ya no se captura en el formulario; se usará el rol real del backend
   const { loading, error, startLoading, stopLoading } = useLoadingState();
   const [success, setSuccess] = useState<string | null>(null);
+  const [hasInvitation, setHasInvitation] = useState(false);
+
+  // Verificar si hay un token de invitación en la URL
+  useEffect(() => {
+    if (token) {
+      // Validar el token para mostrar información adicional
+      validateInvitation(token)
+        .then(response => {
+          if (response.success && response.invitation) {
+            setHasInvitation(true);
+            setEmail(response.invitation.email); // Pre-llenar email
+          }
+        })
+        .catch(err => {
+          console.error('Error validating invitation token:', err);
+        });
+    }
+  }, [token]);
   
   // Helper function para mostrar errores
   const setError = (message: string) => {
@@ -35,22 +56,44 @@ export default function Register() {
     
     startLoading();
     try {
-      await signupRequest({ email, password, full_name: name });
-      
-      // Auto-login inmediato usando el contexto de autenticación
-      const resp = await loginRequest({ email, password });
-      await login(resp.access_token);
-      
-      // Guardar token en localStorage
-      localStorage.setItem('access_token', resp.access_token);
-      
-      // Obtener el perfil para determinar redirección por rol real
-      const me = await fetchMe();
-      const roleName = me?.role?.name;
-      if (roleName === 'cfo') {
-        navigate('/cfo-dashboard');
+      if (hasInvitation && token) {
+        // Usar registro con invitación
+        const response = await signupWithInvitation({
+          email,
+          password,
+          full_name: name,
+          invitation_token: token
+        });
+        
+        await login(response.access_token);
+        localStorage.setItem('access_token', response.access_token);
+        
+        // Redirigir según el rol de la respuesta
+        const roleName = response.user.role.name;
+        if (roleName === 'cfo') {
+          navigate('/cfo-dashboard');
+        } else {
+          navigate('/activos');
+        }
       } else {
-        navigate('/activos');
+        // Registro normal
+        await signupRequest({ email, password, full_name: name });
+        
+        // Auto-login inmediato usando el contexto de autenticación
+        const resp = await loginRequest({ email, password });
+        await login(resp.access_token);
+        
+        // Guardar token en localStorage
+        localStorage.setItem('access_token', resp.access_token);
+        
+        // Obtener el perfil para determinar redirección por rol real
+        const me = await fetchMe();
+        const roleName = me?.role?.name;
+        if (roleName === 'cfo') {
+          navigate('/cfo-dashboard');
+        } else {
+          navigate('/activos');
+        }
       }
       stopLoading();
     } catch (err: any) {
@@ -69,6 +112,12 @@ export default function Register() {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm animate-fadeInUp" style={{animationDelay: '0.05s'}}>
+          {hasInvitation && (
+            <div className="mb-4 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-800">
+              <strong>Invitación detectada:</strong> Has sido invitado a unirse a la plataforma. 
+              El email ya está predefinido y se usará el rol asignado en la invitación.
+            </div>
+          )}
           {error && (
             <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-800">{error}</div>
           )}
@@ -83,7 +132,31 @@ export default function Register() {
             {/* Selector de rol eliminado: el backend define el rol */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
-              <input id="email" type="email" autoComplete="email" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              {hasInvitation ? (
+                <input 
+                  id="email" 
+                  type="email" 
+                  autoComplete="email" 
+                  className="w-full rounded-lg border-gray-300 bg-gray-50 text-gray-600" 
+                  value={email} 
+                  readOnly 
+                  title="El email está predefinido por la invitación"
+                />
+              ) : (
+                <input 
+                  id="email" 
+                  type="email" 
+                  autoComplete="email" 
+                  className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" 
+                  placeholder="tucorreo@ejemplo.com" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                />
+              )}
+              {hasInvitation && (
+                <p className="mt-1 text-xs text-gray-500">Este email está definido por la invitación</p>
+              )}
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
