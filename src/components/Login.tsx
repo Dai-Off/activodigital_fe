@@ -1,16 +1,35 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { loginRequest } from '../services/auth';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { loginRequest, processPendingAssignments } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [invitationMessage, setInvitationMessage] = useState<string | null>(null);
   const { loading, error, startLoading, stopLoading } = useLoadingState();
+
+  // Manejar parámetros de invitación al cargar
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    const invitationParam = searchParams.get('invitation');
+    const messageParam = searchParams.get('message');
+
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+
+    if (invitationParam && messageParam === 'login') {
+      setInvitationMessage('Tienes una invitación pendiente. Inicia sesión para completarla.');
+      // Guardar token de invitación para procesar después del login
+      localStorage.setItem('pendingInvitation', invitationParam);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +45,25 @@ export default function Login() {
         localStorage.setItem('access_token', resp.access_token);
       } else {
         sessionStorage.setItem('access_token', resp.access_token);
+      }
+      
+      // Procesar invitación pendiente si existe
+      const pendingInvitation = localStorage.getItem('pendingInvitation');
+      if (pendingInvitation) {
+        try {
+          // Obtener información de la invitación para procesar la asignación
+          const invitationResponse = await fetch(`/auth/invitation/${pendingInvitation}`);
+          const invitationData = await invitationResponse.json();
+          
+          if (invitationData.success && invitationData.invitation) {
+            // Procesar la asignación pendiente
+            await processPendingAssignments(email, invitationData.invitation.buildingId);
+            localStorage.removeItem('pendingInvitation');
+          }
+        } catch (invitationError) {
+          console.error('Error procesando invitación:', invitationError);
+          // No bloquear el login por errores de invitación
+        }
       }
       
       // Redirigir según el rol
@@ -55,6 +93,12 @@ export default function Login() {
           {error && (
             <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-800">
               {error}
+            </div>
+          )}
+          
+          {invitationMessage && (
+            <div className="mb-4 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-800">
+              {invitationMessage}
             </div>
           )}
           <form className="space-y-4" onSubmit={handleSubmit}>
