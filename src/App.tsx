@@ -10,6 +10,9 @@ import Unidades from './components/Unidades'
 import { LibroDigital } from './components/LibroDigital'
 import Login from './components/Login'
 import Register from './components/Register'
+import RegisterWithInvitation from './components/RegisterWithInvitation'
+import AcceptAssignment from './components/AcceptAssignment'
+import InvitationHandler from './components/InvitationHandler'
 import Landing from './components/Landing'
 import AssetsList from './components/AssetsList'
 import BuildingDetail from './components/BuildingDetail'
@@ -80,6 +83,9 @@ function App() {
           <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/register" element={<RegisterWithInvitation />} />
+        <Route path="/auth/invitation/:token" element={<InvitationHandler />} />
+        <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
         <Route path="/" element={<Landing />} />
 
         {/* Rutas protegidas */}

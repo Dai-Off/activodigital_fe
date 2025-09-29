@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
+import Footer from './Footer';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="border-b border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -18,7 +19,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <main>
+      <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(37,99,235,0.08),transparent)]" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
@@ -133,6 +134,8 @@ Consolida información clave del edificio y añade simulaciones financieras con 
           </div>
         </section>
       </main>
+
+      <Footer showChatButton={false} />
 
       <style>{`
         @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

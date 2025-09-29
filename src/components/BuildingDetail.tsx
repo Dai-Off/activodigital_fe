@@ -326,7 +326,7 @@ const BuildingDetail: React.FC = () => {
   const currentImage = building.images?.[currentImageIndex] || mainImage;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-full py-8">
       {/* Botón superior eliminado por petición: se deja solo el de la sección */}
 
       {/* Building Header */}
@@ -601,7 +601,7 @@ const BuildingDetail: React.FC = () => {
       </div>
 
       {/* Financial Overview - Solo para Propietarios */}
-      {user?.role === 'propietario' && (
+      {user?.role === 'propietario' && user?.role !== 'tecnico' && (
         <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
@@ -643,45 +643,6 @@ const BuildingDetail: React.FC = () => {
         </div>
       )}
 
-      {/* Status Cards */}
-      <div className="grid mt-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">{icons.shieldCheck}</div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Cumplimiento Legal</h3>
-              <p className="text-2xl font-semibold text-gray-900">95%</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.3s both'}}>
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">{icons.clock}</div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Próximas Caducidades</h3>
-              <p className="text-2xl font-semibold text-gray-900">3</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.4s both'}}>
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">{icons.wrench}</div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Tareas Mantenimiento</h3>
-              <p className="text-2xl font-semibold text-gray-900">12</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.5s both'}}>
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">{icons.alertCircle}</div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Incidencias Abiertas</h3>
-              <p className="text-2xl font-semibold text-gray-900">2</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Certificados energéticos - listado (mock) */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm" style={{animation: 'fadeInUp 0.6s ease-out 0.55s both'}}>
@@ -783,9 +744,9 @@ const BuildingDetail: React.FC = () => {
       </div>
 
       {/* Location and Valuation Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <div className={`grid grid-cols-1 gap-6 mt-6 ${user?.role === 'propietario' && user?.role !== 'tecnico' ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
         {/* Map */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
+        <div className={`${user?.role === 'propietario' && user?.role !== 'tecnico' ? 'lg:col-span-2' : 'lg:col-span-1'} bg-white rounded-xl border border-gray-200 p-6`} style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación del Edificio</h3>
           <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
             {mapReady ? (
@@ -843,21 +804,22 @@ const BuildingDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Property Valuation */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Valoración del Inmueble</h3>
-          <div className="space-y-6">
-            {/* Valor Total */}
-            <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-              <p className="text-sm text-gray-600 mb-1">Valor Total Estimado</p>
-              <p className="text-3xl font-bold text-green-600">
-                {building.price ? `€${building.price.toLocaleString('es-ES')}` : '€4,890,000'}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">Actualizado: Sep 2025</p>
-            </div>
+        {/* Property Valuation - Solo para Propietarios */}
+        {user?.role === 'propietario' && user?.role !== 'tecnico' && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Valoración del Inmueble</h3>
+            <div className="space-y-6">
+              {/* Valor Total */}
+              <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                <p className="text-sm text-gray-600 mb-1">Valor Total Estimado</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {building.price ? `€${building.price.toLocaleString('es-ES')}` : '€4,890,000'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Actualizado: Sep 2025</p>
+              </div>
 
-            {/* Campos Financieros */}
-            {(building.rehabilitationCost || building.potentialValue) && (
+            {/* Campos Financieros - Solo para Propietarios */}
+            {user?.role === 'propietario' && user?.role !== 'tecnico' && (building.rehabilitationCost || building.potentialValue) && (
               <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 className="text-sm font-semibold text-blue-900 mb-3">Análisis Financiero</h4>
                 {building.rehabilitationCost && building.rehabilitationCost > 0 && (
@@ -883,38 +845,39 @@ const BuildingDetail: React.FC = () => {
               </div>
             )}
 
-            {/* Desglose */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Valor por m²:</span>
-                <span className="font-medium text-gray-900">€1,996/m²</span>
+              {/* Desglose */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Valor por m²:</span>
+                  <span className="font-medium text-gray-900">€1,996/m²</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Valor por vivienda:</span>
+                  <span className="font-medium text-gray-900">€203,750</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">Variación anual:</span>
+                  <span className="font-medium text-green-600">+5.2%</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-600">Última tasación:</span>
+                  <span className="font-medium text-gray-900">Jun 2025</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Valor por vivienda:</span>
-                <span className="font-medium text-gray-900">€203,750</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Variación anual:</span>
-                <span className="font-medium text-green-600">+5.2%</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-sm text-gray-600">Última tasación:</span>
-                <span className="font-medium text-gray-900">Jun 2025</span>
-              </div>
-            </div>
 
-            {/* Estado del mercado */}
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-                <span className="text-sm font-medium text-blue-900">Mercado Local</span>
+              {/* Estado del mercado */}
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                  </svg>
+                  <span className="text-sm font-medium text-blue-900">Mercado Local</span>
+                </div>
+                <p className="text-xs text-blue-700">Tendencia alcista en zona residencial de Zierbena</p>
               </div>
-              <p className="text-xs text-blue-700">Tendencia alcista en zona residencial de Zierbena</p>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Alerts Section */}

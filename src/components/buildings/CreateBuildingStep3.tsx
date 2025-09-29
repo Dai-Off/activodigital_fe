@@ -97,8 +97,8 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
         </p>
       </div>
 
-      {/* Card principal con toda la información */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      {/* Información del edificio */}
+      <div className="overflow-hidden">
         
         {/* Header de la card con foto principal */}
         {mainPhotoUrl ? (

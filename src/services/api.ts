@@ -1,5 +1,30 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+// Configuración dinámica de API
+const getApiBaseUrl = () => {
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // 1. Si hay VITE_API_BASE configurado, usarlo (tanto en localhost como en producción)
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE;
+  }
+  
+  // 2. Si estamos en localhost y NO hay VITE_API_BASE, usar backend local
+  if (isLocalhost) {
+    return 'http://localhost:3000';
+  }
+  
+  // 3. Si estamos en producción y NO hay VITE_API_BASE, usar backend de producción por defecto
+  return 'https://activodigital-be.fly.dev';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 export const CERTIFICATE_EXTRACTOR_URL = import.meta.env.VITE_CERTIFICATE_EXTRACTOR_URL || 'https://energy-certificate-extractor.fly.dev';
+
+// Debug: Log the API URL being used (solo en desarrollo)
+if (import.meta.env.DEV) {
+  console.log('🔧 API_BASE_URL:', API_BASE_URL);
+  console.log('🔧 Hostname:', window.location.hostname);
+  console.log('🔧 VITE_API_BASE env var:', import.meta.env.VITE_API_BASE);
+}
 
 const DEFAULT_TIMEOUT_MS = 25000; // 25s para servicios en frío (Fly.io)
 

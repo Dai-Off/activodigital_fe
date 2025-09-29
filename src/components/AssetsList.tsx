@@ -210,8 +210,8 @@ export default function AssetsList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="py-8 max-w-full">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -305,10 +305,10 @@ export default function AssetsList() {
 
         {/* Assets List + Paginación */}
         <div
-          className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+          className="bg-white rounded-xl border border-gray-200 overflow-hidden max-w-full"
           style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
         >
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-3 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Listado de Activos</h3>
             {/* total compacto */}
             {!loading && (
@@ -318,7 +318,7 @@ export default function AssetsList() {
             )}
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 max-w-full overflow-x-hidden">
             {loading ? (
               <SkeletonBuildingList />
             ) : paginated.length > 0 ? (
@@ -326,15 +326,16 @@ export default function AssetsList() {
                 <Link
                   key={building.id}
                   to={`/edificio/${building.id}`}
-                  className="block px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden"
                   style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}
                 >
-                  <div className="flex items-center justify-between">
+                  {/* Desktop: Grid layout */}
+                  <div className="hidden md:flex items-center justify-between">
                     <div className="flex-1">
                       {/* Grid de columnas estilo tabla */}
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                      <div className="grid grid-cols-12 gap-4 items-center">
                         {/* ID + copiar: 132…23 */}
-                        <div className="md:col-span-1">
+                        <div className="col-span-2">
                           <span className="text-[11px] font-medium text-gray-500">ID</span>
                           <div className="mt-0.5 flex items-center gap-2">
                             <code className="font-mono text-gray-900">{truncateMiddle(String(building.id), 3, 2)}</code>
@@ -343,16 +344,16 @@ export default function AssetsList() {
                         </div>
 
                         {/* Nombre */}
-                        <div className="md:col-span-1">
+                        <div className="col-span-2">
                           <span className="text-[11px] font-medium text-gray-500">Nombre</span>
-                          <p className="mt-0.5 font-medium text-gray-900 truncate max-w-[26ch]">{building.name}</p>
+                          <p className="mt-0.5 font-medium text-gray-900 truncate">{building.name}</p>
                         </div>
 
                         {/* Ubicación (una línea + copiar con …) */}
-                        <div className="md:col-span-1">
+                        <div className="col-span-5">
                           <span className="text-[11px] font-medium text-gray-500">Ubicación</span>
                           <div className="mt-0.5 flex items-center gap-2">
-                            <span className="font-medium text-gray-900 truncate block max-w-[28ch] sm:max-w-[36ch]" title={building.address}>
+                            <span className="font-medium text-gray-900 truncate block" title={building.address}>
                               {building.address}
                             </span>
                             <CopyButton value={building.address} label="dirección" />
@@ -360,7 +361,7 @@ export default function AssetsList() {
                         </div>
 
                         {/* Valor o Tipología */}
-                        <div className="md:col-span-1">
+                        <div className="col-span-2">
                           <span className="text-[11px] font-medium text-gray-500">
                             {user?.role === 'propietario' ? 'Valor' : 'Tipología'}
                           </span>
@@ -372,7 +373,7 @@ export default function AssetsList() {
                         </div>
 
                         {/* Estado */}
-                        <div className="md:col-span-1">
+                        <div className="col-span-1">
                           <span className="text-[11px] font-medium text-gray-500">Estado</span>
                           <div className="mt-0.5">
                             <span
@@ -389,15 +390,29 @@ export default function AssetsList() {
 
                     {/* Flecha */}
                     <div className="ml-4 shrink-0">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Mobile: Stack layout */}
+                  <div className="md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0 pr-4">
+                        <h3 className="font-medium text-gray-900 text-base truncate" title={building.name}>
+                          {building.name}
+                        </h3>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
                   </div>
                 </Link>
               ))
             ) : (
-              <div className="px-6 py-12 text-center">
+              <div className="px-3 sm:px-6 py-12 text-center">
                 <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
                 </svg>

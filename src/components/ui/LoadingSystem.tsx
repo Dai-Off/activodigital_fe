@@ -27,7 +27,7 @@ export const AppSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: strin
 
 // Loading overlay para páginas completas
 export const PageLoader: React.FC<{ message?: string }> = ({ message = 'Cargando...' }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: '#fdfdfd' }}>
+  <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#fdfdfd' }}>
     <div className="text-center">
       <AppSpinner size="lg" className="mx-auto mb-4" />
       <p className="text-gray-600 text-sm font-medium">{message}</p>
@@ -108,19 +108,52 @@ export const SkeletonCard: React.FC<{ className?: string; shimmer?: boolean }> =
 // Skeleton para lista de edificios con animación escalonada
 export const SkeletonBuildingList: React.FC = () => (
   <div className="divide-y divide-gray-200">
-    {Array.from({ length: 3 }).map((_, index) => (
-      <div key={index} className={`px-6 py-4 stagger-animation`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-gray-200 animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+    {Array.from({ length: 5 }).map((_, index) => (
+      <div key={index} className="px-3 sm:px-6 py-4">
+        {/* Desktop: Grid layout */}
+        <div className="hidden md:flex items-center justify-between">
+          <div className="flex-1">
+            <div className="grid grid-cols-5 gap-4 items-center">
+              <div>
+                <div className="h-[11px] w-4 bg-gray-200 rounded animate-pulse mb-0.5" />
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-3 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <div className="h-[11px] w-12 bg-gray-200 rounded animate-pulse mb-0.5" />
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div>
+                <div className="h-[11px] w-16 bg-gray-200 rounded animate-pulse mb-0.5" />
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-3 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <div className="h-[11px] w-12 bg-gray-200 rounded animate-pulse mb-0.5" />
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div>
+                <div className="h-[11px] w-10 bg-gray-200 rounded animate-pulse mb-0.5" />
+                <div className="h-6 w-20 rounded-full bg-gray-200 animate-pulse" />
+              </div>
             </div>
           </div>
-          <div className="text-right space-y-2">
-            <div className="h-4 w-20 ml-auto bg-gray-200 rounded animate-pulse" />
-            <div className="h-6 w-16 ml-auto rounded-full bg-gray-200 animate-pulse" />
+          <div className="ml-4 shrink-0">
+            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+
+        {/* Mobile: Stack layout */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0 pr-4">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse shrink-0" />
           </div>
         </div>
       </div>

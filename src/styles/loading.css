@@ -166,7 +166,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 60;
   background: rgba(253, 253, 253, 0.95);
   backdrop-filter: blur(2px);
   transition: opacity 0.3s ease-in-out;

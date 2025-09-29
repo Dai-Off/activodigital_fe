@@ -295,7 +295,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                 }}
                 onFocus={() => address.trim() && setShowSuggestions(true)}
                 placeholder="Ej: Calle Mayor 123, Madrid"
-                className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 autoComplete="off"
                 ref={inputRef}
               />
@@ -303,9 +303,9 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                 type="button"
                 onClick={handleGeocode}
                 disabled={geoLoading || !address.trim()}
-                className="px-3 py-2 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                {geoLoading ? 'Buscando...' : 'Buscar ubicación'}
+                {geoLoading ? 'Buscando...' : 'Buscar'}
               </button>
             </div>
             {/* Dropdown de sugerencias sobre el mapa */}
