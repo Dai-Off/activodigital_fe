@@ -1,14 +1,6 @@
 import { Link } from 'react-router-dom';
 
-export default function Footer({
-  isChatOpen,
-  onToggleChat,
-  showChatButton = true,
-}: {
-  isChatOpen?: boolean;
-  onToggleChat?: () => void;
-  showChatButton?: boolean;
-}) {
+export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

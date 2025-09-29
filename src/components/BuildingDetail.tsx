@@ -266,29 +266,6 @@ const BuildingDetail: React.FC = () => {
     );
   }
 
-  // SVGs para iconos
-  const icons = {
-    shieldCheck: (
-      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.01 12.01 0 002.944 12c.047 1.47 1.076 2.767 2.784 3.737C7.882 17.567 9.8 18 12 18s4.118-.433 6.272-1.263c1.708-.97 2.737-2.267 2.784-3.737a12.01 12.01 0 00-.047-6.056z"/>
-      </svg>
-    ),
-    clock: (
-      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-    ),
-    wrench: (
-      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.053 4.19a8.977 8.977 0 011.894 0M10 21v-2a4 4 0 014-4V5a4 4 0 014-4h2a2 2 0 012 2v16a2 2 0 01-2 2h-2a4 4 0 01-4-4v-2a4 4 0 01-4 4H4a2 2 0 01-2-2V3a2 2 0 012-2h2a4 4 0 014 4v12a4 4 0 014 4v2a2 2 0 01-2 2h-2z"/>
-      </svg>
-    ),
-    alertCircle: (
-      <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-    ),
-  };
 
   // Datos para el gráfico de dona
   const chartData = {
@@ -601,7 +578,7 @@ const BuildingDetail: React.FC = () => {
       </div>
 
       {/* Financial Overview - Solo para Propietarios */}
-      {user?.role === 'propietario' && user?.role !== 'tecnico' && (
+      {user?.role === 'propietario' && (
         <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between">
@@ -744,9 +721,9 @@ const BuildingDetail: React.FC = () => {
       </div>
 
       {/* Location and Valuation Grid */}
-      <div className={`grid grid-cols-1 gap-6 mt-6 ${user?.role === 'propietario' && user?.role !== 'tecnico' ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+      <div className={`grid grid-cols-1 gap-6 mt-6 ${user?.role === 'propietario' ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
         {/* Map */}
-        <div className={`${user?.role === 'propietario' && user?.role !== 'tecnico' ? 'lg:col-span-2' : 'lg:col-span-1'} bg-white rounded-xl border border-gray-200 p-6`} style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
+        <div className={`${user?.role === 'propietario' ? 'lg:col-span-2' : 'lg:col-span-1'} bg-white rounded-xl border border-gray-200 p-6`} style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación del Edificio</h3>
           <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
             {mapReady ? (
@@ -805,7 +782,7 @@ const BuildingDetail: React.FC = () => {
         </div>
 
         {/* Property Valuation - Solo para Propietarios */}
-        {user?.role === 'propietario' && user?.role !== 'tecnico' && (
+        {user?.role === 'propietario' && (
           <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Valoración del Inmueble</h3>
             <div className="space-y-6">
@@ -819,7 +796,7 @@ const BuildingDetail: React.FC = () => {
               </div>
 
             {/* Campos Financieros - Solo para Propietarios */}
-            {user?.role === 'propietario' && user?.role !== 'tecnico' && (building.rehabilitationCost || building.potentialValue) && (
+            {user?.role === 'propietario' && (building.rehabilitationCost || building.potentialValue) && (
               <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 className="text-sm font-semibold text-blue-900 mb-3">Análisis Financiero</h4>
                 {building.rehabilitationCost && building.rehabilitationCost > 0 && (

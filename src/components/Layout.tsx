@@ -552,7 +552,7 @@ export default function Layout() {
       </main>
 
       <div className={`transition-all duration-300 ease-out ${isChatOpen ? 'md:pr-80' : 'md:pr-0'}`}>
-        <Footer isChatOpen={isChatOpen} onToggleChat={() => setIsChatOpen((v) => !v)} />
+        <Footer />
       </div>
 
       <style>{`
