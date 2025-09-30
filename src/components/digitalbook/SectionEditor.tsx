@@ -226,7 +226,7 @@ const SectionEditor: React.FC = () => {
     }
   };
 
-  const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: string[] }) => {
+  const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: readonly string[] | string[] }) => {
     const value = formData[field.name] ?? '';
     const baseCls = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ';
     const cls = baseCls + (field.required && !value ? 'border-red-300' : 'border-gray-300');
@@ -339,15 +339,15 @@ const SectionEditor: React.FC = () => {
             {/* Formulario */}
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sectionConfig.fields.map((field) => (
-                  <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    {renderField(field)}
-                  </div>
-                ))}
+                  {sectionConfig.fields.map((field) => (
+                    <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </label>
+                      {renderField(field)}
+                    </div>
+                  ))}
               </div>
 
               {/* Subida de documentos (visual) */}

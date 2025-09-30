@@ -37,11 +37,6 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
   const isNewBuilding = location.state?.isNewBuilding || false;
 
-  const handleManualEntry = () => {
-    navigate(`/libro-digital/manual/${buildingId}`, {
-      state: { buildingName: buildingNameFinal, buildingId, sections },
-    });
-  };
 
   const handlePDFImport = () => {
     navigate('/libro-digital/pdf-import', {
@@ -132,29 +127,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
         {/* Opciones principales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </div>
-                <h3 className="ml-4 text-lg font-semibold text-gray-900">Completar Manualmente</h3>
-              </div>
-
-              <p className="text-gray-600 mb-4">
-                Rellena cada sección paso a paso con formularios guiados. Ideal para tener control total sobre la información.
-              </p>
-
-              <button
-                onClick={handleManualEntry}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-              >
-                Completar Manualmente
-              </button>
-            </div>
-          </div>
+        
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
             <div className="p-6">

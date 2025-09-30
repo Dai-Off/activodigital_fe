@@ -22,7 +22,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 // Nuevos componentes para edificios y libro digital
 import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
 import DigitalBookHub from './components/digitalbook/DigitalBookHub'
-import ManualBookPage from './pages/ManualBookPage'
 import PdfImportPage from './pages/PdfImportPage'
 import SectionsList from './components/digitalbook/SectionsList'
 import SectionEditor from './components/digitalbook/SectionEditor'
@@ -156,14 +155,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/libro-digital/manual/:buildingId"
-              element={
-                <ProtectedRoute>
-                  <ManualBookPage />
-                </ProtectedRoute>
-              }
-            />
+          
             <Route
               path="/libro-digital/pdf-import"
               element={
