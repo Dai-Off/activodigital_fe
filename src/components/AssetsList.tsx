@@ -323,12 +323,7 @@ export default function AssetsList() {
               <SkeletonBuildingList />
             ) : paginated.length > 0 ? (
               paginated.map((building, index) => (
-                <Link
-                  key={building.id}
-                  to={`/edificio/${building.id}`}
-                  className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden"
-                  style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}
-                >
+                <div key={building.id} className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden" style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}>
                   {/* Desktop: Grid layout */}
                   <div className="hidden md:flex items-center justify-between">
                     <div className="flex-1">
@@ -388,6 +383,19 @@ export default function AssetsList() {
                       </div>
                     </div>
 
+                    {/* Botón para técnicos: Gestionar Libro Digital */}
+                    {user?.role === 'tecnico' && (
+                      <Link
+                        to={{
+                          pathname: `/libro-digital/hub/${building.id}`,
+                        }}
+                        state={{ buildingId: building.id, buildingName: building.name }}
+                        className="ml-4 px-3 py-1 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Gestionar Libro Digital
+                      </Link>
+                    )}
+
                     {/* Flecha */}
                     <div className="ml-4 shrink-0">
                       <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -404,12 +412,24 @@ export default function AssetsList() {
                           {building.name}
                         </h3>
                       </div>
+                      {/* Botón móvil para técnicos */}
+                      {user?.role === 'tecnico' && (
+                        <Link
+                          to={{
+                            pathname: `/libro-digital/hub/${building.id}`,
+                          }}
+                          state={{ buildingId: building.id, buildingName: building.name }}
+                          className="px-2 py-1 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
+                        >
+                          Libro Digital
+                        </Link>
+                      )}
                       <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                       </svg>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             ) : (
               <div className="px-3 sm:px-6 py-12 text-center">
