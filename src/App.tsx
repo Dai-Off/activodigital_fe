@@ -31,7 +31,7 @@ const SectionsListPage = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
         <div className="mb-8">
           <nav className="mb-4">
             <ol className="flex items-centered space-x-2 text-sm text-gray-500">
@@ -76,7 +76,7 @@ function App() {
             <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
             <Route path="/" element={<Landing />} />
 
-            {/* Rutas protegidas */}
+            {/* Rutas protegidas (con navbar y contenedor) */}
             <Route element={<Layout />}>
               <Route
                 path="/activos"
@@ -129,6 +129,38 @@ function App() {
                 }
               />
               <Route
+                path="/libro-digital/hub/:buildingId"
+                element={
+                  <ProtectedRoute>
+                    <DigitalBookHub />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/libro-digital/pdf-import"
+                element={
+                  <ProtectedRoute>
+                    <PdfImportPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/libro-digital/section/:buildingId/:sectionId"
+                element={
+                  <ProtectedRoute>
+                    <SectionEditor />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/libro-digital/sections"
+                element={
+                  <ProtectedRoute>
+                    <SectionsListPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/edificio/:id"
                 element={
                   <ProtectedRoute>
@@ -144,40 +176,6 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission="canCreateBuildings">
                   <CreateBuildingWizard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/libro-digital/hub/:buildingId"
-              element={
-                <ProtectedRoute>
-                  <DigitalBookHub />
-                </ProtectedRoute>
-              }
-            />
-          
-            <Route
-              path="/libro-digital/pdf-import"
-              element={
-                <ProtectedRoute>
-                  <PdfImportPage />
-                </ProtectedRoute>
-              }
-            />
-            {/* 👉 Ruta de edición de sección con buildingId en la URL */}
-            <Route
-              path="/libro-digital/section/:buildingId/:sectionId"
-              element={
-                <ProtectedRoute>
-                  <SectionEditor />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/libro-digital/sections"
-              element={
-                <ProtectedRoute>
-                  <SectionsListPage />
                 </ProtectedRoute>
               }
             />

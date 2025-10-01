@@ -111,10 +111,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
     <div className={className}>
       <div
         className={`
-          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
+          border border-dashed rounded-md p-4 text-center cursor-pointer
           transition-colors duration-200
           ${isDragOver 
-            ? 'border-blue-400 bg-blue-50' 
+            ? 'border-blue-300 bg-blue-50' 
             : 'border-gray-300 hover:border-gray-400'
           }
           ${error ? 'border-red-300 bg-red-50' : ''}
@@ -126,9 +126,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
         onClick={handleClick}
       >
         {/* Icono */}
-        <div className="mb-4">
+        <div className="mb-3">
           <svg 
-            className="w-12 h-12 mx-auto text-gray-400"
+            className="w-9 h-9 mx-auto text-gray-400"
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -143,13 +143,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
 
         {/* Texto principal */}
-        <div className="mb-2">
-          <p className="text-lg font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-gray-500">{description}</p>
+        <div className="mb-1.5">
+          <p className="text-sm font-medium text-gray-900">{label}</p>
+          <p className="text-xs text-gray-500">{description}</p>
         </div>
 
         {/* Información adicional */}
-        <div className="text-xs text-gray-400">
+        <div className="text-[11px] text-gray-400">
           <p>Archivos permitidos: {acceptedTypes.join(', ')}</p>
           <p>Tamaño máximo: {maxSizeInMB}MB por archivo</p>
           {multiple && <p>Máximo {maxFiles} archivos</p>}

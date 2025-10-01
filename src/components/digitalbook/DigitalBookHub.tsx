@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import ProgressBar from '../ui/ProgressBar';
+import { getBookByBuilding, type DigitalBook } from '../../services/digitalbook';
+import { PageLoader } from '../ui/LoadingSystem';
 
 // Datos hardcodeados para demostrar la funcionalidad
-const BOOK_SECTIONS = [
-  { id: 'general_data', title: 'Datos generales del edificio', description: 'Información básica y características principales', isCompleted: false, icon: '🏢' },
-  { id: 'construction_features', title: 'Características constructivas y técnicas', description: 'Especificaciones técnicas de construcción', isCompleted: false, icon: '🔧' },
-  { id: 'certificates', title: 'Certificados y licencias', description: 'Documentación legal y certificaciones', isCompleted: false, icon: '📜' },
-  { id: 'maintenance', title: 'Mantenimiento y conservación', description: 'Historial y planes de mantenimiento', isCompleted: false, icon: '🔨' },
-  { id: 'installations', title: 'Instalaciones y consumos', description: 'Sistemas e instalaciones del edificio', isCompleted: false, icon: '⚡' },
-  { id: 'reforms', title: 'Reformas y rehabilitaciones', description: 'Historial de modificaciones y mejoras', isCompleted: false, icon: '🏗️' },
-  { id: 'sustainability', title: 'Sostenibilidad y ESG', description: 'Criterios ambientales y sostenibilidad', isCompleted: false, icon: '🌱' },
-  { id: 'attachments', title: 'Documentos anexos', description: 'Documentación adicional y anexos', isCompleted: false, icon: '📎' },
-];
+const SECTION_LABELS: Record<string, { title: string; description: string; uiId: string } > = {
+  general_data: { title: 'Datos generales del edificio', description: 'Información básica y características principales', uiId: 'general_data' },
+  construction_features: { title: 'Características constructivas y técnicas', description: 'Especificaciones técnicas de construcción', uiId: 'construction_features' },
+  certificates_and_licenses: { title: 'Certificados y licencias', description: 'Documentación legal y certificaciones', uiId: 'certificates' },
+  maintenance_and_conservation: { title: 'Mantenimiento y conservación', description: 'Historial y planes de mantenimiento', uiId: 'maintenance' },
+  facilities_and_consumption: { title: 'Instalaciones y consumos', description: 'Sistemas e instalaciones del edificio', uiId: 'installations' },
+  renovations_and_rehabilitations: { title: 'Reformas y rehabilitaciones', description: 'Historial de modificaciones y mejoras', uiId: 'reforms' },
+  sustainability_and_esg: { title: 'Sostenibilidad y ESG', description: 'Criterios ambientales y sostenibilidad', uiId: 'sustainability' },
+  annex_documents: { title: 'Documentos anexos', description: 'Documentación adicional y anexos', uiId: 'attachments' },
+};
 
 interface DigitalBookHubProps {
   buildingName?: string;
@@ -31,9 +33,19 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const buildingId = location.state?.buildingId || buildingIdParam || buildingIdProp;
   const buildingNameFinal = location.state?.buildingName || buildingName;
 
-  const [sections, setSections] = useState(BOOK_SECTIONS);
-  const completedSections = sections.filter((s) => s.isCompleted).length;
-  const totalSections = sections.length;
+  const [book, setBook] = useState<DigitalBook | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const sections = useMemo(() => {
+    if (!book) return [] as Array<{ key: string; title: string; description: string; isCompleted: boolean }>;
+    return book.sections.map((s) => {
+      const meta = SECTION_LABELS[s.type] || { title: s.type, description: '', uiId: s.type };
+      return { key: meta.uiId, title: meta.title, description: meta.description, isCompleted: Boolean(s.complete) };
+    });
+  }, [book]);
+
+  const completedSections = book?.sections.filter((s) => s.complete).length ?? 0;
+  const totalSections = book?.sections.length ?? 8;
 
   const isNewBuilding = location.state?.isNewBuilding || false;
 
@@ -47,17 +59,46 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   // 👉 Aquí pasamos buildingId en la URL
   const handleSectionClick = (sectionId: string) => {
     navigate(`/libro-digital/section/${buildingId}/${sectionId}`, {
-      state: { buildingName: buildingNameFinal, buildingId, sectionId },
+      state: { buildingName: buildingNameFinal, buildingId, sectionId, userRole: location.state?.userRole },
     });
   };
 
-  const toggleSectionComplete = (sectionId: string) => {
-    setSections((prev) =>
-      prev.map((section) =>
-        section.id === sectionId ? { ...section, isCompleted: !section.isCompleted } : section
-      )
-    );
-  };
+  const loadBook = useCallback(async () => {
+    setLoading(true);
+    try {
+      const b = await getBookByBuilding(buildingId);
+      setBook(b);
+    } finally {
+      setLoading(false);
+    }
+  }, [buildingId]);
+
+  // Load on mount and when building changes
+  useEffect(() => {
+    (async () => {
+      await loadBook();
+    })();
+  }, [loadBook]);
+
+  // Reload when window regains focus or tab becomes visible
+  useEffect(() => {
+    const onFocus = () => { loadBook(); };
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadBook(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [loadBook]);
+
+  // If navigation brought a message (e.g., completed), refresh once
+  useEffect(() => {
+    if (location.state?.message) {
+      loadBook();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.message]);
 
   const getStatusMessage = () => {
     if (completedSections === 0) return 'Libro en borrador – ninguna sección completada';
@@ -72,8 +113,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
+        {loading && (<PageLoader message="Cargando libro digital..." />)}
         {/* Header */}
         <div className="mb-8">
           {/* Breadcrumb */}
@@ -99,8 +141,8 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Libro Digital</h1>
-              <p className="text-lg text-gray-600">{buildingNameFinal}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Libro Digital</h1>
+              <p className="text-sm sm:text-base text-gray-600">{buildingNameFinal}</p>
             </div>
 
             <div className="text-right">
@@ -116,38 +158,50 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
           </div>
         </div>
 
-        {/* Barra de progreso */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <ProgressBar current={completedSections} total={totalSections} label="Progreso del Libro Digital" size="lg" />
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-            <span>Completar todas las secciones para finalizar el libro</span>
-            <span>{Math.round((completedSections / totalSections) * 100)}% completado</span>
+        {/* Estructura desktop: progreso (2/3) + importar (1/3) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Panel Progreso */}
+          <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Progreso del Libro Digital</h2>
+                <p className="text-sm text-gray-600 mt-1">Completar todas las secciones para finalizar el libro</p>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-700">{completedSections} de {totalSections}</div>
+                <div className="text-xs text-gray-500">{Math.round((completedSections / totalSections) * 100)}% completado</div>
+              </div>
+            </div>
+            <ProgressBar current={completedSections} total={totalSections} size="lg" />
           </div>
-        </div>
 
-        {/* Opciones principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        
-
+          {/* Panel Importar PDF */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            <div className="p-6 h-full flex flex-col">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-lg border border-blue-100">
+                  <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
                   </svg>
                 </div>
-                <h3 className="ml-4 text-lg font-semibold text-gray-900">Importar desde PDF</h3>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">Importar contenido desde PDF</h3>
+                  <p className="text-sm text-gray-600 mt-1">Sube un PDF y mapea las páginas a cada sección del libro.</p>
+                </div>
               </div>
-
-              <p className="text-gray-600 mb-4">Sube un PDF existente y mapea las páginas a cada sección. Perfecto si ya tienes documentación preparada.</p>
-
-              <button
-                onClick={handlePDFImport}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-              >
-                Importar desde PDF
-              </button>
+              <div className="mt-auto">
+                <button
+                  onClick={handlePDFImport}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                  </svg>
+                  Cargar PDF
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -161,46 +215,33 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
           <div className="divide-y divide-gray-200">
             {sections.map((section, index) => (
-              <div key={section.id} className="p-6 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => handleSectionClick(section.id)}>
+              <div key={section.key} className="p-6 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => handleSectionClick(section.key)}>
                 <div className="flex items-center">
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                        section.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {section.isCompleted ? (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <span className="ml-3 text-2xl">{section.icon}</span>
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold mr-3 ${
+                      section.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {section.isCompleted ? (
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      index + 1
+                    )}
                   </div>
 
-                  <div className="ml-4 flex-1">
-                    <h3 className={`text-base font-medium ${section.isCompleted ? 'text-gray-900 line-through' : 'text-gray-900'}`}>{section.title}</h3>
+                  <div className="flex-1">
+                    <h3 className={`text-base font-medium text-gray-900`}>{section.title}</h3>
                     <p className="mt-1 text-sm text-gray-600">{section.description}</p>
                   </div>
 
                   <div className="ml-4 flex items-center gap-3">
                     {section.isCompleted ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completada</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completado</span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Pendiente</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">No completado</span>
                     )}
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSectionComplete(section.id);
-                      }}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      {section.isCompleted ? 'Desmarcar' : 'Marcar completa'}
-                    </button>
 
                     <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />

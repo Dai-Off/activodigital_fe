@@ -166,12 +166,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
                   {index + 1}
                 </div>
 
-                {/* Icono */}
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-2xl">
-                    {section.icon}
-                  </div>
-                </div>
+                {/* Icono removido */}
 
                 {/* Información */}
                 <div className="flex-1 min-w-0">

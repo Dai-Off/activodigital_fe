@@ -10,10 +10,12 @@ const PdfImportPage: React.FC = () => {
   const buildingId = location.state?.buildingId || "building-1";
 
   return (
-    <PdfImport 
-      buildingName={buildingName}
-      buildingId={buildingId}
-    />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-8">
+      <PdfImport 
+        buildingName={buildingName}
+        buildingId={buildingId}
+      />
+    </div>
   );
 };
 

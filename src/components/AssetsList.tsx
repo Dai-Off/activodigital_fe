@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -159,6 +159,7 @@ function PaginationBar({
 
 /* --------------------------------- Página --------------------------------- */
 export default function AssetsList() {
+  const navigate = useNavigate();
   const { user, isLoading: authLoading, hasPermission } = useAuth();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
@@ -323,7 +324,15 @@ export default function AssetsList() {
               <SkeletonBuildingList />
             ) : paginated.length > 0 ? (
               paginated.map((building, index) => (
-                <div key={building.id} className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden" style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}>
+                <div
+                  key={building.id}
+                  className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden"
+                  style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}
+                  onClick={() => navigate(`/edificio/${building.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
+                >
                   {/* Desktop: Grid layout */}
                   <div className="hidden md:flex items-center justify-between">
                     <div className="flex-1">
@@ -383,18 +392,7 @@ export default function AssetsList() {
                       </div>
                     </div>
 
-                    {/* Botón para técnicos: Gestionar Libro Digital */}
-                    {user?.role === 'tecnico' && (
-                      <Link
-                        to={{
-                          pathname: `/libro-digital/hub/${building.id}`,
-                        }}
-                        state={{ buildingId: building.id, buildingName: building.name }}
-                        className="ml-4 px-3 py-1 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
-                      >
-                        Gestionar Libro Digital
-                      </Link>
-                    )}
+                    {/* Botón directo a Libro Digital removido: navegación principal va al detalle del edificio */}
 
                     {/* Flecha */}
                     <div className="ml-4 shrink-0">
@@ -412,18 +410,7 @@ export default function AssetsList() {
                           {building.name}
                         </h3>
                       </div>
-                      {/* Botón móvil para técnicos */}
-                      {user?.role === 'tecnico' && (
-                        <Link
-                          to={{
-                            pathname: `/libro-digital/hub/${building.id}`,
-                          }}
-                          state={{ buildingId: building.id, buildingName: building.name }}
-                          className="px-2 py-1 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
-                        >
-                          Libro Digital
-                        </Link>
-                      )}
+                      {/* Acción principal: abrir detalle del edificio */}
                       <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                       </svg>

@@ -1,7 +1,11 @@
 import React from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import FileUpload from '../ui/FileUpload';
+import DocumentManager, { type DocumentFile } from '../ui/DocumentManager';
+import { PageLoader } from '../ui/LoadingSystem';
 import { getBookByBuilding, updateBookSection, type DigitalBook, sectionIdToApiType } from '../../services/digitalbook';
+import { listSectionDocuments } from '../../services/documentUpload';
+import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Config UI (igual que antes)
 const SECTION_CONFIGS = {
@@ -107,9 +111,11 @@ const SectionEditor: React.FC = () => {
   const navigate = useNavigate();
   const { sectionId, buildingId: buildingIdParam } = useParams<{ sectionId: string; buildingId: string }>();
   const location = useLocation();
+  const { isRole } = useAuth();
 
   const buildingId = buildingIdParam || location.state?.buildingId || '';
   const buildingName = location.state?.buildingName || 'Torre Central';
+  const userId = location.state?.userId || 'user-1'; // TODO: Obtener del contexto de autenticación
 
   const sectionConfig =
     sectionId && SECTION_CONFIGS[sectionId as UiSectionKey] ? SECTION_CONFIGS[sectionId as UiSectionKey] : null;
@@ -119,8 +125,11 @@ const SectionEditor: React.FC = () => {
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const [formData, setFormData] = React.useState<Record<string, any>>({});
-  const [documents, setDocuments] = React.useState<File[]>([]);
+  const [documents, setDocuments] = React.useState<DocumentFile[]>([]);
   const [isCompleted, setIsCompleted] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const { showSuccess, showError } = useToast();
+  const isOwner = isRole('propietario');
 
   React.useEffect(() => {
     let mounted = true;
@@ -156,6 +165,19 @@ const SectionEditor: React.FC = () => {
           null;
 
         setFormData(backendSection?.content ?? {});
+        // Rehidratar documentos
+        const backendDocuments = (backendSection?.content as any)?.documents as DocumentFile[] | undefined;
+        if (Array.isArray(backendDocuments) && backendDocuments.length > 0) {
+          setDocuments(backendDocuments);
+        } else {
+          // Fallback: listar desde Storage para esta sección
+          try {
+            const docs = await listSectionDocuments(b.id, sectionId as string, userId);
+            if (mounted) setDocuments(docs as unknown as DocumentFile[]);
+          } catch (_) {
+            // ignorar fallback error
+          }
+        }
         setIsCompleted(Boolean(backendSection?.complete));
       } catch (e: any) {
         if (!mounted) return;
@@ -174,7 +196,7 @@ const SectionEditor: React.FC = () => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
   };
 
-  const handleDocumentsChange = (files: File[]) => setDocuments(files);
+  const handleDocumentsChange = (docs: DocumentFile[]) => setDocuments(docs);
 
   const validateForm = (): boolean => {
     if (!sectionConfig) return false;
@@ -189,7 +211,10 @@ const SectionEditor: React.FC = () => {
     if (!book) throw new Error('Libro no cargado.');
     if (!sectionId) throw new Error('Sección no válida.');
 
-    const updated = await updateBookSection({ id: book.id, sections: book.sections }, sectionId, formData, complete);
+    // Incluir los documentos en el payload de contenido
+    const contentToSave = { ...formData, documents };
+
+    const updated = await updateBookSection({ id: book.id, sections: book.sections }, sectionId, contentToSave, complete);
     setBook(updated);
 
     const apiType = sectionIdToApiType[sectionId as string];
@@ -199,41 +224,68 @@ const SectionEditor: React.FC = () => {
     setIsCompleted(Boolean(newSection?.complete));
   };
 
+  // Auto-completar en silencio UNA vez cuando el formulario pase a válido
+  const autoCompletedRef = React.useRef(false);
+  React.useEffect(() => {
+    const valid = validateForm();
+    if (!book || !sectionId) return;
+    if (valid && !isCompleted && !autoCompletedRef.current) {
+      (async () => {
+        try {
+          autoCompletedRef.current = true;
+          await save(true);
+          setIsCompleted(true);
+        } catch (e) {
+          console.error('Auto-complete save failed', e);
+          autoCompletedRef.current = false;
+        }
+      })();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, documents, book, sectionId]);
+
   const handleSaveDraft = async () => {
     try {
       await save(false);
-      alert('Borrador guardado correctamente');
+      showSuccess('Borrador guardado', 'La sección se guardó como borrador.');
     } catch (e) {
       console.error(e);
-      alert('Error guardando el borrador.');
+      showError('No se pudo guardar', e instanceof Error ? e.message : 'Error guardando el borrador.');
     }
   };
 
-  const handleSaveAndComplete = async () => {
+
+  const handleSave = async () => {
     try {
-      if (!validateForm()) {
-        alert('Completa los campos obligatorios antes de finalizar.');
-        return;
-      }
-      await save(true);
-      alert('Sección guardada y marcada como completada.');
-      navigate(`/libro-digital/hub/${buildingId}`, {
-        state: { buildingName, buildingId, message: `Sección "${sectionConfig?.title}" completada exitosamente` },
-      });
+      setIsSaving(true);
+      const willComplete = validateForm();
+      await save(willComplete);
+      if (willComplete) setIsCompleted(true);
+      showSuccess('Guardado', 'Los cambios se guardaron correctamente.');
     } catch (e) {
       console.error(e);
-      alert('Error guardando la sección.');
+      showError('No se pudo guardar', e instanceof Error ? e.message : 'Error guardando la sección.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: readonly string[] | string[] }) => {
     const value = formData[field.name] ?? '';
-    const baseCls = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ';
+    const baseCls = 'w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ';
     const cls = baseCls + (field.required && !value ? 'border-red-300' : 'border-gray-300');
+
+    if (isOwner) {
+      return (
+        <div key={field.name} className="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 text-gray-700">
+          {String(value || '') || '—'}
+        </div>
+      );
+    }
 
     if (field.type === 'textarea') {
       return (
-        <textarea key={field.name} value={value} onChange={(e) => handleFieldChange(field.name, e.target.value)} placeholder={field.label} rows={4} className={cls} />
+        <textarea key={field.name} value={value} onChange={(e) => handleFieldChange(field.name, e.target.value)} placeholder={field.label} rows={3} className={cls} />
       );
     }
     if (field.type === 'select') {
@@ -270,7 +322,7 @@ const SectionEditor: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
         {/* Header navegación */}
         <div className="mb-8">
           <nav className="mb-4">
@@ -301,7 +353,7 @@ const SectionEditor: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-500">Cargando sección...</div>
+          <PageLoader message="Cargando sección..." />
         ) : loadError ? (
           <div className="text-center py-20 text-red-500">
             <div>{loadError}</div>
@@ -313,119 +365,105 @@ const SectionEditor: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Header de la sección */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl">{sectionConfig.icon}</div>
-                  <div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Header de la sección */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div>
                     <h1 className="text-2xl font-bold text-gray-900">{sectionConfig.title}</h1>
                     <p className="text-gray-600">{sectionConfig.description}</p>
-                  </div>
                 </div>
-
-                {isCompleted && (
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-sm font-medium text-green-600">Completada</span>
-                  </div>
-                )}
               </div>
+              
+              {(isCompleted || validateForm()) && (
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium text-green-600">Completada</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Formulario */}
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {sectionConfig.fields.map((field) => (
+                <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  {renderField(field)}
+                </div>
+              ))}
             </div>
 
-            {/* Formulario */}
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {sectionConfig.fields.map((field) => (
-                    <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {field.label}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                      </label>
-                      {renderField(field)}
-                    </div>
-                  ))}
-              </div>
-
-              {/* Subida de documentos (visual) */}
-              <div className="border-t border-gray-200 pt-6">
+              {/* Subida de documentos (solo técnico/admin) */}
+            <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Documentos de la sección</h3>
-                <FileUpload
-                  onFilesSelected={handleDocumentsChange}
-                  acceptedTypes={['image/*', 'application/pdf', '.doc', '.docx']}
-                  maxFiles={5}
-                  maxSizeInMB={10}
-                  label="Subir documentos relacionados"
-                  description="Arrastra documentos aquí o haz clic para seleccionar (PDF, imágenes, Word)"
-                />
-
-                {documents.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Documentos subidos ({documents.length}):</p>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {documents.map((file, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {file.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                {book && !isOwner && (
+                  <DocumentManager
+                    bookId={book.id}
+                    sectionType={sectionId || 'general_data'}
+                    userId={userId}
+                    existingDocuments={documents}
+                    onDocumentsUpdated={handleDocumentsChange}
+                    maxDocuments={20}
+                    maxSizeMB={10}
+                label="Subir documentos relacionados"
+                    description="Arrastra documentos aquí o haz clic para seleccionar (PDF, imágenes, Word, Excel)"
+                  />
+              )}
+                {isOwner && (
+                  <p className="text-sm text-gray-500">Solo lectura para propietarios. Contacta a tu técnico para actualizar documentos.</p>
                 )}
-              </div>
             </div>
+          </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-              <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-                <div className="text-sm text-gray-600">
-                  {validateForm() ? (
-                    <span className="flex items-center gap-2 text-green-600">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Sección lista para completar
-                    </span>
-                  ) : (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
+              <div className="text-sm text-gray-600">
+                  {!isCompleted && !validateForm() && (
                     <span>Completa los campos obligatorios (*) para marcar como terminada</span>
                   )}
-                </div>
+              </div>
 
-                <div className="flex gap-3">
-                  <button
+              <div className="flex gap-3">
+                <button
                     onClick={() => navigate(`/libro-digital/hub/${buildingId}`, { state: { buildingId, buildingName } })}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancelar
-                  </button>
-
-                    <button
+                >
+                  Cancelar
+                </button>
+                
+                {!isOwner && (
+                <button
                       onClick={handleSaveDraft}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      Guardar Borrador
-                    </button>
-
-                  <button
-                    onClick={handleSaveAndComplete}
-                    disabled={!validateForm()}
-                    className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Guardar y Completar
-                  </button>
-                </div>
+                >
+                  Guardar Borrador
+                </button>
+                )}
+                {!isOwner && (
+                <button
+                  onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSaving && (
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                  )}
+                  Guardar
+                </button>
+                )}
               </div>
             </div>
           </div>
+        </div>
         )}
       </div>
     </div>

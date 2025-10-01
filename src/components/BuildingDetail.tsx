@@ -19,6 +19,7 @@ import { RatingCircle, RatingStars } from './RatingCircle';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -38,7 +39,7 @@ const BuildingDetail: React.FC = () => {
   
   const [building, setBuilding] = useState<Building | null>(null);
   const { loading, startLoading, stopLoading } = useLoadingState(true);
-  const [hasDigitalBook] = useState(false); // TODO: Conectar con API real
+  const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [showImageManager, setShowImageManager] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -93,6 +94,13 @@ const BuildingDetail: React.FC = () => {
         startLoading();
         const buildingData = await BuildingsApiService.getBuildingById(id);
         setBuilding(buildingData);
+        // Cargar estado del libro digital (si existe)
+        try {
+          const book = await getBookByBuilding(id);
+          setDigitalBook(book);
+        } catch (e) {
+          setDigitalBook(null);
+        }
         
         // Activar mapa después de cargar datos
         setTimeout(() => setMapReady(true), 500);
@@ -136,20 +144,22 @@ const BuildingDetail: React.FC = () => {
   }, [isUploadModalOpen]);
 
   const handleCreateDigitalBook = () => {
-    navigate(`/libro-digital/hub`, {
+    if (!building?.id) return;
+    navigate(`/libro-digital/hub/${building.id}`, {
       state: {
-        buildingId: building?.id,
-        buildingName: building?.name,
+        buildingId: building.id,
+        buildingName: building.name,
         isNewBook: true
       }
     });
   };
 
   const handleViewDigitalBook = () => {
-    navigate(`/libro-digital/hub`, {
+    if (!building?.id) return;
+    navigate(`/libro-digital/hub/${building.id}`, {
       state: {
-        buildingId: building?.id,
-        buildingName: building?.name,
+        buildingId: building.id,
+        buildingName: building.name,
         isNewBook: false
       }
     });
@@ -373,26 +383,32 @@ const BuildingDetail: React.FC = () => {
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Libro del Edificio Digital</h4>
                   <div className="flex items-center gap-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                      hasDigitalBook 
-                        ? 'bg-green-100 text-green-700 border-green-200' 
-                        : 'bg-gray-100 text-gray-700 border-gray-200'
-                    }`}>
-                      {hasDigitalBook ? 'Publicado' : 'Pendiente'}
-                    </span>
+                    {(() => {
+                      const total = digitalBook?.sections?.length ?? 0;
+                      const done = digitalBook?.sections?.filter(s => s.complete).length ?? 0;
+                      const statusLabel = done === 0 && total === 0 ? 'Pendiente' : (done === total && total > 0 ? 'Completo' : 'En progreso');
+                      const statusCls = done === total && total > 0
+                        ? 'bg-green-100 text-green-700 border-green-200'
+                        : (done === 0 && total === 0 ? 'bg-gray-100 text-gray-700 border-gray-200' : 'bg-blue-100 text-blue-700 border-blue-200');
+                      return (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusCls}`}>
+                          {statusLabel}
+                        </span>
+                      );
+                    })()}
                     <span className="text-xs text-gray-500">
-                      {hasDigitalBook ? 'Versión 1.2 • Actualizado Sep 2025' : 'Sin crear'}
+                      {digitalBook ? `Actualizado ${new Date(digitalBook.updatedAt).toLocaleDateString('es-ES')}` : 'Sin crear'}
                     </span>
                   </div>
                   <div className="mt-3">
                     <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                       <span>Completado</span>
                       <span className="font-medium text-gray-900">
-                        {hasDigitalBook ? '6/8' : '0/8'}
+                        {digitalBook ? `${digitalBook.sections.filter(s => s.complete).length}/${digitalBook.sections.length}` : '0/8'}
                       </span>
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full">
-                      <div className="h-2 bg-green-500 rounded-l-full" style={{ width: hasDigitalBook ? '75%' : '0%' }} />
+                      <div className="h-2 bg-green-500 rounded-l-full" style={{ width: digitalBook ? `${Math.round((digitalBook.sections.filter(s => s.complete).length / (digitalBook.sections.length || 1)) * 100)}%` : '0%' }} />
                     </div>
                   </div>
                 </div>
@@ -513,20 +529,20 @@ const BuildingDetail: React.FC = () => {
               <h3 className="text-xl font-semibold mb-2">Libro Digital del Edificio</h3>
               <p className="text-blue-100 mb-4">
                 {user?.role === 'propietario' ? (
-                  hasDigitalBook 
+                  digitalBook 
                     ? 'Accede a toda la documentación técnica, certificados y normativas del edificio'
                     : 'El técnico estará trabajando para crear el libro digital. En cuanto esté listo podrás verlo accediendo aquí'
                 ) : (
-                  hasDigitalBook 
+                  digitalBook 
                     ? 'Accede a toda la documentación técnica, certificados y normativas del edificio'
                     : 'Crea el libro digital con información técnica detallada, certificados y normativas'
                 )}
               </p>
               <div className="flex items-center gap-2 text-sm text-blue-100">
-                <span className={`w-2 h-2 rounded-full ${hasDigitalBook ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${digitalBook ? 'bg-green-400' : 'bg-gray-400'}`}></span>
                 <span>
-                  {hasDigitalBook 
-                    ? '92% completado • Versión 1.2.0 • Actualizado 2025-09-01'
+                  {digitalBook 
+                    ? `${Math.round((digitalBook.sections.filter(s => s.complete).length/(digitalBook.sections.length||1))*100)}% completado • Actualizado ${new Date(digitalBook.updatedAt).toLocaleDateString('es-ES')}`
                     : user?.role === 'propietario' 
                       ? (building.technicianEmail 
                           ? `Técnico asignado: ${building.technicianEmail}` 
@@ -537,41 +553,25 @@ const BuildingDetail: React.FC = () => {
               </div>
             </div>
             <div className="ml-6">
-              {hasDigitalBook ? (
-                <button
-                  onClick={handleViewDigitalBook}
-                  className="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                  </svg>
-                  {user?.role === 'propietario' ? 'Ver Libro Digital' : 'Ver Libro Digital'}
-                </button>
-              ) : (
-                user?.role === 'propietario' ? (
+              {(() => {
+                const total = digitalBook?.sections?.length ?? 0;
+                const done = digitalBook?.sections?.filter(s => s.complete).length ?? 0;
+                const hasAny = total > 0;
+                const allDone = hasAny && done === total;
+                const label = !hasAny ? 'Crear Libro Digital' : (allDone ? 'Ver Libro Digital' : 'Continuar creando');
+                const onClick = !hasAny ? handleCreateDigitalBook : handleViewDigitalBook;
+                return (
                   <button
-                    disabled
-                    className="inline-flex items-center px-6 py-3 bg-white/20 text-blue-100 font-semibold rounded-lg cursor-not-allowed"
+                    onClick={onClick}
+                    className="inline-flex items-center px-4 py-2.5 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    En desarrollo
+                    {label}
                   </button>
-                ) : (
-                  hasPermission('canManageDigitalBooks') && (
-                    <button
-                      onClick={handleCreateDigitalBook}
-                      className="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-transform"
-                    >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Crear Libro Digital
-                    </button>
-                  )
-                )
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
