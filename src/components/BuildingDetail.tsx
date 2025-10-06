@@ -9,7 +9,7 @@ import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtr
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
 import { uploadCertificateImage } from '../services/certificateUpload';
 import { getLatestRating, getLatestCO2Emissions, getRatingStars } from '../utils/energyCalculations';
-import { PageLoader, useLoadingState, AppSpinner } from './ui/LoadingSystem';
+import { PageLoader, useLoadingState } from './ui/LoadingSystem';
 import FileUpload from './ui/FileUpload';
 import {
   Chart as ChartJS,
@@ -276,6 +276,9 @@ const BuildingDetail: React.FC = () => {
       expiryDate: '',
       propertyReference: '',
       notes: '',
+      imageUrl: '',
+      imageFilename: '',
+      imageUploadedAt: '',
     });
   };
 
