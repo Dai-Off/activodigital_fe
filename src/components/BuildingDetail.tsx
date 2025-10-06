@@ -7,8 +7,9 @@ import type { Building, BuildingImage } from '../services/buildingsApi';
 import ImageManager from './ui/ImageManager';
 import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
+import { uploadCertificateImage } from '../services/certificateUpload';
 import { getLatestRating, getLatestCO2Emissions, getRatingStars } from '../utils/energyCalculations';
-import { PageLoader, useLoadingState } from './ui/LoadingSystem';
+import { PageLoader, useLoadingState, AppSpinner } from './ui/LoadingSystem';
 import FileUpload from './ui/FileUpload';
 import {
   Chart as ChartJS,
@@ -54,6 +55,66 @@ const BuildingDetail: React.FC = () => {
   const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [selectedCertificateForView, setSelectedCertificateForView] = useState<PersistedEnergyCertificate | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Funciones de paginación
+  const totalPages = Math.ceil(energyCertificates.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCertificates = energyCertificates.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Función para abrir modal de confirmación de eliminación
+  const handleDeleteCertificate = (certificate: PersistedEnergyCertificate) => {
+    setCertificateToDelete(certificate);
+    setDeleteModalOpen(true);
+  };
+
+  // Función para confirmar eliminación
+  const confirmDeleteCertificate = async () => {
+    if (!certificateToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await EnergyCertificatesService.deleteCertificate(certificateToDelete.id);
+      showSuccess('Certificado eliminado correctamente');
+      // Recargar la lista de certificados
+      await loadEnergyCertificates();
+      // Cerrar modal
+      setDeleteModalOpen(false);
+      setCertificateToDelete(null);
+    } catch (error) {
+      console.error('Error al eliminar certificado:', error);
+      showError('Error al eliminar el certificado');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Función para cancelar eliminación
+  const cancelDeleteCertificate = () => {
+    setDeleteModalOpen(false);
+    setCertificateToDelete(null);
+  };
 
   // Función helper para obtener clases CSS del rating energético según escala oficial española
   const getRatingClasses = (rating: string) => {
@@ -80,6 +141,10 @@ const BuildingDetail: React.FC = () => {
     expiryDate: '',
     propertyReference: '',
     notes: '',
+    // Campos de imagen
+    imageUrl: '',
+    imageFilename: '',
+    imageUploadedAt: '',
   });
 
   // Función para cargar certificados energéticos reales del backend
@@ -88,6 +153,7 @@ const BuildingDetail: React.FC = () => {
     
     try {
       const certificatesData = await EnergyCertificatesService.getByBuilding(building.id);
+      console.log('Certificados cargados desde backend:', certificatesData.certificates);
       setEnergyCertificates(certificatesData.certificates || []);
     } catch (error) {
       console.error('Error loading energy certificates:', error);
@@ -144,6 +210,11 @@ const BuildingDetail: React.FC = () => {
 
     checkAIService();
   }, []);
+
+  // Resetear página cuando cambien los certificados
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [energyCertificates.length]);
 
   // Bloquear scroll de fondo cuando la modal está abierta
   useEffect(() => {
@@ -230,15 +301,21 @@ const BuildingDetail: React.FC = () => {
         return;
       }
 
-      // 1. Crear sesión simple en el backend
+      // 1. Subir imagen del certificado a Supabase Storage
+      const uploadResult = await uploadCertificateImage(selectedFile, building.id);
+      if (!uploadResult.success || !uploadResult.image) {
+        throw new Error(uploadResult.error || 'Error subiendo imagen del certificado');
+      }
+
+      // 2. Crear sesión simple en el backend con información de la imagen
       const session = await EnergyCertificatesService.createSimpleSession(building.id);
       setCurrentSessionId(session.id);
 
-      // 2. Extraer datos con IA
+      // 3. Extraer datos con IA
       const aiResponse = await extractCertificateData(selectedFile);
       const mappedData = mapAIResponseToReviewData(aiResponse);
       
-      // 3. Actualizar sesión con datos extraídos por IA
+      // 4. Actualizar sesión con datos extraídos por IA e información de la imagen
       const extractedData = {
         rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: 'AI OCR' },
         primaryEnergyKwhPerM2Year: { value: aiResponse.energy_consumption_kwh_m2y, confidence: 0.95, source: 'AI OCR' },
@@ -250,11 +327,14 @@ const BuildingDetail: React.FC = () => {
         expiryDate: { value: aiResponse.valid_until, confidence: 0.95, source: 'AI OCR' },
         propertyReference: { value: aiResponse.cadastral_reference, confidence: 0.95, source: 'AI OCR' },
         notes: { value: mappedData.notes ?? null, confidence: 0.95, source: 'AI OCR' },
+        // Información de la imagen almacenada
+        imageUrl: { value: uploadResult.image.url, confidence: 1.0, source: 'Supabase Storage' },
+        imageFilename: { value: uploadResult.image.filename, confidence: 1.0, source: 'Supabase Storage' },
       };
 
       await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
       
-      // 4. Actualizar datos de revisión para el usuario
+      // 5. Actualizar datos de revisión para el usuario
       setReviewData({
         rating: (mappedData.rating as any) ?? '',
         primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? '',
@@ -266,10 +346,14 @@ const BuildingDetail: React.FC = () => {
         expiryDate: mappedData.expiryDate ?? '',
         propertyReference: mappedData.propertyReference ?? '',
         notes: mappedData.notes ?? '',
+        // Incluir información de la imagen
+        imageUrl: uploadResult.image.url,
+        imageFilename: uploadResult.image.filename,
+        imageUploadedAt: uploadResult.image.uploadedAt.toISOString(),
       });
       setUploadStep('review');
       
-      showSuccess('Datos extraídos', 'Los datos del certificado han sido extraídos automáticamente y guardados. Revisa y ajusta si es necesario.');
+      showSuccess('Datos extraídos', 'La imagen del certificado se ha guardado y los datos han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
       
     } catch (error) {
       console.error('Error processing certificate:', error);
@@ -315,13 +399,19 @@ const BuildingDetail: React.FC = () => {
         expiryDate: reviewData.expiryDate || undefined,
         propertyReference: reviewData.propertyReference || undefined,
         notes: reviewData.notes || undefined,
+        // Incluir información de la imagen almacenada
+        imageUrl: reviewData.imageUrl || undefined,
+        imageFilename: reviewData.imageFilename || undefined,
+        imageUploadedAt: reviewData.imageUploadedAt || undefined,
       };
 
       // Confirmar certificado en el backend
+      console.log('Enviando datos al backend:', finalData);
       const confirmedCertificate = await EnergyCertificatesService.confirmCertificate(
         currentSessionId,
         finalData
       );
+      console.log('Certificado confirmado desde backend:', confirmedCertificate);
       
       showSuccess('Certificado guardado', `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`);
       
@@ -341,6 +431,10 @@ const BuildingDetail: React.FC = () => {
         expiryDate: '',
         propertyReference: '',
         notes: '',
+        // Limpiar campos de imagen
+        imageUrl: '',
+        imageFilename: '',
+        imageUploadedAt: '',
       });
       handleCloseUpload();
       
@@ -763,7 +857,7 @@ const BuildingDetail: React.FC = () => {
 
 
       {/* Certificados energéticos - listado (mock) */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm" style={{animation: 'fadeInUp 0.6s ease-out 0.55s both'}}>
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm flex flex-col" style={{animation: 'fadeInUp 0.6s ease-out 0.55s both', minHeight: '372px'}}>
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-base font-semibold text-gray-900 tracking-tight">Certificados energéticos</h3>
@@ -781,7 +875,7 @@ const BuildingDetail: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto flex-1">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr className="text-left text-gray-600">
@@ -792,12 +886,13 @@ const BuildingDetail: React.FC = () => {
                 <th className="py-2.5 pr-4 font-medium">Ámbito</th>
                 <th className="py-2.5 pr-4 font-medium">Emisión</th>
                 <th className="py-2.5 pr-4 font-medium">Vencimiento</th>
+                <th className="py-2.5 pr-4 font-medium w-12"></th>
               </tr>
             </thead>
             <tbody>
                   {energyCertificates.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
+                  <td colSpan={8} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                         <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -817,25 +912,90 @@ const BuildingDetail: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                energyCertificates.map((c) => (
-                <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60 cursor-pointer" onClick={() => setSelectedCertificateForView(c)}>
-                  <td className="py-3.5 pr-4 font-medium text-gray-900">{c.certificateNumber}</td>
-                  <td className="py-3.5 pr-4">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(c.rating)}`}>
-                      {c.rating}
-                    </span>
-                  </td>
-                  <td className="py-3.5 pr-4">{c.primaryEnergyKwhPerM2Year}</td>
-                  <td className="py-3.5 pr-4">{c.emissionsKgCo2PerM2Year}</td>
-                  <td className="py-3.5 pr-4 capitalize">{c.scope === 'building' ? 'Edificio' : c.scope === 'dwelling' ? 'Vivienda' : 'Local'}</td>
-                  <td className="py-3.5 pr-4">{new Date(c.issueDate).toLocaleDateString('es-ES')}</td>
-                  <td className="py-3.5 pr-4">{new Date(c.expiryDate).toLocaleDateString('es-ES')}</td>
-                </tr>
-                ))
+                <>
+                  {currentCertificates.map((c) => (
+                    <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60 cursor-pointer" onClick={() => setSelectedCertificateForView(c)}>
+                      <td className="py-3.5 pr-4 font-medium text-gray-900">{c.certificateNumber}</td>
+                      <td className="py-3.5 pr-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(c.rating)}`}>
+                          {c.rating}
+                        </span>
+                      </td>
+                      <td className="py-3.5 pr-4">{c.primaryEnergyKwhPerM2Year}</td>
+                      <td className="py-3.5 pr-4">{c.emissionsKgCo2PerM2Year}</td>
+                      <td className="py-3.5 pr-4 capitalize">{c.scope === 'building' ? 'Edificio' : c.scope === 'dwelling' ? 'Vivienda' : 'Local'}</td>
+                      <td className="py-3.5 pr-4">{new Date(c.issueDate).toLocaleDateString('es-ES')}</td>
+                      <td className="py-3.5 pr-4">{new Date(c.expiryDate).toLocaleDateString('es-ES')}</td>
+                      <td className="py-3.5 pr-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCertificate(c);
+                          }}
+                          className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 rounded"
+                          title="Eliminar certificado"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Filas vacías para mantener altura consistente */}
+                  {Array.from({ length: Math.max(0, itemsPerPage - currentCertificates.length) }).map((_, index) => (
+                    <tr key={`empty-${index}`} className="border-t border-gray-100">
+                      <td colSpan={8} className="py-3.5">&nbsp;</td>
+                    </tr>
+                  ))}
+                </>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {energyCertificates.length > itemsPerPage && (
+          <div className="mt-auto pt-4 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {startIndex + 1} a {Math.min(endIndex, energyCertificates.length)} de {energyCertificates.length} certificados
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              
+              {/* Números de página */}
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content Grid */}
@@ -1253,6 +1413,7 @@ const BuildingDetail: React.FC = () => {
               </div>
             )}
 
+
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
               <button
                 onClick={uploadStep === 'select' ? handleCloseUpload : handleBackToUpload}
@@ -1335,9 +1496,9 @@ const BuildingDetail: React.FC = () => {
               {/* Imagen del certificado */}
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Documento original</h4>
-                {selectedCertificateForView.sourceDocumentUrl ? (
+                {(selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl) ? (
                   <img 
-                    src={selectedCertificateForView.sourceDocumentUrl} 
+                    src={selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl} 
                     alt="Certificado energético" 
                     className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200" 
                   />
@@ -1345,6 +1506,11 @@ const BuildingDetail: React.FC = () => {
                   <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
                     Imagen no disponible
                   </div>
+                )}
+                {selectedCertificateForView.imageFilename && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Archivo: {selectedCertificateForView.imageFilename}
+                  </p>
                 )}
               </div>
 
@@ -1424,9 +1590,83 @@ const BuildingDetail: React.FC = () => {
                         <label className="block mb-1">Última actualización</label>
                         <p>{new Date(selectedCertificateForView.updatedAt).toLocaleDateString('es-ES')}</p>
                       </div>
+                      {selectedCertificateForView.imageUploadedAt && (
+                        <div className="col-span-2">
+                          <label className="block mb-1">Imagen subida</label>
+                          <p>{new Date(selectedCertificateForView.imageUploadedAt).toLocaleDateString('es-ES')}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={cancelDeleteCertificate} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Eliminar certificado</h3>
+                  <p className="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-700 mb-2">
+                  ¿Estás seguro de que quieres eliminar el certificado energético?
+                </p>
+                {certificateToDelete && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm font-medium text-gray-900">N° {certificateToDelete.certificateNumber}</p>
+                    <p className="text-xs text-gray-500">
+                      Rating: {certificateToDelete.rating} • {certificateToDelete.scope === 'building' ? 'Edificio' : certificateToDelete.scope === 'dwelling' ? 'Vivienda' : 'Local'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={cancelDeleteCertificate}
+                  disabled={isDeleting}
+                  className={`px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg transition-colors duration-200 ${
+                    isDeleting 
+                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed' 
+                      : 'text-gray-700 bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteCertificate}
+                  disabled={isDeleting}
+                  className={`px-4 py-2 text-sm font-medium text-white border border-red-600 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+                    isDeleting 
+                      ? 'bg-red-400 cursor-not-allowed' 
+                      : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Eliminando...
+                    </>
+                  ) : (
+                    'Eliminar'
+                  )}
+                </button>
               </div>
             </div>
           </div>

@@ -16,6 +16,9 @@ export interface EnergyCertificateSession {
   editedData?: EnergyCertificateReviewEditable;
   reviewerUserId?: string;
   errorMessage?: string;
+  // Información de la imagen subida a Supabase Storage
+  imageUrl?: string;
+  imageFilename?: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -37,6 +40,10 @@ export interface PersistedEnergyCertificate {
   notes?: string;
   sourceDocumentUrl?: string;
   sourceSessionId?: string;
+  // Información de la imagen almacenada en Supabase Storage
+  imageUrl?: string;
+  imageFilename?: string;
+  imageUploadedAt?: string;
   userId: string;
   createdAt: string;
   updatedAt: string;

@@ -228,7 +228,7 @@ export default function AssetsList() {
 
           {/* Botones de acción basados en permisos */}
           <div className="flex gap-3">
-            {hasPermission('canCreateBuildings') && (
+            {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
               <Link
                 to="/edificios/crear"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -431,7 +431,7 @@ export default function AssetsList() {
                     ? 'Comienza creando tu primer activo para gestionar tu cartera.'
                     : 'Contacta con tu administrador para que te asigne activos.'}
                 </p>
-                {hasPermission('canCreateBuildings') && (
+                {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
                   <Link
                     to="/edificios/crear"
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
