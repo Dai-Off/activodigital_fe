@@ -7,13 +7,13 @@ interface RatingCircleProps {
 }
 
 const ratingColors: Record<string, string> = {
-  'A': 'bg-[#00B050]',  // Verde
-  'B': 'bg-[#92D050]',  // Verde claro
-  'C': 'bg-[#FFC000]',  // Amarillo
-  'D': 'bg-[#FF6600]',  // Naranja
-  'E': 'bg-[#FF0000]',  // Rojo
-  'F': 'bg-[#C00000]',  // Rojo oscuro
-  'G': 'bg-[#7F7F7F]',  // Gris
+  'A': 'bg-green-600',   // Verde vibrante (más eficiente)
+  'B': 'bg-green-500',   // Verde medio  
+  'C': 'bg-yellow-400',  // Amarillo verdoso/Chartreuse
+  'D': 'bg-yellow-300',  // Amarillo claro
+  'E': 'bg-orange-500',  // Naranja
+  'F': 'bg-red-500',     // Rojo anaranjado
+  'G': 'bg-red-600',     // Rojo prominente (menos eficiente)
 };
 
 export const RatingCircle: React.FC<RatingCircleProps> = ({ rating, size = 'md', showLetter = true }) => {

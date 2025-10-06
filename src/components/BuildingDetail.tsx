@@ -6,6 +6,8 @@ import { BuildingsApiService } from '../services/buildingsApi';
 import type { Building, BuildingImage } from '../services/buildingsApi';
 import ImageManager from './ui/ImageManager';
 import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
+import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
+import { getLatestRating, getLatestCO2Emissions, getRatingStars } from '../utils/energyCalculations';
 import { PageLoader, useLoadingState } from './ui/LoadingSystem';
 import FileUpload from './ui/FileUpload';
 import {
@@ -49,6 +51,24 @@ const BuildingDetail: React.FC = () => {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [aiServiceAvailable, setAiServiceAvailable] = useState<boolean | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [selectedCertificateForView, setSelectedCertificateForView] = useState<PersistedEnergyCertificate | null>(null);
+
+  // Función helper para obtener clases CSS del rating energético según escala oficial española
+  const getRatingClasses = (rating: string) => {
+    switch (rating) {
+      case 'A': return 'bg-green-600 text-white border-green-600'; // Verde vibrante (más eficiente)
+      case 'B': return 'bg-green-500 text-white border-green-500'; // Verde medio
+      case 'C': return 'bg-yellow-400 text-white border-yellow-400'; // Amarillo verdoso/chartreuse
+      case 'D': return 'bg-yellow-300 text-white border-yellow-300'; // Amarillo claro
+      case 'E': return 'bg-orange-500 text-white border-orange-500'; // Naranja
+      case 'F': return 'bg-red-500 text-white border-red-500'; // Rojo anaranjado oscuro
+      case 'G': return 'bg-red-600 text-white border-red-600'; // Rojo prominente (menos eficiente)
+      default: return 'border-gray-200 text-gray-800 bg-gray-50';
+    }
+  };
+
   const [reviewData, setReviewData] = useState({
     rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
     primaryEnergyKwhPerM2Year: '' as string | number,
@@ -62,29 +82,18 @@ const BuildingDetail: React.FC = () => {
     notes: '',
   });
 
-  // Certificados energéticos (mock - solo UI)
-  const energyCertificates = [
-    {
-      id: 'cee-001',
-      rating: 'B' as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
-      primary: 85.42, // kWh/m²·año
-      emissions: 16.74, // kgCO₂/m²·año
-      number: 'PRV/0006867706/03/2025',
-      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
-      issueDate: '2025-07-13',
-      expiryDate: '2035-07-13',
-    },
-    {
-      id: 'cee-002',
-      rating: 'C' as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
-      primary: 102.1,
-      emissions: 22.3,
-      number: 'PRV/0001234567/05/2024',
-      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
-      issueDate: '2024-05-10',
-      expiryDate: '2034-05-10',
-    },
-  ];
+  // Función para cargar certificados energéticos reales del backend
+  const loadEnergyCertificates = async () => {
+    if (!building?.id) return;
+    
+    try {
+      const certificatesData = await EnergyCertificatesService.getByBuilding(building.id);
+      setEnergyCertificates(certificatesData.certificates || []);
+    } catch (error) {
+      console.error('Error loading energy certificates:', error);
+      // Mantener estado vacío en caso de error - no mostrar error al usuario en esta carga inicial
+    }
+  };
 
   useEffect(() => {
     const loadBuilding = async () => {
@@ -101,6 +110,10 @@ const BuildingDetail: React.FC = () => {
         } catch (e) {
           setDigitalBook(null);
         }
+        
+        // Cargar certificados energéticos del edificio - ahora buildingData.id está disponible
+        const certificatesData = await EnergyCertificatesService.getByBuilding(buildingData.id);
+        setEnergyCertificates(certificatesData.certificates || []);
         
         // Activar mapa después de cargar datos
         setTimeout(() => setMapReady(true), 500);
@@ -180,6 +193,19 @@ const BuildingDetail: React.FC = () => {
       try { URL.revokeObjectURL(selectedFileUrl); } catch {}
     }
     setSelectedFileUrl(null);
+    setCurrentSessionId(null);
+    setReviewData({
+      rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
+      primaryEnergyKwhPerM2Year: '' as string | number,
+      emissionsKgCo2PerM2Year: '' as string | number,
+      certificateNumber: '',
+      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
+      issuerName: '',
+      issueDate: '',
+      expiryDate: '',
+      propertyReference: '',
+      notes: '',
+    });
   };
 
   const handleFilesSelected = (files: File[]) => {
@@ -193,7 +219,7 @@ const BuildingDetail: React.FC = () => {
   };
 
   const handleContinueToReview = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !building?.id) return;
 
     try {
       setIsProcessingAI(true);
@@ -204,11 +230,31 @@ const BuildingDetail: React.FC = () => {
         return;
       }
 
-      // Extraer datos con IA
+      // 1. Crear sesión simple en el backend
+      const session = await EnergyCertificatesService.createSimpleSession(building.id);
+      setCurrentSessionId(session.id);
+
+      // 2. Extraer datos con IA
       const aiResponse = await extractCertificateData(selectedFile);
       const mappedData = mapAIResponseToReviewData(aiResponse);
       
-      // Actualizar datos de revisión (asegurando defaults)
+      // 3. Actualizar sesión con datos extraídos por IA
+      const extractedData = {
+        rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: 'AI OCR' },
+        primaryEnergyKwhPerM2Year: { value: aiResponse.energy_consumption_kwh_m2y, confidence: 0.95, source: 'AI OCR' },
+        emissionsKgCo2PerM2Year: { value: aiResponse.co2_emissions_kg_m2y, confidence: 0.95, source: 'AI OCR' },
+        certificateNumber: { value: aiResponse.registry_code, confidence: 0.95, source: 'AI OCR' },
+        scope: { value: 'building' as any, confidence: 0.95, source: 'AI OCR' },
+        issuerName: { value: aiResponse.normative, confidence: 0.95, source: 'AI OCR' },
+        issueDate: { value: aiResponse.registry_date, confidence: 0.95, source: 'AI OCR' },
+        expiryDate: { value: aiResponse.valid_until, confidence: 0.95, source: 'AI OCR' },
+        propertyReference: { value: aiResponse.cadastral_reference, confidence: 0.95, source: 'AI OCR' },
+        notes: { value: mappedData.notes ?? null, confidence: 0.95, source: 'AI OCR' },
+      };
+
+      await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
+      
+      // 4. Actualizar datos de revisión para el usuario
       setReviewData({
         rating: (mappedData.rating as any) ?? '',
         primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? '',
@@ -223,7 +269,7 @@ const BuildingDetail: React.FC = () => {
       });
       setUploadStep('review');
       
-      showSuccess('Datos extraídos', 'Los datos del certificado han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
+      showSuccess('Datos extraídos', 'Los datos del certificado han sido extraídos automáticamente y guardados. Revisa y ajusta si es necesario.');
       
     } catch (error) {
       console.error('Error processing certificate:', error);
@@ -237,10 +283,71 @@ const BuildingDetail: React.FC = () => {
     setUploadStep('select');
   };
 
-  const handleConfirmAndSave = () => {
-    // TODO: Implementar guardado en backend
-    showSuccess('Certificado guardado', 'El certificado energético ha sido guardado correctamente.');
-    handleCloseUpload();
+  const handleConfirmAndSave = async () => {
+    if (!currentSessionId) {
+      showError('Error de sesión', 'No se encontró la sesión de certificado. Por favor, vuelve a subir el archivo.');
+      return;
+    }
+
+    try {
+      // Validar campos requeridos antes de enviar
+      if (!reviewData.rating || !reviewData.certificateNumber || !reviewData.issuerName || 
+          !reviewData.issueDate || !reviewData.expiryDate) {
+        showError('Campos requeridos', 'Por favor completa todos los campos obligatorios antes de guardar.');
+        return;
+      }
+
+      // Preparar datos finales con los tipos correctos
+      const finalData = {
+        rating: (reviewData.rating || undefined) as any,
+        primaryEnergyKwhPerM2Year:
+          typeof reviewData.primaryEnergyKwhPerM2Year === 'string'
+            ? parseFloat(reviewData.primaryEnergyKwhPerM2Year || '0')
+            : reviewData.primaryEnergyKwhPerM2Year,
+        emissionsKgCo2PerM2Year:
+          typeof reviewData.emissionsKgCo2PerM2Year === 'string'
+            ? parseFloat(reviewData.emissionsKgCo2PerM2Year || '0')
+            : reviewData.emissionsKgCo2PerM2Year,
+        certificateNumber: reviewData.certificateNumber || undefined,
+        scope: reviewData.scope as any,
+        issuerName: reviewData.issuerName || undefined,
+        issueDate: reviewData.issueDate || undefined,
+        expiryDate: reviewData.expiryDate || undefined,
+        propertyReference: reviewData.propertyReference || undefined,
+        notes: reviewData.notes || undefined,
+      };
+
+      // Confirmar certificado en el backend
+      const confirmedCertificate = await EnergyCertificatesService.confirmCertificate(
+        currentSessionId,
+        finalData
+      );
+      
+      showSuccess('Certificado guardado', `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`);
+      
+      // Recargar la lista de certificados para mostrar el nuevo
+      await loadEnergyCertificates();
+      
+      // Limpiar estado y cerrar modal
+      setCurrentSessionId(null);
+      setReviewData({
+        rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
+        primaryEnergyKwhPerM2Year: '' as string | number,
+        emissionsKgCo2PerM2Year: '' as string | number,
+        certificateNumber: '',
+        scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
+        issuerName: '',
+        issueDate: '',
+        expiryDate: '',
+        propertyReference: '',
+        notes: '',
+      });
+      handleCloseUpload();
+      
+    } catch (error) {
+      console.error('Error saving certificate:', error);
+      showError('Error al guardar', error instanceof Error ? error.message : 'Error desconocido al guardar el certificado');
+    }
   };
 
   // Manejar actualización de imágenes
@@ -346,13 +453,47 @@ const BuildingDetail: React.FC = () => {
               <div className="rounded-lg border border-gray-200 p-3">
                 <span className="block text-xs text-gray-500">Rating energético-ambiental</span>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <RatingCircle rating="A" size="sm" />
-                  <RatingStars stars={5} />
+                  {energyCertificates.length === 0 ? (
+                    <>
+                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-400">
+                        ?
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {user?.role === 'tecnico' 
+                          ? 'Sin certificados registrados' 
+                          : 'Técnico aún no ha subido certificados'
+                        }
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <RatingCircle rating={getLatestRating(energyCertificates)} size="sm" />
+                      <RatingStars stars={getRatingStars(getLatestRating(energyCertificates))} />
+                    </>
+                  )}
                 </div>
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
                 <span className="block text-xs text-gray-500">Huella de carbono</span>
-                <p className="mt-1 font-medium text-gray-900">12.5 kg CO₂eq/m²·año</p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  {energyCertificates.length === 0 ? (
+                    <>
+                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-400">
+                        ?
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {user?.role === 'tecnico' 
+                          ? 'Sin certificados registrados' 
+                          : 'Técnico aún no ha subido certificados'
+                        }
+                      </span>
+                    </>
+                  ) : (
+                    <p className="font-medium text-gray-900">
+                      {getLatestCO2Emissions(energyCertificates)} kg CO₂eq/m²·año
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
                 <span className="block text-xs text-gray-500">Acceso a financiación</span>
@@ -654,21 +795,44 @@ const BuildingDetail: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {energyCertificates.map((c) => (
-                <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60">
-                  <td className="py-3.5 pr-4 font-medium text-gray-900">{c.number}</td>
+                  {energyCertificates.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 font-medium">Sin certificados energéticos</p>
+                        <p className="text-gray-400 text-sm">
+                          {user?.role === 'tecnico' 
+                            ? 'Suba el primer certificado usando el botón superior' 
+                            : 'El técnico asignado puede subir certificados energéticos para este edificio'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                energyCertificates.map((c) => (
+                <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60 cursor-pointer" onClick={() => setSelectedCertificateForView(c)}>
+                  <td className="py-3.5 pr-4 font-medium text-gray-900">{c.certificateNumber}</td>
                   <td className="py-3.5 pr-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border ${c.rating <= 'C' ? 'border-green-200 text-green-800 bg-green-50' : 'border-gray-200 text-gray-800 bg-gray-50'}`}>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(c.rating)}`}>
                       {c.rating}
                     </span>
                   </td>
-                  <td className="py-3.5 pr-4">{c.primary}</td>
-                  <td className="py-3.5 pr-4">{c.emissions}</td>
+                  <td className="py-3.5 pr-4">{c.primaryEnergyKwhPerM2Year}</td>
+                  <td className="py-3.5 pr-4">{c.emissionsKgCo2PerM2Year}</td>
                   <td className="py-3.5 pr-4 capitalize">{c.scope === 'building' ? 'Edificio' : c.scope === 'dwelling' ? 'Vivienda' : 'Local'}</td>
                   <td className="py-3.5 pr-4">{new Date(c.issueDate).toLocaleDateString('es-ES')}</td>
                   <td className="py-3.5 pr-4">{new Date(c.expiryDate).toLocaleDateString('es-ES')}</td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1144,6 +1308,126 @@ const BuildingDetail: React.FC = () => {
                 maxImages={10}
                 allowMainImageSelection={true}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de vista de certificado energético */}
+      {selectedCertificateForView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCertificateForView(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Certificado Energético #{selectedCertificateForView.certificateNumber}
+              </h3>
+              <button 
+                onClick={() => setSelectedCertificateForView(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
+              {/* Imagen del certificado */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Documento original</h4>
+                {selectedCertificateForView.sourceDocumentUrl ? (
+                  <img 
+                    src={selectedCertificateForView.sourceDocumentUrl} 
+                    alt="Certificado energético" 
+                    className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200" 
+                  />
+                ) : (
+                  <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+                    Imagen no disponible
+                  </div>
+                )}
+              </div>
+
+              {/* Datos del certificado (solo lectura) */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Información del certificado</h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Rating energético</label>
+                      <div className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(selectedCertificateForView.rating)}`}>
+                        {selectedCertificateForView.rating}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Ámbito</label>
+                      <p className="text-sm text-gray-900 capitalize">
+                        {selectedCertificateForView.scope === 'building' ? 'Edificio' : 
+                         selectedCertificateForView.scope === 'dwelling' ? 'Vivienda' : 'Local'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Energía primaria kWh/m²·año</label>
+                      <p className="text-sm text-gray-900 capitalize">{selectedCertificateForView.primaryEnergyKwhPerM2Year}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Emisiones kgCO₂/m²·año</label>
+                      <p className="text-sm text-gray-900 capitalize">{selectedCertificateForView.emissionsKgCo2PerM2Year}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Nº de certificado</label>
+                    <p className="text-sm text-gray-900">{selectedCertificateForView.certificateNumber}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Organismo certificador</label>
+                    <p className="text-sm text-gray-900">{selectedCertificateForView.issuerName}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Fecha de emisión</label>
+                      <p className="text-sm text-gray-900">{new Date(selectedCertificateForView.issueDate).toLocaleDateString('es-ES')}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Fecha de vencimiento</label>
+                      <p className="text-sm text-gray-900">{new Date(selectedCertificateForView.expiryDate).toLocaleDateString('es-ES')}</p>
+                    </div>
+                  </div>
+
+                  {selectedCertificateForView.propertyReference && (
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Referencia catastral</label>
+                      <p className="text-sm text-gray-900">{selectedCertificateForView.propertyReference}</p>
+                    </div>
+                  )}
+
+                  {selectedCertificateForView.notes && (
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Notas</label>
+                      <p className="text-sm text-gray-900">{selectedCertificateForView.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                      <div>
+                        <label className="block mb-1">Fecha de carga</label>
+                        <p>{new Date(selectedCertificateForView.createdAt).toLocaleDateString('es-ES')}</p>
+                      </div>
+                      <div>
+                        <label className="block mb-1">Última actualización</label>
+                        <p>{new Date(selectedCertificateForView.updatedAt).toLocaleDateString('es-ES')}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
