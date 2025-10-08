@@ -299,69 +299,145 @@ export default function AssetsList() {
               </span>
             </div>
 
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
                 {/* Left Section - Metrics and Details */}
-                <div className="flex-1 pr-6">
-                  {/* Main Metrics Row - Dynamic based on user role */}
-                  <div className="grid grid-cols-4 gap-6 mb-4">
-                    {user?.role === 'propietario' ? (
-                      <>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600 mb-1">
-                            {formatBuildingValue(dashboardStats.totalValue)}
-                          </div>
-                          <div className="text-sm text-gray-500">Valor total</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                          <div className="text-sm text-gray-500">Activos</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                          </div>
-                          <div className="text-sm text-gray-500">Superficie total</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
-                          </div>
-                          <div className="text-sm text-gray-500">Emisiones anuales</div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                          <div className="text-sm text-gray-500">Edificios asignados</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.completedBooks}
-                          </div>
-                          <div className="text-sm text-gray-500">Libros completados</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.pendingBooks}
-                          </div>
-                          <div className="text-sm text-gray-500">Pendientes</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                          </div>
-                          <div className="text-sm text-gray-500">Superficie total</div>
-                        </div>
-                      </>
-                    )}
-        </div>
+                <div className="flex-1 w-full lg:pr-6">
+                   {/* Main Metrics - Mobile Carousel, Desktop Grid */}
+                   <div className="lg:grid lg:grid-cols-4 lg:gap-6 mb-4">
+                     {/* Mobile Carousel */}
+                     <div className="lg:hidden">
+                       <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+                         {user?.role === 'propietario' ? (
+                           <>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-green-600 mb-1">
+                                   {formatBuildingValue(dashboardStats.totalValue)}
+                                 </div>
+                                 <div className="text-sm text-gray-500">Valor total</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                                 <div className="text-sm text-gray-500">Activos</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">
+                                   {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                                 </div>
+                                 <div className="text-sm text-gray-500">Superficie total</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">
+                                   {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
+                                 </div>
+                                 <div className="text-sm text-gray-500">Emisiones anuales</div>
+                               </div>
+                             </div>
+                           </>
+                         ) : (
+                           <>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                                 <div className="text-sm text-gray-500">Edificios asignados</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">
+                                   {dashboardStats.completedBooks}
+                                 </div>
+                                 <div className="text-sm text-gray-500">Libros completados</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">
+                                   {dashboardStats.pendingBooks}
+                                 </div>
+                                 <div className="text-sm text-gray-500">Pendientes</div>
+                               </div>
+                             </div>
+                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                               <div className="text-center">
+                                 <div className="text-2xl font-bold text-gray-900 mb-1">
+                                   {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                                 </div>
+                                 <div className="text-sm text-gray-500">Superficie total</div>
+                               </div>
+                             </div>
+                           </>
+                         )}
+                       </div>
+                     </div>
+                     
+                     {/* Desktop Grid */}
+                     <div className="hidden lg:contents">
+                       {user?.role === 'propietario' ? (
+                         <>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-green-600 mb-1">
+                               {formatBuildingValue(dashboardStats.totalValue)}
+                             </div>
+                             <div className="text-sm text-gray-500">Valor total</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                             <div className="text-sm text-gray-500">Activos</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">
+                               {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                             </div>
+                             <div className="text-sm text-gray-500">Superficie total</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">
+                               {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
+                             </div>
+                             <div className="text-sm text-gray-500">Emisiones anuales</div>
+                           </div>
+                         </>
+                       ) : (
+                         <>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                             <div className="text-sm text-gray-500">Edificios asignados</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">
+                               {dashboardStats.completedBooks}
+                             </div>
+                             <div className="text-sm text-gray-500">Libros completados</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">
+                               {dashboardStats.pendingBooks}
+                             </div>
+                             <div className="text-sm text-gray-500">Pendientes</div>
+                           </div>
+                           <div className="text-center">
+                             <div className="text-2xl font-bold text-gray-900 mb-1">
+                               {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                             </div>
+                             <div className="text-sm text-gray-500">Superficie total</div>
+                           </div>
+                         </>
+                       )}
+                     </div>
+                   </div>
 
                   {/* Separator Line */}
                   <div className="border-t border-gray-200 mb-4"></div>
 
-                  {/* Performance Details - Dynamic based on user role */}
-                  <div className="grid grid-cols-3 gap-4">
+                   {/* Performance Details - Dynamic based on user role */}
+                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {user?.role === 'propietario' ? (
                       <>
                         <div className="text-center">
@@ -409,7 +485,7 @@ export default function AssetsList() {
                 </div>
 
                 {/* Right Section - Progress Chart */}
-                <div className="flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center justify-center w-full lg:w-auto">
                   <div className="relative w-24 h-24 mb-3">
                     {/* Circular Progress Chart */}
                     <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
