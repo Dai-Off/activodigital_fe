@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import Footer from './Footer';
+import { useAuth } from '../contexts/AuthContext';
 
 type ChatMsg = {
   id: string;
@@ -15,61 +16,28 @@ type ChatMsg = {
   };
 };
 
+// URL del orquestador
+const ORQUESTADOR_URL = 'https://orquestador-clasificador-n8n-v2.fly.dev/webhook/agente-clasificador';
+
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-
-  // Conversación hardcodeada (incluye toolCallPreview + imagen generada)
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       id: crypto.randomUUID(),
       role: 'ai',
       content: '¡Hola! Soy tu asistente de activos digitales. ¿En qué puedo ayudarte hoy?',
     },
-    {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content:
-        'Necesito ayuda con el certificado energético de mi edificio. ¿Qué documentación necesito para renovarlo?',
-    },
-    {
-      id: crypto.randomUUID(),
-      role: 'ai',
-      content:
-        'Para renovar el certificado energético necesitas: planos del edificio, facturas de suministros del último año, certificados de instalaciones térmicas y documentación de mejoras realizadas. ¿Tienes alguno de estos documentos digitalizados?',
-    },
-    {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content:
-        'Sí, tengo los planos y las facturas. ¿Puedes ayudarme a organizarlos en el libro digital del edificio?',
-    },
-    {
-      id: crypto.randomUUID(),
-      role: 'ai',
-      content:
-        'Perfecto. Te ayudo a organizar la documentación. Primero sube los planos en la sección "Instalaciones" y las facturas en "Consumos energéticos". Luego te guío para completar el resto de secciones.',
-    },
-    {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content:
-        '¿Cuánto tiempo tengo para renovar el certificado antes de que expire?',
-    },
-    {
-      id: crypto.randomUUID(),
-      role: 'ai',
-      content:
-        'El certificado energético tiene una validez de 10 años. Si está próximo a vencer, te recomiendo iniciar el proceso 3 meses antes. ¿Quieres que revise las fechas de vencimiento de todos tus certificados?',
-    },
   ]);
 
   const [draft, setDraft] = useState('');
+  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const sessionIdRef = useRef(`sess_${Date.now()}`);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -89,44 +57,190 @@ export default function Layout() {
   }, [isChatOpen]);
 
 
-  const cannedReplies = [
-    'Entendido. ¿En qué activo específico necesitas ayuda?',
-    'Perfecto, te ayudo a organizar esa documentación.',
-    'Listo. ¿Quieres que revise el estado de cumplimiento de tu edificio?',
-    'Quedó claro. Te guío paso a paso para completar el proceso.',
-  ];
-
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    const userMsg: ChatMsg = { id: crypto.randomUUID(), role: 'user', content: text.trim() };
-
-    // DEMO: si el usuario escribe "certificado", respondemos con información específica
-    const lower = text.toLowerCase();
-    let aiMsg: ChatMsg;
-    if (lower.includes('certificado') || lower.includes('certificados')) {
-      aiMsg = {
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoadingResponse) return;
+    
+    // Verificar que el usuario esté autenticado
+    if (!user || !user.userId) {
+      const errorMsg: ChatMsg = {
         id: crypto.randomUUID(),
         role: 'ai',
-        content:
-          'Te ayudo con los certificados. ¿Necesitas información sobre certificados energéticos, de habitabilidad, o de instalaciones? Puedo revisar el estado de vencimiento de todos tus certificados.',
+        content: 'Error: No se pudo identificar tu usuario. Por favor, intenta iniciar sesión nuevamente.',
       };
-    } else if (lower.includes('mantenimiento') || lower.includes('mantenimientos')) {
-      aiMsg = {
-        id: crypto.randomUUID(),
-        role: 'ai',
-        content:
-          'Para el mantenimiento, necesitas planificar las tareas según el tipo de instalación. ¿Quieres que revise qué mantenimientos están próximos a vencer en tus activos?',
-      };
-    } else {
-      aiMsg = {
-        id: crypto.randomUUID(),
-        role: 'ai',
-        content: cannedReplies[Math.floor(Math.random() * cannedReplies.length)],
-      };
+      setMessages((prev) => [...prev, errorMsg]);
+      return;
     }
 
-    setMessages((prev) => [...prev, userMsg, aiMsg]);
+    const userMsg: ChatMsg = { id: crypto.randomUUID(), role: 'user', content: text.trim() };
+    setMessages((prev) => [...prev, userMsg]);
     setDraft('');
+    setIsLoadingResponse(true);
+
+    const requestBody = {
+      prompt: text.trim(),
+      usuario_id: "923f8093-5d82-43da-bcc2-8fbfcb3dac84",
+      session_id: sessionIdRef.current,
+    };
+    console.log('📤 Enviando al orquestador:', requestBody);
+
+    try {
+      // Timeout largo para n8n (puede tardar bastante). Subido a 120s
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+      const response = await fetch(ORQUESTADOR_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/plain, */*',
+        },
+        mode: 'cors',
+        cache: 'no-store',
+        signal: controller.signal,
+        body: JSON.stringify(requestBody),
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      // Hay respuestas que vienen con ruido antes/después del JSON (ej: texto + JSON pegado)
+      // Leemos como texto crudo (usando clone para mayor compatibilidad) y tratamos de extraer JSON.
+      let rawText = '';
+      try {
+        rawText = await response.clone().text();
+      } catch {
+        try {
+          const buf = await response.arrayBuffer();
+          rawText = new TextDecoder('utf-8').decode(buf);
+        } catch {
+          rawText = '';
+        }
+      }
+      console.log('📥 Respuesta RAW del orquestador:', rawText);
+
+      // Si la respuesta está vacía, esperar un poco más y reintentar
+      if (!rawText || rawText.trim() === '') {
+        console.log('⚠️ Respuesta vacía, esperando respuesta del servidor...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Reintentar la lectura
+        try {
+          rawText = await response.clone().text();
+          console.log('📥 Respuesta RAW (reintento):', rawText);
+        } catch {
+          // Si sigue vacía, continuar con el flujo normal
+        }
+        if (!rawText || rawText.trim() === '') {
+          throw new Error('Body vacío: es probable que el webhook haya respondido con múltiples items o sin CORS.');
+        }
+      }
+
+      let dataParsed: unknown = null;
+      // 1) Intento directo
+      try {
+        dataParsed = JSON.parse(rawText);
+      } catch {
+        // Ignorar error de parseo directo; intentaremos extraer JSON embebido
+      }
+
+      // 2) Si falla, buscar el último bloque que parsee a JSON válido
+      if (!dataParsed || typeof dataParsed !== 'object') {
+        // Estrategia ultra-tolerante: desde cada '{', balancear llaves hasta el '}' correspondiente
+        const findBalancedJson = (text: string, startIdx: number): string | null => {
+          let depth = 0;
+          for (let i = startIdx; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '{') depth++;
+            if (ch === '}') {
+              depth--;
+              if (depth === 0) return text.slice(startIdx, i + 1);
+            }
+          }
+          return null;
+        };
+
+        let idx = rawText.indexOf('{');
+        while (idx !== -1) {
+          const candidate = findBalancedJson(rawText, idx);
+          if (candidate) {
+            try {
+              const parsed = JSON.parse(candidate);
+              if (parsed && typeof parsed === 'object' && ('respuesta' in parsed || 'success' in parsed)) {
+                dataParsed = parsed;
+                break;
+              }
+            } catch {
+              // probar siguiente '{'
+            }
+          }
+          idx = rawText.indexOf('{', idx + 1);
+        }
+
+        // Último recurso: si no se pudo parsear pero hay una línea que empieza con {"success",
+        if (!dataParsed) {
+          const guessStart = rawText.indexOf('{"success"');
+          if (guessStart !== -1) {
+            const candidate = findBalancedJson(rawText, guessStart);
+            if (candidate) {
+              try {
+                const parsed = JSON.parse(candidate);
+                if (parsed && typeof parsed === 'object') dataParsed = parsed;
+              } catch {
+                // no-op
+              }
+            }
+          }
+        }
+      }
+
+      console.log('📥 Respuesta parsed del orquestador:', dataParsed);
+
+      // Verificar que la respuesta tenga el formato esperado
+      type OrquestadorResponse = { respuesta: string; [k: string]: unknown };
+      const hasRespuesta = (() => {
+        if (!dataParsed || typeof dataParsed !== 'object') return false;
+        const maybe = dataParsed as Partial<OrquestadorResponse>;
+        return typeof maybe.respuesta === 'string';
+      })();
+
+      if (!hasRespuesta) {
+        console.error('❌ Respuesta inválida (tras parseo flexible):', dataParsed);
+        console.error('❌ Raw text que causó el error:', rawText);
+        throw new Error('Respuesta inválida del servidor (no se encontró campo "respuesta").');
+      }
+
+      const data = dataParsed as OrquestadorResponse;
+
+      const aiMsg: ChatMsg = {
+        id: crypto.randomUUID(),
+        role: 'ai',
+        content: data.respuesta,
+      };
+
+      // Pequeño retraso mínimo para UX (el servicio suele tardar segundos)
+      await new Promise((r) => setTimeout(r, 300));
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (error) {
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
+      if (isAbort) {
+        console.error('⏱️ Tiempo de espera agotado esperando respuesta del orquestador.');
+      } else {
+        console.error('Error al llamar al orquestador:', error);
+      }
+      const errorMsg: ChatMsg = {
+        id: crypto.randomUUID(),
+        role: 'ai',
+        content: isAbort
+          ? 'El servicio está tardando más de lo esperado. Intentá de nuevo en unos segundos.'
+          : 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.',
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsLoadingResponse(false);
+    }
   };
 
   // Alto del footer (para no cubrirlo en móvil).
@@ -284,7 +398,9 @@ export default function Layout() {
                   try {
                     window.localStorage.removeItem('access_token');
                     window.sessionStorage.removeItem('access_token');
-                  } catch {}
+                  } catch {
+                    // Ignorar errores de storage
+                  }
                   navigate('/login');
                 }}
                 className="group inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
@@ -392,6 +508,17 @@ export default function Layout() {
                     </div>
                   </div>
                 ))}
+                {isLoadingResponse && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed bg-gray-100 text-gray-800 rounded-bl-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div ref={endRef} />
               </div>
 
@@ -407,12 +534,14 @@ export default function Layout() {
                     ref={inputRef}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder='Escribe tu mensaje... (prueba "certificados" o "mantenimiento")'
+                    placeholder="Escribe tu mensaje..."
                     className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isLoadingResponse}
                   />
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isLoadingResponse || !draft.trim()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Enviar"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -514,6 +643,17 @@ export default function Layout() {
                     </div>
                   </div>
                 ))}
+                {isLoadingResponse && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed bg-gray-100 text-gray-800 rounded-bl-sm">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div ref={endRef} />
                 </div>
 
@@ -529,12 +669,14 @@ export default function Layout() {
                       ref={inputRef}
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
-                      placeholder='Escribe tu mensaje... (prueba "certificados" o "mantenimiento")'
+                      placeholder="Escribe tu mensaje..."
                       className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isLoadingResponse}
                     />
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isLoadingResponse || !draft.trim()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Enviar"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
