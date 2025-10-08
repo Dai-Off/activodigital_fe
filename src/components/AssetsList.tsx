@@ -6,7 +6,6 @@ import {
   formatBuildingValue,
   getBuildingStatusLabel,
   getBuildingTypologyLabel,
-  getBuildingStatusColor,
 } from '../services/buildingsApi';
 import type { Building, DashboardStats } from '../services/buildingsApi';
 import {
@@ -19,12 +18,6 @@ import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 
 /* -------------------------- Utils de presentación -------------------------- */
-function truncateMiddle(str: string, front = 3, back = 2): string {
-  if (!str) return '';
-  if (str.length <= front + back + 1) return str;
-  return `${str.slice(0, front)}…${str.slice(-back)}`;
-}
-
 function getCityAndDistrict(address: string): string {
   if (!address) return '';
   
@@ -62,39 +55,6 @@ function getCityAndDistrict(address: string): string {
   
   // Último fallback: devolver la dirección completa truncada
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
-}
-
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [ok, setOk] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async (e) => {
-        e.preventDefault(); // evita navegar si está dentro de <Link>
-        try {
-          await navigator.clipboard.writeText(value);
-          setOk(true);
-          setTimeout(() => setOk(false), 1200);
-        } catch {}
-      }}
-      className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 hover:border-gray-300"
-      title={`Copiar ${label}`}
-      aria-label={`Copiar ${label}`}
-      onMouseDown={(e) => e.stopPropagation()}
-      onClickCapture={(e) => e.stopPropagation()}
-    >
-      {ok ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
-      )}
-    </button>
-  );
 }
 
 function PaginationBar({
@@ -233,7 +193,7 @@ function CEERatingIndicator({ building, certificates }: { building: Building; ce
 }
 
 // Componente para el indicador ESG
-function ESGScoreIndicator({ building }: { building: Building }) {
+function ESGScoreIndicator() {
   // TODO: Obtener score ESG real cuando esté disponible en el API
   // Por ahora mostramos "-" si no hay datos
   
@@ -792,7 +752,7 @@ export default function AssetsList() {
                       
                       {/* ESG - Estrellas con colores - Oculto en mobile */}
                       <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <ESGScoreIndicator building={building} />
+                        <ESGScoreIndicator />
                       </td>
                       
                       {/* m² - Superficie - Oculto en mobile */}

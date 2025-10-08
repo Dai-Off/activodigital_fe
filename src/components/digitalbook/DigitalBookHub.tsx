@@ -45,7 +45,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     // Si no hay libro o el libro no tiene secciones, crear las 8 secciones por defecto
     if (!book || !book.sections || book.sections.length === 0) {
       console.log('Creando secciones por defecto porque:', !book ? 'no hay libro' : 'no hay secciones');
-      return Object.entries(SECTION_LABELS).map(([type, meta]) => ({
+      return Object.entries(SECTION_LABELS).map(([, meta]) => ({
         key: meta.uiId,
         title: meta.title,
         description: meta.description,
