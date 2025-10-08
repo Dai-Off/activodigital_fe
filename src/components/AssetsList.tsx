@@ -14,12 +14,54 @@ import {
   SkeletonDashboardSummary,
   useLoadingState,
 } from './ui/LoadingSystem';
+import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
+import { getLatestRating } from '../utils/energyCalculations';
+import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 
 /* -------------------------- Utils de presentación -------------------------- */
 function truncateMiddle(str: string, front = 3, back = 2): string {
   if (!str) return '';
   if (str.length <= front + back + 1) return str;
   return `${str.slice(0, front)}…${str.slice(-back)}`;
+}
+
+function getCityAndDistrict(address: string): string {
+  if (!address) return '';
+  
+  // Dividir la dirección por comas
+  const parts = address.split(',').map(part => part.trim());
+  
+  // Buscar la ciudad principal y el distrito
+  // Ejemplos de direcciones:
+  // "123, Calle del Doctor Esquerdo, Estrella, Retiro, Madrid, Comunidad de Madrid, 28007, España"
+  // "Calle de la Plata, Polígono Industrial El Guija, Arganda del Rey, Comunidad de Madrid, 28500, España"
+  
+  // Si hay "Comunidad de Madrid", la ciudad está antes y el distrito antes de la ciudad
+  const comunidadIndex = parts.findIndex(part => part.includes('Comunidad de Madrid'));
+  if (comunidadIndex > 1) {
+    const city = parts[comunidadIndex - 1];
+    const district = parts[comunidadIndex - 2];
+    return `${city}, ${district}`;
+  }
+  
+  // Si no hay "Comunidad de Madrid", buscar la penúltima parte (antes del código postal)
+  if (parts.length >= 3) {
+    // Buscar la parte que parece ser un código postal (números de 5 dígitos)
+    const postalCodeIndex = parts.findIndex(part => /^\d{5}$/.test(part));
+    if (postalCodeIndex > 1) {
+      const city = parts[postalCodeIndex - 1];
+      const district = parts[postalCodeIndex - 2];
+      return `${city}, ${district}`;
+    }
+  }
+  
+  // Fallback: devolver las dos últimas partes si existen
+  if (parts.length >= 2) {
+    return `${parts[parts.length - 2]}, ${parts[parts.length - 3] || parts[parts.length - 1]}`;
+  }
+  
+  // Último fallback: devolver la dirección completa truncada
+  return address.length > 20 ? `${address.substring(0, 20)}...` : address;
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
@@ -156,6 +198,116 @@ function PaginationBar({
   );
 }
 
+/* ------------------------- Componentes de Indicadores ------------------------- */
+
+// Componente para el indicador CEE (Certificado de Eficiencia Energética)
+function CEERatingIndicator({ building, certificates }: { building: Building; certificates: PersistedEnergyCertificate[] }) {
+  // Obtener el rating del último certificado energético
+  const buildingCerts = certificates.filter(cert => cert.buildingId === building.id);
+  
+  if (buildingCerts.length === 0) {
+    return <span className="text-sm text-gray-400">-</span>;
+  }
+  
+  const rating = getLatestRating(buildingCerts);
+  
+  // Colores según la clasificación energética
+  const getColor = (rating: string) => {
+    switch (rating) {
+      case 'A': return 'bg-green-600';
+      case 'B': return 'bg-green-500';
+      case 'C': return 'bg-yellow-400';
+      case 'D': return 'bg-yellow-300';
+      case 'E': return 'bg-orange-500';
+      case 'F': return 'bg-red-500';
+      case 'G': return 'bg-red-600';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  return (
+    <div className={`w-6 h-6 rounded-full ${getColor(rating)} flex items-center justify-center`}>
+      <span className="text-xs font-medium text-white">{rating}</span>
+    </div>
+  );
+}
+
+// Componente para el indicador ESG
+function ESGScoreIndicator({ building }: { building: Building }) {
+  // TODO: Obtener score ESG real cuando esté disponible en el API
+  // Por ahora mostramos "-" si no hay datos
+  
+  return (
+    <span className="text-sm text-gray-400">-</span>
+  );
+}
+
+// Componente para el indicador de metros cuadrados
+function SquareMetersIndicator({ building }: { building: Building }) {
+  // Usar datos reales del edificio si están disponibles
+  // TODO: Cuando el API tenga un campo específico de superficie total, usarlo directamente
+  
+  if (!building.numUnits || building.numUnits === 0) {
+    return <span className="text-sm text-gray-400">-</span>;
+  }
+  
+  // Calcular superficie aproximada basada en número de unidades
+  // Asumiendo 70 m² por unidad promedio (valor estándar)
+  const avgUnitSize = 70;
+  const surfaceArea = building.numUnits * avgUnitSize;
+  
+  // Formatear con puntos como separadores de miles
+  const formattedArea = surfaceArea.toLocaleString('es-ES');
+  
+  return (
+    <span className="text-sm font-medium text-gray-900">{formattedArea}</span>
+  );
+}
+
+// Componente para el indicador del estado del libro digital (ahora solo muestra progreso numérico)
+function BookStatusIndicator({ building, digitalBooks }: { building: Building; digitalBooks: Map<string, DigitalBook> }) {
+  const totalSections = 8; // Total de secciones del libro digital
+  
+  // Obtener el libro digital del edificio
+  const book = digitalBooks.get(building.id);
+  
+  if (!book) {
+    // Sin libro digital
+    return (
+      <div className="flex items-center justify-center">
+        <span className="text-sm font-medium text-gray-900">0/{totalSections}</span>
+      </div>
+    );
+  }
+  
+  // Usar el campo 'progress' que viene del API (0-8)
+  const completedSections = book.progress || 0;
+  
+  // Siempre mostrar progreso numérico en la columna Libro
+  return (
+    <div className="flex items-center justify-center">
+      <span className="text-sm font-medium text-gray-900">
+        {completedSections}/{totalSections}
+      </span>
+    </div>
+  );
+}
+
+// Componente para mostrar el estado del edificio (ahora incluye "Completado" si el libro está completo)
+function BuildingStatusIndicator({ building, digitalBooks }: { building: Building; digitalBooks: Map<string, DigitalBook> }) {
+  const totalSections = 8;
+  const book = digitalBooks.get(building.id);
+  const completedSections = book?.progress || 0;
+  
+  // Si el libro está completo (8/8), mostrar "Completado" en verde
+  if (completedSections === totalSections) {
+    return <span className="text-sm font-medium text-green-600">Completado</span>;
+  }
+  
+  // Si no, mostrar el estado original del edificio
+  return <span className="text-sm text-gray-900">{getBuildingStatusLabel(building.status)}</span>;
+}
+
 /* --------------------------------- Página --------------------------------- */
 export default function AssetsList() {
   const navigate = useNavigate();
@@ -164,6 +316,10 @@ export default function AssetsList() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
   const { loading: statsLoading, startLoading: startStatsLoading, stopLoading: stopStatsLoading } = useLoadingState(true);
+  
+  // Estados para certificados energéticos y libros digitales
+  const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
+  const [digitalBooks, setDigitalBooks] = useState<Map<string, DigitalBook>>(new Map());
 
   // paginado (cliente)
   const [page, setPage] = useState(1); // 1-based
@@ -172,44 +328,79 @@ export default function AssetsList() {
   useEffect(() => {
     let mounted = true;
 
-    const loadBuildings = async () => {
+    const loadAllData = async () => {
       if (!user || authLoading) return;
 
       try {
         startLoading();
-        const buildingsData = await BuildingsApiService.getAllBuildings();
-        if (mounted) {
-          setBuildings(buildingsData);
-          stopLoading();
-        }
-      } catch (err) {
-        console.error('Error fetching buildings:', err);
-        if (mounted) {
-          stopLoading(err instanceof Error ? err.message : 'Error cargando edificios');
-        }
-      }
-    };
-
-    const loadDashboardStats = async () => {
-      if (!user || authLoading) return;
-
-      try {
         startStatsLoading();
-        const statsData = await BuildingsApiService.getDashboardStats();
+        
+        // Cargar edificios y stats primero
+        const [buildingsData, statsData] = await Promise.all([
+          BuildingsApiService.getAllBuildings(),
+          BuildingsApiService.getDashboardStats()
+        ]);
+        
+        if (!mounted) return;
+        
+        // Establecer edificios y stats
+        setBuildings(buildingsData);
+        setDashboardStats(statsData);
+        
+        // Cargar certificados y libros digitales para todos los edificios en paralelo
+        const certsAndBooksPromises = buildingsData.map(async (building) => {
+          try {
+            const [certsResponse, book] = await Promise.all([
+              EnergyCertificatesService.getByBuilding(building.id).catch(() => ({ sessions: [], certificates: [] })),
+              getBookByBuilding(building.id)
+            ]);
+            return {
+              buildingId: building.id,
+              certificates: certsResponse.certificates || [],
+              book: book
+            };
+          } catch (err) {
+            console.error(`Error cargando datos para edificio ${building.id}:`, err);
+            return {
+              buildingId: building.id,
+              certificates: [],
+              book: null
+            };
+          }
+        });
+        
+        const results = await Promise.all(certsAndBooksPromises);
+        
+        // Consolidar certificados y libros
+        const allCertificates: PersistedEnergyCertificate[] = [];
+        const booksMap = new Map<string, DigitalBook>();
+        
+        results.forEach(result => {
+          // Agregar certificados
+          allCertificates.push(...result.certificates);
+          // Agregar libro si existe
+          if (result.book) {
+            booksMap.set(result.buildingId, result.book);
+          }
+        });
+        
         if (mounted) {
-          setDashboardStats(statsData);
+          setEnergyCertificates(allCertificates);
+          setDigitalBooks(booksMap);
+          stopLoading();
           stopStatsLoading();
         }
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        console.error('Error loading data:', err);
         if (mounted) {
+          stopLoading(err instanceof Error ? err.message : 'Error cargando datos');
           stopStatsLoading();
         }
       }
     };
 
-    loadBuildings();
-    loadDashboardStats();
+    loadAllData();
+    
     return () => {
       mounted = false;
     };
@@ -538,147 +729,113 @@ export default function AssetsList() {
           )}
           </div>
 
-        {/* Assets List + Paginación */}
+        {/* Assets List - Tabla como en la imagen */}
         <div
           className="bg-white rounded-xl border border-gray-200 overflow-hidden max-w-full"
           style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
         >
-          <div className="px-3 sm:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Listado de Activos</h3>
-            {/* total compacto */}
-            {!loading && (
-              <span className="text-xs text-gray-500">
-                {total} registro{total === 1 ? '' : 's'}
-              </span>
-            )}
           </div>
 
-          <div className="divide-y divide-gray-200 max-w-full overflow-x-hidden">
-            {loading ? (
-              <SkeletonBuildingList />
-            ) : paginated.length > 0 ? (
-              paginated.map((building, index) => (
-                <div
-                  key={building.id}
-                  className="block px-3 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer max-w-full overflow-x-hidden"
-                  style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}
-                  onClick={() => navigate(`/edificio/${building.id}`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
+          {loading ? (
+            <SkeletonBuildingList />
+          ) : paginated.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full table-fixed">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '20%'}}>Nombre</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>Valor</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '18%'}}>Estado</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '8%'}}>CEE</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>ESG</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>m²</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>Libro</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {paginated.map((building, index) => (
+                    <tr
+                      key={building.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      style={{ animation: 'fadeInUp 0.4s ease-out both', animationDelay: `${index * 40}ms` }}
+                      onClick={() => navigate(`/edificio/${building.id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
+                    >
+                      {/* Nombre con ubicación debajo */}
+                      <td className="px-4 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{building.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">{getCityAndDistrict(building.address)}</div>
+                        </div>
+                      </td>
+                      
+                      {/* Valor - Oculto en mobile */}
+                      <td className="px-4 py-4 hidden md:table-cell">
+                        <div className="text-sm text-gray-900">{formatBuildingValue(building.price)}</div>
+                      </td>
+                      
+                      {/* Estado - Oculto en mobile */}
+                      <td className="px-4 py-4 hidden md:table-cell">
+                        <BuildingStatusIndicator building={building} digitalBooks={digitalBooks} />
+                      </td>
+                      
+                      {/* CEE - Indicador circular - Oculto en mobile */}
+                      <td className="px-4 py-4 hidden md:table-cell">
+                        <div className="flex items-center justify-center">
+                          <CEERatingIndicator building={building} certificates={energyCertificates} />
+                        </div>
+                      </td>
+                      
+                      {/* ESG - Estrellas con colores - Oculto en mobile */}
+                      <td className="px-4 py-4 text-center hidden md:table-cell">
+                        <ESGScoreIndicator building={building} />
+                      </td>
+                      
+                      {/* m² - Superficie - Oculto en mobile */}
+                      <td className="px-4 py-4 text-center hidden md:table-cell">
+                        <SquareMetersIndicator building={building} />
+                      </td>
+                      
+                      {/* Libro - Estado del libro digital - Oculto en mobile */}
+                      <td className="px-4 py-4 text-center hidden md:table-cell">
+                        <BookStatusIndicator building={building} digitalBooks={digitalBooks} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="px-6 py-12 text-center">
+              <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {user?.role === 'propietario' ? 'No tienes activos aún' : 'No tienes activos asignados'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {user?.role === 'propietario'
+                  ? 'Comienza creando tu primer activo para gestionar tu cartera.'
+                  : 'Contacta con tu administrador para que te asigne activos.'}
+              </p>
+              {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
+                <Link
+                  to="/edificios/crear"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  {/* Desktop: Grid layout */}
-                  <div className="hidden md:flex items-center justify-between">
-                    <div className="flex-1">
-                      {/* Grid de columnas estilo tabla */}
-                      <div className="grid grid-cols-12 gap-4 items-center">
-                        {/* ID + copiar: 132…23 */}
-                        <div className="col-span-2">
-                          <span className="text-[11px] font-medium text-gray-500">ID</span>
-                          <div className="mt-0.5 flex items-center gap-2">
-                            <code className="font-mono text-gray-900">{truncateMiddle(String(building.id), 3, 2)}</code>
-                            <CopyButton value={String(building.id)} label="ID" />
-                          </div>
-                        </div>
-
-                        {/* Nombre */}
-                        <div className="col-span-2">
-                          <span className="text-[11px] font-medium text-gray-500">Nombre</span>
-                          <p className="mt-0.5 font-medium text-gray-900 truncate">{building.name}</p>
-                        </div>
-
-                        {/* Ubicación (una línea + copiar con …) */}
-                        <div className="col-span-5">
-                          <span className="text-[11px] font-medium text-gray-500">Ubicación</span>
-                          <div className="mt-0.5 flex items-center gap-2">
-                            <span className="font-medium text-gray-900 truncate block" title={building.address}>
-                              {building.address}
-                            </span>
-                            <CopyButton value={building.address} label="dirección" />
-                          </div>
-                        </div>
-
-                        {/* Valor o Tipología */}
-                        <div className="col-span-2">
-                          <span className="text-[11px] font-medium text-gray-500">
-                            {user?.role === 'propietario' ? 'Valor' : 'Tipología'}
-                          </span>
-                          <p className="mt-0.5 font-medium text-gray-900">
-                            {user?.role === 'propietario'
-                              ? formatBuildingValue(building.price)
-                              : getBuildingTypologyLabel(building.typology)}
-                          </p>
-                        </div>
-
-                        {/* Estado */}
-                        <div className="col-span-1">
-                          <span className="text-[11px] font-medium text-gray-500">Estado</span>
-                          <div className="mt-0.5">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBuildingStatusColor(
-                                building.status,
-                              )}`}
-                            >
-                              {getBuildingStatusLabel(building.status)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Botón directo a Libro Digital removido: navegación principal va al detalle del edificio */}
-
-                    {/* Flecha */}
-                    <div className="ml-4 shrink-0">
-                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Mobile: Stack layout */}
-                  <div className="md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0 pr-4">
-                        <h3 className="font-medium text-gray-900 text-base truncate" title={building.name}>
-                          {building.name}
-                        </h3>
-                      </div>
-                      {/* Acción principal: abrir detalle del edificio */}
-                      <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="px-3 sm:px-6 py-12 text-center">
-                <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {user?.role === 'propietario' ? 'No tienes activos aún' : 'No tienes activos asignados'}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {user?.role === 'propietario'
-                    ? 'Comienza creando tu primer activo para gestionar tu cartera.'
-                    : 'Contacta con tu administrador para que te asigne activos.'}
-                </p>
-                {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
-                  <Link
-                    to="/edificios/crear"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Crear primer activo
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Crear primer activo
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
 
           {/* Barra de paginación */}
           {!loading && total > 0 && (
@@ -700,7 +857,6 @@ export default function AssetsList() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      </div>
     </div>
   );
 }

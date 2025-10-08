@@ -122,7 +122,7 @@ export class EnergyCertificatesService {
    */
   static async getAll(): Promise<PersistedEnergyCertificate[]> {
     const response = await apiFetch('/certificados-energeticos');
-    return response.data;
+    return response.data || [];
   }
 
   /**

@@ -224,9 +224,10 @@ const SectionEditor: React.FC = () => {
     setIsCompleted(Boolean(newSection?.complete));
   };
 
-  // Auto-completar en silencio UNA vez cuando el formulario pase a válido
+  // Auto-completar en silencio UNA vez cuando el formulario pase a válido (solo para técnicos)
   const autoCompletedRef = React.useRef(false);
   React.useEffect(() => {
+    if (isOwner) return; // Propietarios no pueden auto-guardar
     const valid = validateForm();
     if (!book || !sectionId) return;
     if (valid && !isCompleted && !autoCompletedRef.current) {
@@ -242,7 +243,7 @@ const SectionEditor: React.FC = () => {
       })();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData, documents, book, sectionId]);
+  }, [formData, documents, book, sectionId, isOwner]);
 
   const handleSaveDraft = async () => {
     try {
@@ -401,7 +402,7 @@ const SectionEditor: React.FC = () => {
               ))}
             </div>
 
-              {/* Subida de documentos (solo técnico/admin) */}
+              {/* Documentos de la sección */}
             <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Documentos de la sección</h3>
                 {book && !isOwner && (
@@ -418,7 +419,69 @@ const SectionEditor: React.FC = () => {
                   />
               )}
                 {isOwner && (
-                  <p className="text-sm text-gray-500">Solo lectura para propietarios. Contacta a tu técnico para actualizar documentos.</p>
+                  <div>
+                    {documents.length > 0 ? (
+                      <div className="space-y-2">
+                        {documents.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {/* Icono del documento */}
+                              <div className="flex-shrink-0">
+                                {doc.mimeType.includes('pdf') ? (
+                                  <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                  </svg>
+                                ) : doc.mimeType.includes('image') ? (
+                                  <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                  </svg>
+                                ) : doc.mimeType.includes('word') || doc.mimeType.includes('document') ? (
+                                  <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              {/* Información del documento */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{doc.fileName}</p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(doc.uploadedAt).toLocaleDateString('es-ES')} • {(doc.fileSize / 1024).toFixed(1)} KB
+                                </p>
+                              </div>
+                            </div>
+                            {/* Botón de descarga */}
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Ver documento"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 px-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-sm font-medium text-gray-900 mb-1">No hay documentos cargados</p>
+                        <p className="text-sm text-gray-500">El técnico aún no ha subido documentos a esta sección</p>
+                      </div>
+                    )}
+                  </div>
                 )}
             </div>
           </div>
@@ -427,7 +490,15 @@ const SectionEditor: React.FC = () => {
           <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
               <div className="text-sm text-gray-600">
-                  {!isCompleted && !validateForm() && (
+                  {isOwner && (
+                    <span className="flex items-center gap-2 text-blue-600">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      Modo solo lectura - Contacta al técnico para editar
+                    </span>
+                  )}
+                  {!isOwner && !isCompleted && !validateForm() && (
                     <span>Completa los campos obligatorios (*) para marcar como terminada</span>
                   )}
               </div>
@@ -437,7 +508,7 @@ const SectionEditor: React.FC = () => {
                     onClick={() => navigate(`/libro-digital/hub/${buildingId}`, { state: { buildingId, buildingName } })}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancelar
+                  {isOwner ? 'Volver al Libro Digital' : 'Cancelar'}
                 </button>
                 
                 {!isOwner && (

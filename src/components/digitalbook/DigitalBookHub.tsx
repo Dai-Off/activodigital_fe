@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import ProgressBar from '../ui/ProgressBar';
 import { getBookByBuilding, type DigitalBook } from '../../services/digitalbook';
 import { PageLoader } from '../ui/LoadingSystem';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Datos hardcodeados para demostrar la funcionalidad
 const SECTION_LABELS: Record<string, { title: string; description: string; uiId: string } > = {
@@ -28,6 +29,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { buildingId: buildingIdParam } = useParams();
+  const { user } = useAuth();
 
   // Priorizar: state > URL param > prop
   const buildingId = location.state?.buildingId || buildingIdParam || buildingIdProp;
@@ -36,8 +38,22 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const [book, setBook] = useState<DigitalBook | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Propietario solo puede leer, no editar
+  const canEdit = user?.role !== 'propietario';
+
   const sections = useMemo(() => {
-    if (!book) return [] as Array<{ key: string; title: string; description: string; isCompleted: boolean }>;
+    // Si no hay libro o el libro no tiene secciones, crear las 8 secciones por defecto
+    if (!book || !book.sections || book.sections.length === 0) {
+      console.log('Creando secciones por defecto porque:', !book ? 'no hay libro' : 'no hay secciones');
+      return Object.entries(SECTION_LABELS).map(([type, meta]) => ({
+        key: meta.uiId,
+        title: meta.title,
+        description: meta.description,
+        isCompleted: false
+      }));
+    }
+    
+    console.log('Usando secciones del libro:', book.sections.length);
     return book.sections.map((s) => {
       const meta = SECTION_LABELS[s.type] || { title: s.type, description: '', uiId: s.type };
       return { key: meta.uiId, title: meta.title, description: meta.description, isCompleted: Boolean(s.complete) };
@@ -68,6 +84,10 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     try {
       const b = await getBookByBuilding(buildingId);
       setBook(b);
+    } catch (error) {
+      // Errores reales (no 404, que ya se maneja en getBookByBuilding)
+      console.error('Error cargando libro digital:', error);
+      setBook(null);
     } finally {
       setLoading(false);
     }
@@ -175,47 +195,58 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
             <ProgressBar current={completedSections} total={totalSections} size="lg" />
           </div>
 
-          {/* Panel Importar PDF */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6 h-full flex flex-col">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-lg border border-blue-100">
-                  <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <path d="M14 2v6h6"/>
-                  </svg>
+          {/* Panel Importar PDF - Solo para técnicos */}
+          {canEdit && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="p-6 h-full flex flex-col">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-lg border border-blue-100">
+                    <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <path d="M14 2v6h6"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900">Importar contenido desde PDF</h3>
+                    <p className="text-sm text-gray-600 mt-1">Sube un PDF y mapea las páginas a cada sección del libro.</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">Importar contenido desde PDF</h3>
-                  <p className="text-sm text-gray-600 mt-1">Sube un PDF y mapea las páginas a cada sección del libro.</p>
+                <div className="mt-auto">
+                  <button
+                    onClick={handlePDFImport}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 5v14"/>
+                      <path d="M5 12h14"/>
+                    </svg>
+                    Cargar PDF
+                  </button>
                 </div>
-              </div>
-              <div className="mt-auto">
-                <button
-                  onClick={handlePDFImport}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14"/>
-                    <path d="M5 12h14"/>
-                  </svg>
-                  Cargar PDF
-                </button>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Checklist de secciones */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">Secciones del Libro Digital</h2>
-            <p className="mt-1 text-sm text-gray-600">Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.</p>
+            <p className="mt-1 text-sm text-gray-600">
+              {canEdit 
+                ? 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.'
+                : 'Revisa el contenido de cada sección completada por el técnico asignado.'
+              }
+            </p>
           </div>
 
           <div className="divide-y divide-gray-200">
             {sections.map((section, index) => (
-              <div key={section.key} className="p-6 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => handleSectionClick(section.key)}>
+              <div 
+                key={section.key} 
+                className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handleSectionClick(section.key)}
+              >
                 <div className="flex items-center">
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold mr-3 ${

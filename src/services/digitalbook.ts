@@ -73,13 +73,23 @@ const nocache = () => `t=${Date.now()}`;
  * - Usa apiFetch (adjunta Authorization)
  * - Fuerza no-store + query anti-cache
  * - Devuelve `DigitalBook | null`
+ * - 404 se trata como "libro no existe" (null), NO como error
  */
 export async function getBookByBuilding(buildingId: string): Promise<DigitalBook | null> {
-  const resp = await apiFetch(
-    `/libros-digitales/building/${buildingId}?${nocache()}`,
-    { method: 'GET', cache: 'no-store' }
-  );
-  return (resp as ApiEnvelope<DigitalBook | null>)?.data ?? null;
+  try {
+    const resp = await apiFetch(
+      `/libros-digitales/building/${buildingId}?${nocache()}`,
+      { method: 'GET', cache: 'no-store' }
+    );
+    return (resp as ApiEnvelope<DigitalBook | null>)?.data ?? null;
+  } catch (error: any) {
+    // 404 = libro no existe (caso normal, no es error)
+    if (error?.status === 404 || error?.message?.includes('no encontrado')) {
+      return null;
+    }
+    // Otros errores sí se propagan
+    throw error;
+  }
 }
 
 /**
