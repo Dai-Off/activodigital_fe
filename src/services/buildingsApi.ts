@@ -69,6 +69,47 @@ export interface Technician {
   };
 }
 
+// Estadísticas del dashboard
+export interface DashboardStats {
+  // Métricas financieras
+  totalValue: number;
+  totalAssets: number;
+  totalRehabilitationCost: number;
+  totalPotentialValue: number;
+  
+  // Métricas ambientales y energéticas
+  totalSurfaceArea: number;
+  totalEmissions: number;
+  averageEnergyClass: string | null;
+  averageEnergyRating: number | null;
+  
+  // Métricas de completitud
+  completedBooks: number;
+  pendingBooks: number;
+  draftBooks: number;
+  completionPercentage: number;
+  
+  // Financiación verde
+  greenFinancingEligiblePercentage: number;
+  greenFinancingEligibleCount: number;
+  
+  // Promedios
+  averageUnitsPerBuilding: number;
+  averageBuildingAge: number;
+  averageFloorsPerBuilding: number;
+  
+  // Tipología
+  mostCommonTypology: string | null;
+  typologyDistribution: {
+    residential: number;
+    mixed: number;
+    commercial: number;
+  };
+  
+  // ESG
+  averageESGScore: number | null;
+}
+
 // Respuesta de la API
 export interface ApiResponse<T> {
   data: T;
@@ -137,6 +178,12 @@ export class BuildingsApiService {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  // Obtener estadísticas del dashboard
+  static async getDashboardStats(): Promise<DashboardStats> {
+    const response = await apiFetch('/dashboard/stats', { method: 'GET' });
+    return response.data || response;
   }
 }
 

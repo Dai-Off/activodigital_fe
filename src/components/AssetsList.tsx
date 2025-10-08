@@ -8,11 +8,10 @@ import {
   getBuildingTypologyLabel,
   getBuildingStatusColor,
 } from '../services/buildingsApi';
-import type { Building } from '../services/buildingsApi';
+import type { Building, DashboardStats } from '../services/buildingsApi';
 import {
-  SkeletonUserProfile,
   SkeletonBuildingList,
-  SkeletonPortfolioSummary,
+  SkeletonDashboardSummary,
   useLoadingState,
 } from './ui/LoadingSystem';
 
@@ -162,7 +161,9 @@ export default function AssetsList() {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, hasPermission } = useAuth();
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
+  const { loading: statsLoading, startLoading: startStatsLoading, stopLoading: stopStatsLoading } = useLoadingState(true);
 
   // paginado (cliente)
   const [page, setPage] = useState(1); // 1-based
@@ -189,7 +190,26 @@ export default function AssetsList() {
       }
     };
 
+    const loadDashboardStats = async () => {
+      if (!user || authLoading) return;
+
+      try {
+        startStatsLoading();
+        const statsData = await BuildingsApiService.getDashboardStats();
+        if (mounted) {
+          setDashboardStats(statsData);
+          stopStatsLoading();
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        if (mounted) {
+          stopStatsLoading();
+        }
+      }
+    };
+
     loadBuildings();
+    loadDashboardStats();
     return () => {
       mounted = false;
     };
@@ -257,52 +277,190 @@ export default function AssetsList() {
             </div>
           )}
 
-          {user && !authLoading ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+          {/* Dashboard Summary Card - Exact Layout */}
+          {user && !authLoading && !loading && !statsLoading && dashboardStats ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
+              {/* User Profile Header */}
+              <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-600/10 text-blue-700 flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <circle cx="12" cy="7" r="4" />
                     <path d="M5.5 20a6.5 6.5 0 0113 0" />
                   </svg>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500">Bienvenido</div>
-                  <div className="text-base font-semibold text-gray-900 leading-tight">{user.fullName}</div>
+                    <div className="text-xs text-gray-500">Bienvenido</div>
+                    <div className="text-sm font-semibold text-gray-900">{user.fullName}</div>
+                  </div>
                 </div>
-              </div>
-              <span className="px-3 py-1 rounded-full text-sm border border-gray-200 text-gray-700 capitalize bg-gray-50">
+                <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 capitalize">
                 {user.role}
               </span>
             </div>
-          ) : (
-            <SkeletonUserProfile />
-          )}
+
+              <div className="flex items-start justify-between">
+                {/* Left Section - Metrics and Details */}
+                <div className="flex-1 pr-6">
+                  {/* Main Metrics Row - Dynamic based on user role */}
+                  <div className="grid grid-cols-4 gap-6 mb-4">
+                    {user?.role === 'propietario' ? (
+                      <>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600 mb-1">
+                            {formatBuildingValue(dashboardStats.totalValue)}
+                          </div>
+                          <div className="text-sm text-gray-500">Valor total</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                          <div className="text-sm text-gray-500">Activos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                          </div>
+                          <div className="text-sm text-gray-500">Superficie total</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
+                          </div>
+                          <div className="text-sm text-gray-500">Emisiones anuales</div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
+                          <div className="text-sm text-gray-500">Edificios asignados</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.completedBooks}
+                          </div>
+                          <div className="text-sm text-gray-500">Libros completados</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.pendingBooks}
+                          </div>
+                          <div className="text-sm text-gray-500">Pendientes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                          </div>
+                          <div className="text-sm text-gray-500">Superficie total</div>
+                        </div>
+                      </>
+                    )}
         </div>
 
-        {/* Portfolio Summary */}
-        {loading ? (
-          <SkeletonPortfolioSummary />
-        ) : (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">
-                  {user?.role === 'propietario' ? 'Valor Total de la Cartera' : 'Activos Asignados'}
-                </h2>
-                <p className="text-3xl font-bold text-green-600">
+                  {/* Separator Line */}
+                  <div className="border-t border-gray-200 mb-4"></div>
+
+                  {/* Performance Details - Dynamic based on user role */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {user?.role === 'propietario' ? (
+                      <>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">Clase energética promedio:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.averageEnergyClass || '-'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">ESG Score medio:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.averageESGScore ? `${dashboardStats.averageESGScore}/100` : '-'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">Libro Digital completo:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.completedBooks} de {dashboardStats.totalAssets}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">Tipología más común:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.mostCommonTypology ? getBuildingTypologyLabel(dashboardStats.mostCommonTypology as any) : 'N/A'}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">Promedio de unidades:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.averageUnitsPerBuilding}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-gray-500 mb-1">Edad promedio:</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {dashboardStats.averageBuildingAge} años
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Section - Progress Chart */}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="relative w-24 h-24 mb-3">
+                    {/* Circular Progress Chart */}
+                    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                      {/* Background Circle */}
+                      <path
+                        className="text-gray-200"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        fill="transparent"
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      {/* Progress Circle */}
+                      <path
+                        className="text-green-500"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        fill="transparent"
+                        strokeDasharray={`${user?.role === 'propietario' ? dashboardStats.greenFinancingEligiblePercentage : dashboardStats.completionPercentage}, 100`}
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    {/* Center Text */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-green-500">
+                          {user?.role === 'propietario' 
+                            ? `${dashboardStats.greenFinancingEligiblePercentage}%`
+                            : `${dashboardStats.completionPercentage}%`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center max-w-[100px]">
+                    <div className="text-xs text-gray-500 leading-tight">
                   {user?.role === 'propietario'
-                    ? formatBuildingValue(buildings.reduce((total, building) => total + (building.price || 0), 0))
-                    : buildings.length.toString()}
-                </p>
+                        ? '% cartera apta para financiación verde' 
+                        : '% libros digitales completados'}
+                    </div>
+                  </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">{user?.role === 'propietario' ? 'Total de Activos' : 'Para Gestionar'}</p>
-                <p className="text-2xl font-semibold text-gray-900">{buildings.length}</p>
               </div>
             </div>
+          ) : (
+            <SkeletonDashboardSummary />
+          )}
           </div>
-        )}
 
         {/* Assets List + Paginación */}
         <div
@@ -457,7 +615,6 @@ export default function AssetsList() {
               pageSizeOptions={[10, 20, 50]}
             />
           )}
-        </div>
       </div>
 
       {/* Animaciones simples */}
@@ -467,6 +624,8 @@ export default function AssetsList() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+      </div>
     </div>
   );
 }
+
