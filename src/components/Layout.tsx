@@ -78,7 +78,7 @@ export default function Layout() {
 
     const requestBody = {
       prompt: text.trim(),
-      usuario_id: "923f8093-5d82-43da-bcc2-8fbfcb3dac84",
+      usuario_id: user.userId,
       session_id: sessionIdRef.current,
     };
     console.log('📤 Enviando al orquestador:', requestBody);
@@ -423,7 +423,7 @@ export default function Layout() {
           className={`
             relative
             transition-all duration-300 ease-out
-            ${isChatOpen ? 'md:pr-80' : 'md:pr-0'}
+            ${isChatOpen ? 'md:pr-96' : 'md:pr-0'}
           `}
         >
           {/* Contenido */}
@@ -437,7 +437,7 @@ export default function Layout() {
             aria-label="Chat IA"
             className={`
               hidden md:flex md:flex-col md:border-l md:border-gray-200 md:bg-white
-              md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-80
+              md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-96
               ${isChatOpen ? 'md:opacity-100' : 'md:opacity-0 pointer-events-none'}
               transition-opacity duration-300
             `}
@@ -693,7 +693,7 @@ export default function Layout() {
         </div>
       </main>
 
-      <div className={`transition-all duration-300 ease-out ${isChatOpen ? 'md:pr-80' : 'md:pr-0'}`}>
+      <div className={`transition-all duration-300 ease-out ${isChatOpen ? 'md:pr-96' : 'md:pr-0'}`}>
         <Footer />
       </div>
 
