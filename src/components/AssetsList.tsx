@@ -6,7 +6,6 @@ import {
   formatBuildingValue,
   getBuildingStatusLabel,
   getBuildingTypologyLabel,
-  getBuildingStatusColor,
 } from '../services/buildingsApi';
 import type { Building, DashboardStats } from '../services/buildingsApi';
 import {
@@ -17,14 +16,9 @@ import {
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
 import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
+import { getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
 
 /* -------------------------- Utils de presentación -------------------------- */
-function truncateMiddle(str: string, front = 3, back = 2): string {
-  if (!str) return '';
-  if (str.length <= front + back + 1) return str;
-  return `${str.slice(0, front)}…${str.slice(-back)}`;
-}
-
 function getCityAndDistrict(address: string): string {
   if (!address) return '';
   
@@ -62,39 +56,6 @@ function getCityAndDistrict(address: string): string {
   
   // Último fallback: devolver la dirección completa truncada
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
-}
-
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [ok, setOk] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async (e) => {
-        e.preventDefault(); // evita navegar si está dentro de <Link>
-        try {
-          await navigator.clipboard.writeText(value);
-          setOk(true);
-          setTimeout(() => setOk(false), 1200);
-        } catch {}
-      }}
-      className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] text-gray-600 hover:bg-gray-50 hover:border-gray-300"
-      title={`Copiar ${label}`}
-      aria-label={`Copiar ${label}`}
-      onMouseDown={(e) => e.stopPropagation()}
-      onClickCapture={(e) => e.stopPropagation()}
-    >
-      {ok ? (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      ) : (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
-      )}
-    </button>
-  );
 }
 
 function PaginationBar({
@@ -233,12 +194,29 @@ function CEERatingIndicator({ building, certificates }: { building: Building; ce
 }
 
 // Componente para el indicador ESG
-function ESGScoreIndicator({ building }: { building: Building }) {
-  // TODO: Obtener score ESG real cuando esté disponible en el API
-  // Por ahora mostramos "-" si no hay datos
+function ESGScoreIndicator({ building, esgData }: { building: Building; esgData: Map<string, ESGResponse> }) {
+  const esg = esgData.get(building.id);
+  
+  if (!esg || !esg.data) {
+    return <span className="text-sm text-gray-400">-</span>;
+  }
+  
+  const label = esg.data.label;
+  const color = getESGLabelColor(label);
   
   return (
-    <span className="text-sm text-gray-400">-</span>
+    <div className="flex flex-col items-center justify-center gap-1">
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 24 24" 
+        fill={color}
+        className="w-6 h-6"
+        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
+      >
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+      <span className="text-xs font-medium text-gray-700">{label}</span>
+    </div>
   );
 }
 
@@ -317,9 +295,10 @@ export default function AssetsList() {
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
   const { loading: statsLoading, startLoading: startStatsLoading, stopLoading: stopStatsLoading } = useLoadingState(true);
   
-  // Estados para certificados energéticos y libros digitales
+  // Estados para certificados energéticos, libros digitales y ESG
   const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
   const [digitalBooks, setDigitalBooks] = useState<Map<string, DigitalBook>>(new Map());
+  const [esgScores, setEsgScores] = useState<Map<string, ESGResponse>>(new Map());
 
   // paginado (cliente)
   const [page, setPage] = useState(1); // 1-based
@@ -347,33 +326,37 @@ export default function AssetsList() {
         setBuildings(buildingsData);
         setDashboardStats(statsData);
         
-        // Cargar certificados y libros digitales para todos los edificios en paralelo
+        // Cargar certificados, libros digitales y ESG para todos los edificios en paralelo
         const certsAndBooksPromises = buildingsData.map(async (building) => {
           try {
-            const [certsResponse, book] = await Promise.all([
+            const [certsResponse, book, esgScore] = await Promise.all([
               EnergyCertificatesService.getByBuilding(building.id).catch(() => ({ sessions: [], certificates: [] })),
-              getBookByBuilding(building.id)
+              getBookByBuilding(building.id),
+              getESGScore(building.id).catch(() => null)
             ]);
             return {
               buildingId: building.id,
               certificates: certsResponse.certificates || [],
-              book: book
+              book: book,
+              esgScore: esgScore
             };
           } catch (err) {
             console.error(`Error cargando datos para edificio ${building.id}:`, err);
             return {
               buildingId: building.id,
               certificates: [],
-              book: null
+              book: null,
+              esgScore: null
             };
           }
         });
         
         const results = await Promise.all(certsAndBooksPromises);
         
-        // Consolidar certificados y libros
+        // Consolidar certificados, libros y ESG
         const allCertificates: PersistedEnergyCertificate[] = [];
         const booksMap = new Map<string, DigitalBook>();
+        const esgMap = new Map<string, ESGResponse>();
         
         results.forEach(result => {
           // Agregar certificados
@@ -382,11 +365,16 @@ export default function AssetsList() {
           if (result.book) {
             booksMap.set(result.buildingId, result.book);
           }
+          // Agregar ESG si existe
+          if (result.esgScore) {
+            esgMap.set(result.buildingId, result.esgScore);
+          }
         });
         
         if (mounted) {
           setEnergyCertificates(allCertificates);
           setDigitalBooks(booksMap);
+          setEsgScores(esgMap);
           stopLoading();
           stopStatsLoading();
         }
@@ -792,7 +780,7 @@ export default function AssetsList() {
                       
                       {/* ESG - Estrellas con colores - Oculto en mobile */}
                       <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <ESGScoreIndicator building={building} />
+                        <ESGScoreIndicator building={building} esgData={esgScores} />
                       </td>
                       
                       {/* m² - Superficie - Oculto en mobile */}

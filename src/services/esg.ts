@@ -1,0 +1,83 @@
+// src/services/esg.ts
+// Servicio para obtener la calificación ESG de un edificio
+
+import { apiFetch } from './api';
+
+export interface ESGEnvironmental {
+  ceePoints: number;
+  consumptionPoints: number;
+  emissionsPoints: number;
+  renewablePoints: number;
+  waterPoints: number;
+  subtotalRaw: number;
+  normalized: number;
+}
+
+export interface ESGSocial {
+  accessibilityPoints: number;
+  airQualityPoints: number;
+  safetyPoints: number;
+  subtotalRaw: number;
+  normalized: number;
+}
+
+export interface ESGGovernance {
+  digitalLogPoints: number;
+  compliancePoints: number;
+  subtotalRaw: number;
+  normalized: number;
+}
+
+export interface ESGData {
+  environmental: ESGEnvironmental;
+  social: ESGSocial;
+  governance: ESGGovernance;
+  total: number;
+  label: string;
+}
+
+export interface ESGResponse {
+  data: ESGData;
+}
+
+/**
+ * Obtiene la calificación ESG de un edificio
+ * @param buildingId - ID del edificio
+ * @returns La respuesta ESG del edificio
+ */
+export async function getESGScore(buildingId: string): Promise<ESGResponse> {
+  try {
+    const response = await apiFetch('/esg/calculate', {
+      method: 'POST',
+      body: JSON.stringify({ building_id: buildingId }),
+    });
+    
+    return response;
+  } catch (error) {
+    console.error(`Error obteniendo ESG para edificio ${buildingId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Mapea el label del ESG a un color de estrella
+ */
+export function getESGLabelColor(label: string): string {
+  const labelLower = label.toLowerCase();
+  
+  if (labelLower.includes('platinum') || labelLower.includes('platino') || labelLower.includes('excelente')) {
+    return '#E5E4E2'; // Platino
+  }
+  if (labelLower.includes('gold') || labelLower.includes('oro') || labelLower.includes('avanzado')) {
+    return '#D4AF37'; // Oro
+  }
+  if (labelLower.includes('silver') || labelLower.includes('plata') || labelLower.includes('intermedio')) {
+    return '#C0C0C0'; // Plata
+  }
+  if (labelLower.includes('bronze') || labelLower.includes('bronce') || labelLower.includes('básico')) {
+    return '#CD7F32'; // Bronce
+  }
+  // Crítico o cualquier otro label
+  return '#9CA3AF'; // Gris
+}
+
