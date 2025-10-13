@@ -1,4 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+// Utilidad simple para convertir tablas markdown a HTML
+function markdownTableToHtml(md: string): string {
+  // Busca bloques de tabla markdown
+  const tableRegex = /((?:^|\n)\|.+\|\n\|[-| :]+\|(?:\n\|.*\|)+)/g;
+  return md.replace(tableRegex, (tableBlock) => {
+    const lines = tableBlock.trim().split('\n').filter(Boolean);
+    if (lines.length < 2) return tableBlock; // No es tabla válida
+    const header = lines[0].split('|').slice(1, -1).map((h) => h.trim());
+    const rows = lines.slice(2).map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
+    let html = '<table class="ai-table"><thead><tr>';
+    html += header.map(h => `<th>${h}</th>`).join('');
+    html += '</tr></thead><tbody>';
+    html += rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+    html += '</tbody></table>';
+    return html;
+  });
+}
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import Footer from './Footer';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +42,7 @@ export default function Layout() {
   const { user } = useAuth();
 
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatFullscreen, setIsChatFullscreen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       id: crypto.randomUUID(),
@@ -55,6 +73,13 @@ export default function Layout() {
       clearTimeout(t);
     };
   }, [isChatOpen]);
+
+  // Efecto para resetear fullscreen cuando se cierra el chat
+  useEffect(() => {
+    if (!isChatOpen && isChatFullscreen) {
+      setIsChatFullscreen(false);
+    }
+  }, [isChatOpen, isChatFullscreen]);
 
 
   const sendMessage = async (text: string) => {
@@ -249,7 +274,7 @@ export default function Layout() {
   return (
     <div className="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
       {/* Header/Navbar */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 animate-slideDown">
+  <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 animate-slideDown ${isChatFullscreen ? 'hidden' : ''}`}> 
         <div className="px-4 sm:px-6 lg:px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
@@ -437,10 +462,11 @@ export default function Layout() {
             aria-label="Chat IA"
             className={`
               hidden md:flex md:flex-col md:border-l md:border-gray-200 md:bg-white
-              md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-96
+              ${isChatFullscreen ? 'fixed inset-0 z-[1100] w-screen h-screen md:w-screen md:h-screen top-0 left-0' : 'md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-96'}
               ${isChatOpen ? 'md:opacity-100' : 'md:opacity-0 pointer-events-none'}
-              transition-opacity duration-300
+              transition-all duration-300 bg-white
             `}
+            style={isChatFullscreen ? { border: 'none', borderRadius: 0 } : {}}
           >
             {/* Header chat */}
             <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
@@ -453,20 +479,22 @@ export default function Layout() {
                 </div>
                 <span className="font-semibold text-gray-900">Chat IA</span>
               </div>
-              <button
-                onClick={() => setIsChatOpen(false)}
-                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Cerrar chat"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsChatOpen(false)}
+                  className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Cerrar chat"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Mensajes + input */}
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0" style={{ height: 'calc(100vh - 140px)' }}>
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 chat-background" style={{ height: 'calc(100vh - 140px)' }}>
                 {messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -477,7 +505,15 @@ export default function Layout() {
                       }`}
                     >
                       {/* Contenido del mensaje */}
-                      <div className="whitespace-pre-wrap">{m.content}</div>
+                      {/* Renderiza tablas markdown como HTML si existen */}
+                      {m.role === 'ai' && /\|.+\|\n\|[-| :]+\|/.test(m.content) ? (
+                        <div
+                          className="whitespace-pre-wrap ai-markdown-table"
+                          dangerouslySetInnerHTML={{ __html: markdownTableToHtml(m.content) }}
+                        />
+                      ) : (
+                        <div className="whitespace-pre-wrap">{m.content}</div>
+                      )}
 
                       {/* Vista previa de llamada a herramienta (mock) */}
                       {m.toolCallPreview && (
@@ -550,6 +586,24 @@ export default function Layout() {
                     </svg>
                     Enviar
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsChatFullscreen(f => !f)}
+                    className="rounded-md p-2 ml-1 bg-white border border-gray-300 text-blue-600 hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                    aria-label={isChatFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                    title={isChatFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '40px' }}
+                  >
+                    {isChatFullscreen ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 15v5h5M20 9V4h-5M4 4l7 7M20 20l-7-7" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               </form>
             </div>
@@ -561,8 +615,9 @@ export default function Layout() {
               fixed inset-x-0 top-16 z-40
               ${isChatOpen ? 'pointer-events-auto' : 'pointer-events-none'}
               md:hidden
+              ${isChatFullscreen ? 'fixed inset-0 top-0 left-0 h-screen w-screen z-[1100]' : ''}
             `}
-            style={{ bottom: isChatOpen ? `${FOOTER_HEIGHT_PX}px` : '0px' }}
+            style={isChatFullscreen ? { bottom: 0 } : { bottom: isChatOpen ? `${FOOTER_HEIGHT_PX}px` : '0px' }}
             aria-hidden={!isChatOpen}
           >
             {/* Backdrop */}
@@ -577,6 +632,7 @@ export default function Layout() {
                 transition-transform duration-300 ease-out
                 ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
                 flex flex-col
+                ${isChatFullscreen ? '!max-w-none !w-screen !h-screen !border-0 !rounded-none !fixed !top-0 !left-0 !z-[1100]' : ''}
               `}
               role="dialog"
               aria-modal="true"
@@ -592,19 +648,41 @@ export default function Layout() {
                   </div>
                   <span className="font-semibold text-gray-900">Chat IA</span>
                 </div>
-                <button
-                  onClick={() => setIsChatOpen(false)}
-                  className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Cerrar chat"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setIsChatFullscreen(f => !f)}
+                    className="rounded-md p-2 bg-white border border-gray-300 text-blue-600 hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                    aria-label={isChatFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                    title={isChatFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {isChatFullscreen ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 15v5h5M20 9V4h-5M4 4l7 7M20 20l-7-7" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7" />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsChatFullscreen(false);
+                      setIsChatOpen(false);
+                    }}
+                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Cerrar chat"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0" style={{ height: 'calc(100vh - 140px)' }}>
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 chat-background" style={{ height: 'calc(100vh - 140px)' }}>
                 {messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -614,7 +692,14 @@ export default function Layout() {
                           : 'bg-gray-100 text-gray-800 rounded-bl-sm'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap">{m.content}</div>
+                      {m.role === 'ai' && /\|.+\|\n\|[-| :]+\|/.test(m.content) ? (
+                        <div
+                          className="whitespace-pre-wrap ai-markdown-table"
+                          dangerouslySetInnerHTML={{ __html: markdownTableToHtml(m.content) }}
+                        />
+                      ) : (
+                        <div className="whitespace-pre-wrap">{m.content}</div>
+                      )}
 
                       {m.toolCallPreview && (
                         <div className="mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700">
@@ -698,11 +783,68 @@ export default function Layout() {
       </div>
 
       <style>{`
+        .ai-table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
+        .ai-table th, .ai-table td { border: 1px solid #d1d5db; padding: 0.4em 0.7em; text-align: left; }
+        .ai-table th { background: #f3f4f6; font-weight: 600; }
+        .ai-table tr:nth-child(even) td { background: #f9fafb; }
         @keyframes slideDown {
           from { transform: translateY(-100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
         .animate-slideDown { animation: slideDown 0.6s ease-out; }
+        
+        /* Background arquitectónico detallado para el chat */
+        .chat-background {
+          background: linear-gradient(180deg, #dbeafe 0%, #e0f2fe 25%, #f0f9ff 50%, #fafafa 100%);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        /* Nubes decorativas en el cielo */
+        .chat-background::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 50%;
+          background-image: 
+            url("data:image/svg+xml,%3Csvg width='400' height='200' viewBox='0 0 400 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' opacity='0.5'%3E%3Cellipse cx='60' cy='50' rx='30' ry='15' /%3E%3Cellipse cx='48' cy='58' rx='24' ry='12' /%3E%3Cellipse cx='72' cy='58' rx='22' ry='11' /%3E%3Cellipse cx='200' cy='40' rx='35' ry='17' /%3E%3Cellipse cx='186' cy='49' rx='26' ry='13' /%3E%3Cellipse cx='218' cy='49' rx='24' ry='12' /%3E%3Cellipse cx='320' cy='65' rx='32' ry='16' /%3E%3Cellipse cx='305' cy='73' rx='28' ry='14' /%3E%3Cellipse cx='338' cy='72' rx='26' ry='13' /%3E%3Cellipse cx='140' cy='100' rx='28' ry='14' /%3E%3Cellipse cx='128' cy='108' rx='22' ry='11' /%3E%3Cellipse cx='154' cy='107' rx='20' ry='10' /%3E%3Cellipse cx='280' cy='120' rx='30' ry='15' /%3E%3Cellipse cx='267' cy='128' rx='24' ry='12' /%3E%3Cellipse cx='295' cy='127' rx='22' ry='11' /%3E%3C/g%3E%3Cg fill='%23fbbf24' opacity='0.6'%3E%3Ccircle cx='350' cy='35' r='25' /%3E%3C/g%3E%3Cg fill='%23fbbf24' opacity='0.2'%3E%3Ccircle cx='350' cy='35' r='32' /%3E%3C/g%3E%3Cg fill='none' stroke='%2393c5fd' stroke-width='1' opacity='0.3'%3E%3Cpath d='M 20 160 Q 50 155 80 160 T 140 160 T 200 160 T 260 160 T 320 160 T 380 160' /%3E%3Cpath d='M 30 175 Q 60 172 90 175 T 150 175 T 210 175 T 270 175 T 330 175' /%3E%3C/g%3E%3C/svg%3E");
+          background-size: 800px 400px;
+          background-position: 0 0;
+          background-repeat: repeat-x;
+          animation: moveClouds 80s linear infinite;
+          pointer-events: none;
+          z-index: 0;
+        }
+        
+        @keyframes moveClouds {
+          0% { background-position: 0 0; }
+          100% { background-position: 800px 0; }
+        }
+        
+        /* Skyline de edificios con más detalles y árboles completos */
+        .chat-background::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 55%;
+          background-image: 
+            url("data:image/svg+xml,%3Csvg width='1000' height='500' viewBox='0 0 1000 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='buildingGrad' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%233b82f6;stop-opacity:0.15' /%3E%3Cstop offset='100%25' style='stop-color:%232563eb;stop-opacity:0.08' /%3E%3C/linearGradient%3E%3ClinearGradient id='buildingGrad2' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%236366f1;stop-opacity:0.14' /%3E%3Cstop offset='100%25' style='stop-color:%234f46e5;stop-opacity:0.07' /%3E%3C/linearGradient%3E%3ClinearGradient id='trunkGrad' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%23783e1e;stop-opacity:0.5' /%3E%3Cstop offset='100%25' style='stop-color:%235c2e10;stop-opacity:0.6' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23buildingGrad)'%3E%3Crect x='40' y='220' width='70' height='280' /%3E%3Crect x='120' y='170' width='85' height='330' /%3E%3Crect x='215' y='240' width='60' height='260' /%3E%3Crect x='285' y='150' width='95' height='350' /%3E%3Crect x='390' y='200' width='75' height='300' /%3E%3Crect x='475' y='230' width='65' height='270' /%3E%3C/g%3E%3Cg fill='url(%23buildingGrad2)'%3E%3Crect x='550' y='120' width='90' height='380' /%3E%3Crect x='650' y='180' width='70' height='320' /%3E%3Crect x='730' y='210' width='80' height='290' /%3E%3Crect x='820' y='160' width='75' height='340' /%3E%3Crect x='905' y='190' width='70' height='310' /%3E%3C/g%3E%3Cg fill='%23fef3c7' opacity='0.7'%3E%3Crect x='48' y='232' width='9' height='10' /%3E%3Crect x='62' y='232' width='9' height='10' /%3E%3Crect x='76' y='232' width='9' height='10' /%3E%3Crect x='90' y='232' width='9' height='10' /%3E%3Crect x='48' y='250' width='9' height='10' /%3E%3Crect x='62' y='250' width='9' height='10' /%3E%3Crect x='76' y='250' width='9' height='10' /%3E%3Crect x='90' y='250' width='9' height='10' /%3E%3Crect x='48' y='268' width='9' height='10' /%3E%3Crect x='62' y='268' width='9' height='10' /%3E%3Crect x='76' y='268' width='9' height='10' /%3E%3Crect x='90' y='268' width='9' height='10' /%3E%3Crect x='48' y='286' width='9' height='10' /%3E%3Crect x='62' y='286' width='9' height='10' /%3E%3Crect x='76' y='286' width='9' height='10' /%3E%3Crect x='90' y='286' width='9' height='10' /%3E%3Crect x='130' y='184' width='11' height='12' /%3E%3Crect x='147' y='184' width='11' height='12' /%3E%3Crect x='164' y='184' width='11' height='12' /%3E%3Crect x='181' y='184' width='11' height='12' /%3E%3Crect x='130' y='205' width='11' height='12' /%3E%3Crect x='147' y='205' width='11' height='12' /%3E%3Crect x='164' y='205' width='11' height='12' /%3E%3Crect x='181' y='205' width='11' height='12' /%3E%3Crect x='130' y='226' width='11' height='12' /%3E%3Crect x='147' y='226' width='11' height='12' /%3E%3Crect x='164' y='226' width='11' height='12' /%3E%3Crect x='181' y='226' width='11' height='12' /%3E%3Crect x='130' y='247' width='11' height='12' /%3E%3Crect x='147' y='247' width='11' height='12' /%3E%3Crect x='164' y='247' width='11' height='12' /%3E%3Crect x='181' y='247' width='11' height='12' /%3E%3Crect x='295' y='164' width='12' height='13' /%3E%3Crect x='313' y='164' width='12' height='13' /%3E%3Crect x='331' y='164' width='12' height='13' /%3E%3Crect x='349' y='164' width='12' height='13' /%3E%3Crect x='367' y='164' width='12' height='13' /%3E%3Crect x='295' y='187' width='12' height='13' /%3E%3Crect x='313' y='187' width='12' height='13' /%3E%3Crect x='331' y='187' width='12' height='13' /%3E%3Crect x='349' y='187' width='12' height='13' /%3E%3Crect x='367' y='187' width='12' height='13' /%3E%3Crect x='295' y='210' width='12' height='13' /%3E%3Crect x='313' y='210' width='12' height='13' /%3E%3Crect x='331' y='210' width='12' height='13' /%3E%3Crect x='349' y='210' width='12' height='13' /%3E%3Crect x='367' y='210' width='12' height='13' /%3E%3Crect x='560' y='134' width='13' height='14' /%3E%3Crect x='579' y='134' width='13' height='14' /%3E%3Crect x='598' y='134' width='13' height='14' /%3E%3Crect x='617' y='134' width='13' height='14' /%3E%3Crect x='560' y='159' width='13' height='14' /%3E%3Crect x='579' y='159' width='13' height='14' /%3E%3Crect x='598' y='159' width='13' height='14' /%3E%3Crect x='617' y='159' width='13' height='14' /%3E%3Crect x='560' y='184' width='13' height='14' /%3E%3Crect x='579' y='184' width='13' height='14' /%3E%3Crect x='598' y='184' width='13' height='14' /%3E%3Crect x='617' y='184' width='13' height='14' /%3E%3Crect x='560' y='209' width='13' height='14' /%3E%3Crect x='579' y='209' width='13' height='14' /%3E%3Crect x='598' y='209' width='13' height='14' /%3E%3Crect x='617' y='209' width='13' height='14' /%3E%3C/g%3E%3Cg fill='url(%23trunkGrad)'%3E%3Crect x='20' y='450' width='10' height='50' rx='2' /%3E%3Crect x='110' y='455' width='10' height='50' rx='2' /%3E%3Crect x='203' y='452' width='10' height='50' rx='2' /%3E%3Crect x='378' y='453' width='10' height='50' rx='2' /%3E%3Crect x='540' y='456' width='10' height='50' rx='2' /%3E%3Crect x='640' y='454' width='10' height='50' rx='2' /%3E%3Crect x='808' y='451' width='10' height='50' rx='2' /%3E%3Crect x='965' y='455' width='10' height='50' rx='2' /%3E%3C/g%3E%3Cg fill='%2310b981' opacity='0.4'%3E%3Cellipse cx='25' cy='455' rx='32' ry='40' /%3E%3Cellipse cx='115' cy='460' rx='28' ry='35' /%3E%3Cellipse cx='208' cy='457' rx='30' ry='38' /%3E%3Cellipse cx='383' cy='458' rx='31' ry='39' /%3E%3Cellipse cx='545' cy='461' rx='29' ry='36' /%3E%3Cellipse cx='645' cy='459' rx='30' ry='37' /%3E%3Cellipse cx='813' cy='456' rx='32' ry='40' /%3E%3Cellipse cx='970' cy='460' rx='28' ry='35' /%3E%3C/g%3E%3Cg stroke='%2364748b' stroke-width='2' opacity='0.2' fill='none'%3E%3Cpath d='M 0 492 Q 125 484 250 492 T 500 492 T 750 492 T 1000 492' /%3E%3C/g%3E%3Cg fill='%2393c5fd' opacity='0.15'%3E%3Crect x='280' y='145' width='8' height='8' transform='rotate(45 284 149)' /%3E%3Crect x='390' y='195' width='6' height='6' transform='rotate(45 393 198)' /%3E%3Crect x='550' y='115' width='7' height='7' transform='rotate(45 553.5 118.5)' /%3E%3C/g%3E%3C/svg%3E");
+          background-size: 1400px 500px;
+          background-position: center bottom;
+          background-repeat: repeat-x;
+          opacity: 1;
+          pointer-events: none;
+          z-index: 1;
+        }
+        
+        .chat-background > * {
+          position: relative;
+          z-index: 2;
+        }
       `}</style>
     </div>
   );
