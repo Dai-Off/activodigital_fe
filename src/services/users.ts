@@ -21,3 +21,4 @@ export async function assignTechnician(payload: { buildingId: string; technician
     body: JSON.stringify(payload),
   });
 }
+

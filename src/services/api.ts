@@ -4,7 +4,33 @@
 //
 // 1) Base URLs dinámicos
 //
-const getApiBaseUrl = () => {
+// Variable global para cachear el resultado de la detección
+let cachedApiBaseUrl: string | null = null;
+let detectionPromise: Promise<string> | null = null;
+
+// Función para limpiar la caché (útil para testing)
+export const clearBackendCache = () => {
+  cachedApiBaseUrl = null;
+  detectionPromise = null;
+  console.log('🧹 Caché de backend limpiada');
+};
+
+const detectBackendAvailability = async (url: string): Promise<boolean> => {
+  try {
+    console.log(`🔍 Probando conectividad con: ${url}/health`);
+    const response = await fetch(`${url}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(2000) // 2 segundos timeout
+    });
+    console.log(`📡 Respuesta de ${url}:`, response.status, response.ok);
+    return response.ok;
+  } catch (error) {
+    console.log(`❌ Error conectando con ${url}:`, error);
+    return false;
+  }
+};
+
+const getApiBaseUrl = async (): Promise<string> => {
   const isLocalhost =
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
@@ -12,14 +38,47 @@ const getApiBaseUrl = () => {
   // 1. Si hay VITE_API_BASE, usarlo (dev o prod)
   if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
 
-  // 2. Localhost sin VITE_API_BASE → backend local
-  if (isLocalhost) return 'http://localhost:3000';
+  // 2. Si estamos en localhost → detectar automáticamente
+  if (isLocalhost) {
+    // Si hay un parámetro ?backend=prod en la URL, usar producción
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('backend') === 'prod') {
+      return 'https://activodigital-be.fly.dev';
+    }
 
-  // 3. Producción sin VITE_API_BASE → backend por defecto
+    // Si ya tenemos un resultado cacheado, usarlo
+    if (cachedApiBaseUrl) return cachedApiBaseUrl;
+
+    // Si ya hay una detección en progreso, esperar a que termine
+    if (detectionPromise) return detectionPromise;
+
+    // Iniciar detección
+    detectionPromise = (async () => {
+      console.log('🔍 Iniciando detección automática de backend...');
+      
+      // Intentar backend local primero
+      const isLocalAvailable = await detectBackendAvailability('http://localhost:3000');
+      
+      if (isLocalAvailable) {
+        console.log('✅ Backend local disponible: http://localhost:3000');
+        cachedApiBaseUrl = 'http://localhost:3000';
+        return 'http://localhost:3000';
+      } else {
+        console.log('❌ Backend local no disponible, usando producción: https://activodigital-be.fly.dev');
+        cachedApiBaseUrl = 'https://activodigital-be.fly.dev';
+        return 'https://activodigital-be.fly.dev';
+      }
+    })();
+
+    return detectionPromise;
+  }
+  
+  // 3. Si estamos en producción → backend de producción
   return 'https://activodigital-be.fly.dev';
 };
 
-export const API_BASE_URL = getApiBaseUrl();
+// No podemos exportar directamente porque ahora es async
+// Se calculará dinámicamente en cada petición
 export const CERTIFICATE_EXTRACTOR_URL =
   import.meta.env.VITE_CERTIFICATE_EXTRACTOR_URL ||
   'https://energy-certificate-extractor.fly.dev';
@@ -58,8 +117,11 @@ export async function apiFetch(
   options: RequestInit = {},
   timeoutMs: number = DEFAULT_TIMEOUT_MS
 ) {
+  // Obtener la URL base dinámicamente
+  const baseUrl = await getApiBaseUrl();
+  
   // Normaliza URL
-  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
   // Headers base
   const headers = new Headers(options.headers || {});
@@ -78,9 +140,12 @@ export async function apiFetch(
       headers.set('Authorization', `Bearer ${token}`);
     }
     if (import.meta.env.DEV && !_loggedOnce) {
-      console.log('🔧 API_BASE_URL:', API_BASE_URL);
+      console.log('🔧 API_BASE_URL (DINÁMICO):', baseUrl);
       console.log('🔧 Hostname:', window.location.hostname);
-      console.log('🔧 VITE_API_BASE env var:', import.meta.env.VITE_API_BASE);
+      console.log('🔧 Is Localhost:', window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      console.log('🔧 URL Params:', window.location.search);
+      console.log('🔧 Backend param:', new URLSearchParams(window.location.search).get('backend'));
+      console.log('🔧 VITE_API_BASE:', import.meta.env.VITE_API_BASE);
       console.log('🔑 Authorization header (apiFetch):', headers.get('Authorization'));
       _loggedOnce = true;
     }
