@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BuildingsApiService, ValidateAssignmentsResponse } from '../../services/buildingsApi';
+import { BuildingsApiService } from '../../services/buildingsApi';
 
 // Import BuildingStep1Data from CreateBuildingWizard
 import type { BuildingStep1Data } from './CreateBuildingWizard';
