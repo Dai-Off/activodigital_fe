@@ -739,7 +739,6 @@ export default function AssetsList() {
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '8%'}}>CEE</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>ESG</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>m²</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>Libro</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -788,10 +787,7 @@ export default function AssetsList() {
                         <SquareMetersIndicator building={building} />
                       </td>
                       
-                      {/* Libro - Estado del libro digital - Oculto en mobile */}
-                      <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <BookStatusIndicator building={building} digitalBooks={digitalBooks} />
-                      </td>
+                   
                     </tr>
                   ))}
                 </tbody>

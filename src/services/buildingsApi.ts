@@ -226,7 +226,7 @@ export const formatPotentialValue = (value?: number): string => {
 export const getBuildingStatusLabel = (status: Building['status']): string => {
   switch (status) {
     case 'draft':
-      return 'Pendiente libro digital';
+      return 'Pendiente';
     case 'ready_book':
       return 'Listo para libro';
     case 'with_book':
