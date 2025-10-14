@@ -197,10 +197,22 @@ function CEERatingIndicator({ building, certificates }: { building: Building; ce
 function ESGScoreIndicator({ building, esgData }: { building: Building; esgData: Map<string, ESGResponse> }) {
   const esg = esgData.get(building.id);
   
-  if (!esg || !esg.data) {
+  // Si no hay datos ESG, mostrar '-'
+  if (!esg) {
     return <span className="text-sm text-gray-400">-</span>;
   }
   
+  // Si el status es 'incomplete', mostrar '-'
+  if (esg.status === 'incomplete') {
+    return <span className="text-sm text-gray-400">-</span>;
+  }
+  
+  // Si el status es 'complete' pero no hay data, mostrar '-'
+  if (esg.status === 'complete' && !esg.data) {
+    return <span className="text-sm text-gray-400">-</span>;
+  }
+  
+  // Si llegamos aquí, tenemos datos completos
   const label = esg.data.label;
   const color = getESGLabelColor(label);
   
@@ -279,11 +291,24 @@ function BuildingStatusIndicator({ building, digitalBooks }: { building: Buildin
   
   // Si el libro está completo (8/8), mostrar "Completado" en verde
   if (completedSections === totalSections) {
-    return <span className="text-sm font-medium text-green-600">Completado</span>;
+    return <span className="text-sm font-medium text-green-600">Completado {completedSections}/{totalSections}</span>;
   }
-  
-  // Si no, mostrar el estado original del edificio
-  return <span className="text-sm text-gray-900">{getBuildingStatusLabel(building.status)}</span>;
+
+  // Estados sin la frase "Libro Digital" y con progreso a la derecha
+  const statusLabel = (() => {
+    switch (building.status) {
+      case 'draft':
+        return 'Pendiente';
+      case 'ready_book':
+        return 'Listo';
+      case 'with_book':
+        return 'En curso';
+      default:
+        return getBuildingStatusLabel(building.status);
+    }
+  })();
+
+  return <span className="text-sm text-gray-900">{statusLabel} {completedSections}/{totalSections}</span>;
 }
 
 /* --------------------------------- Página --------------------------------- */
@@ -341,7 +366,6 @@ export default function AssetsList() {
               esgScore: esgScore
             };
           } catch (err) {
-            console.error(`Error cargando datos para edificio ${building.id}:`, err);
             return {
               buildingId: building.id,
               certificates: [],
@@ -379,7 +403,6 @@ export default function AssetsList() {
           stopStatsLoading();
         }
       } catch (err) {
-        console.error('Error loading data:', err);
         if (mounted) {
           stopLoading(err instanceof Error ? err.message : 'Error cargando datos');
           stopStatsLoading();
@@ -735,11 +758,11 @@ export default function AssetsList() {
                   <tr className="border-b border-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '20%'}}>Nombre</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>Valor</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '18%'}}>Estado</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '18%'}}>ESTADO LIBRO DIGITAL</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '8%'}}>CEE</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>ESG</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>m²</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>Libro</th>
+                    {/* Eliminado: columna separada de Libro. El progreso se muestra junto al estado. */}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -767,7 +790,7 @@ export default function AssetsList() {
                       </td>
                       
                       {/* Estado - Oculto en mobile */}
-                      <td className="px-4 py-4 hidden md:table-cell">
+                      <td className="px-4 py-4 text-center hidden md:table-cell">
                         <BuildingStatusIndicator building={building} digitalBooks={digitalBooks} />
                       </td>
                       
@@ -788,10 +811,7 @@ export default function AssetsList() {
                         <SquareMetersIndicator building={building} />
                       </td>
                       
-                      {/* Libro - Estado del libro digital - Oculto en mobile */}
-                      <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <BookStatusIndicator building={building} digitalBooks={digitalBooks} />
-                      </td>
+                      {/* Eliminado: celda de columna Libro. El progreso ahora va junto al estado. */}
                     </tr>
                   ))}
                 </tbody>

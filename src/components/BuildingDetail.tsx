@@ -23,6 +23,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
+import { getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -60,6 +61,23 @@ const BuildingDetail: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [esgData, setEsgData] = useState<ESGResponse | null>(null);
+  const [esgLoading, setEsgLoading] = useState(false);
+
+  // Función para cargar datos ESG
+  const loadESGData = async () => {
+    if (!building?.id || user?.role !== 'tecnico') return;
+    
+    setEsgLoading(true);
+    try {
+      const esgResponse = await getESGScore(building.id);
+      setEsgData(esgResponse);
+    } catch (error) {
+      setEsgData(null);
+    } finally {
+      setEsgLoading(false);
+    }
+  };
 
   // Funciones de paginación
   const totalPages = Math.ceil(energyCertificates.length / itemsPerPage);
@@ -103,7 +121,6 @@ const BuildingDetail: React.FC = () => {
       setDeleteModalOpen(false);
       setCertificateToDelete(null);
     } catch (error) {
-      console.error('Error al eliminar certificado:', error);
       showError('Error al eliminar el certificado');
     } finally {
       setIsDeleting(false);
@@ -153,10 +170,8 @@ const BuildingDetail: React.FC = () => {
     
     try {
       const certificatesData = await EnergyCertificatesService.getByBuilding(building.id);
-      console.log('Certificados cargados desde backend:', certificatesData.certificates);
       setEnergyCertificates(certificatesData.certificates || []);
     } catch (error) {
-      console.error('Error loading energy certificates:', error);
       // Mantener estado vacío en caso de error - no mostrar error al usuario en esta carga inicial
     }
   };
@@ -181,12 +196,16 @@ const BuildingDetail: React.FC = () => {
         const certificatesData = await EnergyCertificatesService.getByBuilding(buildingData.id);
         setEnergyCertificates(certificatesData.certificates || []);
         
+        // Cargar datos ESG para mostrar indicadores de datos faltantes (solo para técnicos)
+        if (user?.role === 'tecnico') {
+          await loadESGData();
+        }
+        
         // Activar mapa después de cargar datos
         setTimeout(() => setMapReady(true), 500);
         stopLoading();
         
       } catch (error) {
-        console.error('Error loading building:', error);
         showError('Error al cargar edificio', 'No se pudo cargar la información del edificio');
         navigate('/activos');
         stopLoading();
@@ -203,7 +222,6 @@ const BuildingDetail: React.FC = () => {
         const isAvailable = await checkCertificateExtractorHealth();
         setAiServiceAvailable(isAvailable);
       } catch (error) {
-        console.warn('AI service check failed:', error);
         setAiServiceAvailable(false);
       }
     };
@@ -215,6 +233,36 @@ const BuildingDetail: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [energyCertificates.length]);
+
+  // Cargar datos ESG cuando el componente se monta
+  useEffect(() => {
+    if (user?.role === 'tecnico' && building?.id) {
+      loadESGData();
+    }
+  }, [user?.role, building?.id]);
+
+  // Recargar datos ESG cuando el usuario regrese del libro digital
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user?.role === 'tecnico') {
+        loadESGData();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.role === 'tecnico') {
+        loadESGData();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user?.role, building?.id]);
 
   // Bloquear scroll de fondo cuando la modal está abierta
   useEffect(() => {
@@ -237,7 +285,6 @@ const BuildingDetail: React.FC = () => {
       
       // Crear el libro en el backend
       const createdBook = await getOrCreateBookForBuilding(building.id);
-      console.log('Libro creado:', createdBook);
       
       // Actualizar el estado local
       setDigitalBook(createdBook);
@@ -253,7 +300,6 @@ const BuildingDetail: React.FC = () => {
       
       stopLoading();
     } catch (error) {
-      console.error('Error creando libro digital:', error);
       showError('Error al crear el libro digital');
       stopLoading();
     }
@@ -380,7 +426,6 @@ const BuildingDetail: React.FC = () => {
       showSuccess('Datos extraídos', 'La imagen del certificado se ha guardado y los datos han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
       
     } catch (error) {
-      console.error('Error processing certificate:', error);
       showError('Error al procesar certificado', error instanceof Error ? error.message : 'Error desconocido al procesar el certificado');
     } finally {
       setIsProcessingAI(false);
@@ -430,12 +475,10 @@ const BuildingDetail: React.FC = () => {
       };
 
       // Confirmar certificado en el backend
-      console.log('Enviando datos al backend:', finalData);
       const confirmedCertificate = await EnergyCertificatesService.confirmCertificate(
         currentSessionId,
         finalData
       );
-      console.log('Certificado confirmado desde backend:', confirmedCertificate);
       
       showSuccess('Certificado guardado', `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`);
       
@@ -463,7 +506,6 @@ const BuildingDetail: React.FC = () => {
       handleCloseUpload();
       
     } catch (error) {
-      console.error('Error saving certificate:', error);
       showError('Error al guardar', error instanceof Error ? error.message : 'Error desconocido al guardar el certificado');
     }
   };
@@ -867,6 +909,150 @@ const BuildingDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ESG Data Status Indicator - Solo para Técnicos */}
+      {user?.role === 'tecnico' && (
+        <div className="mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
+          {esgLoading ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-600 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Calculando score ESG...
+                    </h4>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Cargando
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Verificando datos de sostenibilidad y certificado energético...
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : esgData?.status === 'incomplete' ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Datos ESG incompletos
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={loadESGData}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                        title="Actualizar estado ESG"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Actualizar
+                      </button>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Pendiente
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                    Para calcular el score ESG, faltan algunos datos críticos. Completa la información en el Libro Digital para obtener un análisis completo.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Datos faltantes ({esgData.missingData.length}):</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {esgData.missingData.map((item, index) => (
+                        <div 
+                          key={index}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-700"
+                        >
+                          <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="truncate">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Datos ESG completos
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={loadESGData}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+                        title="Actualizar estado ESG"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Actualizar
+                      </button>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Completado
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                    ¡Excelente! Todos los datos ESG están completos. El sistema puede calcular el score ESG correctamente.
+                  </p>
+                  {esgData.data && (
+                    <div className="space-y-3">
+                      <div className="text-sm font-medium text-gray-700">Score ESG calculado:</div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            fill={getESGLabelColor(esgData.data.label)}
+                            className="w-6 h-6"
+                            style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
+                          >
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          <span className="text-xs font-medium text-gray-700">{esgData.data.label}</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Score: {esgData.data.total}/100
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Financial Overview - Solo para Propietarios */}
       {user?.role === 'propietario' && (

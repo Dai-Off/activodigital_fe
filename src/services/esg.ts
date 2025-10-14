@@ -34,11 +34,22 @@ export interface ESGData {
   governance: ESGGovernance;
   total: number;
   label: string;
+  // Flag opcional del backend para indicar si el cálculo está completo
+  complete?: boolean;
 }
 
-export interface ESGResponse {
+export interface ESGIncompleteResponse {
+  status: 'incomplete';
+  missingData: string[];
+  message: string;
+}
+
+export interface ESGCompleteResponse {
+  status: 'complete';
   data: ESGData;
 }
+
+export type ESGResponse = ESGCompleteResponse | ESGIncompleteResponse;
 
 /**
  * Obtiene la calificación ESG de un edificio
@@ -54,7 +65,6 @@ export async function getESGScore(buildingId: string): Promise<ESGResponse> {
     
     return response;
   } catch (error) {
-    console.error(`Error obteniendo ESG para edificio ${buildingId}:`, error);
     throw error;
   }
 }

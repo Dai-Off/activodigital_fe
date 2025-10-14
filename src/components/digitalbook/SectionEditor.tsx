@@ -84,11 +84,20 @@ const SECTION_CONFIGS = {
     description: 'Criterios ambientales y sostenibilidad',
     icon: '🌱',
     fields: [
-      { name: 'energy_indicators', label: 'Indicadores energéticos', type: 'textarea', required: true },
-      { name: 'emissions', label: 'Emisiones de CO2', type: 'text', required: true },
-      { name: 'water_footprint', label: 'Huella hídrica', type: 'text', required: false },
-      { name: 'waste_management', label: 'Gestión de residuos', type: 'textarea', required: false },
-      { name: 'green_certifications', label: 'Certificaciones verdes', type: 'textarea', required: false },
+      { name: 'renewableSharePercent', label: 'Porcentaje de energía renovable (%)', type: 'number', required: true },
+      { name: 'waterFootprintM3PerM2Year', label: 'Huella hídrica (m³/m²·año)', type: 'number', required: true },
+      { name: 'accessibility', label: 'Nivel de accesibilidad', type: 'select', options: [
+        { value: 'full', label: 'Cumple 100% normativa' },
+        { value: 'partial', label: 'Parcial (solo acceso básico)' },
+        { value: 'none', label: 'No cumple' }
+      ] as Array<{value: string, label: string}>, required: true },
+      { name: 'indoorAirQualityCo2Ppm', label: 'Calidad del aire interior (ppm CO₂)', type: 'number', required: true },
+      { name: 'safetyCompliance', label: 'Cumplimiento de seguridad', type: 'select', options: [
+        { value: 'full', label: 'Cumple todas las normativas' },
+        { value: 'pending', label: 'Pendiente de actualización' },
+        { value: 'none', label: 'No cumple / en infracción' }
+      ] as Array<{value: string, label: string}>, required: true },
+      { name: 'regulatoryCompliancePercent', label: 'Porcentaje de cumplimiento normativo (%)', type: 'number', required: true },
     ],
   },
   attachments: {
@@ -214,6 +223,8 @@ const SectionEditor: React.FC = () => {
     // Incluir los documentos en el payload de contenido
     const contentToSave = { ...formData, documents };
 
+    console.log('💾 Guardando sección:', sectionId, 'con contenido:', contentToSave);
+
     const updated = await updateBookSection({ id: book.id, sections: book.sections }, sectionId, contentToSave, complete);
     setBook(updated);
 
@@ -222,6 +233,12 @@ const SectionEditor: React.FC = () => {
       updated.sections.find((s) => s.id === sectionId) || updated.sections.find((s) => apiType && s.type === apiType) || null;
 
     setIsCompleted(Boolean(newSection?.complete));
+
+    // Si es la sección de sostenibilidad, notificar que se actualicen los datos ESG
+    if (sectionId === 'sustainability') {
+      console.log('🌱 Sección de sostenibilidad guardada, disparando evento de actualización ESG');
+      window.dispatchEvent(new CustomEvent('esg-data-updated'));
+    }
   };
 
   // Auto-completar en silencio UNA vez cuando el formulario pase a válido (solo para técnicos)
@@ -271,7 +288,7 @@ const SectionEditor: React.FC = () => {
     }
   };
 
-  const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: readonly string[] | string[] }) => {
+  const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: readonly string[] | string[] | Array<{value: string, label: string}> }) => {
     const value = formData[field.name] ?? '';
     const baseCls = 'w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ';
     const cls = baseCls + (field.required && !value ? 'border-red-300' : 'border-gray-300');
@@ -293,12 +310,29 @@ const SectionEditor: React.FC = () => {
       return (
         <select key={field.name} value={value} onChange={(e) => handleFieldChange(field.name, e.target.value)} className={cls}>
           <option value="">Selecciona una opción</option>
-          {field.options?.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
+          {field.options?.map((o) => {
+            const optionValue = typeof o === 'string' ? o : o.value;
+            const optionLabel = typeof o === 'string' ? o : o.label;
+            return (
+              <option key={optionValue} value={optionValue}>
+                {optionLabel}
+              </option>
+            );
+          })}
         </select>
+      );
+    }
+    if (field.type === 'number') {
+      return (
+        <input 
+          key={field.name} 
+          type="number" 
+          value={value} 
+          onChange={(e) => handleFieldChange(field.name, e.target.value)} 
+          className={cls}
+          min="0"
+          step={field.name.includes('Percent') ? "1" : "0.1"}
+        />
       );
     }
     if (field.type === 'date') {
