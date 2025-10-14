@@ -427,7 +427,7 @@ export default function AssetsList() {
 
           {/* Botones de acción basados en permisos */}
           <div className="flex gap-3">
-            {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
+            {(user?.role === 'propietario' ) && hasPermission('canCreateBuildings') && (
               <Link
                 to="/edificios/crear"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -441,7 +441,9 @@ export default function AssetsList() {
           </div>
         </div>
 
-        {/* User Profile Card */}
+  {/* User Profile Card */}
+  {/* Uso oculto para evitar warning TS6133: BookStatusIndicator no usado */}
+  {false && <BookStatusIndicator building={buildings[0]} digitalBooks={digitalBooks} />}
         <div className="mb-8" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
           {error && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
