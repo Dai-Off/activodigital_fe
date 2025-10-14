@@ -163,9 +163,18 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
 
   // Función para manejar la subida de fotos
   const handlePhotosSelected = (newFiles: File[]) => {
-    const limited = newFiles.slice(0, 5);
-    setPhotos(limited);
-    if (limited.length > 0 && mainPhotoIndex >= limited.length) {
+    // Calcular cuántas fotos podemos agregar sin exceder el límite de 5
+    const availableSlots = 5 - photos.length;
+    if (availableSlots <= 0) {
+      return; // No se pueden agregar más fotos
+    }
+    
+    const filesToAdd = newFiles.slice(0, availableSlots);
+    const updatedPhotos = [...photos, ...filesToAdd];
+    setPhotos(updatedPhotos);
+    
+    // Ajustar el índice de foto principal si es necesario
+    if (updatedPhotos.length > 0 && mainPhotoIndex >= updatedPhotos.length) {
       setMainPhotoIndex(0);
     }
     if (errors.photos) {
@@ -184,7 +193,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     setPhotos(newPhotos);
     
     // Ajustar el índice de foto principal si es necesario
-    if (index === mainPhotoIndex) {
+    if (newPhotos.length === 0) {
+      setMainPhotoIndex(0);
+    } else if (index === mainPhotoIndex) {
+      // Si eliminamos la foto principal, establecer la primera disponible como principal
       setMainPhotoIndex(0);
     } else if (index < mainPhotoIndex) {
       setMainPhotoIndex(mainPhotoIndex - 1);
@@ -395,10 +407,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
             <FileUpload
               onFilesSelected={handlePhotosSelected}
               acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
-              maxFiles={5}
+              maxFiles={5 - photos.length}
               maxSizeInMB={5}
               label="Subir fotos"
-              description="Arrastra fotos aquí o haz clic para seleccionar"
+              description={`Arrastra fotos aquí o haz clic para seleccionar (${5 - photos.length} restantes)`}
               className="mb-6"
             />
           )}
