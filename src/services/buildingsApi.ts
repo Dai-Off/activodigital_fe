@@ -60,6 +60,26 @@ export interface TechnicianAssignmentPayload {
   technicianEmail: string;
 }
 
+// Tipos para validación de asignaciones
+export interface ValidationResult {
+  isValid: boolean;
+  errors: {
+    technician?: string;
+    cfo?: string;
+  };
+}
+
+export interface ValidateAssignmentsResponse {
+  technicianValidation: ValidationResult;
+  cfoValidation: ValidationResult;
+  overallValid: boolean;
+}
+
+export interface ValidateAssignmentsRequest {
+  technicianEmail?: string;
+  cfoEmail?: string;
+}
+
 export interface Technician {
   id: string;
   email: string;
@@ -183,6 +203,15 @@ export class BuildingsApiService {
   // Obtener estadísticas del dashboard
   static async getDashboardStats(): Promise<DashboardStats> {
     const response = await apiFetch('/dashboard/stats', { method: 'GET' });
+    return response.data || response;
+  }
+
+  // Validar asignaciones de técnico y CFO antes de crear edificio
+  static async validateUserAssignments(payload: ValidateAssignmentsRequest): Promise<ValidateAssignmentsResponse> {
+    const response = await apiFetch('/edificios/validate-assignments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
     return response.data || response;
   }
 }

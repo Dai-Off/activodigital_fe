@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { BuildingsApiService } from '../../services/buildingsApi';
 
 // Import BuildingStep1Data from CreateBuildingWizard
 import type { BuildingStep1Data } from './CreateBuildingWizard';
@@ -31,6 +31,11 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   // Estado para loading y error de geocodificación
 
   const [errors, setErrors] = useState<Partial<BuildingStep1Data>>({});
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    technician?: string;
+    cfo?: string;
+  }>({});
 
   const validateForm = (): boolean => {
     const newErrors: Partial<BuildingStep1Data> = {};
@@ -127,14 +132,61 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (errors[field]) {
       setErrors((prev: Partial<BuildingStep1Data>) => ({ ...prev, [field]: undefined }));
     }
+    // Limpiar errores de validación específicos cuando se modifican los emails
+    if ((field === 'technicianEmail' && validationErrors.technician) || 
+        (field === 'cfoEmail' && validationErrors.cfo)) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [field === 'technicianEmail' ? 'technician' : 'cfo']: undefined
+      }));
+    }
   };
 
-  const handleNext = () => {
-    if (validateForm()) {
-      // Omit address when passing to parent (step 1 doesn't use it)
-      const { address, ...rest } = formData;
-      onNext({ ...rest } as BuildingStep1Data);
+  const handleNext = async () => {
+    // Primero validar el formulario básico
+    if (!validateForm()) {
+      return;
     }
+
+    // Si hay emails de técnico o CFO, validar con el backend
+    if (formData.technicianEmail || formData.cfoEmail) {
+      setIsValidating(true);
+      setValidationErrors({}); // Limpiar errores previos
+      
+      try {
+        const validationResponse = await BuildingsApiService.validateUserAssignments({
+          technicianEmail: formData.technicianEmail || undefined,
+          cfoEmail: formData.cfoEmail || undefined
+        });
+
+        // Verificar si hay errores de validación
+        if (!validationResponse.overallValid) {
+          const newValidationErrors: { technician?: string; cfo?: string } = {};
+          
+          if (!validationResponse.technicianValidation.isValid && validationResponse.technicianValidation.errors.technician) {
+            newValidationErrors.technician = validationResponse.technicianValidation.errors.technician;
+          }
+          
+          if (!validationResponse.cfoValidation.isValid && validationResponse.cfoValidation.errors.cfo) {
+            newValidationErrors.cfo = validationResponse.cfoValidation.errors.cfo;
+          }
+          
+          setValidationErrors(newValidationErrors);
+          setIsValidating(false);
+          return; // No avanzar si hay errores
+        }
+      } catch (error) {
+        console.error('Error validando asignaciones:', error);
+        // En caso de error de red, permitir continuar (validación del backend como respaldo)
+        console.warn('No se pudo validar las asignaciones, continuando...');
+      } finally {
+        setIsValidating(false);
+      }
+    }
+
+    // Si todas las validaciones pasaron, avanzar al siguiente paso
+    const { address, ...rest } = formData;
+    onNext({ ...rest } as BuildingStep1Data);
   };
 
   const handleSaveDraft = () => {
@@ -312,11 +364,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               onChange={(e) => handleInputChange('technicianEmail', e.target.value)}
               placeholder="tecnico@ejemplo.com"
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.technicianEmail ? 'border-red-300' : 'border-gray-300'
+                errors.technicianEmail || validationErrors.technician ? 'border-red-300' : 'border-gray-300'
               }`}
             />
             {errors.technicianEmail && (
               <p className="mt-1 text-sm text-red-600">{errors.technicianEmail}</p>
+            )}
+            {validationErrors.technician && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.technician}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">Opcional. El técnico podrá gestionar los libros digitales</p>
           </div>
@@ -333,11 +388,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               onChange={(e) => handleInputChange('cfoEmail', e.target.value)}
               placeholder="cfo@ejemplo.com"
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.cfoEmail ? 'border-red-300' : 'border-gray-300'
+                errors.cfoEmail || validationErrors.cfo ? 'border-red-300' : 'border-gray-300'
               }`}
             />
             {errors.cfoEmail && (
               <p className="mt-1 text-sm text-red-600">{errors.cfoEmail}</p>
+            )}
+            {validationErrors.cfo && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.cfo}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">Opcional. El CFO podrá acceder a información financiera del edificio</p>
           </div>
@@ -413,9 +471,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           <button
             type="button"
             onClick={handleNext}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
+            disabled={isValidating}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Siguiente
+            {isValidating && (
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            {isValidating ? 'Validando...' : 'Siguiente'}
           </button>
         </div>
       </form>

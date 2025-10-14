@@ -130,6 +130,9 @@ const CreateBuildingWizard: React.FC = () => {
 
     startLoading();
     
+    // La validación principal de roles ocurre en el Paso 1
+    // Esta es solo una validación de respaldo por seguridad
+    
     try {
       // Preparar datos para el backend
       const buildingPayload: CreateBuildingPayload = {
@@ -206,11 +209,40 @@ const CreateBuildingWizard: React.FC = () => {
       
     } catch (error) {
       console.error('Error guardando edificio:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      showError(
-        'Error al crear el activo',
-        errorMessage
-      );
+      
+      // Mejorar los mensajes de error según el tipo de conflicto
+      let errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      let errorTitle = 'Error al crear el activo';
+      
+      // Detectar errores de roles duplicados o conflictos de usuario del backend
+      const lowerError = errorMessage.toLowerCase();
+      if (lowerError.includes('rol') || 
+          lowerError.includes('role') || 
+          lowerError.includes('ya asignado') ||
+          lowerError.includes('already assigned') ||
+          lowerError.includes('propietario') ||
+          lowerError.includes('owner') ||
+          lowerError.includes('técnico') ||
+          lowerError.includes('technician') ||
+          lowerError.includes('cfo')) {
+        errorTitle = 'Conflicto de rol de usuario';
+        
+        // Mensajes específicos según qué usuario causó el error
+        if (step1Data.technicianEmail && step1Data.cfoEmail) {
+          errorMessage = `Uno de los usuarios asignados ya tiene un rol incompatible:\n\n` +
+                        `• Técnico (${step1Data.technicianEmail}): No puede ser CFO o propietario\n` +
+                        `• CFO (${step1Data.cfoEmail}): No puede ser técnico o propietario\n\n` +
+                        `Por favor, verifica los emails ingresados.`;
+        } else if (step1Data.technicianEmail) {
+          errorMessage = `El usuario "${step1Data.technicianEmail}" ya tiene un rol incompatible. Un técnico no puede ser CFO o propietario de otro edificio. Por favor, usa un email diferente o deja el campo vacío.`;
+        } else if (step1Data.cfoEmail) {
+          errorMessage = `El usuario "${step1Data.cfoEmail}" ya tiene un rol incompatible. Un CFO no puede ser técnico o propietario de otro edificio. Por favor, usa un email diferente o deja el campo vacío.`;
+        } else {
+          errorMessage = 'Uno de los usuarios asignados ya tiene un rol incompatible en el sistema. Por favor, verifica los emails ingresados.';
+        }
+      }
+      
+      showError(errorTitle, errorMessage);
     } finally {
       stopLoading();
     }

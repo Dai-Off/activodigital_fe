@@ -699,7 +699,7 @@ const BuildingDetail: React.FC = () => {
             </div>
           </div>
           <div className="col-span-12 lg:col-span-4 lg:self-stretch">
-            <div className="relative group h-full min-h-[400px]">
+            <div className="relative group h-80 lg:h-[500px]">
               {/* Imagen principal */}
               <img 
                 src={currentImage?.url || "/image.png"} 
