@@ -16,7 +16,7 @@ import {
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
 import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
-import { getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
+import { calculateESGScore, getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
 
 /* -------------------------- Utils de presentación -------------------------- */
 function getCityAndDistrict(address: string): string {
@@ -354,11 +354,15 @@ export default function AssetsList() {
         // Cargar certificados, libros digitales y ESG para todos los edificios en paralelo
         const certsAndBooksPromises = buildingsData.map(async (building) => {
           try {
+            // Determinar qué función ESG usar según el rol
+            const esgFunction = user?.role === 'tecnico' ? calculateESGScore : getESGScore;
+            
             const [certsResponse, book, esgScore] = await Promise.all([
               EnergyCertificatesService.getByBuilding(building.id).catch(() => ({ sessions: [], certificates: [] })),
               getBookByBuilding(building.id),
-              getESGScore(building.id).catch(() => null)
+              esgFunction(building.id).catch(() => null)
             ]);
+            
             return {
               buildingId: building.id,
               certificates: certsResponse.certificates || [],

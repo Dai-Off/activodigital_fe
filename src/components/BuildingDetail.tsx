@@ -23,7 +23,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
-import { getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
+import { calculateESGScore, getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -62,16 +62,27 @@ const BuildingDetail: React.FC = () => {
   const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [esgData, setEsgData] = useState<ESGResponse | null>(null);
+  const [isLoadingESG, setIsLoadingESG] = useState(false);
 
   // Función para cargar datos ESG
   const loadESGData = async () => {
-    if (!building?.id || user?.role !== 'tecnico') return;
+    if (!building?.id) return;
     
+    setIsLoadingESG(true);
     try {
-      const esgResponse = await getESGScore(building.id);
-      setEsgData(esgResponse);
+      if (user?.role === 'tecnico') {
+        // TÉCNICO: SIEMPRE calcular en tiempo real (POST)
+        const calculatedESG = await calculateESGScore(building.id);
+        setEsgData(calculatedESG);
+      } else {
+        // PROPIETARIO: Leer ESG guardado en BD (GET)
+        const storedESG = await getESGScore(building.id);
+        setEsgData(storedESG);
+      }
     } catch (error) {
       setEsgData(null);
+    } finally {
+      setIsLoadingESG(false);
     }
   };
 
@@ -113,6 +124,8 @@ const BuildingDetail: React.FC = () => {
       showSuccess('Certificado eliminado correctamente');
       // Recargar la lista de certificados
       await loadEnergyCertificates();
+      // Recalcular ESG después de eliminar certificado
+      await loadESGData();
       // Cerrar modal
       setDeleteModalOpen(false);
       setCertificateToDelete(null);
@@ -192,10 +205,8 @@ const BuildingDetail: React.FC = () => {
         const certificatesData = await EnergyCertificatesService.getByBuilding(buildingData.id);
         setEnergyCertificates(certificatesData.certificates || []);
         
-        // Cargar datos ESG para mostrar indicadores de datos faltantes (solo para técnicos)
-        if (user?.role === 'tecnico') {
-          await loadESGData();
-        }
+        // Cargar datos ESG
+        await loadESGData();
         
         // Activar mapa después de cargar datos
         setTimeout(() => setMapReady(true), 500);
@@ -232,7 +243,7 @@ const BuildingDetail: React.FC = () => {
 
   // Cargar datos ESG cuando el componente se monta
   useEffect(() => {
-    if (user?.role === 'tecnico' && building?.id) {
+    if (building?.id) {
       loadESGData();
     }
   }, [user?.role, building?.id]);
@@ -240,13 +251,11 @@ const BuildingDetail: React.FC = () => {
   // Recargar datos ESG cuando el usuario regrese del libro digital
   useEffect(() => {
     const handleFocus = () => {
-      if (user?.role === 'tecnico') {
-        loadESGData();
-      }
+      loadESGData();
     };
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && user?.role === 'tecnico') {
+      if (!document.hidden) {
         loadESGData();
       }
     };
@@ -480,6 +489,9 @@ const BuildingDetail: React.FC = () => {
       
       // Recargar la lista de certificados para mostrar el nuevo
       await loadEnergyCertificates();
+      
+      // Recalcular ESG después de agregar certificado
+      await loadESGData();
       
       // Limpiar estado y cerrar modal
       setCurrentSessionId(null);
@@ -906,10 +918,35 @@ const BuildingDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* ESG Data Status Indicator - Solo para Técnicos */}
-      {user?.role === 'tecnico' && (
+      {/* ESG Data Status Indicator */}
+      {(user?.role === 'tecnico' || user?.role === 'propietario') && (
         <div className="mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
-          {esgData?.status === 'incomplete' ? (
+          {isLoadingESG ? (
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      Calculando ESG...
+                    </h4>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">
+                      Procesando
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Estamos analizando los datos del edificio para calcular el score ESG. Esto tomará solo un momento.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : esgData && esgData.status === 'incomplete' && user?.role === 'tecnico' ? (
             <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
@@ -950,7 +987,7 @@ const BuildingDetail: React.FC = () => {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : esgData && esgData.status === 'complete' && (
             <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
