@@ -52,11 +52,28 @@ export interface ESGCompleteResponse {
 export type ESGResponse = ESGCompleteResponse | ESGIncompleteResponse;
 
 /**
- * Obtiene la calificación ESG de un edificio
+ * Obtiene la calificación ESG guardada de un edificio
  * @param buildingId - ID del edificio
  * @returns La respuesta ESG del edificio
  */
 export async function getESGScore(buildingId: string): Promise<ESGResponse> {
+  try {
+    const response = await apiFetch(`/esg/building/${buildingId}`, {
+      method: 'GET',
+    });
+    
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Calcula y guarda el ESG de un edificio (solo para técnicos)
+ * @param buildingId - ID del edificio
+ * @returns La respuesta ESG calculada
+ */
+export async function calculateESGScore(buildingId: string): Promise<ESGResponse> {
   try {
     const response = await apiFetch('/esg/calculate', {
       method: 'POST',

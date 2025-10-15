@@ -62,20 +62,16 @@ const BuildingDetail: React.FC = () => {
   const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [esgData, setEsgData] = useState<ESGResponse | null>(null);
-  const [esgLoading, setEsgLoading] = useState(false);
 
   // Función para cargar datos ESG
   const loadESGData = async () => {
     if (!building?.id || user?.role !== 'tecnico') return;
     
-    setEsgLoading(true);
     try {
       const esgResponse = await getESGScore(building.id);
       setEsgData(esgResponse);
     } catch (error) {
       setEsgData(null);
-    } finally {
-      setEsgLoading(false);
     }
   };
 
@@ -913,32 +909,7 @@ const BuildingDetail: React.FC = () => {
       {/* ESG Data Status Indicator - Solo para Técnicos */}
       {user?.role === 'tecnico' && (
         <div className="mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
-          {esgLoading ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      Calculando score ESG...
-                    </h4>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      Cargando
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Verificando datos de sostenibilidad y certificado energético...
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : esgData?.status === 'incomplete' ? (
+          {esgData?.status === 'incomplete' ? (
             <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
@@ -953,21 +924,9 @@ const BuildingDetail: React.FC = () => {
                     <h4 className="text-lg font-semibold text-gray-900">
                       Datos ESG incompletos
                     </h4>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={loadESGData}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
-                        title="Actualizar estado ESG"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Actualizar
-                      </button>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Pendiente
-                      </span>
-                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Pendiente
+                    </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                     Para calcular el score ESG, faltan algunos datos críticos. Completa la información en el Libro Digital para obtener un análisis completo.
@@ -1006,26 +965,14 @@ const BuildingDetail: React.FC = () => {
                     <h4 className="text-lg font-semibold text-gray-900">
                       Datos ESG completos
                     </h4>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={loadESGData}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
-                        title="Actualizar estado ESG"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Actualizar
-                      </button>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Completado
-                      </span>
-                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Completado
+                    </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                     ¡Excelente! Todos los datos ESG están completos. El sistema puede calcular el score ESG correctamente.
                   </p>
-                  {esgData.data && (
+                  {esgData?.data && (
                     <div className="space-y-3">
                       <div className="text-sm font-medium text-gray-700">Score ESG calculado:</div>
                       <div className="flex items-center gap-3">
