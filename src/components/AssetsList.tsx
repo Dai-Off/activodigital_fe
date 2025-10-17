@@ -17,6 +17,7 @@ import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../s
 import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 import { calculateESGScore, getESGScore, getESGLabelColor, getESGColorFromScore, type ESGResponse } from '../services/esg';
+import AssetsSearchBar, { type SearchFilters } from './ui/AssetsSearchBar';
 
 /* -------------------------- Utils de presentación -------------------------- */
 function getCityAndDistrict(address: string): string {
@@ -337,6 +338,15 @@ export default function AssetsList() {
   // paginado (cliente)
   const [page, setPage] = useState(1); // 1-based
   const [pageSize, setPageSize] = useState(10);
+  
+  // Filtros de búsqueda y ordenamiento
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    searchTerm: '',
+    sortField: 'name',
+    sortOrder: 'asc',
+    statusFilter: [],
+    energyClassFilter: [],
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -431,18 +441,134 @@ export default function AssetsList() {
     };
   }, [user, authLoading]);
 
+  // Calcular emisiones totales de CO₂ en el frontend
+  const calculatedTotalEmissions = useMemo(() => {
+    if (!buildings.length || !energyCertificates.length) return 0;
+
+    let totalEmissions = 0;
+    
+    buildings.forEach(building => {
+      // Buscar el certificado energético del edificio
+      const cert = energyCertificates.find(c => c.buildingId === building.id);
+      
+      if (cert && cert.emissionsKgCo2PerM2Year && cert.emissionsKgCo2PerM2Year > 0) {
+        // Usar datos reales del certificado (ej: 16.74 kg CO₂eq/m²·año)
+        const surfaceArea = building.squareMeters || (building.numUnits || 0) * 70;
+        
+        // Calcular emisiones: kg CO₂/m²·año × m² → toneladas/año (÷ 1000)
+        const buildingEmissions = (cert.emissionsKgCo2PerM2Year * surfaceArea) / 1000;
+        totalEmissions += buildingEmissions;
+      }
+    });
+    
+    return Math.round(totalEmissions);
+  }, [buildings, energyCertificates]);
+
+  // Aplicar filtros y ordenamiento
+  const filteredAndSortedBuildings = useMemo(() => {
+    let result = [...buildings];
+
+    // Filtro de búsqueda por texto
+    if (searchFilters.searchTerm) {
+      const term = searchFilters.searchTerm.toLowerCase();
+      result = result.filter(
+        (building) =>
+          building.name.toLowerCase().includes(term) ||
+          building.address.toLowerCase().includes(term) ||
+          building.cadastralReference?.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtro por estado
+    if (searchFilters.statusFilter.length > 0) {
+      result = result.filter((building) => {
+        const book = digitalBooks.get(building.id);
+        const completedSections = book?.progress || 0;
+        
+        // Si está completado (8/8)
+        if (completedSections === 8 && searchFilters.statusFilter.includes('completed')) {
+          return true;
+        }
+        
+        // Si no está completado, verificar el status del building
+        return searchFilters.statusFilter.includes(building.status);
+      });
+    }
+
+    // Filtro por clase energética
+    if (searchFilters.energyClassFilter.length > 0) {
+      result = result.filter((building) => {
+        const certs = energyCertificates.filter((cert) => cert.buildingId === building.id);
+        if (certs.length === 0) return false;
+        const rating = getLatestRating(certs);
+        return searchFilters.energyClassFilter.includes(rating);
+      });
+    }
+
+    // Ordenamiento
+    result.sort((a, b) => {
+      let comparison = 0;
+
+      switch (searchFilters.sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'value':
+          comparison = (a.price || 0) - (b.price || 0);
+          break;
+        case 'status': {
+          const bookA = digitalBooks.get(a.id);
+          const bookB = digitalBooks.get(b.id);
+          const progressA = bookA?.progress || 0;
+          const progressB = bookB?.progress || 0;
+          comparison = progressA - progressB;
+          break;
+        }
+        case 'energyClass': {
+          const certsA = energyCertificates.filter((cert) => cert.buildingId === a.id);
+          const certsB = energyCertificates.filter((cert) => cert.buildingId === b.id);
+          const ratingA = certsA.length > 0 ? getLatestRating(certsA) : 'Z';
+          const ratingB = certsB.length > 0 ? getLatestRating(certsB) : 'Z';
+          comparison = ratingA.localeCompare(ratingB);
+          break;
+        }
+        case 'esgScore': {
+          const esgA = esgScores.get(a.id);
+          const esgB = esgScores.get(b.id);
+          const labelA = (esgA?.status === 'complete' && esgA.data?.label) ? esgA.data.label : 'Z';
+          const labelB = (esgB?.status === 'complete' && esgB.data?.label) ? esgB.data.label : 'Z';
+          comparison = labelA.localeCompare(labelB);
+          break;
+        }
+        case 'squareMeters':
+          comparison = (a.squareMeters || 0) - (b.squareMeters || 0);
+          break;
+      }
+
+      return searchFilters.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [buildings, searchFilters, digitalBooks, energyCertificates, esgScores]);
+
   // recalcular vista paginada
-  const total = buildings.length;
+  const total = filteredAndSortedBuildings.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, totalPages);
   const paginated = useMemo(() => {
     const start = (safePage - 1) * pageSize;
-    return buildings.slice(start, start + pageSize);
-  }, [buildings, pageSize, safePage]);
+    return filteredAndSortedBuildings.slice(start, start + pageSize);
+  }, [filteredAndSortedBuildings, pageSize, safePage]);
 
   // al cambiar tamaño, volver a pág. 1
   const handlePageSizeChange = (s: number) => {
     setPageSize(s);
+    setPage(1);
+  };
+
+  // Al cambiar filtros, volver a página 1
+  const handleFiltersChange = (filters: SearchFilters) => {
+    setSearchFilters(filters);
     setPage(1);
   };
 
@@ -549,14 +675,14 @@ export default function AssetsList() {
                                  <div className="text-sm text-gray-500">Superficie total</div>
                                </div>
                              </div>
-                             <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                               <div className="text-center">
-                                 <div className="text-2xl font-bold text-gray-900 mb-1">
-                                   {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
-                                 </div>
-                                 <div className="text-sm text-gray-500">Emisiones anuales</div>
-                               </div>
-                             </div>
+                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-gray-900 mb-1">
+                                  {calculatedTotalEmissions.toLocaleString()} tCO₂ eq
+                                </div>
+                                <div className="text-sm text-gray-500">Emisiones anuales</div>
+                              </div>
+                            </div>
                            </>
                          ) : (
                            <>
@@ -615,12 +741,12 @@ export default function AssetsList() {
                              </div>
                              <div className="text-sm text-gray-500">Superficie total</div>
                            </div>
-                           <div className="text-center">
-                             <div className="text-2xl font-bold text-gray-900 mb-1">
-                               {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
-                             </div>
-                             <div className="text-sm text-gray-500">Emisiones anuales</div>
-                           </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-900 mb-1">
+                              {calculatedTotalEmissions.toLocaleString()} tCO₂ eq
+                            </div>
+                            <div className="text-sm text-gray-500">Emisiones anuales</div>
+                          </div>
                          </>
                        ) : (
                          <>
@@ -776,6 +902,13 @@ export default function AssetsList() {
             <SkeletonDashboardSummary />
           )}
           </div>
+
+        {/* Barra de búsqueda y filtros */}
+        <AssetsSearchBar
+          onFiltersChange={handleFiltersChange}
+          totalResults={total}
+          isLoading={loading}
+        />
 
         {/* Assets List - Tabla como en la imagen */}
         <div
