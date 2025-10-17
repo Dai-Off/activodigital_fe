@@ -26,7 +26,8 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     technicianEmail: initialData.technicianEmail || '',
     cfoEmail: initialData.cfoEmail || '',
     rehabilitationCost: initialData.rehabilitationCost || '',
-    potentialValue: initialData.potentialValue || ''
+    potentialValue: initialData.potentialValue || '',
+    squareMeters: initialData.squareMeters || ''
   });
   // Estado para loading y error de geocodificación
 
@@ -119,6 +120,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       const value = parseFloat(formData.potentialValue);
       if (isNaN(value) || value < 0) {
         newErrors.potentialValue = 'Ingresa un valor válido';
+      }
+    }
+
+    // Metros cuadrados - opcional pero si se proporciona debe ser válido
+    if (formData.squareMeters && formData.squareMeters.trim()) {
+      const meters = parseFloat(formData.squareMeters);
+      if (isNaN(meters) || meters < 0) {
+        newErrors.squareMeters = 'Ingresa una superficie válida';
       }
     }
 
@@ -455,6 +464,29 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
                 <p className="mt-1 text-sm text-red-600">{errors.potentialValue}</p>
               )}
               <p className="mt-1 text-xs text-gray-500">Opcional. Valor estimado tras rehabilitación o mejoras</p>
+            </div>
+
+            {/* Metros cuadrados */}
+            <div>
+              <label htmlFor="squareMeters" className="block text-sm font-medium text-gray-700 mb-2">
+                Superficie (m²)
+              </label>
+              <input
+                type="number"
+                id="squareMeters"
+                value={formData.squareMeters}
+                onChange={(e) => handleInputChange('squareMeters', e.target.value)}
+                placeholder="500.50"
+                min="0"
+                step="0.01"
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.squareMeters ? 'border-red-300' : 'border-gray-300'
+                }`}
+              />
+              {errors.squareMeters && (
+                <p className="mt-1 text-sm text-red-600">{errors.squareMeters}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">Opcional. Superficie total del edificio en metros cuadrados</p>
             </div>
           </div>
         </div>

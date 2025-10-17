@@ -24,6 +24,7 @@ export interface BuildingStep1Data {
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
+  squareMeters: string;       // Superficie en metros cuadrados
 }
 
 interface BuildingStep2Data {
@@ -47,6 +48,7 @@ interface CompleteBuildingData {
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
+  squareMeters: string;       // Superficie en metros cuadrados
   latitude: number;
   longitude: number;
   photos: File[];
@@ -148,6 +150,7 @@ const CreateBuildingWizard: React.FC = () => {
         // Campos financieros
         rehabilitationCost: step1Data.rehabilitationCost ? parseFloat(step1Data.rehabilitationCost) : 0,
         potentialValue: step1Data.potentialValue ? parseFloat(step1Data.potentialValue) : 0,
+        squareMeters: step1Data.squareMeters ? parseFloat(step1Data.squareMeters) : undefined,
         lat: step2Data.latitude,
         lng: step2Data.longitude,
         // Inicialmente sin imágenes, las subiremos después

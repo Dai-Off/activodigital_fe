@@ -21,6 +21,7 @@ export interface Building {
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)
+  squareMeters?: number;       // Superficie en metros cuadrados
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +52,7 @@ export interface CreateBuildingPayload {
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)
+  squareMeters?: number;       // Superficie en metros cuadrados
 }
 
 export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> {}

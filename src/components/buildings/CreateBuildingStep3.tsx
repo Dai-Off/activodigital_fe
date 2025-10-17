@@ -26,6 +26,7 @@ interface BuildingSummaryData {
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
+  squareMeters: string;       // Superficie en metros cuadrados
   
   // Ubicación y fotos
   latitude: number;
@@ -239,6 +240,13 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   <span className="text-sm font-medium text-gray-600">Valor potencial:</span>
                   <span className="text-sm text-gray-900">
                     {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : 'No especificado'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-600">Superficie:</span>
+                  <span className="text-sm text-gray-900">
+                    {buildingData.squareMeters ? `${parseFloat(buildingData.squareMeters).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} m²` : 'No especificado'}
                   </span>
                 </div>
                 

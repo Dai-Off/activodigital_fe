@@ -92,6 +92,9 @@ export async function calculateESGScore(buildingId: string): Promise<ESGResponse
 export function getESGLabelColor(label: string): string {
   const labelLower = label.toLowerCase();
   
+  if (labelLower.includes('premium')) {
+    return '#00CED1'; // Celeste diamante (Dark Turquoise)
+  }
   if (labelLower.includes('platinum') || labelLower.includes('platino') || labelLower.includes('excelente')) {
     return '#E5E4E2'; // Platino
   }
@@ -106,5 +109,27 @@ export function getESGLabelColor(label: string): string {
   }
   // Crítico o cualquier otro label
   return '#9CA3AF'; // Gris
+}
+
+/**
+ * Mapea una puntuación ESG numérica a un color de estrella
+ */
+export function getESGColorFromScore(score: number): string {
+  if (score >= 90) {
+    return '#00CED1'; // Celeste diamante (Premium)
+  }
+  if (score >= 75) {
+    return '#E5E4E2'; // Platino
+  }
+  if (score >= 60) {
+    return '#D4AF37'; // Oro
+  }
+  if (score >= 40) {
+    return '#C0C0C0'; // Plata
+  }
+  if (score >= 20) {
+    return '#CD7F32'; // Bronce
+  }
+  return '#9CA3AF'; // Gris (Crítico)
 }
 

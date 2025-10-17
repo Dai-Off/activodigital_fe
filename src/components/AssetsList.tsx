@@ -16,7 +16,7 @@ import {
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
 import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
-import { calculateESGScore, getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
+import { calculateESGScore, getESGScore, getESGLabelColor, getESGColorFromScore, type ESGResponse } from '../services/esg';
 
 /* -------------------------- Utils de presentación -------------------------- */
 function getCityAndDistrict(address: string): string {
@@ -56,6 +56,20 @@ function getCityAndDistrict(address: string): string {
   
   // Último fallback: devolver la dirección completa truncada
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
+}
+
+// Función helper para obtener el color de la clase energética
+function getCEEColor(rating: string): string {
+  switch (rating) {
+    case 'A': return 'bg-green-600';
+    case 'B': return 'bg-green-500';
+    case 'C': return 'bg-yellow-400';
+    case 'D': return 'bg-yellow-300';
+    case 'E': return 'bg-orange-500';
+    case 'F': return 'bg-red-500';
+    case 'G': return 'bg-red-600';
+    default: return 'bg-gray-400';
+  }
 }
 
 function PaginationBar({
@@ -235,23 +249,18 @@ function ESGScoreIndicator({ building, esgData }: { building: Building; esgData:
 // Componente para el indicador de metros cuadrados
 function SquareMetersIndicator({ building }: { building: Building }) {
   // Usar datos reales del edificio si están disponibles
-  // TODO: Cuando el API tenga un campo específico de superficie total, usarlo directamente
-  
-  if (!building.numUnits || building.numUnits === 0) {
-    return <span className="text-sm text-gray-400">-</span>;
+  if (building.squareMeters && building.squareMeters > 0) {
+    const formattedArea = building.squareMeters.toLocaleString('es-ES', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+    return (
+      <span className="text-sm font-medium text-gray-900">{formattedArea}</span>
+    );
   }
   
-  // Calcular superficie aproximada basada en número de unidades
-  // Asumiendo 70 m² por unidad promedio (valor estándar)
-  const avgUnitSize = 70;
-  const surfaceArea = building.numUnits * avgUnitSize;
-  
-  // Formatear con puntos como separadores de miles
-  const formattedArea = surfaceArea.toLocaleString('es-ES');
-  
-  return (
-    <span className="text-sm font-medium text-gray-900">{formattedArea}</span>
-  );
+  // Si no hay metros cuadrados, mostrar guion
+  return <span className="text-sm text-gray-400">-</span>;
 }
 
 // Componente para el indicador del estado del libro digital (ahora solo muestra progreso numérico)
@@ -651,14 +660,35 @@ export default function AssetsList() {
                       <>
                         <div className="text-center">
                           <div className="text-sm text-gray-500 mb-1">Clase energética promedio:</div>
-                          <div className="text-sm font-bold text-gray-900">
-                            {dashboardStats.averageEnergyClass || '-'}
+                          <div className="flex items-center justify-center">
+                            {dashboardStats.averageEnergyClass ? (
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getCEEColor(dashboardStats.averageEnergyClass)}`}>
+                                <span className="text-xs font-medium text-white">{dashboardStats.averageEnergyClass}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
                           </div>
                         </div>
                         <div className="text-center">
                           <div className="text-sm text-gray-500 mb-1">ESG Score medio:</div>
-                          <div className="text-sm font-bold text-gray-900">
-                            {dashboardStats.averageESGScore ? `${dashboardStats.averageESGScore}/100` : '-'}
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            {dashboardStats.averageESGScore ? (
+                              <>
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  viewBox="0 0 24 24" 
+                                  fill={getESGColorFromScore(dashboardStats.averageESGScore)}
+                                  className="w-6 h-6"
+                                  style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
+                                >
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <span className="text-xs font-medium text-gray-700">{dashboardStats.averageESGScore}</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
                           </div>
                         </div>
                         <div className="text-center">

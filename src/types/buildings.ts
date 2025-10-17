@@ -15,6 +15,7 @@ export interface Building {
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)
+  squareMeters?: number;       // Superficie en metros cuadrados
   createdAt: Date;
   updatedAt: Date;
   mainPhotoId?: string;
@@ -188,6 +189,7 @@ export interface BuildingFormStep1 {
   // Campos financieros
   rehabilitationCost: string; // Coste de rehabilitación
   potentialValue: string;     // Valor potencial
+  squareMeters: string;       // Superficie en metros cuadrados
 }
 
 export interface BuildingFormStep2 {
