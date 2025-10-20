@@ -210,3 +210,34 @@ export async function getBookIdOrThrow(buildingId: string): Promise<string> {
   if (!book?.id) throw new Error('No se pudo obtener/crear el libro digital.');
   return book.id;
 }
+
+/**
+ * POST /libros-digitales/upload-ai
+ * Procesa un PDF con IA y crea/actualiza el libro digital automáticamente
+ */
+export async function processPDFWithAI(
+  buildingId: string,
+  file: File
+): Promise<{
+  data: DigitalBook;
+  message: string;
+  metadata: {
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    extractedTextLength: number;
+    sectionsGenerated: number;
+  };
+}> {
+  const formData = new FormData();
+  formData.append('document', file);
+  formData.append('buildingId', buildingId);
+
+  const resp = await apiFetch('/libros-digitales/upload-ai', {
+    method: 'POST',
+    cache: 'no-store',
+    body: formData,
+  });
+
+  return resp as any;
+}

@@ -289,7 +289,31 @@ const SectionEditor: React.FC = () => {
   };
 
   const renderField = (field: { name: string; label: string; type: string; required?: boolean; options?: readonly string[] | string[] | Array<{value: string, label: string}> }) => {
-    const value = formData[field.name] ?? '';
+    const rawValue = formData[field.name];
+    
+    // Función para convertir cualquier valor a string de forma segura
+    const safeStringify = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number') return String(value);
+      if (typeof value === 'boolean') return String(value);
+      if (typeof value === 'object') {
+        // Si es un objeto, intentar extraer información útil
+        if (Array.isArray(value)) {
+          return value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join(', ');
+        }
+        // Si tiene propiedades comunes, intentar extraer texto
+        if (value.text) return String(value.text);
+        if (value.name) return String(value.name);
+        if (value.description) return String(value.description);
+        if (value.value) return String(value.value);
+        // Como último recurso, convertir a JSON
+        return JSON.stringify(value);
+      }
+      return String(value);
+    };
+    
+    const value = safeStringify(rawValue);
     const baseCls = 'w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ';
     const cls = baseCls + (field.required && !value ? 'border-red-300' : 'border-gray-300');
 
