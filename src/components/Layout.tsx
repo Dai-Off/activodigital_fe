@@ -19,6 +19,8 @@ function markdownTableToHtml(md: string): string {
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import Footer from './Footer';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './ui/NotificationBell';
+import DiscreteNotification from './ui/DiscreteNotification';
 
 type ChatMsg = {
   id: string;
@@ -353,14 +355,14 @@ export default function Layout() {
               </nav>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {/* Toggle Chat */}
               <button
                 onClick={() => setIsChatOpen((v) => !v)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                   isChatOpen
-                    ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                 }`}
                 aria-haspopup="dialog"
                 aria-controls="chat-sidebar"
@@ -398,26 +400,22 @@ export default function Layout() {
                 )}
               </button>
 
-              <button 
-                className="relative p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" 
-                aria-label="Notificaciones"
-                title="Notificaciones"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 01-3.46 0" />
-                </svg>
-                {/* Badge de notificaciones */}
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
+              {/* Botón de notificaciones */}
+              <NotificationBell />
 
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              {/* Botón de perfil */}
+              <button
+                className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                aria-label="Perfil"
+                title="Perfil"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="7" r="4" />
                   <path d="M5.5 20a6.5 6.5 0 0113 0" />
                 </svg>
-              </div>
+              </button>
 
+              {/* Botón de cerrar sesión */}
               <button
                 onClick={() => {
                   try {
@@ -428,11 +426,11 @@ export default function Layout() {
                   }
                   navigate('/login');
                 }}
-                className="group inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
                 aria-label="Cerrar sesión"
                 title="Cerrar sesión"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
                 </svg>
@@ -781,6 +779,9 @@ export default function Layout() {
       <div className={`transition-all duration-300 ease-out ${isChatOpen ? 'md:pr-96' : 'md:pr-0'}`}>
         <Footer />
       </div>
+
+      {/* Componente discreto de notificaciones */}
+      <DiscreteNotification />
 
       <style>{`
         .ai-table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
