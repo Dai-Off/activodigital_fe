@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import DocumentManager from '../ui/DocumentManager';
 import type { DocumentacionAdministrativa } from '../../types/digitalbook';
@@ -41,19 +42,20 @@ const DocumentacionAdministrativaSection: React.FC<DocumentacionAdministrativaSe
     onNext?.();
   };
 
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       {/* Encabezado */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Documentación Administrativa y Legal</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('adminLegalDocsTitle', 'Documentación Administrativa y Legal')}</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Sube las licencias, autorizaciones y documentación legal del edificio.
+          {t('adminLegalDocsDesc', 'Sube las licencias, autorizaciones y documentación legal del edificio.')}
         </p>
       </div>
 
       {/* Licencias de Obra */}
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-gray-800">Licencias de Obra</h3>
+        <h3 className="text-lg font-semibold text-gray-800">{t('workLicenses', 'Licencias de Obra')}</h3>
         <DocumentManager
           bookId={bookId}
           sectionType="documentacion_administrativa"
@@ -61,13 +63,13 @@ const DocumentacionAdministrativaSection: React.FC<DocumentacionAdministrativaSe
           existingDocuments={documentacion.licenciasObra || []}
           onDocumentsUpdated={(docs) => setDocumentacion(prev => ({ ...prev, licenciasObra: docs }))}
           maxDocuments={10}
-          label="Subir licencias de obra"
+          label={t('uploadWorkLicenses', 'Subir licencias de obra')}
         />
       </div>
 
       {/* Licencia de Primera Ocupación */}
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-gray-800">Licencia de Primera Ocupación</h3>
+        <h3 className="text-lg font-semibold text-gray-800">{t('firstOccupationLicense', 'Licencia de Primera Ocupación')}</h3>
         <DocumentManager
           bookId={bookId}
           sectionType="documentacion_administrativa"
@@ -75,7 +77,7 @@ const DocumentacionAdministrativaSection: React.FC<DocumentacionAdministrativaSe
           existingDocuments={documentacion.licenciaPrimeraOcupacion || []}
           onDocumentsUpdated={(docs) => setDocumentacion(prev => ({ ...prev, licenciaPrimeraOcupacion: docs }))}
           maxDocuments={5}
-          label="Subir licencia de primera ocupación"
+          label={t('uploadFirstOccupationLicense', 'Subir licencia de primera ocupación')}
         />
       </div>
 

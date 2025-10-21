@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useCallback } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { uploadBuildingImage, deleteBuildingImage } from '../../services/imageUpload';
@@ -21,6 +22,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
   allowMainImageSelection = true,
   className = ''
 }) => {
+  const { t } = useTranslation();
   const { showSuccess, showError, showInfo } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -32,14 +34,14 @@ const ImageManager: React.FC<ImageManagerProps> = ({
     // Verificar límite de imágenes
     if (existingImages.length + files.length > maxImages) {
       showError(
-        'Límite de imágenes excedido',
-        `Solo puedes subir hasta ${maxImages} imágenes. Actualmente tienes ${existingImages.length}.`
+        t('imageLimitExceeded', 'Límite de imágenes excedido'),
+        t('maxImagesMsg', `Solo puedes subir hasta ${maxImages} imágenes. Actualmente tienes ${existingImages.length}.`)
       );
       return;
     }
 
     setIsUploading(true);
-    showInfo('Subiendo imágenes...', 'Las imágenes se están procesando');
+  showInfo(t('uploadingImages', 'Subiendo imágenes...'), t('imagesProcessing', 'Las imágenes se están procesando'));
 
     try {
       const uploadPromises = files.map((file, index) => {
@@ -57,8 +59,8 @@ const ImageManager: React.FC<ImageManagerProps> = ({
       if (failedUploads.length > 0) {
         console.warn('Algunas imágenes no se pudieron subir:', failedUploads);
         showError(
-          'Error en algunas imágenes',
-          `${failedUploads.length} de ${uploadResults.length} imágenes no se pudieron subir.`
+          t('someImagesError', 'Error en algunas imágenes'),
+          t('someImagesErrorMsg', `${failedUploads.length} de ${uploadResults.length} imágenes no se pudieron subir.`)
         );
       }
 

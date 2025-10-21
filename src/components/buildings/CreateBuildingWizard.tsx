@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../contexts/ToastContext';
@@ -64,18 +65,19 @@ const CreateBuildingWizard: React.FC = () => {
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
 
   // Pasos del wizard
+  const { t } = useTranslation();
   const wizardSteps = [
     {
-      title: 'Datos Generales',
-      description: 'Información básica del edificio'
+      title: t('generalData', 'Datos Generales'),
+      description: t('generalDataDesc', 'Información básica del edificio')
     },
     {
-      title: 'Ubicación y Fotos',
-      description: 'Localización y elementos visuales'
+      title: t('locationPhotos', 'Ubicación y Fotos'),
+      description: t('locationPhotosDesc', 'Localización y elementos visuales')
     },
     {
-      title: 'Resumen',
-      description: 'Revisar información antes de continuar'
+      title: t('summary', 'Resumen'),
+      description: t('summaryDesc', 'Revisar información antes de continuar')
     }
   ];
 
@@ -88,7 +90,7 @@ const CreateBuildingWizard: React.FC = () => {
   const handleStep1SaveDraft = (data: BuildingStep1Data) => {
     setStep1Data(data);
     // Mostrar notificación de borrador guardado
-    showInfo('Borrador guardado', 'Los datos se han guardado temporalmente');
+    showInfo(t('buildings.draftSaved'), t('buildings.dataSavedTemporarily'));
   };
 
   // Manejar paso 2 - Ubicación y fotos
@@ -106,7 +108,7 @@ const CreateBuildingWizard: React.FC = () => {
     if (data.photos && data.photos.length > 0) {
       setStep2Data(prev => ({ ...prev, ...data } as BuildingStep2Data));
     }
-    showInfo('Borrador guardado', 'Ubicación y fotos guardadas temporalmente');
+    showInfo(t('buildings.draftSaved'), t('buildings.locationAndPhotosSaved'));
   };
 
   // Manejar paso 3 - Resumen
@@ -120,13 +122,13 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleSaveFinal = async () => {
     if (!step1Data || !step2Data) {
-      showError('Error', 'Faltan datos del formulario. Por favor, completa todos los pasos.');
+      showError(t('error'), t('buildings.missingFormData', 'Faltan datos del formulario. Por favor, completa todos los pasos.'));
       return;
     }
 
     // Validar que la dirección no esté vacía
     if (!step2Data.address || step2Data.address.trim() === '') {
-      showError('Error', 'La dirección es requerida. Por favor, selecciona una ubicación en el mapa.');
+      showError(t('error'), t('buildings.addressRequired'));
       return;
     }
 
@@ -205,7 +207,7 @@ const CreateBuildingWizard: React.FC = () => {
       }
       
       // Mostrar notificación de éxito
-      showSuccess('Edificio creado exitosamente');
+      showSuccess(t('buildings.buildingCreatedSuccess'));
       
       // Navegar de vuelta a la lista
       navigate('/activos');
@@ -214,8 +216,8 @@ const CreateBuildingWizard: React.FC = () => {
       console.error('Error guardando edificio:', error);
       
       // Mejorar los mensajes de error según el tipo de conflicto
-      let errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      let errorTitle = 'Error al crear el activo';
+      let errorMessage = error instanceof Error ? error.message : t('unknownError', 'Error desconocido');
+      let errorTitle = t('buildings.errorCreatingAsset');
       
       // Detectar errores de roles duplicados o conflictos de usuario del backend
       const lowerError = errorMessage.toLowerCase();
@@ -228,7 +230,7 @@ const CreateBuildingWizard: React.FC = () => {
           lowerError.includes('técnico') ||
           lowerError.includes('technician') ||
           lowerError.includes('cfo')) {
-        errorTitle = 'Conflicto de rol de usuario';
+        errorTitle = t('buildings.roleConflict');
         
         // Mensajes específicos según qué usuario causó el error
         if (step1Data.technicianEmail && step1Data.cfoEmail) {
@@ -284,7 +286,7 @@ const CreateBuildingWizard: React.FC = () => {
             onPrevious={handleStep2Previous}
             onSaveDraft={handleStep2SaveDraft}
             initialData={step2Data || {}}
-            buildingName={step1Data?.name || 'Nuevo Edificio'}
+            buildingName={step1Data?.name || t('buildings.newBuilding', 'Nuevo Edificio')}
           />
         );
       
@@ -320,7 +322,7 @@ const CreateBuildingWizard: React.FC = () => {
                   onClick={() => navigate('/activos')}
                   className="hover:text-blue-600"
                 >
-                  Activos
+                  {t('buildings.assets')}
                 </button>
               </li>
               <li>
@@ -329,7 +331,7 @@ const CreateBuildingWizard: React.FC = () => {
                 </svg>
               </li>
               <li className="text-gray-900 font-medium">
-                Crear Edificio
+                {t('buildings.createBuilding')}
               </li>
             </ol>
           </nav>
@@ -351,13 +353,13 @@ const CreateBuildingWizard: React.FC = () => {
         {/* Footer con información adicional */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            ¿Necesitas ayuda? Consulta nuestra{' '}
+            {t('buildings.needHelp')}{' '}
             <a href="#" className="text-blue-600 hover:text-blue-700">
-              guía de creación de edificios
+              {t('buildings.buildingCreationGuide')}
             </a>
-            {' '}o{' '}
+            {' '}{t('buildings.or')}{' '}
             <a href="#" className="text-blue-600 hover:text-blue-700">
-              contacta con soporte
+              {t('buildings.contactSupport')}
             </a>
           </p>
         </div>

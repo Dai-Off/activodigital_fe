@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -87,6 +88,7 @@ function PaginationBar({
   onPageSizeChange: (s: number) => void;
   pageSizeOptions?: number[];
 }) {
+  const { t } = useTranslation();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(total, page * pageSize);
@@ -96,8 +98,7 @@ function PaginationBar({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3">
       <div className="text-xs text-gray-600">
-        Mostrando <span className="font-medium">{start}</span>–<span className="font-medium">{end}</span> de{' '}
-        <span className="font-medium">{total}</span>
+        {t('showing', 'Mostrando')} <span className="font-medium">{start}</span>–<span className="font-medium">{end}</span> {t('of', 'de')} <span className="font-medium">{total}</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -105,12 +106,12 @@ function PaginationBar({
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-          aria-label="Tamaño de página"
-          title="Tamaño de página"
+          aria-label={t('pageSize', 'Tamaño de página')}
+          title={t('pageSize', 'Tamaño de página')}
         >
           {pageSizeOptions.map((opt) => (
             <option key={opt} value={opt}>
-              {opt}/página
+              {opt} {t('perPage', '/página')}
             </option>
           ))}
         </select>
@@ -120,8 +121,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(1)}
             disabled={page === 1}
-            title="Primera página"
-            aria-label="Primera página"
+            title={t('firstPage', 'Primera página')}
+            aria-label={t('firstPage', 'Primera página')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m11 17-5-5 5-5" />
@@ -132,8 +133,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page - 1)}
             disabled={page === 1}
-            title="Anterior"
-            aria-label="Anterior"
+            title={t('previous', 'Anterior')}
+            aria-label={t('previous', 'Anterior')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m15 18-6-6 6-6" />
@@ -141,15 +142,15 @@ function PaginationBar({
           </button>
 
           <span className="px-2 text-xs text-gray-600">
-            Página <span className="font-medium">{page}</span> / {totalPages}
+            {t('page', 'Página')} <span className="font-medium">{page}</span> / {totalPages}
           </span>
 
           <button
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page + 1)}
             disabled={page === totalPages}
-            title="Siguiente"
-            aria-label="Siguiente"
+            title={t('next', 'Siguiente')}
+            aria-label={t('next', 'Siguiente')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m9 18 6-6-6-6" />
@@ -159,8 +160,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(totalPages)}
             disabled={page === totalPages}
-            title="Última página"
-            aria-label="Última página"
+            title={t('lastPage', 'Última página')}
+            aria-label={t('lastPage', 'Última página')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m13 17 5-5-5-5" />
@@ -299,21 +300,22 @@ function BuildingStatusIndicator({ building, digitalBooks }: { building: Buildin
   const completedSections = book?.progress || 0;
   
   // Si el libro está completo (8/8), mostrar "Completado" en verde
+  const { t } = useTranslation();
   if (completedSections === totalSections) {
-    return <span className="text-sm font-medium text-green-600">Completado {completedSections}/{totalSections}</span>;
+    return <span className="text-sm font-medium text-green-600">{t('completed', 'Completado')} {completedSections}/{totalSections}</span>;
   }
 
   // Estados sin la frase "Libro Digital" y con progreso a la derecha
   const statusLabel = (() => {
     switch (building.status) {
       case 'draft':
-        return 'Pendiente';
+        return t('pending', 'Pendiente');
       case 'ready_book':
-        return 'Listo';
+        return t('ready', 'Listo');
       case 'with_book':
-        return 'En curso';
+        return t('inProgress', 'En curso');
       default:
-        return getBuildingStatusLabel(building.status);
+        return t(getBuildingStatusLabel(building.status), getBuildingStatusLabel(building.status));
     }
   })();
 
@@ -322,6 +324,7 @@ function BuildingStatusIndicator({ building, digitalBooks }: { building: Buildin
 
 /* --------------------------------- Página --------------------------------- */
 export default function AssetsList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoading: authLoading, hasPermission } = useAuth();
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -453,12 +456,12 @@ export default function AssetsList() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {user?.role === 'propietario' ? 'Mis Activos' : 'Activos Asignados'}
+              {user?.role === 'propietario' ? t('myAssets', 'Mis Activos') : t('assignedAssets', 'Activos Asignados')}
             </h1>
             <p className="text-gray-600">
               {user?.role === 'propietario'
-                ? 'Gestiona tu cartera de activos inmobiliarios y asigna técnicos'
-                : 'Activos que tienes asignados para gestionar libros digitales'}
+                ? t('managePortfolio', 'Gestiona tu cartera de activos inmobiliarios y asigna técnicos')
+                : t('assignedAssetsDesc', 'Activos que tienes asignados para gestionar libros digitales')}
             </p>
           </div>
 
@@ -472,7 +475,7 @@ export default function AssetsList() {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Crear Edificio
+                {t('createBuilding', 'Crear Edificio')}
               </Link>
             )}
           </div>
@@ -508,12 +511,12 @@ export default function AssetsList() {
                   </svg>
                 </div>
                 <div>
-                    <div className="text-xs text-gray-500">Bienvenido</div>
+                    <div className="text-xs text-gray-500">{t('welcome', 'Bienvenido')}</div>
                     <div className="text-sm font-semibold text-gray-900">{user.fullName}</div>
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 capitalize">
-                {user.role}
+                {t(user.role, user.role)}
               </span>
             </div>
 
@@ -532,13 +535,13 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-green-600 mb-1">
                                    {formatBuildingValue(dashboardStats.totalValue)}
                                  </div>
-                                 <div className="text-sm text-gray-500">Valor total</div>
+                                 <div className="text-sm text-gray-500">{t('totalValue', 'Valor total')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
                                <div className="text-center">
                                  <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                                 <div className="text-sm text-gray-500">Activos</div>
+                                 <div className="text-sm text-gray-500">{t('assets', 'Activos')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
@@ -546,7 +549,7 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-gray-900 mb-1">
                                    {dashboardStats.totalSurfaceArea.toLocaleString()} m²
                                  </div>
-                                 <div className="text-sm text-gray-500">Superficie total</div>
+                                 <div className="text-sm text-gray-500">{t('totalSurface', 'Superficie total')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
@@ -554,16 +557,16 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-gray-900 mb-1">
                                    {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
                                  </div>
-                                 <div className="text-sm text-gray-500">Emisiones anuales</div>
+                                 <div className="text-sm text-gray-500">{t('annualEmissions', 'Emisiones anuales')}</div>
                                </div>
                              </div>
-                           </>
+                           </> 
                          ) : (
                            <>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
                                <div className="text-center">
                                  <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                                 <div className="text-sm text-gray-500">Edificios asignados</div>
+                                 <div className="text-sm text-gray-500">{t('assignedBuildings', 'Edificios asignados')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
@@ -571,7 +574,7 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-gray-900 mb-1">
                                    {dashboardStats.completedBooks}
                                  </div>
-                                 <div className="text-sm text-gray-500">Libros completados</div>
+                                 <div className="text-sm text-gray-500">{t('completedBooks', 'Libros completados')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
@@ -579,7 +582,7 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-gray-900 mb-1">
                                    {dashboardStats.pendingBooks}
                                  </div>
-                                 <div className="text-sm text-gray-500">Pendientes</div>
+                                 <div className="text-sm text-gray-500">{t('pendingBooks', 'Pendientes')}</div>
                                </div>
                              </div>
                              <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
@@ -587,7 +590,7 @@ export default function AssetsList() {
                                  <div className="text-2xl font-bold text-gray-900 mb-1">
                                    {dashboardStats.totalSurfaceArea.toLocaleString()} m²
                                  </div>
-                                 <div className="text-sm text-gray-500">Superficie total</div>
+                                 <div className="text-sm text-gray-500">{t('totalSurface', 'Superficie total')}</div>
                                </div>
                              </div>
                            </>
@@ -603,48 +606,48 @@ export default function AssetsList() {
                              <div className="text-2xl font-bold text-green-600 mb-1">
                                {formatBuildingValue(dashboardStats.totalValue)}
                              </div>
-                             <div className="text-sm text-gray-500">Valor total</div>
+                             <div className="text-sm text-gray-500">{t('totalValue', 'Valor total')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                             <div className="text-sm text-gray-500">Activos</div>
+                             <div className="text-sm text-gray-500">{t('assets', 'Activos')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">
                                {dashboardStats.totalSurfaceArea.toLocaleString()} m²
                              </div>
-                             <div className="text-sm text-gray-500">Superficie total</div>
+                             <div className="text-sm text-gray-500">{t('totalSurface', 'Superficie total')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">
                                {dashboardStats.totalEmissions.toLocaleString()} tCO₂ eq
                              </div>
-                             <div className="text-sm text-gray-500">Emisiones anuales</div>
+                             <div className="text-sm text-gray-500">{t('annualEmissions', 'Emisiones anuales')}</div>
                            </div>
                          </>
                        ) : (
                          <>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">{dashboardStats.totalAssets}</div>
-                             <div className="text-sm text-gray-500">Edificios asignados</div>
+                             <div className="text-sm text-gray-500">{t('assignedBuildings', 'Edificios asignados')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">
                                {dashboardStats.completedBooks}
                              </div>
-                             <div className="text-sm text-gray-500">Libros completados</div>
+                             <div className="text-sm text-gray-500">{t('completedBooks', 'Libros completados')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">
                                {dashboardStats.pendingBooks}
                              </div>
-                             <div className="text-sm text-gray-500">Pendientes</div>
+                             <div className="text-sm text-gray-500">{t('pendingBooks', 'Pendientes')}</div>
                            </div>
                            <div className="text-center">
                              <div className="text-2xl font-bold text-gray-900 mb-1">
                                {dashboardStats.totalSurfaceArea.toLocaleString()} m²
                              </div>
-                             <div className="text-sm text-gray-500">Superficie total</div>
+                             <div className="text-sm text-gray-500">{t('totalSurface', 'Superficie total')}</div>
                            </div>
                          </>
                        )}
@@ -659,7 +662,7 @@ export default function AssetsList() {
                     {user?.role === 'propietario' ? (
                       <>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Clase energética promedio:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('averageEnergyClass', 'Clase energética promedio:')}</div>
                           <div className="flex items-center justify-center">
                             {dashboardStats.averageEnergyClass ? (
                               <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getCEEColor(dashboardStats.averageEnergyClass)}`}>
@@ -671,7 +674,7 @@ export default function AssetsList() {
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">ESG Score medio:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('averageESGScore', 'ESG Score medio:')}</div>
                           <div className="flex flex-col items-center justify-center gap-1">
                             {dashboardStats.averageESGScore ? (
                               <>
@@ -692,30 +695,30 @@ export default function AssetsList() {
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Libro Digital completo:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('completedDigitalBook', 'Libro Digital completo:')}</div>
                           <div className="text-sm font-bold text-gray-900">
-                            {dashboardStats.completedBooks} de {dashboardStats.totalAssets}
+                            {dashboardStats.completedBooks} {t('of', 'de')} {dashboardStats.totalAssets}
                           </div>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Tipología más común:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('mostCommonTypology', 'Tipología más común:')}</div>
                           <div className="text-sm font-bold text-gray-900">
                             {dashboardStats.mostCommonTypology ? getBuildingTypologyLabel(dashboardStats.mostCommonTypology as any) : 'N/A'}
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Promedio de unidades:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('averageUnits', 'Promedio de unidades:')}</div>
                           <div className="text-sm font-bold text-gray-900">
                             {dashboardStats.averageUnitsPerBuilding}
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Edad promedio:</div>
+                          <div className="text-sm text-gray-500 mb-1">{t('averageAge', 'Edad promedio:')}</div>
                           <div className="text-sm font-bold text-gray-900">
-                            {dashboardStats.averageBuildingAge} años
+                            {dashboardStats.averageBuildingAge} {t('years', 'años')}
                           </div>
                         </div>
                       </>
@@ -764,9 +767,9 @@ export default function AssetsList() {
                   
                   <div className="text-center max-w-[100px]">
                     <div className="text-xs text-gray-500 leading-tight">
-                  {user?.role === 'propietario'
-                        ? '% cartera apta para financiación verde' 
-                        : '% libros digitales completados'}
+      {user?.role === 'propietario'
+        ? t('greenFinancingEligible', '% cartera apta para financiación verde')
+        : t('completedDigitalBooksPercent', '% libros digitales completados')}
                     </div>
                   </div>
               </div>
@@ -783,7 +786,7 @@ export default function AssetsList() {
           style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
         >
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Listado de Activos</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('assetsList', 'Listado de Activos')}</h3>
           </div>
 
           {loading ? (
@@ -793,12 +796,12 @@ export default function AssetsList() {
               <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '20%'}}>Nombre</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>Valor</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '18%'}}>ESTADO LIBRO DIGITAL</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '8%'}}>CEE</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>ESG</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>m²</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '20%'}}>{t('name', 'Nombre')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>{t('value', 'Valor')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '18%'}}>{t('digitalBookStatus', 'ESTADO LIBRO DIGITAL')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '8%'}}>{t('cee', 'CEE')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '12%'}}>{t('esg', 'ESG')}</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell" style={{width: '10%'}}>{t('squareMeters', 'm²')}</th>
                     {/* Eliminado: columna separada de Libro. El progreso se muestra junto al estado. */}
                   </tr>
                 </thead>
@@ -860,12 +863,12 @@ export default function AssetsList() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === 'propietario' ? 'No tienes activos aún' : 'No tienes activos asignados'}
+                {user?.role === 'propietario' ? t('noAssetsYet', 'No tienes activos aún') : t('noAssignedAssets', 'No tienes activos asignados')}
               </h3>
               <p className="text-gray-600 mb-4">
                 {user?.role === 'propietario'
-                  ? 'Comienza creando tu primer activo para gestionar tu cartera.'
-                  : 'Contacta con tu administrador para que te asigne activos.'}
+                  ? t('createFirstAsset', 'Comienza creando tu primer activo para gestionar tu cartera.')
+                  : t('contactAdmin', 'Contacta con tu administrador para que te asigne activos.')}
               </p>
               {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
                 <Link
@@ -875,7 +878,7 @@ export default function AssetsList() {
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  Crear primer activo
+                  {t('createFirstAssetBtn', 'Crear primer activo')}
                 </Link>
               )}
             </div>

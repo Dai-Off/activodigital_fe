@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import DocumentManager, { type DocumentFile } from '../ui/DocumentManager';
 import type { ProyectoTecnico } from '../../types/digitalbook';
@@ -73,11 +74,12 @@ const ProyectoTecnicoSection: React.FC<ProyectoTecnicoSectionProps> = ({
     onNext?.();
   };
 
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       {/* Encabezado */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Proyecto Técnico</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('technicalProject', 'Proyecto Técnico')}</h2>
         <p className="text-sm text-gray-600 mt-1">
           Sube la documentación técnica del proyecto: proyecto de ejecución, planos, memoria de obra, etc.
         </p>

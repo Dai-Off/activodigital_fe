@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useCallback } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { 
@@ -46,6 +47,9 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
   label = 'Subir documentos',
   description = 'Arrastra archivos aquí o haz clic para seleccionar'
 }) => {
+  const { t } = useTranslation();
+  label = t('uploadDocuments', label);
+  description = t('dragOrClick', description);
   const { showSuccess, showError, showInfo } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);

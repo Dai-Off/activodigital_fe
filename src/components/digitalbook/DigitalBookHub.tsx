@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import ProgressBar from '../ui/ProgressBar';
@@ -6,16 +7,16 @@ import { PageLoader } from '../ui/LoadingSystem';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Datos hardcodeados para demostrar la funcionalidad
-const SECTION_LABELS: Record<string, { title: string; description: string; uiId: string } > = {
-  general_data: { title: 'Datos generales del edificio', description: 'Información básica y características principales', uiId: 'general_data' },
-  construction_features: { title: 'Características constructivas y técnicas', description: 'Especificaciones técnicas de construcción', uiId: 'construction_features' },
-  certificates_and_licenses: { title: 'Certificados y licencias', description: 'Documentación legal y certificaciones', uiId: 'certificates' },
-  maintenance_and_conservation: { title: 'Mantenimiento y conservación', description: 'Historial y planes de mantenimiento', uiId: 'maintenance' },
-  facilities_and_consumption: { title: 'Instalaciones y consumos', description: 'Sistemas e instalaciones del edificio', uiId: 'installations' },
-  renovations_and_rehabilitations: { title: 'Reformas y rehabilitaciones', description: 'Historial de modificaciones y mejoras', uiId: 'reforms' },
-  sustainability_and_esg: { title: 'Sostenibilidad y ESG', description: 'Criterios ambientales y sostenibilidad', uiId: 'sustainability' },
-  annex_documents: { title: 'Documentos anexos', description: 'Documentación adicional y anexos', uiId: 'attachments' },
-};
+const SECTION_LABELS = (t: any) => ({
+  general_data: { title: t('generalData', 'Datos generales del edificio'), description: t('generalDataDesc', 'Información básica y características principales'), uiId: 'general_data' },
+  construction_features: { title: t('constructionFeatures', 'Características constructivas y técnicas'), description: t('constructionFeaturesDesc', 'Especificaciones técnicas de construcción'), uiId: 'construction_features' },
+  certificates_and_licenses: { title: t('certificatesAndLicenses', 'Certificados y licencias'), description: t('certificatesAndLicensesDesc', 'Documentación legal y certificaciones'), uiId: 'certificates' },
+  maintenance_and_conservation: { title: t('maintenanceAndConservation', 'Mantenimiento y conservación'), description: t('maintenanceAndConservationDesc', 'Historial y planes de mantenimiento'), uiId: 'maintenance' },
+  facilities_and_consumption: { title: t('facilitiesAndConsumption', 'Instalaciones y consumos'), description: t('facilitiesAndConsumptionDesc', 'Sistemas e instalaciones del edificio'), uiId: 'installations' },
+  renovations_and_rehabilitations: { title: t('renovationsAndRehabilitations', 'Reformas y rehabilitaciones'), description: t('renovationsAndRehabilitationsDesc', 'Historial de modificaciones y mejoras'), uiId: 'reforms' },
+  sustainability_and_esg: { title: t('sustainabilityAndESG', 'Sostenibilidad y ESG'), description: t('sustainabilityAndESGDesc', 'Criterios ambientales y sostenibilidad'), uiId: 'sustainability' },
+  annex_documents: { title: t('annexDocuments', 'Documentos anexos'), description: t('annexDocumentsDesc', 'Documentación adicional y anexos'), uiId: 'attachments' },
+});
 
 interface DigitalBookHubProps {
   buildingName?: string;
@@ -41,24 +42,22 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   // Propietario solo puede leer, no editar
   const canEdit = user?.role !== 'propietario';
 
+  const { t } = useTranslation();
   const sections = useMemo(() => {
-    // Si no hay libro o el libro no tiene secciones, crear las 8 secciones por defecto
+    const labels = SECTION_LABELS(t);
     if (!book || !book.sections || book.sections.length === 0) {
-      console.log('Creando secciones por defecto porque:', !book ? 'no hay libro' : 'no hay secciones');
-      return Object.entries(SECTION_LABELS).map(([_type, meta]) => ({
+      return Object.entries(labels).map(([_type, meta]) => ({
         key: meta.uiId,
         title: meta.title,
         description: meta.description,
         isCompleted: false
       }));
     }
-    
-    console.log('Usando secciones del libro:', book.sections.length);
     return book.sections.map((s) => {
-      const meta = SECTION_LABELS[s.type] || { title: s.type, description: '', uiId: s.type };
+      const meta = labels[s.type] || { title: s.type, description: '', uiId: s.type };
       return { key: meta.uiId, title: meta.title, description: meta.description, isCompleted: Boolean(s.complete) };
     });
-  }, [book]);
+  }, [book, t]);
 
   const completedSections = book?.sections.filter((s) => s.complete).length ?? 0;
   const totalSections = book?.sections.length ?? 8;

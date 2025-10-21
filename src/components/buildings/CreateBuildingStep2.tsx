@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 // Utilidad debounce simple
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
   let timeout: ReturnType<typeof setTimeout>;
@@ -63,6 +64,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
   const [address, setAddress] = useState<string>("");
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const { t } = useTranslation();
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [hasSelectedSuggestion, setHasSelectedSuggestion] = useState(false);
@@ -208,12 +210,12 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     const newErrors: { location?: string; photos?: string } = {};
 
     if (!location) {
-      newErrors.location = 'Debes seleccionar una ubicación en el mapa';
+      newErrors.location = t('buildings.locationRequired');
     }
 
     // Fotos opcionales, máximo 5
     if (photos.length > 5) {
-      newErrors.photos = 'Máximo 5 fotos';
+      newErrors.photos = t('buildings.maxPhotos', 'Máximo 5 fotos');
     }
 
     setErrors(newErrors);
@@ -246,7 +248,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     if (address.trim()) {
       data.address = address.trim();
     }
-    
+      setGeoError(t('addressRequired', 'La dirección es obligatoria'));
     if (photos.length > 0) {
       data.photos = photos;
       data.mainPhotoIndex = mainPhotoIndex;
@@ -276,10 +278,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {buildingName} - Ubicación y Fotos
+          {buildingName} - {t('buildings.locationAndPhotos')}
         </h1>
         <p className="text-gray-600">
-          Marca la ubicación del edificio en el mapa y sube las fotos correspondientes.
+          {t('buildings.markLocationAndUpload', 'Marca la ubicación del edificio en el mapa y sube las fotos correspondientes.')}
         </p>
       </div>
 
@@ -288,10 +290,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Ubicación del Edificio *
+              {t('buildings.buildingLocation', 'Ubicación del Edificio')} *
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Puedes buscar la ubicación escribiendo la dirección o haciendo clic en el mapa.
+              {t('buildings.searchOrClickMap', 'Puedes buscar la ubicación escribiendo la dirección o haciendo clic en el mapa.')}
             </p>
           </div>
 
@@ -306,7 +308,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                   setHasSelectedSuggestion(false);
                 }}
                 onFocus={() => address.trim() && setShowSuggestions(true)}
-                placeholder="Ej: Calle Mayor 123, Madrid"
+                placeholder={t('buildings.addressPlaceholder', 'Ej: Calle Mayor 123, Madrid')}
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 autoComplete="off"
                 ref={inputRef}
@@ -317,14 +319,14 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                 disabled={geoLoading || !address.trim()}
                 className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                {geoLoading ? 'Buscando...' : 'Buscar'}
+                {geoLoading ? t('buildings.searching') : t('buildings.search')}
               </button>
             </div>
             {/* Dropdown de sugerencias sobre el mapa */}
             {showSuggestions && (
               <ul className="absolute left-0 top-full w-full bg-white border border-blue-400 rounded-lg shadow-2xl mt-1 max-h-56 overflow-auto" style={{zIndex: 9999}}>
                 {suggestions.length === 0 && address.trim() && (
-                  <li className="px-3 py-2 text-gray-500 text-sm select-none">No se encontraron resultados</li>
+                  <li className="px-3 py-2 text-gray-500 text-sm select-none">{t('buildings.noResults', 'No se encontraron resultados')}</li>
                 )}
                 {suggestions.map((s) => (
                   <li
@@ -375,19 +377,19 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {location && (
             <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                <strong>Ubicación seleccionada:</strong><br />
+                <strong>{t('buildings.selectedLocation', 'Ubicación seleccionada')}:</strong><br />
                 {address && (
                   <span className="block font-semibold text-green-900 mb-1">{address}</span>
                 )}
-                Latitud: {location.lat.toFixed(6)}<br />
-                Longitud: {location.lng.toFixed(6)}
+                {t('buildings.latitude', 'Latitud')}: {location.lat.toFixed(6)}<br />
+                {t('buildings.longitude', 'Longitud')}: {location.lng.toFixed(6)}
               </p>
             </div>
           )}
 
           {/* Error de ubicación */}
           {errors.location && (
-            <p className="mt-2 text-sm text-red-600">{errors.location}</p>
+            <p className="mt-2 text-sm text-red-600">{t('buildings.locationRequired')}</p>
           )}
         </div>
 
@@ -395,10 +397,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Fotos del Edificio *
+              {t('buildings.buildingPhotos', 'Fotos del Edificio')} *
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              Sube fotos del edificio. La primera será la foto principal.
+              {t('buildings.uploadPhotosDesc', 'Sube fotos del edificio. La primera será la foto principal.')}
             </p>
           </div>
 
@@ -409,8 +411,8 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
               acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
               maxFiles={5 - photos.length}
               maxSizeInMB={5}
-              label="Subir fotos"
-              description={`Arrastra fotos aquí o haz clic para seleccionar (${5 - photos.length} restantes)`}
+              label={t('buildings.uploadPhotos', 'Subir fotos')}
+              description={t('buildings.dragPhotosOrClick', 'Arrastra fotos aquí o haz clic para seleccionar ({{remaining}} restantes)', { remaining: 5 - photos.length })}
               className="mb-6"
             />
           )}
@@ -424,7 +426,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {photos.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-gray-900">
-                Fotos subidas ({photos.length}/5)
+                {t('buildings.uploadedPhotos', 'Fotos subidas')} ({photos.length}/5)
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
@@ -450,7 +452,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                         {isMain && (
                           <div className="absolute top-2 left-2">
                             <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
-                              Principal
+                              {t('buildings.mainPhoto')}
                             </span>
                           </div>
                         )}
@@ -462,7 +464,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                               type="button"
                               onClick={() => handleSetMainPhoto(index)}
                               className="p-1 text-white bg-black bg-opacity-50 rounded hover:bg-opacity-70"
-                              title="Establecer como principal"
+                              title={t('buildings.setAsMain')}
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -474,7 +476,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                             type="button"
                             onClick={() => handleRemovePhoto(index)}
                             className="p-1 text-white bg-red-500 bg-opacity-70 rounded hover:bg-opacity-90"
-                            title="Eliminar foto"
+                            title={t('buildings.remove')}
                           >
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -503,7 +505,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={onPrevious}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Anterior
+          {t('buildings.previous')}
         </button>
         
         <button
@@ -511,7 +513,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={handleSaveDraft}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Guardar borrador
+          {t('buildings.saveDraft')}
         </button>
         
         <button
@@ -519,7 +521,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={handleNext}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
         >
-          Guardar y continuar
+          {t('buildings.saveAndContinue', 'Guardar y continuar')}
         </button>
       </div>
     </div>

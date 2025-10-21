@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
+import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 
 // Fix para iconos de Leaflet
@@ -50,40 +51,45 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   onSaveFinal,
   isSaving = false
 }) => {
+  const { t } = useTranslation();
   const safePhotos = Array.isArray(buildingData.photos) ? buildingData.photos : [];
   const safeMainIndex = Number.isInteger(buildingData.mainPhotoIndex) && buildingData.mainPhotoIndex >= 0
     ? buildingData.mainPhotoIndex
     : 0;
   const mainPhoto = safePhotos[safeMainIndex];
-  const [mainPhotoUrl, setMainPhotoUrl] = React.useState<string | null>(null);
-  
+  const [mainPhotoUrl, setMainPhotoUrl] = React.useState<string | undefined>(undefined);
+
   // Crear URL del objeto de forma segura
   React.useEffect(() => {
     if (mainPhoto) {
       try {
         const url = URL.createObjectURL(mainPhoto);
         setMainPhotoUrl(url);
-        
+
         // Limpiar URL cuando el componente se desmonte
         return () => {
           URL.revokeObjectURL(url);
         };
       } catch (error) {
         console.error('Error creando URL del objeto:', error);
-        setMainPhotoUrl(null);
+        setMainPhotoUrl(undefined);
       }
     } else {
-      setMainPhotoUrl(null);
+      setMainPhotoUrl(undefined);
     }
   }, [mainPhoto]);
 
   const getTypologyLabel = (typology: string) => {
-    const labels = {
-      'residential': 'Residencial',
-      'mixed': 'Mixto',
-      'commercial': 'Comercial'
-    };
-    return labels[typology as keyof typeof labels] || typology;
+    switch (typology) {
+      case 'residential':
+        return t('residential', 'Residencial');
+      case 'mixed':
+        return t('mixed', 'Mixto');
+      case 'commercial':
+        return t('commercial', 'Comercial');
+      default:
+        return typology;
+    }
   };
 
   return (
@@ -91,10 +97,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Resumen del Activo
+          {t('buildings.assetSummary')}
         </h1>
         <p className="text-gray-600">
-          Revisa toda la información antes de crear el activo.
+          {t('buildings.reviewBeforeCreating')}
         </p>
       </div>
 
@@ -106,7 +112,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           <div className="relative h-72 bg-gray-200">
             <img
               src={mainPhotoUrl}
-              alt={`Foto principal de ${buildingData.name}`}
+              alt={`${t('buildings.mainPhotoOf')} ${buildingData.name}`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 console.error('Error cargando imagen:', e);
@@ -148,7 +154,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <p className="text-gray-500 text-sm">Sin imagen principal</p>
+                <p className="text-gray-500 text-sm">{t('buildings.noMainPhoto')}</p>
             </div>
             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 via-black/20 to-transparent">
               <div className="p-6">
@@ -171,87 +177,87 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Información General
+                  {t('buildings.generalInfo')}
                 </h3>
                 <button
                   onClick={onEditData}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  Editar datos
+                  {t('buildings.editData')}
                 </button>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Nombre:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('name')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.name}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Año construcción:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.constructionYear')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.constructionYear}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Tipología:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.typology')}:</span>
                   <span className="text-sm text-gray-900">{getTypologyLabel(buildingData.typology)}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Plantas:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.floors')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.floors}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Unidades:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.units')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.units}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Precio:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.price')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.price ? `€${parseInt(buildingData.price).toLocaleString('es-ES')}` : 'No especificado'}
+                    {buildingData.price ? `€${parseInt(buildingData.price).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Técnico asignado:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.assignedTechnician')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.technicianEmail || 'Sin asignar'}
+                    {buildingData.technicianEmail || t('buildings.unassigned')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">CFO asignado:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.assignedCFO')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.cfoEmail || 'Sin asignar'}
+                    {buildingData.cfoEmail || t('buildings.unassigned')}
                   </span>
                 </div>
                 
                 {/* Campos financieros */}
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Coste rehabilitación:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.rehabilitationCostLabel')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.rehabilitationCost ? `€${parseInt(buildingData.rehabilitationCost).toLocaleString('es-ES')}` : 'No especificado'}
+                    {buildingData.rehabilitationCost ? `€${parseInt(buildingData.rehabilitationCost).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Valor potencial:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.potentialValueLabel')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : 'No especificado'}
+                    {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">Superficie:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('buildings.surfaceLabel')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.squareMeters ? `${parseFloat(buildingData.squareMeters).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} m²` : 'No especificado'}
+                    {buildingData.squareMeters ? `${parseFloat(buildingData.squareMeters).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} m²` : t('buildings.notSpecified')}
                   </span>
                 </div>
                 
                 <div className="py-2">
-                  <span className="text-sm font-medium text-gray-600 block mb-2">Dirección:</span>
+                  <span className="text-sm font-medium text-gray-600 block mb-2">{t('buildings.address')}:</span>
                   <p className="text-sm text-gray-900">{buildingData.address}</p>
                 </div>
               </div>
@@ -261,13 +267,13 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Ubicación
+                  {t('buildings.location')}
                 </h3>
                 <button
                   onClick={onEditLocation}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  Editar ubicación
+                  {t('buildings.editLocation')}
                 </button>
               </div>
 
@@ -314,7 +320,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           disabled={isSaving}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Editar Datos
+          {t('buildings.editDataButton')}
         </button>
         
         <button
@@ -322,7 +328,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           disabled={isSaving}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Editar Ubicación
+          {t('buildings.editLocationButton')}
         </button>
         
         <button
@@ -333,14 +339,14 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           {isSaving ? (
             <>
               <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Creando...</span>
+              <span>{t('buildings.creating')}</span>
             </>
           ) : (
             <>
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              <span>Crear Activo</span>
+              <span>{t('buildings.createAsset')}</span>
             </>
           )}
         </button>

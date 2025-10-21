@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -21,6 +22,7 @@ L.Icon.Default.mergeOptions({
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   // SVGs para iconos
   const icons = {
     shieldCheck: (
@@ -47,7 +49,12 @@ export default function Dashboard() {
 
   // Datos para el gráfico de dona
   const chartData = {
-    labels: ["Completadas", "En progreso", "Programadas", "Vencidas"],
+    labels: [
+      t('dashboard.completed'),
+      t('dashboard.inProgress'),
+      t('dashboard.scheduled'),
+      t('dashboard.expired')
+    ],
     datasets: [
       {
         data: [24, 8, 12, 3],
@@ -83,23 +90,23 @@ export default function Dashboard() {
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
         <div className="grid grid-cols-12 gap-4 items-start">
           <div className="col-span-12 lg:col-span-8">
-            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">Hotel RIU PLAZA España</h2>
-            <p className="text-gray-600 text-sm mt-0.5">Calle Gran Vía, 84, 28013 Madrid • Ref. Cat: 1234567890</p>
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{t('buildingName')}</h2>
+            <p className="text-gray-600 text-sm mt-0.5">{t('buildingAddress')}</p>
 
             {/* Meta compacta */}
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">Año construcción</span>
+                <span className="text-gray-500">{t('yearBuilt')}</span>
                 <span className="font-medium text-gray-900">1953</span>
               </div>
               <div className="hidden sm:block h-4 w-px bg-gray-200" />
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">Superficie</span>
+                <span className="text-gray-500">{t('surface')}</span>
                 <span className="font-medium text-gray-900">45,000 m²</span>
               </div>
               <div className="hidden sm:block h-4 w-px bg-gray-200" />
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">Habitaciones</span>
+                <span className="text-gray-500">{t('rooms')}</span>
                 <span className="font-medium text-gray-900">550 habitaciones</span>
               </div>
             </div>
@@ -107,19 +114,19 @@ export default function Dashboard() {
             {/* KPIs compactos */}
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">Rating energético-ambiental</span>
+                <span className="block text-xs text-gray-500">{t('energyRating')}</span>
                 <div className="mt-1.5 flex items-center gap-2">
                   <RatingCircle rating="A" size="sm" />
                   <RatingStars stars={5} />
                 </div>
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">Huella de carbono</span>
+                <span className="block text-xs text-gray-500">{t('carbonFootprint')}</span>
                 <p className="mt-1 font-medium text-gray-900">12.5 kg CO₂eq/m²·año</p>
               </div>
               <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">Acceso a financiación</span>
-                <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">Alta</span>
+                <span className="block text-xs text-gray-500">{t('dashboard.financingAccess')}</span>
+                <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">{t('dashboard.high')}</span>
               </div>
             </div>
 
@@ -128,11 +135,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Cumplimiento por tipología */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Cumplimiento por tipología</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('dashboard.complianceByType')}</h4>
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>Terciario</span>
+                        <span>{t('dashboard.tertiary')}</span>
                         <span className="font-medium text-gray-900">81%</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full">
@@ -144,14 +151,14 @@ export default function Dashboard() {
 
                 {/* Libro del Edificio Digital (estado) */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Libro del Edificio Digital</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('dashboard.digitalBuildingBook')}</h4>
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Publicado</span>
-                    <span className="text-xs text-gray-500">Versión 1.2 • Actualizado Sep 2025</span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">{t('dashboard.published')}</span>
+                    <span className="text-xs text-gray-500">{t('dashboard.version')} 1.2 • {t('dashboard.updated')} Sep 2025</span>
                   </div>
                   <div className="mt-3">
                     <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>Completado</span>
+                      <span>{t('dashboard.completed')}</span>
                       <span className="font-medium text-gray-900">6/8</span>
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full">
@@ -162,24 +169,24 @@ export default function Dashboard() {
 
                 {/* Progreso de secciones + Estado por sección */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Estado por sección</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('dashboard.statusBySection')}</h4>
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">OK</div>
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">Pendiente</div>
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">Vence</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">{t('dashboard.ok')}</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">{t('dashboard.pending')}</div>
+                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">{t('dashboard.expired')}</div>
                   </div>
                   <div className="mt-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between text-gray-600">
-                      <span>Instalaciones</span><span className="font-medium text-green-700">OK</span>
+                      <span>{t('dashboard.installations')}</span><span className="font-medium text-green-700">{t('dashboard.ok')}</span>
                     </div>
                     <div className="flex items-center justify-between text-gray-600">
-                      <span>Certificados</span><span className="font-medium text-yellow-700">Pendiente</span>
+                      <span>{t('dashboard.certificates')}</span><span className="font-medium text-yellow-700">{t('dashboard.pending')}</span>
                     </div>
                     <div className="flex items-center justify-between text-gray-600">
-                      <span>Mantenimiento</span><span className="font-medium text-green-700">OK</span>
+                      <span>{t('dashboard.maintenance')}</span><span className="font-medium text-green-700">{t('dashboard.ok')}</span>
                     </div>
                     <div className="flex items-center justify-between text-gray-600">
-                      <span>Inspecciones</span><span className="font-medium text-red-700">Vence</span>
+                      <span>{t('dashboard.inspections')}</span><span className="font-medium text-red-700">{t('dashboard.expired')}</span>
                     </div>
                   </div>
                 </div>
@@ -201,11 +208,11 @@ export default function Dashboard() {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Libro Digital del Edificio</h3>
-              <p className="text-blue-100 mb-4">Accede a toda la documentación técnica, certificados y normativas del edificio</p>
+              <h3 className="text-xl font-semibold mb-2">{t('dashboard.digitalBuildingBook')}</h3>
+              <p className="text-blue-100 mb-4">{t('dashboard.accessAllDocs')}</p>
               <div className="flex items-center gap-2 text-sm text-blue-100">
                 <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                <span>92% completado • Versión 1.2.0 • Actualizado 2025-09-01</span>
+                <span>92% {t('dashboard.completed')} • {t('dashboard.version')} 1.2.0 • {t('dashboard.updated')} 2025-09-01</span>
               </div>
             </div>
             <div className="ml-6">
@@ -216,7 +223,7 @@ export default function Dashboard() {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
-                Abrir Libro Digital
+                {t('dashboard.openDigitalBook')}
               </Link>
             </div>
           </div>
@@ -229,7 +236,7 @@ export default function Dashboard() {
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">{icons.shieldCheck}</div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Cumplimiento Legal</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.legalCompliance')}</h3>
               <p className="text-2xl font-semibold text-gray-900">95%</p>
             </div>
           </div>
@@ -238,7 +245,7 @@ export default function Dashboard() {
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">{icons.clock}</div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Próximas Caducidades</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.upcomingExpirations')}</h3>
               <p className="text-2xl font-semibold text-gray-900">3</p>
             </div>
           </div>
@@ -247,7 +254,7 @@ export default function Dashboard() {
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">{icons.wrench}</div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Tareas Mantenimiento</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.maintenanceTasks')}</h3>
               <p className="text-2xl font-semibold text-gray-900">12</p>
             </div>
           </div>
@@ -256,7 +263,7 @@ export default function Dashboard() {
           <div className="flex items-center">
             <div className="p-2 bg-red-100 rounded-lg">{icons.alertCircle}</div>
             <div className="ml-4">
-              <h3 className="text-sm font-medium text-gray-500">Incidencias Abiertas</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.openIncidents')}</h3>
               <p className="text-2xl font-semibold text-gray-900">2</p>
             </div>
           </div>
@@ -267,7 +274,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Maintenance Chart */}
         <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.6s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Plan de Mantenimiento</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.maintenancePlan')}</h3>
           <div className="relative h-48">
             <Doughnut data={chartData} options={chartOptions} />
           </div>
@@ -275,34 +282,34 @@ export default function Dashboard() {
 
         {/* Recent Activities */}
         <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.7s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.recentActivity')}</h3>
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
               <div>
-                <p className="text-sm text-gray-900">Certificado CEE renovado</p>
-                <p className="text-xs text-gray-500">Hace 2 días</p>
+                <p className="text-sm text-gray-900">{t('dashboard.ceeRenewed')}</p>
+                <p className="text-xs text-gray-500">{t('dashboard.daysAgo', { count: 2 })}</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
               <div>
-                <p className="text-sm text-gray-900">Mantenimiento HVAC completado</p>
-                <p className="text-xs text-gray-500">Hace 1 semana</p>
+                <p className="text-sm text-gray-900">{t('dashboard.hvacCompleted')}</p>
+                <p className="text-xs text-gray-500">{t('dashboard.weekAgo')}</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
               <div>
-                <p className="text-sm text-gray-900">Inspección de ascensor programada</p>
-                <p className="text-xs text-gray-500">En 3 días</p>
+                <p className="text-sm text-gray-900">{t('dashboard.elevatorScheduled')}</p>
+                <p className="text-xs text-gray-500">{t('dashboard.inDays', { count: 3 })}</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
               <div>
-                <p className="text-sm text-gray-900">Incidencia en sistema PCI</p>
-                <p className="text-xs text-gray-500">Hace 5 días</p>
+                <p className="text-sm text-gray-900">{t('dashboard.pciIncident')}</p>
+                <p className="text-xs text-gray-500">{t('dashboard.daysAgo', { count: 5 })}</p>
               </div>
             </div>
           </div>
@@ -313,7 +320,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         {/* Map */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación del Edificio</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.buildingLocation')}</h3>
           <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
             <MapContainer
               center={[40.424167, -3.711944]} // Coordenadas del Hotel RIU PLAZA España, Madrid
@@ -343,19 +350,19 @@ export default function Dashboard() {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Municipio:</span>
+              <span className="text-gray-500">{t('dashboard.municipality')}:</span>
               <p className="font-medium text-gray-900">Madrid</p>
             </div>
             <div>
-              <span className="text-gray-500">Provincia:</span>
+              <span className="text-gray-500">{t('dashboard.province')}:</span>
               <p className="font-medium text-gray-900">Madrid</p>
             </div>
             <div>
-              <span className="text-gray-500">Coordenadas:</span>
+              <span className="text-gray-500">{t('dashboard.coordinates')}:</span>
               <p className="font-mono text-xs text-gray-700">40.424167, -3.711944</p>
             </div>
             <div>
-              <span className="text-gray-500">Código postal:</span>
+              <span className="text-gray-500">{t('dashboard.postalCode')}:</span>
               <p className="font-medium text-gray-900">28013</p>
             </div>
           </div>
@@ -363,31 +370,31 @@ export default function Dashboard() {
 
         {/* Property Valuation */}
         <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Valoración del Inmueble</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dashboard.propertyValuation')}</h3>
           <div className="space-y-6">
             {/* Valor Total */}
             <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-              <p className="text-sm text-gray-600 mb-1">Valor Total Estimado</p>
+              <p className="text-sm text-gray-600 mb-1">{t('dashboard.totalEstimatedValue')}</p>
               <p className="text-3xl font-bold text-green-600">€4,890,000</p>
-              <p className="text-xs text-gray-500 mt-1">Actualizado: Sep 2025</p>
+              <p className="text-xs text-gray-500 mt-1">{t('dashboard.lastUpdated')}: Sep 2025</p>
             </div>
 
             {/* Desglose */}
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Valor por m²:</span>
+                <span className="text-sm text-gray-600">{t('dashboard.valuePerSqm')}:</span>
                 <span className="font-medium text-gray-900">€1,996/m²</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Valor por vivienda:</span>
+                <span className="text-sm text-gray-600">{t('dashboard.valuePerUnit')}:</span>
                 <span className="font-medium text-gray-900">€203,750</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">Variación anual:</span>
+                <span className="text-sm text-gray-600">{t('dashboard.annualChange')}:</span>
                 <span className="font-medium text-green-600">+5.2%</span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-sm text-gray-600">Última tasación:</span>
+                <span className="text-sm text-gray-600">{t('dashboard.lastAppraisal')}:</span>
                 <span className="font-medium text-gray-900">Jun 2025</span>
               </div>
             </div>

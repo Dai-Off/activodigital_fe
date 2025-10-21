@@ -1,28 +1,31 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Mantenimiento() {
+  const { t } = useTranslation();
   return (
     <div className="section animate-fadeInUp">
-      <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-6">Plan de Mantenimiento</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-6">{t('maintenancePlan', 'Plan de Mantenimiento')}</h2>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">Plan de Mantenimiento</h3>
+        <h3 className="text-xl font-semibold text-gray-900">{t('maintenancePlan', 'Plan de Mantenimiento')}</h3>
         <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 5v14m7-7H5" />
           </svg>
-          <span>Nueva tarea</span>
+          <span>{t('newTask', 'Nueva tarea')}</span>
         </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Calendario */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Calendario de Mantenimiento</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('maintenanceCalendar', 'Calendario de Mantenimiento')}</h3>
           <div className="grid grid-cols-7 gap-2 mb-4">
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Dom</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Lun</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Mar</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Mié</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Jue</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Vie</div>
-            <div className="text-center text-sm font-medium text-gray-500 py-2">Sáb</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('daySun', 'Dom')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('dayMon', 'Lun')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('dayTue', 'Mar')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('dayWed', 'Mié')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('dayThu', 'Jue')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('dayFri', 'Vie')}</div>
+            <div className="text-center text-sm font-medium text-gray-500 py-2">{t('daySat', 'Sáb')}</div>
           </div>
           <div className="grid grid-cols-7 gap-2">
             <div className="aspect-square p-2 text-center text-sm text-gray-400">30</div>

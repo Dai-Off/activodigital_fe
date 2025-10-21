@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { BuildingsApiService } from '../../services/buildingsApi';
 
@@ -15,6 +16,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   onSaveDraft,
   initialData = {}
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<BuildingStep1Data>({
     name: initialData.name || '',
     address: '', // address is not used in step 1, but required by type, so set as empty
@@ -43,43 +45,43 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
     // Nombre obligatorio
     if (!formData.name.trim()) {
-      newErrors.name = 'El nombre del edificio es obligatorio';
+      newErrors.name = t('buildingNameRequired', 'El nombre del edificio es obligatorio');
     }
 
 
     // Año de construcción - validar formato
     if (!formData.constructionYear) {
-      newErrors.constructionYear = 'El año de construcción es obligatorio';
+      newErrors.constructionYear = t('constructionYearRequired', 'El año de construcción es obligatorio');
     } else {
       const year = parseInt(formData.constructionYear);
       const currentYear = new Date().getFullYear();
       if (isNaN(year) || year < 1800 || year > currentYear) {
-        newErrors.constructionYear = `Ingresa un año válido (1800-${currentYear})`;
+        newErrors.constructionYear = t('validYear', `Ingresa un año válido (1800-${currentYear})`);
       }
     }
 
     // Tipología obligatoria
     if (!formData.typology) {
-      newErrors.typology = 'Selecciona una tipología' as any;
+      newErrors.typology = t('typologyRequired', 'Selecciona una tipología') as any;
     }
 
     // Número de plantas - validar que sea número positivo
     if (!formData.floors) {
-      newErrors.floors = 'El número de plantas es obligatorio';
+      newErrors.floors = t('floorsRequired', 'El número de plantas es obligatorio');
     } else {
       const floors = parseInt(formData.floors);
       if (isNaN(floors) || floors < 1 || floors > 100) {
-        newErrors.floors = 'Ingresa un número válido de plantas (1-100)';
+        newErrors.floors = t('validFloors', 'Ingresa un número válido de plantas (1-100)');
       }
     }
 
     // Número de unidades - validar que sea número positivo
     if (!formData.units) {
-      newErrors.units = 'El número de unidades es obligatorio';
+      newErrors.units = t('unitsRequired', 'El número de unidades es obligatorio');
     } else {
       const units = parseInt(formData.units);
       if (isNaN(units) || units < 1 || units > 1000) {
-        newErrors.units = 'Ingresa un número válido de unidades (1-1000)';
+        newErrors.units = t('buildings.validUnits');
       }
     }
 
@@ -87,7 +89,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.price && formData.price.trim()) {
       const price = parseFloat(formData.price);
       if (isNaN(price) || price < 0) {
-        newErrors.price = 'Ingresa un precio válido';
+        newErrors.price = t('buildings.validPrice');
       }
     }
 
@@ -95,7 +97,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.technicianEmail && formData.technicianEmail.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.technicianEmail)) {
-        newErrors.technicianEmail = 'Ingresa un email válido';
+        newErrors.technicianEmail = t('buildings.validEmail');
       }
     }
 
@@ -103,7 +105,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.cfoEmail && formData.cfoEmail.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.cfoEmail)) {
-        newErrors.cfoEmail = 'Ingresa un email válido';
+        newErrors.cfoEmail = t('buildings.validEmail');
       }
     }
 
@@ -111,7 +113,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.rehabilitationCost && formData.rehabilitationCost.trim()) {
       const cost = parseFloat(formData.rehabilitationCost);
       if (isNaN(cost) || cost < 0) {
-        newErrors.rehabilitationCost = 'Ingresa un coste válido';
+        newErrors.rehabilitationCost = t('buildings.validCost');
       }
     }
 
@@ -119,7 +121,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.potentialValue && formData.potentialValue.trim()) {
       const value = parseFloat(formData.potentialValue);
       if (isNaN(value) || value < 0) {
-        newErrors.potentialValue = 'Ingresa un valor válido';
+        newErrors.potentialValue = t('buildings.validValue');
       }
     }
 
@@ -127,7 +129,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.squareMeters && formData.squareMeters.trim()) {
       const meters = parseFloat(formData.squareMeters);
       if (isNaN(meters) || meters < 0) {
-        newErrors.squareMeters = 'Ingresa una superficie válida';
+        newErrors.squareMeters = t('buildings.validSurface');
       }
     }
 
@@ -204,7 +206,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       const { address, ...rest } = formData;
       onSaveDraft({ ...rest } as BuildingStep1Data);
     } else {
-      setErrors({ name: 'El nombre es necesario para guardar el borrador' });
+      setErrors({ name: t('buildings.draftNameRequired') });
     }
   };
 
@@ -213,10 +215,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Crear Edificio - Datos Generales
+          {t('buildings.createBuilding')}
         </h1>
         <p className="text-gray-600">
-          Completa la información básica del edificio para comenzar.
+          {t('buildings.completeBasicInfo')}
         </p>
       </div>
 
@@ -225,14 +227,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Nombre del edificio */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Nombre del edificio *
+            {t('buildings.buildingName')} *
           </label>
           <input
             type="text"
             id="name"
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder="Ej: Torre Central, Residencial Los Olivos..."
+            placeholder={t('buildings.buildingNamePlaceholder')}
             className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.name ? 'border-red-300' : 'border-gray-300'
             }`}
@@ -247,7 +249,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Año de construcción */}
         <div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
-            Año de construcción *
+            {t('buildings.constructionYear')} *
           </label>
           <input
             type="number"
@@ -269,7 +271,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Tipología */}
         <div>
           <label htmlFor="typology" className="block text-sm font-medium text-gray-700 mb-2">
-            Tipología *
+            {t('buildings.typology')} *
           </label>
           <select
             id="typology"
@@ -279,10 +281,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               errors.typology ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            <option value="">Selecciona una tipología</option>
-            <option value="residential">Residencial</option>
-            <option value="mixed">Mixto</option>
-            <option value="commercial">Comercial</option>
+            <option value="">{t('buildings.selectTypology')}</option>
+            <option value="residential">{t('buildings.residential')}</option>
+            <option value="mixed">{t('buildings.mixed')}</option>
+            <option value="commercial">{t('buildings.commercial')}</option>
           </select>
           {errors.typology && (
             <p className="mt-1 text-sm text-red-600">{errors.typology}</p>
@@ -294,7 +296,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Número de plantas */}
           <div>
             <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
-              Número de plantas *
+              {t('buildings.numFloors')} *
             </label>
             <input
               type="number"
@@ -316,7 +318,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Número de unidades */}
           <div>
             <label htmlFor="units" className="block text-sm font-medium text-gray-700 mb-2">
-              Número de unidades *
+              {t('buildings.numUnits')} *
             </label>
             <input
               type="number"
@@ -341,7 +343,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Precio */}
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-              Precio del activo (€)
+              {t('buildings.assetPrice')}
             </label>
             <input
               type="number"
@@ -358,13 +360,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {errors.price && (
               <p className="mt-1 text-sm text-red-600">{errors.price}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Opcional. Valor estimado del activo</p>
+            <p className="mt-1 text-xs text-gray-500">{t('buildings.assetPriceHelper')}</p>
           </div>
 
           {/* Email del técnico */}
           <div>
             <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              Email del técnico asignado
+              {t('buildings.technicianEmail')}
             </label>
             <input
               type="email"
@@ -382,13 +384,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {validationErrors.technician && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.technician}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Opcional. El técnico podrá gestionar los libros digitales</p>
+            <p className="mt-1 text-xs text-gray-500">{t('buildings.technicianEmailHelper')}</p>
           </div>
 
           {/* Email del CFO */}
           <div>
             <label htmlFor="cfoEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              Email del CFO asignado
+              {t('buildings.cfoEmail')}
             </label>
             <input
               type="email"
@@ -406,24 +408,24 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {validationErrors.cfo && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.cfo}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">Opcional. El CFO podrá acceder a información financiera del edificio</p>
+            <p className="mt-1 text-xs text-gray-500">{t('buildings.cfoEmailHelper')}</p>
           </div>
         </div>
 
         {/* Sección de datos financieros */}
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Información Financiera
+            {t('buildings.financialInfo')}
           </h3>
           <p className="text-sm text-gray-600 mb-6">
-            Campos opcionales que pueden completarse más adelante según la información disponible.
+            {t('buildings.financialInfoDesc')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Coste de rehabilitación */}
             <div>
               <label htmlFor="rehabilitationCost" className="block text-sm font-medium text-gray-700 mb-2">
-                Coste de Rehabilitación (€)
+                {t('buildings.rehabilitationCost')}
               </label>
               <input
                 type="number"
@@ -440,13 +442,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.rehabilitationCost && (
                 <p className="mt-1 text-sm text-red-600">{errors.rehabilitationCost}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">Opcional. Coste estimado para rehabilitar el edificio</p>
+              <p className="mt-1 text-xs text-gray-500">{t('buildings.rehabilitationCostHelper')}</p>
             </div>
 
             {/* Valor potencial */}
             <div>
               <label htmlFor="potentialValue" className="block text-sm font-medium text-gray-700 mb-2">
-                Valor Potencial (€)
+                {t('buildings.potentialValue')}
               </label>
               <input
                 type="number"
@@ -463,13 +465,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.potentialValue && (
                 <p className="mt-1 text-sm text-red-600">{errors.potentialValue}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">Opcional. Valor estimado tras rehabilitación o mejoras</p>
+              <p className="mt-1 text-xs text-gray-500">{t('buildings.potentialValueHelper')}</p>
             </div>
 
             {/* Metros cuadrados */}
             <div>
               <label htmlFor="squareMeters" className="block text-sm font-medium text-gray-700 mb-2">
-                Superficie (m²)
+                {t('buildings.surface')}
               </label>
               <input
                 type="number"
@@ -486,7 +488,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.squareMeters && (
                 <p className="mt-1 text-sm text-red-600">{errors.squareMeters}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">Opcional. Superficie total del edificio en metros cuadrados</p>
+              <p className="mt-1 text-xs text-gray-500">{t('buildings.surfaceHelper')}</p>
             </div>
           </div>
         </div>
@@ -498,7 +500,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             onClick={handleSaveDraft}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            Guardar borrador
+            {t('buildings.saveDraft')}
           </button>
           <button
             type="button"
@@ -509,7 +511,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {isValidating && (
               <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             )}
-            {isValidating ? 'Validando...' : 'Siguiente'}
+            {isValidating ? t('buildings.validating') : t('buildings.next')}
           </button>
         </div>
       </form>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Section {
   id: string;
@@ -20,57 +21,57 @@ interface SectionsListProps {
 const DEFAULT_SECTIONS: Section[] = [
   {
     id: 'general_data',
-    title: 'Datos generales del edificio',
-    description: 'Información básica y características principales',
+    title: 'digitalbook.sections.general_data.title',
+    description: 'digitalbook.sections.general_data.description',
     icon: '🏢',
     status: 'pending'
   },
   {
     id: 'construction_features',
-    title: 'Características constructivas y técnicas',
-    description: 'Especificaciones técnicas de construcción',
+    title: 'digitalbook.sections.construction_features.title',
+    description: 'digitalbook.sections.construction_features.description',
     icon: '🔧',
     status: 'pending'
   },
   {
     id: 'certificates',
-    title: 'Certificados y licencias',
-    description: 'Documentación legal y certificaciones',
+    title: 'digitalbook.sections.certificates.title',
+    description: 'digitalbook.sections.certificates.description',
     icon: '📜',
     status: 'pending'
   },
   {
     id: 'maintenance',
-    title: 'Mantenimiento y conservación',
-    description: 'Historial y planes de mantenimiento',
+    title: 'digitalbook.sections.maintenance.title',
+    description: 'digitalbook.sections.maintenance.description',
     icon: '🔨',
     status: 'pending'
   },
   {
     id: 'installations',
-    title: 'Instalaciones y consumos',
-    description: 'Sistemas e instalaciones del edificio',
+    title: 'digitalbook.sections.installations.title',
+    description: 'digitalbook.sections.installations.description',
     icon: '⚡',
     status: 'pending'
   },
   {
     id: 'reforms',
-    title: 'Reformas y rehabilitaciones',
-    description: 'Historial de modificaciones y mejoras',
+    title: 'digitalbook.sections.reforms.title',
+    description: 'digitalbook.sections.reforms.description',
     icon: '🏗️',
     status: 'pending'
   },
   {
     id: 'sustainability',
-    title: 'Sostenibilidad y ESG',
-    description: 'Criterios ambientales y sostenibilidad',
+    title: 'digitalbook.sections.sustainability.title',
+    description: 'digitalbook.sections.sustainability.description',
     icon: '🌱',
     status: 'pending'
   },
   {
     id: 'attachments',
-    title: 'Documentos anexos',
-    description: 'Documentación adicional y anexos',
+    title: 'digitalbook.sections.attachments.title',
+    description: 'digitalbook.sections.attachments.description',
     icon: '📎',
     status: 'pending'
   }
@@ -84,6 +85,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
   onMarkComplete
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSectionClick = (sectionId: string) => {
     if (onSectionClick) {
@@ -116,21 +118,21 @@ const SectionsList: React.FC<SectionsListProps> = ({
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm text-green-600 font-medium">Completada</span>
+            <span className="text-sm text-green-600 font-medium">{t('digitalbook.status.completed', 'Completada')}</span>
           </div>
         );
       case 'in-progress':
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <span className="text-sm text-yellow-600 font-medium">En progreso</span>
+            <span className="text-sm text-yellow-600 font-medium">{t('digitalbook.status.inProgress', 'En progreso')}</span>
           </div>
         );
       default:
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="text-sm text-gray-500 font-medium">Pendiente</span>
+            <span className="text-sm text-gray-500 font-medium">{t('digitalbook.status.pending', 'Pendiente')}</span>
           </div>
         );
     }
@@ -141,10 +143,10 @@ const SectionsList: React.FC<SectionsListProps> = ({
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Secciones del Libro Digital
+          {t('digitalbook.sectionsList.title', 'Secciones del Libro Digital')}
         </h2>
         <p className="text-gray-600">
-          Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.
+          {t('digitalbook.sectionsList.instructions', 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.')}
         </p>
       </div>
 
@@ -171,10 +173,10 @@ const SectionsList: React.FC<SectionsListProps> = ({
                 {/* Información */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    {section.title}
+                    {t(section.title)}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {section.description}
+                    {t(section.description)}
                   </p>
                 </div>
               </div>
@@ -190,7 +192,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
                   onClick={(e) => handleMarkComplete(e, section.id)}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                 >
-                  Marcar completa
+                  {t('digitalbook.sectionsList.markComplete', 'Marcar completa')}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -207,7 +209,11 @@ const SectionsList: React.FC<SectionsListProps> = ({
           
           {/* Progreso */}
           <div className="text-sm text-gray-600">
-            {sections.filter(s => s.status === 'completed').length} de {sections.length} secciones completadas
+            {t('digitalbook.sectionsList.progress', {
+              completed: sections.filter(s => s.status === 'completed').length,
+              total: sections.length,
+              defaultValue: '{{completed}} de {{total}} secciones completadas'
+            })}
           </div>
 
           {/* Botones */}
@@ -216,13 +222,13 @@ const SectionsList: React.FC<SectionsListProps> = ({
               onClick={() => navigate('/libro-digital/hub')}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Volver al Hub
+              {t('digitalbook.sectionsList.backToHub', 'Volver al Hub')}
             </button>
             <button
               onClick={() => navigate('/libro-digital/manual')}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Continuar con Wizard
+              {t('digitalbook.sectionsList.continueWizard', 'Continuar con Wizard')}
             </button>
           </div>
         </div>

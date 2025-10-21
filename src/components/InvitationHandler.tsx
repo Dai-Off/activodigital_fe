@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../services/api';
 
@@ -20,6 +21,7 @@ interface InvitationResponse {
 }
 
 export default function InvitationHandler() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function InvitationHandler() {
 
   useEffect(() => {
     if (!token) {
-      setError('Token de invitación no encontrado');
+  setError(t('invitationTokenNotFound', 'Token de invitación no encontrado'));
       setLoading(false);
       return;
     }
@@ -46,11 +48,11 @@ export default function InvitationHandler() {
             navigate(`/auth/register?token=${token}`);
           }
         } else {
-          setError('Error al procesar la invitación');
+    setError(t('invitationProcessError', 'Error al procesar la invitación'));
         }
       } catch (err: any) {
         console.error('Error procesando invitación:', err);
-        setError(err.message || 'Error al conectar con el servidor');
+  setError(err.message || t('serverConnectionError', 'Error al conectar con el servidor'));
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,7 @@ export default function InvitationHandler() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Procesando invitación...</p>
+          <p className="text-gray-600">{t('processingInvitation', 'Procesando invitación...')}</p>
         </div>
       </div>
     );
@@ -75,13 +77,13 @@ export default function InvitationHandler() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('error', 'Error')}</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => navigate('/')}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
-            Ir al Inicio
+            {t('goToHome', 'Ir al Inicio')}
           </button>
         </div>
       </div>

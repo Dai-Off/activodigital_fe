@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 interface WizardStep {
@@ -18,8 +19,9 @@ const Wizard: React.FC<WizardProps> = ({
   steps, 
   currentStep, 
   children, 
-  className = '' 
+  className = ''
 }) => {
+  const { t } = useTranslation();
   return (
     <div className={`w-full ${className}`}>
       {/* Header con pasos */}
@@ -75,12 +77,10 @@ const Wizard: React.FC<WizardProps> = ({
                         className={`text-sm font-medium 
                           ${isActive ? 'text-blue-600' : 'text-gray-900'}`}
                       >
-                        {step.title}
+                        {t(step.title, step.title)}
                       </p>
                       {step.description && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {step.description}
-                        </p>
+                        <p className="text-xs text-gray-500">{t(step.description, step.description)}</p>
                       )}
                     </div>
                   </div>
@@ -90,11 +90,8 @@ const Wizard: React.FC<WizardProps> = ({
           </ol>
         </nav>
       </div>
-
-      {/* Contenido del paso actual */}
-      <div className="min-h-[400px]">
-        {children}
-      </div>
+      {/* Render children or other content below steps */}
+      {children}
     </div>
   );
 };

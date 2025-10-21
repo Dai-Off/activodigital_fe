@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
 import Footer from './Footer';
+import { useTranslation } from 'react-i18next';
 
 export default function Landing() {
+  const { t } = useTranslation();
+  const features = [
+    { title: t('landing.simpleClear', 'Simple y claro'), desc: t('landing.simpleClearDesc', 'Interfaz limpia, sin ruido. Enfócate en lo importante.') },
+    { title: t('landing.readyToGrow', 'Listo para crecer'), desc: t('landing.readyToGrowDesc', 'Arquitectura modular. Funciona hoy, escala mañana.') },
+    { title: t('landing.secureData', 'Datos seguros'), desc: t('landing.secureDataDesc', 'Autenticación y roles gestionados por backend.') },
+  ];
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="border-b border-gray-200 bg-white">
@@ -10,11 +17,11 @@ export default function Landing() {
             <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-semibold">LE</span>
             </div>
-            <span className="text-gray-900 font-semibold">Activo digital</span>
+            <span className="text-gray-900 font-semibold">{t('appTitle', 'Activo digital')}</span>
           </div>
           <nav className="flex items-center gap-3">
-            <Link to="/login" className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">Iniciar sesión</Link>
-            <Link to="/register" className="inline-flex items-center rounded-lg bg-blue-600 text-white text-sm font-semibold px-4 py-2 hover:bg-blue-700 transition-colors">Crear cuenta</Link>
+            <Link to="/login" className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">{t('login', 'Iniciar sesión')}</Link>
+            <Link to="/register" className="inline-flex items-center rounded-lg bg-blue-600 text-white text-sm font-semibold px-4 py-2 hover:bg-blue-700 transition-colors">{t('register', 'Crear cuenta')}</Link>
           </nav>
         </div>
       </header>
@@ -27,30 +34,29 @@ export default function Landing() {
               {/* Columna izquierda */}
               <div className="animate-fadeInUp">
                 <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                  Plataforma para edificios
+                  {t('landing.platformForBuildings', 'Plataforma para edificios')}
                 </span>
                 <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-                  Plataforma Gestión Activos Inmbiliarios
+                  {t('landing.platformTitle', 'Plataforma Gestión Activos Inmbiliarios')}
                 </h1>
                 <p className="mt-4 text-gray-600">
-Consolida información clave del edificio y añade simulaciones financieras con IA para apoyar decisiones de inversión, rehabilitación o venta. Claridad total para propietarios, gestores e inversores.
-
+                  {t('landing.platformDesc', 'Consolida información clave del edificio y añade simulaciones financieras con IA para apoyar decisiones de inversión, rehabilitación o venta. Claridad total para propietarios, gestores e inversores.')}
                 </p>
                 <div className="mt-6 flex items-center gap-3">
                   <Link
                     to="/register"
                     className="inline-flex items-center rounded-lg bg-blue-600 text-white font-semibold px-5 py-2.5 hover:bg-blue-700 transition-colors"
                   >
-                    Crear cuenta
+                    {t('register', 'Crear cuenta')}
                   </Link>
                   <Link
                     to="/login"
                     className="inline-flex items-center rounded-lg border border-gray-300 bg-white text-gray-900 font-medium px-5 py-2.5 hover:bg-gray-50"
                   >
-                    Iniciar sesión
+                    {t('login', 'Iniciar sesión')}
                   </Link>
                 </div>
-                <div className="mt-4 text-sm text-gray-500">Mockup de producto. Las métricas mostradas son demostrativas.</div>
+                <div className="mt-4 text-sm text-gray-500">{t('landing.mockupNotice', 'Mockup de producto. Las métricas mostradas son demostrativas.')}</div>
               </div>
 
               {/* Columna derecha: imagen + 3 items horizontales debajo */}
@@ -74,7 +80,7 @@ Consolida información clave del edificio y añade simulaciones financieras con 
                             <path d="M5 13l4 4L19 7" />
                           </svg>
                         </span>
-                        <span className="font-medium">Rating Financiero &amp; ESG</span>
+                        <span className="font-medium">{t('landing.financialRating', 'Rating Financiero & ESG')}</span>
                       </div>
                     </div>
 
@@ -85,7 +91,7 @@ Consolida información clave del edificio y añade simulaciones financieras con 
                             <path d="M13 17h8m0 0v-8m0 8-8-8M3 7h8m0 0V3m0 4-8 8" />
                           </svg>
                         </span>
-                        <span className="font-medium">Simulador de Inversiones</span>
+                        <span className="font-medium">{t('landing.investmentSimulator', 'Simulador de Inversiones')}</span>
                       </div>
                     </div>
 
@@ -96,7 +102,7 @@ Consolida información clave del edificio y añade simulaciones financieras con 
                             <path d="M12 2v4M2 12h4m12 0h4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                           </svg>
                         </span>
-                        <span className="font-medium">Huella Ambiental Inteligente</span>
+                        <span className="font-medium">{t('landing.smartEnvironmentalFootprint', 'Huella Ambiental Inteligente')}</span>
                       </div>
                     </div>
                   </div>
@@ -106,16 +112,11 @@ Consolida información clave del edificio y añade simulaciones financieras con 
             </div>
           </div>
         </section>
-
         {/* Sección INTACTA (no tocar) */}
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { title: 'Simple y claro', desc: 'Interfaz limpia, sin ruido. Enfócate en lo importante.' },
-                { title: 'Listo para crecer', desc: 'Arquitectura modular. Funciona hoy, escala mañana.' },
-                { title: 'Datos seguros', desc: 'Autenticación y roles gestionados por backend.' },
-              ].map((f, i) => (
+              {features.map((f, i) => (
                 <div
                   key={i}
                   className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow animate-fadeInUp"
@@ -135,8 +136,8 @@ Consolida información clave del edificio y añade simulaciones financieras con 
         </section>
       </main>
 
-      <Footer />
 
+      <Footer />
       <style>{`
         @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }

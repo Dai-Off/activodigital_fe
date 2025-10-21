@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Duración estándar para todas las animaciones de carga
 export const LOADING_DURATION = {
@@ -26,14 +27,18 @@ export const AppSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: strin
 };
 
 // Loading overlay para páginas completas
-export const PageLoader: React.FC<{ message?: string }> = ({ message = 'Cargando...' }) => (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#fdfdfd' }}>
-    <div className="text-center">
-      <AppSpinner size="lg" className="mx-auto mb-4" />
-      <p className="text-gray-600 text-sm font-medium">{message}</p>
+export const PageLoader: React.FC<{ message?: string }> = ({ message }) => {
+  const { t } = useTranslation();
+  const msg = message || t('loading', 'Cargando...');
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#fdfdfd' }}>
+      <div className="text-center">
+        <AppSpinner size="lg" className="mx-auto mb-4" />
+        <p className="text-gray-600 text-sm font-medium">{msg}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Skeleton base con animación profesional
 export const SkeletonBase: React.FC<{ 

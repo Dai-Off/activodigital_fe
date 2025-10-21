@@ -1,29 +1,32 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Documentos() {
+  const { t } = useTranslation();
   return (
     <div className="section animate-fadeInUp">
-      <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-6">Repositorio Documental</h2>
+  <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-6">{t('documents', 'Repositorio Documental')}</h2>
       <div className="flex justify-between items-center mb-6">
         <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M16 16v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
             <polyline points="22 2 22 8 16 8" />
           </svg>
-          <span>Subir documento</span>
+          <span>{t('uploadDocument', 'Subir documento')}</span>
         </button>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>Todas las categorías</option>
+            <option>{t('allCategories', 'Todas las categorías')}</option>
           </select>
           <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>Todos los sistemas</option>
+            <option>{t('allSystems', 'Todos los sistemas')}</option>
           </select>
           <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>Estado de firma</option>
+            <option>{t('signatureStatus', 'Estado de firma')}</option>
           </select>
           <div className="relative">
-            <input type="text" placeholder="Buscar documentos..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <input type="text" placeholder={t('searchDocuments', 'Buscar documentos...')} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -34,10 +37,10 @@ export default function Documentos() {
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-500">
-            <div className="col-span-4">Documento</div>
-            <div className="col-span-2">Categoría</div>
-            <div className="col-span-2">Sistema</div>
-            <div className="col-span-2">Fecha</div>
+            <div className="col-span-4">{t('document', 'Documento')}</div>
+            <div className="col-span-2">{t('category', 'Categoría')}</div>
+            <div className="col-span-2">{t('system', 'Sistema')}</div>
+            <div className="col-span-2">{t('date', 'Fecha')}</div>
             <div className="col-span-1">Estado</div>
             <div className="col-span-1">Acciones</div>
           </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { signupWithInvitation, validateInvitation } from '../services/auth';
@@ -6,6 +7,7 @@ import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 import type { ValidateInvitationResponse } from '../services/auth';
 
 export default function RegisterWithInvitation() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
@@ -118,13 +120,13 @@ export default function RegisterWithInvitation() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-gray-900">Invitación Inválida</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{t('invalidInvitation', 'Invitación Inválida')}</h1>
             <p className="text-gray-600 mt-1">{tokenError}</p>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm animate-fadeInUp" style={{animationDelay: '0.05s'}}>
             <p className="text-gray-600 text-center mb-6">
-              La invitación no es válida, ha expirado o ya fue utilizada.
+              {t('invitationInvalidDesc', 'La invitación no es válida, ha expirado o ya fue utilizada.')}
             </p>
             
             <div className="space-y-3">
@@ -132,7 +134,7 @@ export default function RegisterWithInvitation() {
                 to="/register"
                 className="w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Registrarse normalmente
+                {t('registerNormally', 'Registrarse normalmente')}
               </Link>
               
               <Link
@@ -158,8 +160,8 @@ export default function RegisterWithInvitation() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">¡Has sido invitado!</h1>
-          <p className="text-gray-600 mt-1">Completa tu registro para comenzar</p>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('invitedTitle', '¡Has sido invitado!')}</h1>
+          <p className="text-gray-600 mt-1">{t('registerSubtitle', 'Completa tu registro para comenzar')}</p>
         </div>
 
         {/* Información de la invitación */}

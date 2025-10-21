@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileUpload from '../ui/FileUpload';
@@ -20,6 +21,7 @@ const PdfImport: React.FC<PdfImportProps> = ({
   buildingName = "Torre Central",
   buildingId = "building-1"
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [uploadedDocuments, setUploadedDocuments] = useState<ImportedDocument[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -73,9 +75,9 @@ const PdfImport: React.FC<PdfImportProps> = ({
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return t('zeroBytes', '0 Bytes');
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = [t('bytes', 'Bytes'), t('kb', 'KB'), t('mb', 'MB'), t('gb', 'GB')];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };

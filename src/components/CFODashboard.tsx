@@ -1,6 +1,8 @@
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 export default function CFODashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   return (
@@ -9,10 +11,10 @@ export default function CFODashboard() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Dashboard CFO
+            {t('cfoDashboard.title')}
           </h1>
           <p className="text-gray-600">
-            Bienvenido, {user?.fullName || 'CFO'}
+            {t('cfoDashboard.welcomeCFO')}, {user?.fullName || t('cfoDashboard.cfo')}
           </p>
         </div>
 
@@ -25,11 +27,10 @@ export default function CFODashboard() {
               </svg>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-              Dashboard CFO en desarrollo
+              {t('cfoDashboard.inDevelopment')}
             </h2>
             <p className="text-gray-600 max-w-md mx-auto">
-              Esta sección está siendo desarrollada. Pronto tendrás acceso a las funcionalidades 
-              específicas para tu rol de CFO.
+              {t('cfoDashboard.description')}
             </p>
           </div>
         </div>

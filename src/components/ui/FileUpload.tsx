@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useRef, useState } from 'react';
 
 interface FileUploadProps {
@@ -23,6 +24,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
   description = 'Arrastra archivos aquí o haz clic para seleccionar',
   disabled = false
 }) => {
+  const { t } = useTranslation();
+  label = t('uploadFiles', label);
+  description = t('dragOrClick', description);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);

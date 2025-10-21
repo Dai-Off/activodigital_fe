@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DocumentManager, { type DocumentFile } from '../ui/DocumentManager';
 import { PageLoader } from '../ui/LoadingSystem';
 import { getBookByBuilding, updateBookSection, type DigitalBook, sectionIdToApiType } from '../../services/digitalbook';
@@ -7,116 +8,120 @@ import { listSectionDocuments } from '../../services/documentUpload';
 import { useToast } from '../../contexts/ToastContext';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Config UI (igual que antes)
-const SECTION_CONFIGS = {
-  general_data: {
-    title: 'Datos generales del edificio',
-    description: 'Información básica y características principales',
-    icon: '🏢',
-    fields: [
-      { name: 'identification', label: 'Identificación del edificio', type: 'textarea', required: true },
-      { name: 'ownership', label: 'Titularidad', type: 'text', required: true },
-      { name: 'building_typology', label: 'Tipología detallada', type: 'select', options: ['Residencial', 'Comercial', 'Mixto', 'Industrial'], required: true },
-      { name: 'primary_use', label: 'Uso principal', type: 'text', required: true },
-      { name: 'construction_date', label: 'Fecha de construcción exacta', type: 'date', required: false },
-    ],
-  },
-  construction_features: {
-    title: 'Características constructivas y técnicas',
-    description: 'Especificaciones técnicas de construcción',
-    icon: '🔧',
-    fields: [
-      { name: 'materials', label: 'Materiales principales', type: 'textarea', required: true },
-      { name: 'insulation_systems', label: 'Sistemas de aislamiento', type: 'textarea', required: true },
-      { name: 'structural_system', label: 'Sistema estructural', type: 'text', required: true },
-      { name: 'facade_type', label: 'Tipo de fachada', type: 'text', required: true },
-      { name: 'roof_type', label: 'Tipo de cubierta', type: 'text', required: false },
-    ],
-  },
-  certificates: {
-    title: 'Certificados y licencias',
-    description: 'Documentación legal y certificaciones',
-    icon: '📜',
-    fields: [
-      { name: 'energy_certificate', label: 'Certificado energético (CEE)', type: 'text', required: true },
-      { name: 'building_permits', label: 'Licencias de obra', type: 'textarea', required: true },
-      { name: 'habitability_license', label: 'Licencia de habitabilidad', type: 'text', required: true },
-      { name: 'fire_certificate', label: 'Certificado contra incendios', type: 'text', required: false },
-      { name: 'accessibility_certificate', label: 'Certificado de accesibilidad', type: 'text', required: false },
-    ],
-  },
-  maintenance: {
-    title: 'Mantenimiento y conservación',
-    description: 'Historial y planes de mantenimiento',
-    icon: '🔨',
-    fields: [
-      { name: 'preventive_plan', label: 'Plan de mantenimiento preventivo', type: 'textarea', required: true },
-      { name: 'inspection_schedule', label: 'Programa de revisiones', type: 'textarea', required: true },
-      { name: 'incident_history', label: 'Historial de incidencias', type: 'textarea', required: false },
-      { name: 'maintenance_contracts', label: 'Contratos de mantenimiento activos', type: 'textarea', required: false },
-    ],
-  },
-  installations: {
-    title: 'Instalaciones y consumos',
-    description: 'Sistemas e instalaciones del edificio',
-    icon: '⚡',
-    fields: [
-      { name: 'electrical_system', label: 'Sistema eléctrico', type: 'textarea', required: true },
-      { name: 'water_system', label: 'Sistema de agua', type: 'textarea', required: true },
-      { name: 'gas_system', label: 'Sistema de gas', type: 'textarea', required: false },
-      { name: 'hvac_system', label: 'Sistema HVAC', type: 'textarea', required: true },
-      { name: 'consumption_history', label: 'Historial de consumos', type: 'textarea', required: false },
-    ],
-  },
-  reforms: {
-    title: 'Reformas y rehabilitaciones',
-    description: 'Historial de modificaciones y mejoras',
-    icon: '🏗️',
-    fields: [
-      { name: 'renovation_history', label: 'Historial de obras', type: 'textarea', required: true },
-      { name: 'structural_modifications', label: 'Modificaciones estructurales', type: 'textarea', required: false },
-      { name: 'permits_renovations', label: 'Permisos de reformas', type: 'textarea', required: false },
-      { name: 'improvement_investments', label: 'Inversiones en mejoras', type: 'text', required: false },
-    ],
-  },
-  sustainability: {
-    title: 'Sostenibilidad y ESG',
-    description: 'Criterios ambientales y sostenibilidad',
-    icon: '🌱',
-    fields: [
-      { name: 'renewableSharePercent', label: 'Porcentaje de energía renovable (%)', type: 'number', required: true },
-      { name: 'waterFootprintM3PerM2Year', label: 'Huella hídrica (m³/m²·año)', type: 'number', required: true },
-      { name: 'accessibility', label: 'Nivel de accesibilidad', type: 'select', options: [
-        { value: 'full', label: 'Cumple 100% normativa' },
-        { value: 'partial', label: 'Parcial (solo acceso básico)' },
-        { value: 'none', label: 'No cumple' }
-      ] as Array<{value: string, label: string}>, required: true },
-      { name: 'indoorAirQualityCo2Ppm', label: 'Calidad del aire interior (ppm CO₂)', type: 'number', required: true },
-      { name: 'safetyCompliance', label: 'Cumplimiento de seguridad', type: 'select', options: [
-        { value: 'full', label: 'Cumple todas las normativas' },
-        { value: 'pending', label: 'Pendiente de actualización' },
-        { value: 'none', label: 'No cumple / en infracción' }
-      ] as Array<{value: string, label: string}>, required: true },
-      { name: 'regulatoryCompliancePercent', label: 'Porcentaje de cumplimiento normativo (%)', type: 'number', required: true },
-    ],
-  },
-  attachments: {
-    title: 'Documentos anexos',
-    description: 'Documentación adicional y anexos',
-    icon: '📎',
-    fields: [
-      { name: 'technical_drawings', label: 'Planos técnicos', type: 'textarea', required: false },
-      { name: 'operation_manuals', label: 'Manuales de funcionamiento', type: 'textarea', required: false },
-      { name: 'financial_reports', label: 'Informes financieros', type: 'textarea', required: false },
-      { name: 'insurance_policies', label: 'Pólizas de seguro', type: 'textarea', required: false },
-      { name: 'legal_documents', label: 'Documentos legales', type: 'textarea', required: false },
-    ],
-  },
-} as const;
 
-type UiSectionKey = keyof typeof SECTION_CONFIGS;
+function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
+  return {
+    general_data: {
+      title: t('digitalbook.sections.general_data.title', 'Datos generales del edificio'),
+      description: t('digitalbook.sections.general_data.description', 'Información básica y características principales'),
+      icon: '🏢',
+      fields: [
+        { name: 'identification', label: t('digitalbook.fields.identification', 'Identificación del edificio'), type: 'textarea', required: true },
+        { name: 'ownership', label: t('digitalbook.fields.ownership', 'Titularidad'), type: 'text', required: true },
+        { name: 'building_typology', label: t('digitalbook.fields.building_typology', 'Tipología detallada'), type: 'select', options: [t('digitalbook.options.residential', 'Residencial'), t('digitalbook.options.commercial', 'Comercial'), t('digitalbook.options.mixed', 'Mixto'), t('digitalbook.options.industrial', 'Industrial')], required: true },
+        { name: 'primary_use', label: t('digitalbook.fields.primary_use', 'Uso principal'), type: 'text', required: true },
+        { name: 'construction_date', label: t('digitalbook.fields.construction_date', 'Fecha de construcción exacta'), type: 'date', required: false },
+      ],
+    },
+    construction_features: {
+      title: t('digitalbook.sections.construction_features.title', 'Características constructivas y técnicas'),
+      description: t('digitalbook.sections.construction_features.description', 'Especificaciones técnicas de construcción'),
+      icon: '🔧',
+      fields: [
+        { name: 'materials', label: t('digitalbook.fields.materials', 'Materiales principales'), type: 'textarea', required: true },
+        { name: 'insulation_systems', label: t('digitalbook.fields.insulation_systems', 'Sistemas de aislamiento'), type: 'textarea', required: true },
+        { name: 'structural_system', label: t('digitalbook.fields.structural_system', 'Sistema estructural'), type: 'text', required: true },
+        { name: 'facade_type', label: t('digitalbook.fields.facade_type', 'Tipo de fachada'), type: 'text', required: true },
+        { name: 'roof_type', label: t('digitalbook.fields.roof_type', 'Tipo de cubierta'), type: 'text', required: false },
+      ],
+    },
+    certificates: {
+      title: t('digitalbook.sections.certificates.title', 'Certificados y licencias'),
+      description: t('digitalbook.sections.certificates.description', 'Documentación legal y certificaciones'),
+      icon: '📜',
+      fields: [
+        { name: 'energy_certificate', label: t('digitalbook.fields.energy_certificate', 'Certificado energético (CEE)'), type: 'text', required: true },
+        { name: 'building_permits', label: t('digitalbook.fields.building_permits', 'Licencias de obra'), type: 'textarea', required: true },
+        { name: 'habitability_license', label: t('digitalbook.fields.habitability_license', 'Licencia de habitabilidad'), type: 'text', required: true },
+        { name: 'fire_certificate', label: t('digitalbook.fields.fire_certificate', 'Certificado contra incendios'), type: 'text', required: false },
+        { name: 'accessibility_certificate', label: t('digitalbook.fields.accessibility_certificate', 'Certificado de accesibilidad'), type: 'text', required: false },
+      ],
+    },
+    maintenance: {
+      title: t('digitalbook.sections.maintenance.title', 'Mantenimiento y conservación'),
+      description: t('digitalbook.sections.maintenance.description', 'Historial y planes de mantenimiento'),
+      icon: '🔨',
+      fields: [
+        { name: 'preventive_plan', label: t('digitalbook.fields.preventive_plan', 'Plan de mantenimiento preventivo'), type: 'textarea', required: true },
+        { name: 'inspection_schedule', label: t('digitalbook.fields.inspection_schedule', 'Programa de revisiones'), type: 'textarea', required: true },
+        { name: 'incident_history', label: t('digitalbook.fields.incident_history', 'Historial de incidencias'), type: 'textarea', required: false },
+        { name: 'maintenance_contracts', label: t('digitalbook.fields.maintenance_contracts', 'Contratos de mantenimiento activos'), type: 'textarea', required: false },
+      ],
+    },
+    installations: {
+      title: t('digitalbook.sections.installations.title', 'Instalaciones y consumos'),
+      description: t('digitalbook.sections.installations.description', 'Sistemas e instalaciones del edificio'),
+      icon: '⚡',
+      fields: [
+        { name: 'electrical_system', label: t('digitalbook.fields.electrical_system', 'Sistema eléctrico'), type: 'textarea', required: true },
+        { name: 'water_system', label: t('digitalbook.fields.water_system', 'Sistema de agua'), type: 'textarea', required: true },
+        { name: 'gas_system', label: t('digitalbook.fields.gas_system', 'Sistema de gas'), type: 'textarea', required: false },
+        { name: 'hvac_system', label: t('digitalbook.fields.hvac_system', 'Sistema HVAC'), type: 'textarea', required: true },
+        { name: 'consumption_history', label: t('digitalbook.fields.consumption_history', 'Historial de consumos'), type: 'textarea', required: false },
+      ],
+    },
+    reforms: {
+      title: t('digitalbook.sections.reforms.title', 'Reformas y rehabilitaciones'),
+      description: t('digitalbook.sections.reforms.description', 'Historial de modificaciones y mejoras'),
+      icon: '🏗️',
+      fields: [
+        { name: 'renovation_history', label: t('digitalbook.fields.renovation_history', 'Historial de obras'), type: 'textarea', required: true },
+        { name: 'structural_modifications', label: t('digitalbook.fields.structural_modifications', 'Modificaciones estructurales'), type: 'textarea', required: false },
+        { name: 'permits_renovations', label: t('digitalbook.fields.permits_renovations', 'Permisos de reformas'), type: 'textarea', required: false },
+        { name: 'improvement_investments', label: t('digitalbook.fields.improvement_investments', 'Inversiones en mejoras'), type: 'text', required: false },
+      ],
+    },
+    sustainability: {
+      title: t('digitalbook.sections.sustainability.title', 'Sostenibilidad y ESG'),
+      description: t('digitalbook.sections.sustainability.description', 'Criterios ambientales y sostenibilidad'),
+      icon: '🌱',
+      fields: [
+        { name: 'renewableSharePercent', label: t('digitalbook.fields.renewableSharePercent', 'Porcentaje de energía renovable (%)'), type: 'number', required: true },
+        { name: 'waterFootprintM3PerM2Year', label: t('digitalbook.fields.waterFootprintM3PerM2Year', 'Huella hídrica (m³/m²·año)'), type: 'number', required: true },
+        { name: 'accessibility', label: t('digitalbook.fields.accessibility', 'Nivel de accesibilidad'), type: 'select', options: [
+          { value: 'full', label: t('digitalbook.options.accessibility.full', 'Cumple 100% normativa') },
+          { value: 'partial', label: t('digitalbook.options.accessibility.partial', 'Parcial (solo acceso básico)') },
+          { value: 'none', label: t('digitalbook.options.accessibility.none', 'No cumple') }
+        ] as Array<{value: string, label: string}>, required: true },
+        { name: 'indoorAirQualityCo2Ppm', label: t('digitalbook.fields.indoorAirQualityCo2Ppm', 'Calidad del aire interior (ppm CO₂)'), type: 'number', required: true },
+        { name: 'safetyCompliance', label: t('digitalbook.fields.safetyCompliance', 'Cumplimiento de seguridad'), type: 'select', options: [
+          { value: 'full', label: t('digitalbook.options.safetyCompliance.full', 'Cumple todas las normativas') },
+          { value: 'pending', label: t('digitalbook.options.safetyCompliance.pending', 'Pendiente de actualización') },
+          { value: 'none', label: t('digitalbook.options.safetyCompliance.none', 'No cumple / en infracción') }
+        ] as Array<{value: string, label: string}>, required: true },
+        { name: 'regulatoryCompliancePercent', label: t('digitalbook.fields.regulatoryCompliancePercent', 'Porcentaje de cumplimiento normativo (%)'), type: 'number', required: true },
+      ],
+    },
+    attachments: {
+      title: t('digitalbook.sections.attachments.title', 'Documentos anexos'),
+      description: t('digitalbook.sections.attachments.description', 'Documentación adicional y anexos'),
+      icon: '📎',
+      fields: [
+        { name: 'technical_drawings', label: t('digitalbook.fields.technical_drawings', 'Planos técnicos'), type: 'textarea', required: false },
+        { name: 'operation_manuals', label: t('digitalbook.fields.operation_manuals', 'Manuales de funcionamiento'), type: 'textarea', required: false },
+        { name: 'financial_reports', label: t('digitalbook.fields.financial_reports', 'Informes financieros'), type: 'textarea', required: false },
+        { name: 'insurance_policies', label: t('digitalbook.fields.insurance_policies', 'Pólizas de seguro'), type: 'textarea', required: false },
+        { name: 'legal_documents', label: t('digitalbook.fields.legal_documents', 'Documentos legales'), type: 'textarea', required: false },
+      ],
+    },
+  } as const;
+}
+
+type UiSectionKey = keyof ReturnType<typeof getSectionConfigs>;
+
 
 const SectionEditor: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { sectionId, buildingId: buildingIdParam } = useParams<{ sectionId: string; buildingId: string }>();
   const location = useLocation();
@@ -126,6 +131,7 @@ const SectionEditor: React.FC = () => {
   const buildingName = location.state?.buildingName || 'Torre Central';
   const userId = location.state?.userId || 'user-1'; // TODO: Obtener del contexto de autenticación
 
+  const SECTION_CONFIGS = getSectionConfigs(t);
   const sectionConfig =
     sectionId && SECTION_CONFIGS[sectionId as UiSectionKey] ? SECTION_CONFIGS[sectionId as UiSectionKey] : null;
 

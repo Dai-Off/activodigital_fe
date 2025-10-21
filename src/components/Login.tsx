@@ -2,6 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { loginRequest, processPendingAssignments } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
@@ -17,6 +18,7 @@ export default function Login() {
   const [showQrStep, setShowQrStep] = useState(false);
   const [qrCodeInput, setQrCodeInput] = useState('');
   const [pendingRedirect, setPendingRedirect] = useState<'cfo'|'activos'|null>(null);
+  const { t } = useTranslation();
 
   // Manejar parámetros de invitación al cargar
   useEffect(() => {
@@ -92,8 +94,8 @@ export default function Login() {
           <div className="mx-auto w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-3">
             <span className="text-white font-semibold">LE</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Iniciar sesión</h1>
-          <p className="text-gray-600 mt-1">Accede a Activo Digital</p>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('loginTitle', 'Iniciar sesión')}</h1>
+          <p className="text-gray-600 mt-1">{t('loginSubtitle', 'Accede a Activo Digital')}</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm animate-fadeInUp" style={{animationDelay: '0.05s'}}>
@@ -110,17 +112,22 @@ export default function Login() {
 
           {/* Paso de QR mockeado */}
           {showQrStep ? (
-            <form className="space-y-7" onSubmit={handleQrCodeSubmit}>
+            <form className="space-y-8" onSubmit={handleQrCodeSubmit}>
               <div className="flex flex-col items-center gap-4">
+                <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex flex-col items-center mb-2 animate-fadeInUp">
+                  <svg className="w-8 h-8 text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2z"/><path d="M12 19c-4.418 0-8-1.79-8-4V7a2 2 0 012-2h12a2 2 0 012 2v8c0 2.21-3.582 4-8 4z"/></svg>
+                  <span className="text-blue-900 font-semibold text-base text-center">Verificación adicional de seguridad</span>
+                  <span className="text-blue-800 text-sm text-center mt-1">Para proteger tu cuenta y tus datos, te pedimos escanear este código QR y escribir el código recibido. Así evitamos accesos no autorizados y garantizamos que solo tú puedes ingresar.</span>
+                </div>
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=mock-activo-digital" alt="QR de acceso" className="rounded-lg border-2 border-blue-200 shadow-md" />
                 <span className="text-gray-700 text-base font-medium text-center">Escanea el QR con tu app y escribe el código recibido</span>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 items-center">
                 <label htmlFor="qr-code-input" className="text-sm font-semibold text-gray-800">Código del QR</label>
                 <input
                   id="qr-code-input"
                   type="text"
-                  className="w-full rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg px-4 py-3 transition-all placeholder-gray-400 tracking-widest text-center font-mono bg-blue-50"
+                  className="w-60 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg px-4 py-3 transition-all placeholder-gray-400 tracking-widest text-center font-mono bg-blue-50 shadow-sm"
                   placeholder="Ej: 123456"
                   value={qrCodeInput}
                   onChange={e => setQrCodeInput(e.target.value)}
@@ -137,6 +144,7 @@ export default function Login() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M5 13l4 4L19 7" /></svg>
                 Validar código y entrar
               </button>
+              <div className="text-xs text-gray-500 text-center mt-2">¿Problemas? Asegúrate de usar la app oficial o contacta a soporte.</div>
             </form>
           ) : (
             <>

@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { useTranslation } from 'react-i18next';
 
 // Mock data del libro digital
 const libroData = {
@@ -149,6 +150,7 @@ const libroData = {
 };
 
 export function LibroDigital() {
+  const { t } = useTranslation();
   const getEstadoColor = (estado: string) => {
     switch (estado) {
       case "completo": return "bg-green-100 text-green-800 border-green-200";
@@ -195,13 +197,13 @@ export function LibroDigital() {
       // Título principal
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('LIBRO DIGITAL DEL EDIFICIO', pageWidth / 2, yPosition, { align: 'center' });
+  pdf.text(t('digitalBookTitle', 'LIBRO DIGITAL DEL EDIFICIO'), pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
 
       // Nombre del edificio
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Hotel RIU PLAZA España', pageWidth / 2, yPosition, { align: 'center' });
+  pdf.text(t('buildingName', 'Hotel RIU PLAZA España'), pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
 
       // Imagen del edificio (debajo del título)
@@ -321,7 +323,7 @@ export function LibroDigital() {
       }
 
       // Información básica del edificio
-      addText('INFORMACIÓN GENERAL', 14, true);
+  addText(t('generalInfo', 'INFORMACIÓN GENERAL'), 14, true);
       addText(`ID del Libro: ${libroData.libroId}`);
       addText(`ID del Edificio: ${libroData.edificioId}`);
       addText(`Versión: ${libroData.version}`);
@@ -333,14 +335,14 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Responsable técnico
-      addText('RESPONSABLE TÉCNICO', 14, true);
+  addText(t('technicalManager', 'RESPONSABLE TÉCNICO'), 14, true);
       addText(`Nombre: ${libroData.responsable.nombre}`);
       addText(`ID Usuario: ${libroData.responsable.usuarioId}`);
       
       yPosition += 5;
 
       // Normativa de referencia
-      addText('NORMATIVA DE REFERENCIA', 14, true);
+  addText(t('referenceRegulations', 'NORMATIVA DE REFERENCIA'), 14, true);
       libroData.normativaReferencia.forEach(norma => {
         addText(`• ${norma.norma} (${norma.ambito.toUpperCase()}) - Versión ${norma.version}`);
       });
@@ -348,7 +350,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Secciones del libro
-      addText('SECCIONES DEL LIBRO DIGITAL', 14, true);
+  addText(t('digitalBookSections', 'SECCIONES DEL LIBRO DIGITAL'), 14, true);
       libroData.secciones.forEach(seccion => {
         addText(`${seccion.titulo}`, 12, true);
         addText(`Estado: ${seccion.estado.toUpperCase()}`);
@@ -367,7 +369,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Estado de publicación
-      addText('ESTADO DE PUBLICACIÓN', 14, true);
+  addText(t('publicationStatus', 'ESTADO DE PUBLICACIÓN'), 14, true);
       addText(`Estado: ${libroData.publicacion.estadoPublicacion.toUpperCase()}`);
       addText(`Nivel de Acceso: ${libroData.publicacion.nivelAcceso.toUpperCase()}`);
       addText(`Vigente desde: ${libroData.publicacion.vigenteDesde}`);
@@ -378,7 +380,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Firmas digitales
-      addText('FIRMAS DIGITALES', 14, true);
+  addText(t('digitalSignatures', 'FIRMAS DIGITALES'), 14, true);
       libroData.firmas.forEach(firma => {
         const fechaFormateada = new Date(firma.fecha).toLocaleDateString('es-ES', {
           year: 'numeric',
@@ -398,7 +400,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Documentos adjuntos
-      addText('DOCUMENTOS ADJUNTOS', 14, true);
+  addText(t('attachedDocuments', 'DOCUMENTOS ADJUNTOS'), 14, true);
       libroData.documentosAdjuntos.forEach(doc => {
         addText(`• ${doc.tipo.replace(/_/g, ' ').toUpperCase()} (${doc.formato})`);
         addText(`  ID: ${doc.documentoId}`);
@@ -409,7 +411,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Referencias del sistema
-      addText('REFERENCIAS DEL SISTEMA', 14, true);
+  addText(t('systemReferences', 'REFERENCIAS DEL SISTEMA'), 14, true);
       addText('Certificados:', 12, true);
       libroData.snapshot.certificadosIds.forEach(id => {
         addText(`  • ${id}`);
@@ -452,27 +454,27 @@ export function LibroDigital() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Libro Digital del Edificio</h1>
-            <p className="text-gray-600">Hotel RIU PLAZA España</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('digitalBookTitle', 'Libro Digital del Edificio')}</h1>
+            <p className="text-gray-600">{t('buildingName', 'Hotel RIU PLAZA España')}</p>
             <div className="flex items-center gap-4 mt-3">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                {libroData.estado}
+                {t(libroData.estado, libroData.estado)}
               </span>
-              <span className="text-sm text-gray-500">Versión {libroData.version}</span>
-              <span className="text-sm text-gray-500">Actualizado: {libroData.fechaUltimaActualizacion}</span>
+              <span className="text-sm text-gray-500">{t('version', 'Versión')} {libroData.version}</span>
+              <span className="text-sm text-gray-500">{t('updated', 'Actualizado')}: {libroData.fechaUltimaActualizacion}</span>
             </div>
             <div className="mt-4 pt-3 border-t border-gray-100">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">ID del Libro:</span>
+                  <span className="text-gray-500">{t('bookId', 'ID del Libro')}:</span>
                   <p className="font-mono text-xs text-gray-700 bg-gray-50 p-1 rounded mt-1">{libroData.libroId}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">ID del Edificio:</span>
+                  <span className="text-gray-500">{t('buildingId', 'ID del Edificio')}:</span>
                   <p className="font-mono text-xs text-gray-700 bg-gray-50 p-1 rounded mt-1">{libroData.edificioId}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Fecha de creación:</span>
+                  <span className="text-gray-500">{t('creationDate', 'Fecha de creación')}:</span>
                   <p className="text-gray-700">{libroData.fechaCreacion}</p>
                 </div>
               </div>
@@ -502,7 +504,7 @@ export function LibroDigital() {
       {/* Responsable y Normativa */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Responsable</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('responsible', 'Responsable')}</h3>
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -512,18 +514,18 @@ export function LibroDigital() {
               </div>
               <div>
                 <p className="font-medium text-gray-900">{libroData.responsable.nombre}</p>
-                <p className="text-sm text-gray-500">Responsable técnico</p>
+                <p className="text-sm text-gray-500">{t('technicalManager', 'Responsable técnico')}</p>
               </div>
             </div>
             <div className="pt-3 border-t border-gray-100">
-              <span className="text-xs text-gray-500">Usuario ID:</span>
+              <span className="text-xs text-gray-500">{t('userId', 'Usuario ID')}:</span>
               <p className="font-mono text-xs text-gray-600 bg-gray-50 p-1 rounded mt-1">{libroData.responsable.usuarioId}</p>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Normativa de Referencia</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('referenceRegulations', 'Normativa de Referencia')}</h3>
           <div className="space-y-2">
             {libroData.normativaReferencia.map((norma, index) => (
               <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
@@ -540,7 +542,7 @@ export function LibroDigital() {
 
       {/* Secciones */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Secciones del Libro</h3>
+  <h3 className="text-lg font-semibold text-gray-900 mb-6">{t('digitalBookSections', 'Secciones del Libro')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {libroData.secciones.map((seccion, index) => (
             <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -577,24 +579,24 @@ export function LibroDigital() {
       {/* Publicación y Alertas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado de Publicación</h3>
+    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('publicationStatus', 'Estado de Publicación')}</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Estado:</span>
+              <span className="text-sm text-gray-600">{t('status', 'Estado')}:</span>
               <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                 {libroData.publicacion.estadoPublicacion}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Nivel de acceso:</span>
+              <span className="text-sm text-gray-600">{t('accessLevel', 'Nivel de acceso')}:</span>
               <span className="text-sm font-medium text-gray-900">{libroData.publicacion.nivelAcceso}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Vigente desde:</span>
+              <span className="text-sm text-gray-600">{t('validFrom', 'Vigente desde')}:</span>
               <span className="text-sm font-medium text-gray-900">{libroData.publicacion.vigenteDesde}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Vigente hasta:</span>
+              <span className="text-sm text-gray-600">{t('validUntil', 'Vigente hasta')}:</span>
               <span className="text-sm font-medium text-gray-900">
                 {libroData.publicacion.vigenteHasta || 'Sin fecha límite'}
               </span>
@@ -607,7 +609,7 @@ export function LibroDigital() {
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium underline block"
                 >
-                  Ver versión pública →
+                  {t('viewPublicVersion', 'Ver versión pública')} →
                 </a>
                 <div className="text-xs text-gray-500">
                   QR URL: {libroData.publicacion.qr.urlImagen}
@@ -618,7 +620,7 @@ export function LibroDigital() {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas Activas</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('activeAlerts', 'Alertas Activas')}</h3>
           {libroData.alertas.length > 0 ? (
             <div className="space-y-3">
               {libroData.alertas.map((alerta, index) => (
@@ -640,14 +642,14 @@ export function LibroDigital() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No hay alertas activas</p>
+            <p className="text-sm text-gray-500">{t('noActiveAlerts', 'No hay alertas activas')}</p>
           )}
         </div>
       </div>
 
       {/* Firmas Digitales */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Firmas Digitales</h3>
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('digitalSignatures', 'Firmas Digitales')}</h3>
         <div className="space-y-4">
           {libroData.firmas.map((firma, index) => {
             const fechaFormateada = new Date(firma.fecha).toLocaleDateString('es-ES', {
@@ -678,7 +680,7 @@ export function LibroDigital() {
                   </div>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
-                  <span className="text-xs text-gray-500">Usuario firmante:</span>
+                  <span className="text-xs text-gray-500">{t('signingUser', 'Usuario firmante')}:</span>
                   <p className="font-mono text-xs text-gray-600 bg-gray-50 p-1 rounded mt-1">{firma.usuarioId}</p>
                 </div>
               </div>
@@ -689,7 +691,7 @@ export function LibroDigital() {
 
       {/* Documentos Adjuntos */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Documentos Adjuntos</h3>
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('attachedDocuments', 'Documentos Adjuntos')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {libroData.documentosAdjuntos.map((doc, index) => (
             <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -708,9 +710,9 @@ export function LibroDigital() {
                 <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">{doc.formato}</span>
                 <div className="flex items-center gap-2">
                   {doc.firmado && (
-                    <span className="text-xs px-2 py-1 bg-green-100 rounded text-green-600">Firmado</span>
+                    <span className="text-xs px-2 py-1 bg-green-100 rounded text-green-600">{t('signed', 'Firmado')}</span>
                   )}
-                  <button className="text-blue-600 hover:text-blue-800 text-xs font-medium">Ver</button>
+                  <button className="text-blue-600 hover:text-blue-800 text-xs font-medium">{t('view', 'Ver')}</button>
                 </div>
               </div>
             </div>
@@ -720,10 +722,10 @@ export function LibroDigital() {
 
       {/* Snapshot de Referencias */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Referencias del Sistema</h3>
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('systemReferences', 'Referencias del Sistema')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Certificados</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('certificates', 'Certificados')}</h4>
             <div className="space-y-2">
               {libroData.snapshot.certificadosIds.map((id, index) => (
                 <div key={index} className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
@@ -733,7 +735,7 @@ export function LibroDigital() {
             </div>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Intervenciones</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('interventions', 'Intervenciones')}</h4>
             <div className="space-y-2">
               {libroData.snapshot.intervencionesIds.map((id, index) => (
                 <div key={index} className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
@@ -743,7 +745,7 @@ export function LibroDigital() {
             </div>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Instalaciones</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('installations', 'Instalaciones')}</h4>
             <div className="space-y-2">
               {libroData.snapshot.instalacionesIds.map((id, index) => (
                 <div key={index} className="text-sm text-gray-600 font-mono bg-gray-50 p-2 rounded">
@@ -754,7 +756,7 @@ export function LibroDigital() {
           </div>
         </div>
         <div className="mt-6 pt-4 border-t border-gray-100">
-          <h4 className="font-medium text-gray-900 mb-3">Documentos del Sistema</h4>
+          <h4 className="font-medium text-gray-900 mb-3">{t('systemDocuments', 'Documentos del Sistema')}</h4>
           <div className="flex flex-wrap gap-2">
             {libroData.snapshot.documentosIds.map((id, index) => (
               <span key={index} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded border border-blue-200">
@@ -767,7 +769,7 @@ export function LibroDigital() {
 
       {/* Acciones */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones</h3>
+  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('actions', 'Acciones')}</h3>
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={generarPDF}
@@ -776,19 +778,19 @@ export function LibroDigital() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            Descargar PDF
+            {t('downloadPDF', 'Descargar PDF')}
           </button>
           <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium inline-flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
             </svg>
-            Exportar Datos
+            {t('exportData', 'Exportar Datos')}
           </button>
           <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium inline-flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            Historial de Versiones
+            {t('versionHistory', 'Historial de Versiones')}
           </button>
           <a 
             href={libroData.routes.volverAlEdificio}
@@ -797,7 +799,7 @@ export function LibroDigital() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Volver al Edificio
+            {t('backToBuilding', 'Volver al Edificio')}
           </a>
         </div>
       </div>

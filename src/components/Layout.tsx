@@ -1,3 +1,54 @@
+import React from 'react';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
+// Utilidad para extraer imágenes markdown y links a imágenes del texto
+function extractMarkdownImages(text: string): { alt: string; src: string }[] {
+  const images: { alt: string; src: string }[] = [];
+  // Unir líneas que tengan un guion y una imagen markdown en la siguiente línea
+  const normalized = text.replace(/-\s*\n\s*!\[/g, '- ![');
+  // ![alt](url)
+  const imgMd = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = imgMd.exec(normalized))) {
+    images.push({ alt: match[1], src: match[2] });
+  }
+  // [alt](url) si url contiene extensión de imagen en cualquier parte
+  const linkImgMd = /\[([^\]]*)\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi;
+  while ((match = linkImgMd.exec(normalized))) {
+    images.push({ alt: match[1], src: match[2] });
+  }
+  return images;
+}
+
+// Utilidad para reemplazar imágenes markdown en HTML de tabla por miniaturas clicables
+function replaceTableImagesWithThumbnails(html: string, setModalImage: (img: { src: string; alt?: string }) => void): React.ReactElement {
+  // Usar DOMParser para manipular el HTML
+  const parser = new window.DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  // Buscar celdas con imágenes markdown renderizadas como texto
+  doc.querySelectorAll('td').forEach(td => {
+    // Buscar imágenes markdown en el texto
+    const text = td.textContent || '';
+    const imgs = extractMarkdownImages(text);
+    if (imgs.length > 0) {
+      // Limpiar el contenido
+      td.innerHTML = '';
+      // Filtrar duplicados por src dentro de la celda
+      const seen = new Set();
+      imgs.forEach(img => {
+        if (seen.has(img.src)) return;
+        seen.add(img.src);
+        // Crear miniatura
+        const span = doc.createElement('span');
+        span.innerHTML = `<img src=\"${img.src}\" alt=\"${img.alt || 'Imagen'}\" style=\"width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;margin:2px;\" />`;
+        span.onclick = () => setModalImage({ src: img.src, alt: img.alt });
+        td.appendChild(span);
+      });
+    }
+  });
+  // Convertir el HTML de vuelta a React
+  return <span dangerouslySetInnerHTML={{ __html: doc.body.innerHTML }} />;
+}
 import { useEffect, useRef, useState } from 'react';
 // Utilidad simple para convertir tablas markdown a HTML
 function markdownTableToHtml(md: string): string {
@@ -43,6 +94,8 @@ export default function Layout() {
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatFullscreen, setIsChatFullscreen] = useState(false);
+  // Estado para imagen en modal
+  const [modalImage, setModalImage] = useState<{ src: string; alt?: string } | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       id: crypto.randomUUID(),
@@ -271,10 +324,11 @@ export default function Layout() {
   // Alto del footer (para no cubrirlo en móvil).
   const FOOTER_HEIGHT_PX = 88;
 
+  const { t } = useTranslation();
   return (
     <div className="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
       {/* Header/Navbar */}
-  <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 animate-slideDown ${isChatFullscreen ? 'hidden' : ''}`}> 
+      <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 animate-slideDown ${isChatFullscreen ? 'hidden' : ''}`}>
         <div className="px-4 sm:px-6 lg:px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
@@ -282,7 +336,7 @@ export default function Layout() {
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-semibold text-sm tracking-tight">LE</span>
                 </div>
-                <h1 className="text-xl font-semibold text-gray-900">Activo digital</h1>
+                <h1 className="text-xl font-semibold text-gray-900">{t('appTitle', 'Activo digital')}</h1>
               </div>
               <nav className="hidden md:flex space-x-1">
                 <Link
@@ -293,7 +347,7 @@ export default function Layout() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Activos
+                  {t('assets', 'Activos')}
                   {isActive('/activos') && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                   )}
@@ -306,7 +360,7 @@ export default function Layout() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Documentación
+                  {t('documents', 'Documentación')}
                   {isActive('/documentos') && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                   )}
@@ -319,7 +373,7 @@ export default function Layout() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Mantenimiento
+                  {t('maintenance', 'Mantenimiento')}
                   {isActive('/mantenimiento') && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                   )}
@@ -332,7 +386,7 @@ export default function Layout() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Cumplimiento
+                  {t('compliance', 'Cumplimiento')}
                   {isActive('/cumplimiento') && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                   )}
@@ -345,12 +399,13 @@ export default function Layout() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  Unidades
+                  {t('units', 'Unidades')}
                   {isActive('/unidades') && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                   )}
                 </Link>
               </nav>
+              <LanguageSwitcher />
             </div>
 
             <div className="flex items-center space-x-3">
@@ -494,7 +549,7 @@ export default function Layout() {
 
             {/* Mensajes + input */}
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 chat-background" style={{ height: 'calc(100vh - 140px)' }}>
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 gn-chat-bg scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-blue-50" style={{ height: 'calc(100vh - 140px)', overflowY: 'auto' }}>
                 {messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -506,13 +561,61 @@ export default function Layout() {
                     >
                       {/* Contenido del mensaje */}
                       {/* Renderiza tablas markdown como HTML si existen */}
+
+                      {/* Renderizar tablas markdown como HTML si existen */}
                       {m.role === 'ai' && /\|.+\|\n\|[-| :]+\|/.test(m.content) ? (
-                        <div
-                          className="whitespace-pre-wrap ai-markdown-table"
-                          dangerouslySetInnerHTML={{ __html: markdownTableToHtml(m.content) }}
-                        />
+                        <div className="whitespace-pre-wrap ai-markdown-table">
+                          {replaceTableImagesWithThumbnails(markdownTableToHtml(m.content), setModalImage)}
+                        </div>
                       ) : (
-                        <div className="whitespace-pre-wrap">{m.content}</div>
+                        <>
+                          {/* Renderizar imágenes markdown como miniaturas */}
+                          {extractMarkdownImages(m.content).length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex flex-wrap gap-2">
+                                {(() => {
+                                  // Filtrar imágenes duplicadas por src
+                                  const seen = new Set<string>();
+                                  return extractMarkdownImages(m.content)
+                                    .filter(img => {
+                                      if (seen.has(img.src)) return false;
+                                      seen.add(img.src);
+                                      return true;
+                                    })
+                                    .map((img) => (
+                                      <figure key={img.src} className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
+                                        <img
+                                          src={img.src}
+                                          alt={img.alt || 'Imagen IA'}
+                                          className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
+                                          onClick={() => setModalImage({ src: img.src, alt: img.alt })}
+                                          style={{ maxWidth: '128px', maxHeight: '128px' }}
+                                        />
+                                        {img.alt && (
+                                          <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
+                                            {img.alt}
+                                          </figcaption>
+                                        )}
+                                      </figure>
+                                    ));
+                                })()}
+                              </div>
+                              {/* Mostrar el texto sin los links de imagen, con word-break seguro */}
+                              {(() => {
+                                const text = m.content
+                                  .replace(/-\s*\n\s*!\[/g, '- ![')
+                                  .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+                                  .replace(/\[[^\]]*\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi, '')
+                                  .trim();
+                                return text ? (
+                                  <div className="whitespace-pre-wrap break-words overflow-auto">{text}</div>
+                                ) : null;
+                              })()}
+                            </div>
+                          ) : (
+                            <div className="whitespace-pre-wrap break-words overflow-auto">{m.content}</div>
+                          )}
+                        </>
                       )}
 
                       {/* Vista previa de llamada a herramienta (mock) */}
@@ -532,8 +635,14 @@ export default function Layout() {
 
                       {/* Imagen generada (mock) */}
                       {m.imageSrc && (
-                        <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200">
-                          <img src={m.imageSrc} alt={m.imageAlt || 'Imagen generada demo'} className="w-full h-auto block" />
+                        <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
+                          <img
+                            src={m.imageSrc}
+                            alt={m.imageAlt || 'Imagen generada demo'}
+                            className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
+                            onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                            style={{ maxWidth: '128px', maxHeight: '128px' }}
+                          />
                           {m.imageAlt && (
                             <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
                               {m.imageAlt}
@@ -682,7 +791,7 @@ export default function Layout() {
               </div>
 
               <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 chat-background" style={{ height: 'calc(100vh - 140px)' }}>
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 gn-chat-bg scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-blue-50" style={{ height: 'calc(100vh - 140px)', overflowY: 'auto' }}>
                 {messages.map((m) => (
                   <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div
@@ -693,12 +802,41 @@ export default function Layout() {
                       }`}
                     >
                       {m.role === 'ai' && /\|.+\|\n\|[-| :]+\|/.test(m.content) ? (
-                        <div
-                          className="whitespace-pre-wrap ai-markdown-table"
-                          dangerouslySetInnerHTML={{ __html: markdownTableToHtml(m.content) }}
-                        />
+                        <div className="whitespace-pre-wrap ai-markdown-table">
+                          {replaceTableImagesWithThumbnails(markdownTableToHtml(m.content), setModalImage)}
+                        </div>
                       ) : (
-                        <div className="whitespace-pre-wrap">{m.content}</div>
+                        <>
+                          {/* Renderizar imágenes markdown como miniaturas */}
+                          {extractMarkdownImages(m.content).length > 0 ? (
+                            <>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {extractMarkdownImages(m.content).map((img, idx) => (
+                                  <figure key={img.src + idx} className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
+                                    <img
+                                      src={img.src}
+                                      alt={img.alt || 'Imagen IA'}
+                                      className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
+                                      onClick={() => setModalImage({ src: img.src, alt: img.alt })}
+                                      style={{ maxWidth: '128px', maxHeight: '128px' }}
+                                    />
+                                    {img.alt && (
+                                      <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
+                                        {img.alt}
+                                      </figcaption>
+                                    )}
+                                  </figure>
+                                ))}
+                              </div>
+                              {/* Mostrar el texto sin los links de imagen */}
+                              <div className="whitespace-pre-wrap">
+                                {m.content.replace(/!\[[^\]]*\]\([^)]+\)/g, '').trim()}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="whitespace-pre-wrap">{m.content}</div>
+                          )}
+                        </>
                       )}
 
                       {m.toolCallPreview && (
@@ -716,8 +854,14 @@ export default function Layout() {
                       )}
 
                       {m.imageSrc && (
-                        <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200">
-                          <img src={m.imageSrc} alt={m.imageAlt || 'Imagen generada demo'} className="w-full h-auto block" />
+                        <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
+                          <img
+                            src={m.imageSrc}
+                            alt={m.imageAlt || 'Imagen generada demo'}
+                            className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
+                            onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                            style={{ maxWidth: '128px', maxHeight: '128px' }}
+                          />
                           {m.imageAlt && (
                             <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
                               {m.imageAlt}
@@ -725,6 +869,33 @@ export default function Layout() {
                           )}
                         </figure>
                       )}
+      {/* Modal para imagen fullscreen */}
+      {modalImage && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 cursor-zoom-out animate-fadeIn"
+          onClick={() => setModalImage(null)}
+          tabIndex={-1}
+          aria-modal="true"
+          role="dialog"
+        >
+          <img
+            src={modalImage.src}
+            alt={modalImage.alt || 'Imagen'}
+            className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl border-4 border-white"
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            className="absolute top-6 right-6 text-white bg-black/60 rounded-full p-2 hover:bg-black/80 focus:outline-none"
+            onClick={() => setModalImage(null)}
+            aria-label="Cerrar imagen"
+            style={{ zIndex: 2100 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
                     </div>
                   </div>
                 ))}
@@ -793,25 +964,21 @@ export default function Layout() {
         }
         .animate-slideDown { animation: slideDown 0.6s ease-out; }
         
-        /* Fondo del chat: gradiente suave (verde -> azul -> lila) inspirado en la imagen */
-        .chat-background {
+        @keyframes gn-auroraFlow {
+          0% { background-position: 0% 0%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 100%; }
+        }
+        .gn-chat-bg {
+          background: radial-gradient(900px 600px at 15% 25%, rgba(38,100,255,0.25), transparent 60%),
+                      radial-gradient(900px 600px at 85% 75%, rgba(124,58,237,0.25), transparent 60%),
+                      #F4F6FA;
+          background-size: 200% 200%;
+          animation: gn-auroraFlow 16s ease-in-out infinite;
           position: relative;
           overflow: hidden;
-          /* Capa base (dirección 120deg) */
-          background: linear-gradient(120deg, #d9fbe7 0%, #cfeffd 40%, #e7dcff 100%);
-          /* Mezcla extra sutil para dar luz central (radial + transparencia) */
-          background-image:
-            radial-gradient(circle at 25% 70%, rgba(255,255,255,0.7), rgba(255,255,255,0) 60%),
-            linear-gradient(120deg, #d9fbe7 0%, #cfeffd 40%, #e7dcff 100%);
-          background-blend-mode: overlay, normal;
         }
-        /* Eliminar decoraciones anteriores (nubes/skyline) */
-        .chat-background::before,
-        .chat-background::after {
-          content: none !important;
-        }
-        /* Asegurar stacking normal de los elementos internos */
-        .chat-background > * { position: relative; z-index: 1; }
+        .gn-chat-bg > * { position: relative; z-index: 1; }
       `}</style>
     </div>
   );

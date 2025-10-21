@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 interface ProgressBarProps {
@@ -25,20 +26,20 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
     lg: 'h-4'
   };
 
+  const { t } = useTranslation();
   return (
     <div className={`w-full ${className}`}>
       {/* Header con label y números */}
       {(label || showNumbers) && (
         <div className="flex justify-between items-center mb-2">
-          {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
+          {label && <span className="text-sm font-medium text-gray-700">{t(label, label)}</span>}
           {showNumbers && (
             <span className="text-sm text-gray-500">
-              {current} de {total}
+              {current} {t('of', 'de')} {total}
             </span>
           )}
         </div>
       )}
-      
       {/* Barra de progreso */}
       <div className={`w-full bg-gray-200 rounded-full ${sizeClasses[size]}`}>
         <div 
@@ -49,7 +50,6 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
           }}
         />
       </div>
-      
       {/* Porcentaje */}
       <div className="mt-1 text-right">
         <span className="text-xs text-gray-500">{Math.round(percentage)}%</span>
