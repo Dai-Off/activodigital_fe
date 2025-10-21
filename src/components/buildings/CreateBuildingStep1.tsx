@@ -338,7 +338,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           </div>
         </div>
 
-        {/* Grid para precio y email del técnico */}
+        {/* Grid para datos de precios del activo */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Precio */}
           <div>
@@ -361,6 +361,29 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               <p className="mt-1 text-sm text-red-600">{errors.price}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">{t('buildings.assetPriceHelper')}</p>
+          </div>
+
+          {/* Metros cuadrados */}
+          <div>
+            <label htmlFor="squareMeters" className="block text-sm font-medium text-gray-700 mb-2">
+              Superficie (m²)
+            </label>
+            <input
+              type="number"
+              id="squareMeters"
+              value={formData.squareMeters}
+              onChange={(e) => handleInputChange('squareMeters', e.target.value)}
+              placeholder="500.50"
+              min="0"
+              step="0.01"
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.squareMeters ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.squareMeters && (
+              <p className="mt-1 text-sm text-red-600">{errors.squareMeters}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Opcional. Superficie total del edificio en metros cuadrados</p>
           </div>
 
           {/* Email del técnico */}

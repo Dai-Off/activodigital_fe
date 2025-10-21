@@ -22,7 +22,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 // Nuevos componentes para edificios y libro digital
 import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
 import DigitalBookHub from './components/digitalbook/DigitalBookHub'
-import PdfImportPage from './pages/PdfImportPage'
 import SectionsList from './components/digitalbook/SectionsList'
 import SectionEditor from './components/digitalbook/SectionEditor'
 
@@ -133,14 +132,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DigitalBookHub />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/libro-digital/pdf-import"
-                element={
-                  <ProtectedRoute>
-                    <PdfImportPage />
                   </ProtectedRoute>
                 }
               />
