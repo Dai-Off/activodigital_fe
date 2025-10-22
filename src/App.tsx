@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import ToastContainer from './components/ui/Toast'
 import Layout from './components/Layout'
 import Documentos from './components/Documentos'
@@ -24,6 +25,7 @@ import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
 import DigitalBookHub from './components/digitalbook/DigitalBookHub'
 import SectionsList from './components/digitalbook/SectionsList'
 import SectionEditor from './components/digitalbook/SectionEditor'
+import TermsAndConditions from './components/TermsAndConditions'
 
 // Página de lista de secciones (opcional)
 import { useTranslation } from 'react-i18next';
@@ -68,99 +70,104 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <Router>
-          <Layout>
+        <NotificationProvider>
+          <Router>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/register" element={<RegisterWithInvitation />} />
               <Route path="/auth/invitation/:token" element={<InvitationHandler />} />
               <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
-              <Route path="/" element={<Landing />} />
 
-              {/* Rutas protegidas (con navbar y contenedor) */}
-              <Route
-                path="/activos"
-                element={
-                  <ProtectedRoute>
-                    <ErrorBoundary>
-                      <AssetsList />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/documentos"
-                element={
-                  <ProtectedRoute>
-                    <Documentos />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/mantenimiento"
-                element={
-                  <ProtectedRoute>
-                    <Mantenimiento />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cumplimiento"
-                element={
-                  <ProtectedRoute>
-                    <Cumplimiento />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/unidades"
-                element={
-                  <ProtectedRoute>
-                    <Unidades />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/libro-digital"
-                element={
-                  <ProtectedRoute>
-                    <LibroDigital />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/libro-digital/hub/:buildingId"
-                element={
-                  <ProtectedRoute>
-                    <DigitalBookHub />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/libro-digital/section/:buildingId/:sectionId"
-                element={
-                  <ProtectedRoute>
-                    <SectionEditor />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/libro-digital/sections"
-                element={
-                  <ProtectedRoute>
-                    <SectionsListPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/edificio/:id"
-                element={
-                  <ProtectedRoute>
-                    <BuildingDetail />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Rutas públicas sin autenticación */}
+              <Route path="/terminos" element={<TermsAndConditions />} />
+
+              {/* Rutas con navbar y footer (Layout) */}
+              <Route element={<Layout />}>
+                <Route path="/" element={<Landing />} />
+                <Route
+                  path="/activos"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <AssetsList />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/documentos"
+                  element={
+                    <ProtectedRoute>
+                      <Documentos />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mantenimiento"
+                  element={
+                    <ProtectedRoute>
+                      <Mantenimiento />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/cumplimiento"
+                  element={
+                    <ProtectedRoute>
+                      <Cumplimiento />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/unidades"
+                  element={
+                    <ProtectedRoute>
+                      <Unidades />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/libro-digital"
+                  element={
+                    <ProtectedRoute>
+                      <LibroDigital />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/libro-digital/hub/:buildingId"
+                  element={
+                    <ProtectedRoute>
+                      <DigitalBookHub />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/libro-digital/section/:buildingId/:sectionId"
+                  element={
+                    <ProtectedRoute>
+                      <SectionEditor />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/libro-digital/sections"
+                  element={
+                    <ProtectedRoute>
+                      <SectionsListPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/edificio/:id"
+                  element={
+                    <ProtectedRoute>
+                      <BuildingDetail />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
               {/* Rutas fullscreen protegidas */}
               <Route
@@ -176,8 +183,8 @@ function App() {
               <Route path="*" element={<Landing />} />
             </Routes>
             <ToastContainer />
-          </Layout>
-        </Router>
+          </Router>
+        </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
   );

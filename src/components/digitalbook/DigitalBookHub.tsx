@@ -139,7 +139,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       }, 8000);
       
       // Llamar a la API de procesamiento con IA
-      const result = await processPDFWithAI(buildingId, file);
+      await processPDFWithAI(buildingId, file);
       
       // Completar progreso
       clearInterval(progressInterval);
@@ -147,13 +147,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       setProgress(100);
       setCurrentStep('¡Procesamiento completado!');
       
-      // Mostrar éxito
-      showToast({
-        type: 'success',
-        title: 'Procesamiento completado',
-        message: result.message,
-        duration: 5000
-      });
+      // El éxito se maneja a través de notificaciones del sistema
       
       // Actualizar el libro
       setTimeout(() => {
@@ -177,12 +171,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     } catch (error: any) {
       console.error('Error procesando PDF con IA:', error);
       
-      showToast({
-        type: 'error',
-        title: 'Error de procesamiento',
-        message: error.message || 'Error al procesar el PDF con IA',
-        duration: 5000
-      });
+      // Los errores se manejan a través de notificaciones del sistema
       
       setIsProcessing(false);
       setProcessingFile(null);

@@ -1,10 +1,12 @@
-
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+
 import LanguageSwitcher from './LanguageSwitcher';
 import Footer from './Footer';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './ui/NotificationBell';
+import DiscreteNotification from './ui/DiscreteNotification';
 
 /* ============================
    Types
@@ -41,15 +43,14 @@ function extractMarkdownImages(text: string): { alt: string; src: string }[] {
   const normalized = text.replace(/-\s*\n\s*!\[/g, '- ![');
 
   // ![alt](url)
-  const imgMd = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  const imgMd = /!\{0,1}\[([^\]]*)\]\(([^)]+)\)/g;
   let match: RegExpExecArray | null;
   while ((match = imgMd.exec(normalized))) {
     images.push({ alt: match[1], src: match[2] });
   }
 
-  // [alt](url) when url points to an image extension
-  const linkImgMd =
-    /\[([^\]]*)\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi;
+  // [alt](url) con extensión de imagen
+  const linkImgMd = /\[([^\]]*)\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi;
   while ((match = linkImgMd.exec(normalized))) {
     images.push({ alt: match[1], src: match[2] });
   }
@@ -61,10 +62,12 @@ function markdownTableToHtml(md: string): string {
   return md.replace(tableRegex, (tableBlock) => {
     const lines = tableBlock.trim().split('\n').filter(Boolean);
     if (lines.length < 2) return tableBlock;
+
     const header = lines[0].split('|').slice(1, -1).map((h) => h.trim());
     const rows = lines
       .slice(2)
       .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()));
+
     let html = '<table class="ai-table"><thead><tr>';
     html += header.map((h) => `<th>${h}</th>`).join('');
     html += '</tr></thead><tbody>';
@@ -76,14 +79,9 @@ function markdownTableToHtml(md: string): string {
   });
 }
 
-function replaceTableImagesWithThumbnails(
-  html: string,
-  setModalImage: (img: { src: string; alt?: string }) => void
-): React.ReactElement {
-  if (typeof window === 'undefined') {
-    // SSR safety: just render the raw HTML
-    return <span dangerouslySetInnerHTML={{ __html: html }} />;
-  }
+function injectTableThumbnails(html: string): string {
+  if (typeof window === 'undefined') return html;
+
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
@@ -91,20 +89,73 @@ function replaceTableImagesWithThumbnails(
     const text = td.textContent || '';
     const imgs = extractMarkdownImages(text);
     if (!imgs.length) return;
+
     td.innerHTML = '';
     const seen = new Set<string>();
     imgs.forEach((img) => {
       if (seen.has(img.src)) return;
       seen.add(img.src);
-      const span = doc.createElement('span');
-      span.innerHTML = `<img src="${img.src}" alt="${img.alt || 'Imagen'}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;margin:2px;" />`;
-      // Attach click -> open modal (requires bridging to React)
-      span.addEventListener('click', () => setModalImage({ src: img.src, alt: img.alt }));
-      td.appendChild(span);
+
+      const fig = doc.createElement('figure');
+      fig.setAttribute('style', 'display:inline-block;margin:2px;');
+
+      const image = doc.createElement('img');
+      image.src = img.src;
+      image.alt = img.alt || 'Imagen';
+      image.setAttribute('data-thumb', '1');
+      image.setAttribute(
+        'style',
+        'width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;display:block;'
+      );
+
+      const capText = (img.alt || '').trim();
+      if (capText) {
+        const cap = doc.createElement('figcaption');
+        cap.textContent = capText;
+        cap.setAttribute(
+          'style',
+          'font-size:11px;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;padding:2px 6px;text-align:center;'
+        );
+        fig.appendChild(image);
+        fig.appendChild(cap);
+      } else {
+        fig.appendChild(image);
+      }
+
+      td.appendChild(fig);
     });
   });
 
-  return <span dangerouslySetInnerHTML={{ __html: doc.body.innerHTML }} />;
+  return doc.body.innerHTML;
+}
+
+function TableHtmlWithClicks({
+  html,
+  onOpen,
+}: {
+  html: string;
+  onOpen: (img: { src: string; alt?: string }) => void;
+}) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const handler = (ev: Event) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target) return;
+      if (target.tagName === 'IMG' && (target as HTMLElement).getAttribute('data-thumb') === '1') {
+        const imgEl = target as HTMLImageElement;
+        onOpen({ src: imgEl.src, alt: imgEl.alt });
+      }
+    };
+
+    el.addEventListener('click', handler);
+    return () => el.removeEventListener('click', handler);
+  }, [onOpen, html]);
+
+  return <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /* ============================
@@ -142,24 +193,22 @@ function findBalancedJson(raw: string, startIdx: number): string | null {
 }
 
 function parseLooselyForRespuesta(rawText: string): OrquestadorResponse | null {
-  // Try direct JSON first
   try {
     const parsed = JSON.parse(rawText);
-    if (parsed && typeof parsed === 'object' && typeof parsed.respuesta === 'string') {
+    if (parsed && typeof parsed === 'object' && typeof (parsed as any).respuesta === 'string') {
       return parsed as OrquestadorResponse;
     }
   } catch {
-    // continue to loose parsing
+    // continue
   }
 
-  // Scan for first '{' and try to balance
   let idx = rawText.indexOf('{');
   while (idx !== -1) {
     const candidate = findBalancedJson(rawText, idx);
     if (candidate) {
       try {
         const parsed = JSON.parse(candidate);
-        if (parsed && typeof parsed === 'object' && typeof parsed.respuesta === 'string') {
+        if (parsed && typeof parsed === 'object' && typeof (parsed as any).respuesta === 'string') {
           return parsed as OrquestadorResponse;
         }
       } catch {
@@ -169,18 +218,14 @@ function parseLooselyForRespuesta(rawText: string): OrquestadorResponse | null {
     idx = rawText.indexOf('{', idx + 1);
   }
 
-  // Last attempt: if we see {"success" ...} we still try to parse and accept it if object-y
   const guessStart = rawText.indexOf('{"success"');
   if (guessStart !== -1) {
     const candidate = findBalancedJson(rawText, guessStart);
     if (candidate) {
       try {
-        const parsed = JSON.parse(candidate);
-        if (parsed && typeof parsed === 'object') {
-          // If there's no "respuesta", but we got an object, convert to string
-          const fallback = (parsed as any).respuesta ?? JSON.stringify(parsed);
-          return { respuesta: String(fallback), ...parsed };
-        }
+        const parsed = JSON.parse(candidate) as any;
+        const fallback = parsed?.respuesta ?? JSON.stringify(parsed);
+        return { respuesta: String(fallback), ...parsed };
       } catch {
         // no-op
       }
@@ -215,7 +260,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     if (messages.length === 0) {
       setMessages([
         {
-          id: crypto.randomUUID(),
+          id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
           role: 'ai',
           content: t(
             'chatWelcome',
@@ -250,7 +295,11 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     if (!trimmed) return;
 
     // Push user message
-    const userMsg: ChatMsg = { id: crypto.randomUUID(), role: 'user', content: trimmed };
+    const userMsg: ChatMsg = {
+      id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
+      role: 'user',
+      content: trimmed,
+    };
     setMessages((prev) => [...prev, userMsg]);
     setDraft('');
 
@@ -285,7 +334,6 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       }
 
       if (!parsed || typeof parsed.respuesta !== 'string') {
-        // Fallback: show raw text if any
         const fallbackMsg = rawText?.trim()
           ? rawText.trim().slice(0, 4000)
           : t(
@@ -293,29 +341,31 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.'
             );
 
-        const aiMsg: ChatMsg = { id: crypto.randomUUID(), role: 'ai', content: fallbackMsg };
+        const aiMsg: ChatMsg = {
+          id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
+          role: 'ai',
+          content: fallbackMsg,
+        };
         await new Promise((r) => setTimeout(r, 300));
         setMessages((prev) => [...prev, aiMsg]);
         return;
       }
 
-      const aiMsg: ChatMsg = { id: crypto.randomUUID(), role: 'ai', content: parsed.respuesta };
+      const aiMsg: ChatMsg = {
+        id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
+        role: 'ai',
+        content: parsed.respuesta,
+      };
       await new Promise((r) => setTimeout(r, 300));
       setMessages((prev) => [...prev, aiMsg]);
     } catch (error) {
       const isAbort = error instanceof DOMException && error.name === 'AbortError';
       const errorMsg: ChatMsg = {
-        id: crypto.randomUUID(),
+        id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
         role: 'ai',
         content: isAbort
-          ? t(
-              'chatTimeoutError',
-              'El servicio está tardando más de lo esperado. Intentá de nuevo en unos segundos.'
-            )
-          : t(
-              'chatProcessingError',
-              'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.'
-            ),
+          ? t('chatTimeoutError', 'El servicio está tardando más de lo esperado. Intenta de nuevo en unos segundos.')
+          : t('chatProcessingError', 'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.'),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -332,10 +382,11 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       const hasImgs = imgs.length > 0;
 
       if (m.role === 'ai' && containsTable) {
-        const html = markdownTableToHtml(m.content);
+        const htmlRaw = markdownTableToHtml(m.content);
+        const html = injectTableThumbnails(htmlRaw);
         return (
           <div className="whitespace-pre-wrap ai-markdown-table">
-            {replaceTableImagesWithThumbnails(html, setModalImage)}
+            <TableHtmlWithClicks html={html} onOpen={(img) => setModalImage(img)} />
           </div>
         );
       }
@@ -345,10 +396,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         const text = m.content
           .replace(/-\s*\n\s*!\[/g, '- ![')
           .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-          .replace(
-            /\[[^\]]*\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi,
-            ''
-          )
+          .replace(/\[[^\]]*\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi, '')
           .trim();
 
         return (
@@ -361,7 +409,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 >
                   <img
                     src={img.src}
-                    alt={img.alt || 'Imagen IA'}
+                    alt={img.alt || t('chatAI', 'Chat IA')}
                     className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                     onClick={() => setModalImage({ src: img.src, alt: img.alt })}
                     style={{ maxWidth: 128, maxHeight: 128 }}
@@ -383,7 +431,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
       return <div className="whitespace-pre-wrap break-words overflow-auto">{m.content}</div>;
     };
-  }, [setModalImage]);
+  }, [t]);
 
   /* ========== JSX ========== */
   return (
@@ -398,30 +446,16 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm tracking-tight">LE</span>
-                </div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {t('appTitle', 'Activo digital')}
-                </h1>
+                <img 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  className="w-48 h-28 object-contain"
+                />
               </div>
 
               <nav className="hidden md:flex space-x-1">
-                <Link
-                  to="/activos"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/activos')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {t('assets', 'Activos')}
-                  {isActive('/activos') && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-
-                <Link
+                {/* Public links - always visible */}
+               {user && ( <Link
                   to="/documentos"
                   className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive('/documentos')
@@ -429,64 +463,83 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  {t('documents', 'Documentación')}
+                  {t('nav.documentation', 'Documentación')}
                   {isActive('/documentos') && (
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
                   )}
-                </Link>
+                </Link>)}
 
-                <Link
-                  to="/mantenimiento"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/mantenimiento')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {t('maintenance', 'Mantenimiento')}
-                  {isActive('/mantenimiento') && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
+                {/* Authenticated user links */}
+                {user && (
+                  <>
+                    <Link
+                      to="/activos"
+                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive('/activos')
+                          ? 'text-blue-600 bg-blue-50 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t('nav.assets', 'Activos')}
+                      {isActive('/activos') && (
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
+                      )}
+                    </Link>
 
-                <Link
-                  to="/cumplimiento"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/cumplimiento')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {t('compliance', 'Cumplimiento')}
-                  {isActive('/cumplimiento') && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
+                    <Link
+                      to="/mantenimiento"
+                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive('/mantenimiento')
+                          ? 'text-blue-600 bg-blue-50 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t('nav.maintenance', 'Mantenimiento')}
+                      {isActive('/mantenimiento') && (
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
+                      )}
+                    </Link>
 
-                <Link
-                  to="/unidades"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/unidades')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {t('units', 'Unidades')}
-                  {isActive('/unidades') && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
+                    <Link
+                      to="/cumplimiento"
+                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive('/cumplimiento')
+                          ? 'text-blue-600 bg-blue-50 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t('nav.compliance', 'Cumplimiento')}
+                      {isActive('/cumplimiento') && (
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
+                      )}
+                    </Link>
+
+                    <Link
+                      to="/unidades"
+                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive('/unidades')
+                          ? 'text-blue-600 bg-blue-50 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t('nav.units', 'Unidades')}
+                      {isActive('/unidades') && (
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
+                      )}
+                    </Link>
+                  </>
+                )}
               </nav>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {/* Toggle Chat */}
               <button
                 onClick={() => setIsChatOpen((v) => !v)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                   isChatOpen
-                    ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                 }`}
                 aria-haspopup="dialog"
                 aria-controls="chat-sidebar"
@@ -510,46 +563,70 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 )}
               </button>
 
-              <button
-                className="relative p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                aria-label={t('notifications', 'Notificaciones')}
-                title={t('notifications', 'Notificaciones')}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 01-3.46 0" />
-                </svg>
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white" />
-              </button>
-
+              {/* Idioma */}
               <LanguageSwitcher />
 
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="7" r="4" />
-                  <path d="M5.5 20a6.5 6.5 0 0113 0" />
-                </svg>
-              </div>
-
-              <button
-                onClick={() => {
-                  try {
-                    window.localStorage.removeItem('access_token');
-                    window.sessionStorage.removeItem('access_token');
-                  } catch {
-                    // ignore
-                  }
-                  navigate('/login');
-                }}
-                className="group inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
-                aria-label={t('logout', 'Cerrar sesión')}
-                title={t('logout', 'Cerrar sesión')}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
-                </svg>
-              </button>
+              {/* Autenticación y perfil */}
+              {user ? (
+                <>
+                  <NotificationBell />
+                  {/* Perfil */}
+                  <button
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                    aria-label={t('profile', 'Perfil')}
+                    title={t('profile', 'Perfil')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <circle cx="12" cy="7" r="4" />
+                      <path d="M5.5 20a6.5 6.5 0 0113 0" />
+                    </svg>
+                  </button>
+                  {/* Cerrar sesión */}
+                  <button
+                    onClick={() => {
+                      try {
+                        window.localStorage.removeItem('access_token');
+                        window.sessionStorage.removeItem('access_token');
+                      } catch {
+                        // ignore
+                      }
+                      navigate('/login');
+                    }}
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
+                    aria-label={t('logout', 'Cerrar sesión')}
+                    title={t('logout', 'Cerrar sesión')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Iniciar sesión */}
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
+                    </svg>
+                    <span className="hidden sm:inline">{t('login', 'Iniciar sesión')}</span>
+                  </Link>
+                  {/* Registrarse */}
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                    </svg>
+                    <span className="hidden sm:inline">{t('register', 'Registrarse')}</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -567,10 +644,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             {children ? children : <Outlet />}
           </section>
 
-          {/* Desktop Chat Sidebar (md and up) */}
+          {/* Desktop Chat Sidebar */}
           <aside
             id="chat-sidebar"
-            aria-label="Chat IA"
+            aria-label={t('chatAI', 'Chat IA')}
             className={`hidden md:flex md:flex-col md:border-l md:border-gray-200 md:bg-white
               ${isChatFullscreen ? 'fixed inset-0 z-[1100] w-screen h-screen top-0 left-0' : 'md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-96'}
               ${isChatOpen ? 'md:opacity-100' : 'md:opacity-0 pointer-events-none'}
@@ -592,7 +669,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 <button
                   onClick={() => setIsChatOpen(false)}
                   className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Cerrar chat"
+                  aria-label={t('closeChatTitle', 'Cerrar chat IA')}
+                  title={t('closeChatTitle', 'Cerrar chat IA')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 6 6 18M6 6l12 12" />
@@ -638,7 +716,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                         <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
                           <img
                             src={m.imageSrc}
-                            alt={m.imageAlt || 'Imagen generada demo'}
+                            alt={m.imageAlt || t('chatAI', 'Chat IA')}
                             className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                             onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
                             style={{ maxWidth: 128, maxHeight: 128 }}
@@ -689,7 +767,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     type="submit"
                     disabled={isLoadingResponse || !draft.trim()}
                     className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Enviar"
+                    title={t('send', 'Enviar')}
+                    aria-label={t('send', 'Enviar')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M22 2L11 13" />
@@ -725,7 +804,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             </div>
           </aside>
 
-          {/* Mobile overlay (does not push layout; footer stays below everything) */}
+          {/* Mobile overlay */}
           <div
             className={`fixed inset-x-0 top-16 z-40 md:hidden ${
               isChatOpen ? 'pointer-events-auto' : 'pointer-events-none'
@@ -748,7 +827,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 ${isChatFullscreen ? '!max-w-none !w-screen !h-screen !border-0 !rounded-none !fixed !top-0 !left-0 !z-[1100]' : ''}`}
               role="dialog"
               aria-modal="true"
-              aria-label="Chat IA"
+              aria-label={t('chatAI', 'Chat IA')}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
@@ -790,6 +869,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     }}
                     className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label={t('close', 'Cerrar')}
+                    title={t('close', 'Cerrar')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M18 6 6 18M6 6l12 12" />
@@ -833,7 +913,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                           <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
                             <img
                               src={m.imageSrc}
-                              alt={m.imageAlt || 'Imagen generada demo'}
+                              alt={m.imageAlt || t('chatAI', 'Chat IA')}
                               className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                               onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
                               style={{ maxWidth: 128, maxHeight: 128 }}
@@ -884,7 +964,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                       type="submit"
                       disabled={isLoadingResponse || !draft.trim()}
                       className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Enviar"
+                      title={t('send', 'Enviar')}
+                      aria-label={t('send', 'Enviar')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M22 2L11 13" />
@@ -898,7 +979,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Image Modal (shared) */}
+          {/* Image Modal */}
           {modalImage && (
             <div
               className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 cursor-zoom-out animate-fadeIn"
@@ -909,7 +990,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             >
               <img
                 src={modalImage.src}
-                alt={modalImage.alt || 'Imagen'}
+                alt={modalImage.alt || t('chatAI', 'Chat IA')}
                 className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl border-4 border-white"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -917,6 +998,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 className="absolute top-6 right-6 text-white bg-black/60 rounded-full p-2 hover:bg-black/80 focus:outline-none"
                 onClick={() => setModalImage(null)}
                 aria-label={t('closeImage', 'Cerrar imagen')}
+                title={t('closeImage', 'Cerrar imagen')}
                 style={{ zIndex: 2100 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -928,10 +1010,12 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         </div>
       </main>
 
-      {/* Footer (always at the very bottom) */}
+      {/* Footer */}
       <Footer />
 
-      {/* Styles */}
+      {/* Notificación discreta */}
+      <DiscreteNotification />
+
       <style>{`
         .ai-table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
         .ai-table th, .ai-table td { border: 1px solid #d1d5db; padding: 0.4em 0.7em; text-align: left; }
@@ -961,11 +1045,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         }
         .gn-chat-bg > * { position: relative; z-index: 1; }
 
-        /* Simple fade for modal */
-        @keyframes fadeIn {
-          from { opacity: 0 }
-          to { opacity: 1 }
-        }
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         .animate-fadeIn { animation: fadeIn .2s ease-out; }
       `}</style>
     </div>

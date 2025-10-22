@@ -4,16 +4,40 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 /**
- * Clean, de-duplicated resources for ES and EN.
- * - Keys are aligned across languages.
- * - No duplicate sections/fields.
- * - Safe defaults (fallbackLng:'en', returnNull:false).
+ * Recursos ES/EN completos y deduplicados.
+ * - Incluye alias para todas las claves usadas en: Wizard, Step1, Step2, Step3, AssetsList, topbar/footer.
+ * - fallbackLng:'en', returnNull:false para evitar nulls en UI.
  */
 
 export const resources = {
   es: {
     translation: {
-      // --- Auth / Session ---
+  // --- Alias globales ---
+  appTitle: 'Activo digital',
+  profile: 'Perfil',
+  // --- Navegación / Menú / Idioma ---
+      nav: {
+        productName: 'Activo digital',
+        assets: 'Activos',
+        documentation: 'Documentación',
+        maintenance: 'Mantenimiento',
+        compliance: 'Cumplimiento',
+        units: 'Unidades',
+        aiChat: 'Chat IA',
+      },
+      language: {
+        en: 'English',
+        es: 'Español',
+      },
+
+      // --- Roles ---
+      roles: {
+        propietario: 'propietario',
+        tecnico: 'técnico',
+        cfo: 'CFO',
+      },
+
+      // --- Auth / Sesión ---
       email: 'Correo electrónico',
       emailPlaceholder: 'tucorreo@ejemplo.com',
       password: 'Contraseña',
@@ -83,12 +107,36 @@ export const resources = {
       perPage: '/página',
       firstPage: 'Primera página',
       previous: 'Anterior',
+      next: 'Siguiente',
       page: 'Página',
       lastPage: 'Última página',
       ready: 'Listo',
       inProgress: 'En curso',
+      status: 'Estado',
+      digitalBook: 'Libro Digital',
+      energyCertificate: 'Certificación Energética',
+      squareMeters: 'Superficie',
+      price: 'Precio',
+      welcome: 'Bienvenido',
+      myAssets: 'Mis Activos',
+      assignedAssets: 'Activos Asignados',
+      managePortfolio: 'Gestiona tu cartera de activos inmobiliarios y asigna técnicos',
+      assignedAssetsDesc: 'Activos que tienes asignados para gestionar libros digitales',
+      assignedBuildings: 'Edificios asignados',
+      completedBooks: 'Libros completados',
+      pendingBooks: 'Pendientes',
+      mostCommonTypology: 'Tipología más común',
+      averageUnits: 'Promedio de unidades',
+      averageAge: 'Edad promedio',
+      years: 'años',
+      greenFinancingEligible: '% cartera apta para financiación verde',
+      completedDigitalBooksPercent: '% libros digitales completados',
+      userDataLoadWarning: 'No se pudieron cargar los datos del usuario, pero puedes continuar navegando.',
+      noAssetsYet: 'No tienes activos aún',
+      createFirstAsset: 'Comienza creando tu primer activo para gestionar tu cartera.',
+      contactAdmin: 'Contacta con tu administrador para que te asigne activos.',
 
-      // Quick actions (ES only—overrides if present elsewhere)
+      // Quick actions
       closeChatTitle: 'Cerrar chat IA',
       openChatTitle: 'Abrir chat IA',
       notifications: 'Notificaciones',
@@ -97,7 +145,7 @@ export const resources = {
       exitFullscreen: 'Salir de pantalla completa',
       closeImage: 'Cerrar imagen',
 
-      // --- Common ---
+      // --- Common (incluye alias de formularios) ---
       common: {
         ok: 'OK',
         completed: 'Completado',
@@ -112,8 +160,43 @@ export const resources = {
         confirmAndSave: 'Confirmar y guardar',
         deleteCertificate: 'Eliminar certificado',
         actionCannotBeUndone: 'Esta acción no se puede deshacer',
-        confirmDeleteCertificate: '¿Seguro que quieres eliminar el certificado energético?'
+        confirmDeleteCertificate: '¿Seguro que quieres eliminar el certificado energético?',
+        previous: 'Anterior',
+        next: 'Siguiente',
+        saveDraft: 'Guardar borrador',
+        saveAndContinue: 'Guardar y continuar',
+        validating: 'Validando...',
+        remove: 'Eliminar',
+        search: 'Buscar',
+        searching: 'Buscando...',
+        noResults: 'No se encontraron resultados',
+        address: 'Dirección',
+        addressPlaceholder: 'Ej.: Calle Mayor 123, Madrid',
+        unassigned: 'Sin asignar',
+        notSpecified: 'No especificado',
+        or: 'o',
+        error: 'Error',
+        unknownError: 'Error desconocido',
       },
+
+      // --- Mensajes/links de ayuda (Wizard header) ---
+      needHelp: '¿Necesitas ayuda?',
+      buildingCreationGuide: 'Guía de creación de activos',
+      contactSupport: 'Contactar soporte',
+      assets: 'Activos',
+      createBuilding: 'Crear edificio',
+
+      // --- Wizard: títulos y desc de pasos ---
+      generalData: 'Datos Generales',
+      generalDataDesc: 'Información básica del edificio',
+      locationPhotos: 'Ubicación y Fotos',
+      locationPhotosDesc: 'Localización y elementos visuales',
+      summary: 'Resumen',
+      summaryDesc: 'Revisar información antes de continuar',
+      draftSaved: 'Borrador guardado',
+      dataSavedTemporarily: 'Los datos se han guardado temporalmente.',
+      locationAndPhotosSaved: 'Ubicación y fotos guardadas.',
+      addressRequired: 'La dirección es obligatoria',
 
       // --- Certificates ---
       certificates: {
@@ -144,9 +227,7 @@ export const resources = {
       },
 
       // --- Maintenance Block ---
-      maintenanceBlock: {
-        maintenancePlan: 'Plan de mantenimiento'
-      },
+      maintenanceBlock: { maintenancePlan: 'Plan de mantenimiento' },
 
       // --- Building (dashboard tiles & details) ---
       building: {
@@ -278,8 +359,7 @@ export const resources = {
       landing: {
         platformForBuildings: 'Plataforma para edificios',
         platformTitle: 'Plataforma Gestión Activos Inmobiliarios',
-        platformDesc:
-          'Consolida información clave del edificio y añade simulaciones financieras con IA para apoyar decisiones de inversión, rehabilitación o venta.',
+        platformDesc: 'Consolida información clave del edificio y añade simulaciones financieras con IA para apoyar decisiones de inversión, rehabilitación o venta.',
         mockupNotice: 'Mockup de producto. Las métricas mostradas son demostrativas.',
         simpleClear: 'Simple y claro',
         simpleClearDesc: 'Interfaz limpia, sin ruido. Enfócate en lo importante.',
@@ -321,7 +401,7 @@ export const resources = {
         up: 'Arriba'
       },
 
-      // --- Digital Book (structured editor) ---
+      // --- Digital Book (editor estructurado) ---
       digitalbook: {
         title: 'Libro Digital',
         pending: 'Pendiente',
@@ -404,16 +484,8 @@ export const resources = {
           commercial: 'Comercial',
           mixed: 'Mixto',
           industrial: 'Industrial',
-          accessibility: {
-            full: '100% conforme',
-            partial: 'Parcial (solo acceso básico)',
-            none: 'No conforme'
-          },
-          safetyCompliance: {
-            full: 'Cumple toda la normativa',
-            pending: 'Pendiente de actualización',
-            none: 'No conforme / en infracción'
-          }
+          accessibility: { full: '100% conforme', partial: 'Parcial (solo acceso básico)', none: 'No conforme' },
+          safetyCompliance: { full: 'Cumple toda la normativa', pending: 'Pendiente de actualización', none: 'No conforme / en infracción' }
         },
         sectionsList: {
           title: 'Secciones del Libro Digital',
@@ -423,12 +495,164 @@ export const resources = {
           backToHub: 'Volver al Hub',
           continueWizard: 'Continuar con Wizard'
         }
-      }
+      },
+
+      // --- Building Wizard (resumen y mapas) ---
+      buildingWizard: {
+        assetSummary: 'Resumen del activo',
+        reviewBeforeCreating: 'Revisa los datos antes de crear el activo.',
+        mainPhotoOf: 'Foto principal de',
+        imageLoadError: 'Error cargando la imagen',
+        noMainPhoto: 'Sin foto principal',
+        generalInfo: 'Información general',
+        locationPhotos: 'Ubicación y fotos',
+        markLocationAndUpload: 'Marca la ubicación del edificio en el mapa y sube las fotos correspondientes.',
+        searchOrClickMap: 'Puedes buscar escribiendo la dirección o haciendo clic en el mapa.',
+        buildingPhotos: 'Fotos del edificio',
+        uploadPhotosDesc: 'Sube fotos del edificio. Marca una como principal.',
+        uploadPhotos: 'Subir fotos',
+        dragPhotosOrClick: 'Arrastra aquí o haz clic ({{remaining}} restantes)',
+        uploadedPhotos: 'Fotos subidas',
+        mainPhoto: 'Principal',
+        setAsMain: 'Marcar como principal',
+        photoAlt: 'Foto {{n}}'
+      },
+      maps: {
+        noLocationFound: 'No se encontró la ubicación.',
+        searchError: 'Error buscando la ubicación.',
+        selectedLocation: 'Ubicación seleccionada',
+        latitude: 'Latitud',
+        longitude: 'Longitud'
+      },
+
+      // --- Buildings (Wizard forms) + Backend messages ---
+      buildings: {
+        createBuilding: 'Crear edificio',
+        newBuilding: 'Nuevo Edificio',
+        completeBasicInfo: 'Completa la información básica para continuar',
+        editDataButton: 'Editar datos',
+        editLocationButton: 'Editar ubicación',
+        createAsset: 'Crear activo',
+        creating: 'Creando...',
+        address: 'Dirección',
+        addressRequired: 'La dirección es obligatoria',
+        locationRequired: 'La ubicación es obligatoria',
+        maxPhotos: 'Máximo {{n}} fotos',
+        buildingCreatedSuccess: 'El activo se ha creado correctamente.',
+        errorCreatingAsset: 'Error al crear el activo',
+        roleConflict: 'Conflicto de roles',
+        missingFormData: 'Faltan datos del formulario. Por favor, completa todos los pasos.',
+        // Campos / placeholders / ayudas
+        fields: {
+          name: 'Nombre',
+          constructionYear: 'Año de construcción',
+          typology: 'Tipología',
+          numFloors: 'Número de plantas',
+          numUnits: 'Número de unidades',
+          assetPrice: 'Precio del activo',
+          surface: 'Superficie (m²)',
+          technicianEmail: 'Email del técnico',
+          cfoEmail: 'Email del CFO',
+          rehabilitationCost: 'Coste de rehabilitación',
+          potentialValue: 'Valor potencial'
+        },
+        placeholders: {
+          name: 'Ej.: Torre Central',
+          price: '250000',
+          surface: '500.50',
+          technicianEmail: 'tecnico@ejemplo.com',
+          cfoEmail: 'cfo@ejemplo.com',
+          rehabilitationCost: '125000',
+          potentialValue: '950000',
+          selectTypology: 'Selecciona una tipología'
+        },
+        helpers: {
+          assetPrice: 'Opcional. Solo informativo para análisis financiero.',
+          surface: 'Opcional. Superficie total del edificio.',
+          technicianEmail: 'Opcional. Asignará el rol de Técnico al usuario.',
+          cfoEmail: 'Opcional. Asignará el rol de CFO al usuario.',
+          rehabilitationCost: 'Estimado de inversión en mejoras.',
+          potentialValue: 'Valor estimado después de rehabilitar.'
+        },
+        validation: {
+          nameRequired: 'El nombre del edificio es obligatorio',
+          constructionYearRequired: 'El año de construcción es obligatorio',
+          validYear: 'Ingresa un año válido (1800-{{currentYear}})',
+          typologyRequired: 'Selecciona una tipología',
+          floorsRequired: 'El número de plantas es obligatorio',
+          validFloors: 'Ingresa un número válido de plantas (1-100)',
+          unitsRequired: 'El número de unidades es obligatorio',
+          validUnits: 'Ingresa un número válido de unidades (1-1000)',
+          validPrice: 'Ingresa un precio válido',
+          validCost: 'Costo inválido',
+          validValue: 'Valor inválido',
+          validSurface: 'Superficie inválida',
+          validEmail: 'Email inválido',
+          draftNameRequired: 'El borrador requiere un nombre'
+        }
+      },
+
+      // --- ALIAS planos (para claves sueltas usadas en componentes) ---
+      buildingName: 'Nombre del edificio',
+      buildingNamePlaceholder: 'Ej.: Torre Central',
+      constructionYear: 'Año de construcción',
+      typology: 'Tipología',
+      selectTypology: 'Selecciona una tipología',
+      residential: 'Residencial',
+      mixed: 'Mixto',
+      commercial: 'Comercial',
+      numFloors: 'Número de plantas',
+      numUnits: 'Número de unidades',
+      assetPrice: 'Precio del activo',
+      assetPriceHelper: 'Opcional. Solo informativo para análisis financiero.',
+      technicianEmail: 'Email del técnico',
+      technicianEmailHelper: 'Opcional. Asignará el rol de Técnico al usuario.',
+      cfoEmail: 'Email del CFO',
+      cfoEmailHelper: 'Opcional. Asignará el rol de CFO al usuario.',
+      financialInfo: 'Información financiera',
+      financialInfoDesc: 'Completa datos para análisis y simulaciones.',
+      rehabilitationCost: 'Coste de rehabilitación',
+      rehabilitationCostHelper: 'Estimado de inversión en mejoras.',
+      potentialValue: 'Valor potencial',
+      potentialValueHelper: 'Valor estimado después de rehabilitar.',
+      surface: 'Superficie (m²)',
+      surfaceHelper: 'Opcional. Superficie total del edificio.',
+      assignedTechnician: 'Técnico asignado',
+      assignedCFO: 'CFO asignado',
+      rehabilitationCostLabel: 'Coste de rehabilitación',
+      potentialValueLabel: 'Valor potencial',
+      surfaceLabel: 'Superficie',
+      editData: 'Editar datos',
     }
   },
 
   en: {
     translation: {
+  // --- Global aliases ---
+  appTitle: 'Digital Asset',
+  profile: 'Profile',
+  // --- Navigation / Menu / Language ---
+      nav: {
+        productName: 'Digital Asset',
+        assets: 'Assets',
+        documentation: 'Documentation',
+        maintenance: 'Maintenance',
+        compliance: 'Compliance',
+        units: 'Units',
+        aiChat: 'AI Chat',
+      },
+      language: {
+        en: 'English',
+        es: 'Spanish',
+      },
+
+      // --- Roles ---
+      roles: {
+        propietario: 'owner',
+        tecnico: 'technician',
+        cfo: 'CFO',
+      },
+
       // --- Auth / Session ---
       email: 'Email',
       emailPlaceholder: 'you@example.com',
@@ -499,11 +723,36 @@ export const resources = {
       perPage: '/page',
       firstPage: 'First page',
       previous: 'Previous',
+      next: 'Next',
       page: 'Page',
       lastPage: 'Last page',
       ready: 'Ready',
       inProgress: 'In progress',
+      status: 'Status',
+      digitalBook: 'Digital Book',
+      energyCertificate: 'Energy Certificate',
+      squareMeters: 'Surface',
+      price: 'Price',
+      welcome: 'Welcome',
+      myAssets: 'My Assets',
+      assignedAssets: 'Assigned Assets',
+      managePortfolio: 'Manage your real estate portfolio and assign technicians',
+      assignedAssetsDesc: 'Assets assigned to you to manage digital books',
+      assignedBuildings: 'Assigned buildings',
+      completedBooks: 'Completed books',
+      pendingBooks: 'Pending',
+      mostCommonTypology: 'Most common typology',
+      averageUnits: 'Average units',
+      averageAge: 'Average age',
+      years: 'years',
+      greenFinancingEligible: '% portfolio eligible for green financing',
+      completedDigitalBooksPercent: '% completed digital books',
+      userDataLoadWarning: 'We could not load user data, but you can continue browsing.',
+      noAssetsYet: 'You have no assets yet',
+      createFirstAsset: 'Start by creating your first asset to manage your portfolio.',
+      contactAdmin: 'Contact your administrator to assign you assets.',
 
+      // Quick actions
       closeChatTitle: 'Close AI chat',
       openChatTitle: 'Open AI chat',
       notifications: 'Notifications',
@@ -527,8 +776,43 @@ export const resources = {
         confirmAndSave: 'Confirm and save',
         deleteCertificate: 'Delete certificate',
         actionCannotBeUndone: 'This action cannot be undone',
-        confirmDeleteCertificate: 'Are you sure you want to delete the energy certificate?'
+        confirmDeleteCertificate: 'Are you sure you want to delete the energy certificate?',
+        previous: 'Previous',
+        next: 'Next',
+        saveDraft: 'Save draft',
+        saveAndContinue: 'Save and continue',
+        validating: 'Validating...',
+        remove: 'Remove',
+        search: 'Search',
+        searching: 'Searching...',
+        noResults: 'No results found',
+        address: 'Address',
+        addressPlaceholder: 'e.g., 123 Main St, Madrid',
+        unassigned: 'Unassigned',
+        notSpecified: 'Not specified',
+        or: 'or',
+        error: 'Error',
+        unknownError: 'Unknown error',
       },
+
+      // --- Help/links header ---
+      needHelp: 'Need help?',
+      buildingCreationGuide: 'Asset creation guide',
+      contactSupport: 'Contact support',
+      assets: 'Assets',
+      createBuilding: 'Create building',
+
+      // --- Wizard step titles/descriptions ---
+      generalData: 'General Data',
+      generalDataDesc: 'Basic building information',
+      locationPhotos: 'Location and Photos',
+      locationPhotosDesc: 'Location and visual assets',
+      summary: 'Summary',
+      summaryDesc: 'Review information before continuing',
+      draftSaved: 'Draft saved',
+      dataSavedTemporarily: 'Data saved temporarily.',
+      locationAndPhotosSaved: 'Location and photos saved.',
+      addressRequired: 'Address is required',
 
       // --- Certificates ---
       certificates: {
@@ -559,9 +843,7 @@ export const resources = {
       },
 
       // --- Maintenance Block ---
-      maintenanceBlock: {
-        maintenancePlan: 'Maintenance Plan'
-      },
+      maintenanceBlock: { maintenancePlan: 'Maintenance Plan' },
 
       // --- Building (dashboard tiles & details) ---
       building: {
@@ -693,8 +975,7 @@ export const resources = {
       landing: {
         platformForBuildings: 'Platform for buildings',
         platformTitle: 'Real Estate Asset Management Platform',
-        platformDesc:
-          'Consolidates key building information and adds AI financial simulations to support investment, renovation or sale decisions.',
+        platformDesc: 'Consolidates key building information and adds AI financial simulations to support investment, renovation or sale decisions.',
         mockupNotice: 'Product mockup. The metrics shown are demonstrative.',
         simpleClear: 'Simple and clear',
         simpleClearDesc: 'Clean interface, no noise. Focus on what matters.',
@@ -736,7 +1017,7 @@ export const resources = {
         up: 'Up'
       },
 
-      // --- Digital Book (structured editor) ---
+      // --- Digital Book ---
       digitalbook: {
         title: 'Digital Book',
         pending: 'Pending',
@@ -819,16 +1100,8 @@ export const resources = {
           commercial: 'Commercial',
           mixed: 'Mixed',
           industrial: 'Industrial',
-          accessibility: {
-            full: '100% compliant',
-            partial: 'Partial (basic access only)',
-            none: 'Not compliant'
-          },
-          safetyCompliance: {
-            full: 'Compliant with all regulations',
-            pending: 'Pending update',
-            none: 'Not compliant / in violation'
-          }
+          accessibility: { full: '100% compliant', partial: 'Partial (basic access only)', none: 'Not compliant' },
+          safetyCompliance: { full: 'Compliant with all regulations', pending: 'Pending update', none: 'Not compliant / in violation' }
         },
         sectionsList: {
           title: 'Digital Book Sections',
@@ -838,7 +1111,133 @@ export const resources = {
           backToHub: 'Back to Hub',
           continueWizard: 'Continue with Wizard'
         }
-      }
+      },
+
+      // --- Building Wizard (summary + maps) ---
+      buildingWizard: {
+        assetSummary: 'Asset summary',
+        reviewBeforeCreating: 'Review the data before creating the asset.',
+        mainPhotoOf: 'Main photo of',
+        imageLoadError: 'Error loading image',
+        noMainPhoto: 'No main photo',
+        generalInfo: 'General information',
+        locationPhotos: 'Location and photos',
+        markLocationAndUpload: 'Mark the building location on the map and upload the photos.',
+        searchOrClickMap: 'You can search by typing the address or by clicking on the map.',
+        buildingPhotos: 'Building photos',
+        uploadPhotosDesc: 'Upload building photos. Mark one as main.',
+        uploadPhotos: 'Upload photos',
+        dragPhotosOrClick: 'Drag here or click ({{remaining}} left)',
+        uploadedPhotos: 'Uploaded photos',
+        mainPhoto: 'Main',
+        setAsMain: 'Set as main',
+        photoAlt: 'Photo {{n}}'
+      },
+      maps: {
+        noLocationFound: 'Location not found.',
+        searchError: 'Error searching location.',
+        selectedLocation: 'Selected location',
+        latitude: 'Latitude',
+        longitude: 'Longitude'
+      },
+
+      // --- Buildings (Wizard forms) + Backend messages ---
+      buildings: {
+        createBuilding: 'Create building',
+        newBuilding: 'New Building',
+        completeBasicInfo: 'Complete the basic information to continue',
+        editDataButton: 'Edit data',
+        editLocationButton: 'Edit location',
+        createAsset: 'Create asset',
+        creating: 'Creating...',
+        address: 'Address',
+        addressRequired: 'Address is required',
+        locationRequired: 'Location is required',
+        maxPhotos: 'Maximum {{n}} photos',
+        buildingCreatedSuccess: 'The asset was created successfully.',
+        errorCreatingAsset: 'Error creating asset',
+        roleConflict: 'Role conflict',
+        missingFormData: 'Form data is missing. Please complete all steps.',
+        fields: {
+          name: 'Name',
+          constructionYear: 'Year of construction',
+          typology: 'Typology',
+          numFloors: 'Number of floors',
+          numUnits: 'Number of units',
+          assetPrice: 'Asset price',
+          surface: 'Surface (m²)',
+          technicianEmail: 'Technician email',
+          cfoEmail: 'CFO email',
+          rehabilitationCost: 'Rehabilitation cost',
+          potentialValue: 'Potential value'
+        },
+        placeholders: {
+          name: 'e.g., Central Tower',
+          price: '250000',
+          surface: '500.50',
+          technicianEmail: 'technician@example.com',
+          cfoEmail: 'cfo@example.com',
+          rehabilitationCost: '125000',
+          potentialValue: '950000',
+          selectTypology: 'Select a typology'
+        },
+        helpers: {
+          assetPrice: 'Optional. Informational for financial analysis only.',
+          surface: 'Optional. Total building surface.',
+          technicianEmail: 'Optional. Will assign the Technician role.',
+          cfoEmail: 'Optional. Will assign the CFO role.',
+          rehabilitationCost: 'Estimated investment in improvements.',
+          potentialValue: 'Estimated value after rehabilitation.'
+        },
+        validation: {
+          nameRequired: 'Building name is required',
+          constructionYearRequired: 'Construction year is required',
+          validYear: 'Enter a valid year (1800-{{currentYear}})',
+          typologyRequired: 'Select a typology',
+          floorsRequired: 'Number of floors is required',
+          validFloors: 'Enter a valid number of floors (1-100)',
+          unitsRequired: 'Number of units is required',
+          validUnits: 'Enter a valid number of units (1-1000)',
+          validPrice: 'Enter a valid price',
+          validCost: 'Invalid cost',
+          validValue: 'Invalid value',
+          validSurface: 'Invalid surface',
+          validEmail: 'Invalid email',
+          draftNameRequired: 'Draft requires a name'
+        }
+      },
+
+      // --- FLAT aliases (single keys used directly in components) ---
+      buildingName: 'Building name',
+      buildingNamePlaceholder: 'e.g., Central Tower',
+      constructionYear: 'Year of construction',
+      typology: 'Typology',
+      selectTypology: 'Select a typology',
+      residential: 'Residential',
+      mixed: 'Mixed',
+      commercial: 'Commercial',
+      numFloors: 'Number of floors',
+      numUnits: 'Number of units',
+      assetPrice: 'Asset price',
+      assetPriceHelper: 'Optional. Informational for financial analysis only.',
+      technicianEmail: 'Technician email',
+      technicianEmailHelper: 'Optional. Will assign the Technician role.',
+      cfoEmail: 'CFO email',
+      cfoEmailHelper: 'Optional. Will assign the CFO role.',
+      financialInfo: 'Financial information',
+      financialInfoDesc: 'Complete data for analysis and simulations.',
+      rehabilitationCost: 'Rehabilitation cost',
+      rehabilitationCostHelper: 'Estimated investment in improvements.',
+      potentialValue: 'Potential value',
+      potentialValueHelper: 'Estimated value after rehabilitation.',
+      surface: 'Surface (m²)',
+      surfaceHelper: 'Optional. Total building surface.',
+      assignedTechnician: 'Assigned technician',
+      assignedCFO: 'Assigned CFO',
+      rehabilitationCostLabel: 'Rehabilitation cost',
+      potentialValueLabel: 'Potential value',
+      surfaceLabel: 'Surface',
+      editData: 'Edit data',
     }
   }
 } as const;
@@ -857,9 +1256,9 @@ i18n
     returnNull: false,
     detection: {
       order: ['localStorage', 'querystring', 'navigator', 'htmlTag'],
-      caches: ['localStorage']
+      caches: ['localStorage'],
     },
-    react: { useSuspense: false }
+    react: { useSuspense: false },
   });
 
 export default i18n;

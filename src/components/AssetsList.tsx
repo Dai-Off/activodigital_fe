@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   BuildingsApiService,
   formatBuildingValue,
-  getBuildingStatusLabel,
+  // getBuildingStatusLabel,
   getBuildingTypologyLabel,
 } from '../services/buildingsApi';
 import type { Building, DashboardStats } from '../services/buildingsApi';
@@ -32,7 +32,7 @@ import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 import {
   calculateESGScore,
   getESGScore,
-  getESGLabelColor,
+  // getESGLabelColor,
   getESGColorFromScore,
   type ESGResponse,
 } from '../services/esg';
@@ -239,7 +239,8 @@ function PaginationBar({
 /* ------------------------- Componentes de Indicadores ------------------------- */
 
 // Componente para el indicador CEE (Certificado de Eficiencia Energética)
-function CEERatingIndicator({
+/*
+function _CEERatingIndicator({
   building,
   certificates,
 }: {
@@ -262,9 +263,11 @@ function CEERatingIndicator({
     </div>
   );
 }
+*/
 
 // Componente para el indicador ESG
-function ESGScoreIndicator({
+/*
+function _ESGScoreIndicator({
   building,
   esgData,
 }: {
@@ -296,9 +299,11 @@ function ESGScoreIndicator({
     </div>
   );
 }
+*/
 
 // Componente para el indicador de metros cuadrados
-function SquareMetersIndicator({ building }: { building: Building }) {
+/*
+function _SquareMetersIndicator({ building }: { building: Building }) {
   if (building.squareMeters && building.squareMeters > 0) {
     const formattedArea = building.squareMeters.toLocaleString('es-ES', {
       minimumFractionDigits: 0,
@@ -308,9 +313,11 @@ function SquareMetersIndicator({ building }: { building: Building }) {
   }
   return <span className="text-sm text-gray-400">-</span>;
 }
+*/
 
 // Componente para mostrar el estado del edificio (incluye “Completado” si el libro está completo)
-function BuildingStatusIndicator({
+/*
+function _BuildingStatusIndicator({
   building,
   digitalBooks,
 }: {
@@ -1098,8 +1105,8 @@ export default function AssetsList() {
                 const ceeRating = ceeCerts.length > 0 ? getLatestRating(ceeCerts) : '-';
                 const esg = esgScores.get(building.id);
                 const esgScore = esg?.status === 'complete' && esg.data ? esg.data.total : null;
-                const mainImage = building.images?.find(img => img.isMain) || building.images?.[0];
-                const imageUrl = mainImage?.url || 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80';
+                /* const mainImage = building.images?.find(img => img.isMain) || building.images?.[0]; */
+                /* const _imageUrl = mainImage?.url || 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80'; */
                 // Estado badge color
                 const getEstadoBadgeClassName = (estado: string) => {
                   if (estado === t('operational', { defaultValue: 'Operativo' })) {
