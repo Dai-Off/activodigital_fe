@@ -81,7 +81,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     } else {
       const units = parseInt(formData.units);
       if (isNaN(units) || units < 1 || units > 1000) {
-        newErrors.units = t('buildings.validUnits');
+    newErrors.units = t('validUnits');
       }
     }
 
@@ -89,7 +89,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.price && formData.price.trim()) {
       const price = parseFloat(formData.price);
       if (isNaN(price) || price < 0) {
-        newErrors.price = t('buildings.validPrice');
+    newErrors.price = t('validPrice');
       }
     }
 
@@ -97,7 +97,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.technicianEmail && formData.technicianEmail.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.technicianEmail)) {
-        newErrors.technicianEmail = t('buildings.validEmail');
+    newErrors.technicianEmail = t('validEmail');
       }
     }
 
@@ -105,7 +105,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.cfoEmail && formData.cfoEmail.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.cfoEmail)) {
-        newErrors.cfoEmail = t('buildings.validEmail');
+    newErrors.cfoEmail = t('validEmail');
       }
     }
 
@@ -113,7 +113,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.rehabilitationCost && formData.rehabilitationCost.trim()) {
       const cost = parseFloat(formData.rehabilitationCost);
       if (isNaN(cost) || cost < 0) {
-        newErrors.rehabilitationCost = t('buildings.validCost');
+    newErrors.rehabilitationCost = t('validCost');
       }
     }
 
@@ -121,7 +121,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.potentialValue && formData.potentialValue.trim()) {
       const value = parseFloat(formData.potentialValue);
       if (isNaN(value) || value < 0) {
-        newErrors.potentialValue = t('buildings.validValue');
+    newErrors.potentialValue = t('validValue');
       }
     }
 
@@ -129,7 +129,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.squareMeters && formData.squareMeters.trim()) {
       const meters = parseFloat(formData.squareMeters);
       if (isNaN(meters) || meters < 0) {
-        newErrors.squareMeters = t('buildings.validSurface');
+    newErrors.squareMeters = t('validSurface');
       }
     }
 
@@ -206,7 +206,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       const { address, ...rest } = formData;
       onSaveDraft({ ...rest } as BuildingStep1Data);
     } else {
-      setErrors({ name: t('buildings.draftNameRequired') });
+  setErrors({ name: t('draftNameRequired') });
     }
   };
 
@@ -215,10 +215,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildings.createBuilding')}
+          {t('createBuilding')}
         </h1>
         <p className="text-gray-600">
-          {t('buildings.completeBasicInfo')}
+          {t('completeBasicInfo')}
         </p>
       </div>
 
@@ -227,14 +227,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Nombre del edificio */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.buildingName')} *
+            {t('buildingName')} *
           </label>
           <input
             type="text"
             id="name"
             value={formData.name}
             onChange={(e) => handleInputChange('name', e.target.value)}
-            placeholder={t('buildings.buildingNamePlaceholder')}
+            placeholder={t('buildingNamePlaceholder')}
             className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.name ? 'border-red-300' : 'border-gray-300'
             }`}
@@ -249,7 +249,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Año de construcción */}
         <div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.constructionYear')} *
+            {t('constructionYear')} *
           </label>
           <input
             type="number"
@@ -271,7 +271,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Tipología */}
         <div>
           <label htmlFor="typology" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.typology')} *
+            {t('typology')} *
           </label>
           <select
             id="typology"
@@ -281,10 +281,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               errors.typology ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            <option value="">{t('buildings.selectTypology')}</option>
-            <option value="residential">{t('buildings.residential')}</option>
-            <option value="mixed">{t('buildings.mixed')}</option>
-            <option value="commercial">{t('buildings.commercial')}</option>
+            <option value="">{t('selectTypology')}</option>
+            <option value="residential">{t('residential')}</option>
+            <option value="mixed">{t('mixed')}</option>
+            <option value="commercial">{t('commercial')}</option>
           </select>
           {errors.typology && (
             <p className="mt-1 text-sm text-red-600">{errors.typology}</p>
@@ -296,7 +296,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Número de plantas */}
           <div>
             <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.numFloors')} *
+              {t('numFloors')} *
             </label>
             <input
               type="number"
@@ -318,7 +318,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Número de unidades */}
           <div>
             <label htmlFor="units" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.numUnits')} *
+              {t('numUnits')} *
             </label>
             <input
               type="number"
@@ -343,7 +343,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Precio */}
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.assetPrice')}
+              {t('assetPrice')}
             </label>
             <input
               type="number"
@@ -360,7 +360,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {errors.price && (
               <p className="mt-1 text-sm text-red-600">{errors.price}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">{t('buildings.assetPriceHelper')}</p>
+            <p className="mt-1 text-xs text-gray-500">{t('assetPriceHelper')}</p>
           </div>
 
           {/* Metros cuadrados */}
@@ -389,7 +389,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {/* Email del técnico */}
           <div>
             <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.technicianEmail')}
+              {t('technicianEmail')}
             </label>
             <input
               type="email"
@@ -407,13 +407,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {validationErrors.technician && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.technician}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">{t('buildings.technicianEmailHelper')}</p>
+            <p className="mt-1 text-xs text-gray-500">{t('technicianEmailHelper')}</p>
           </div>
 
           {/* Email del CFO */}
           <div>
             <label htmlFor="cfoEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.cfoEmail')}
+              {t('cfoEmail')}
             </label>
             <input
               type="email"
@@ -431,24 +431,24 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {validationErrors.cfo && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.cfo}</p>
             )}
-            <p className="mt-1 text-xs text-gray-500">{t('buildings.cfoEmailHelper')}</p>
+            <p className="mt-1 text-xs text-gray-500">{t('cfoEmailHelper')}</p>
           </div>
         </div>
 
         {/* Sección de datos financieros */}
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t('buildings.financialInfo')}
+            {t('financialInfo')}
           </h3>
           <p className="text-sm text-gray-600 mb-6">
-            {t('buildings.financialInfoDesc')}
+            {t('financialInfoDesc')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Coste de rehabilitación */}
             <div>
               <label htmlFor="rehabilitationCost" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildings.rehabilitationCost')}
+                {t('rehabilitationCost')}
               </label>
               <input
                 type="number"
@@ -465,13 +465,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.rehabilitationCost && (
                 <p className="mt-1 text-sm text-red-600">{errors.rehabilitationCost}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">{t('buildings.rehabilitationCostHelper')}</p>
+              <p className="mt-1 text-xs text-gray-500">{t('rehabilitationCostHelper')}</p>
             </div>
 
             {/* Valor potencial */}
             <div>
               <label htmlFor="potentialValue" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildings.potentialValue')}
+                {t('potentialValue')}
               </label>
               <input
                 type="number"
@@ -488,13 +488,13 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.potentialValue && (
                 <p className="mt-1 text-sm text-red-600">{errors.potentialValue}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">{t('buildings.potentialValueHelper')}</p>
+              <p className="mt-1 text-xs text-gray-500">{t('potentialValueHelper')}</p>
             </div>
 
             {/* Metros cuadrados */}
             <div>
               <label htmlFor="squareMeters" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildings.surface')}
+                {t('surface')}
               </label>
               <input
                 type="number"
@@ -511,7 +511,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               {errors.squareMeters && (
                 <p className="mt-1 text-sm text-red-600">{errors.squareMeters}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">{t('buildings.surfaceHelper')}</p>
+              <p className="mt-1 text-xs text-gray-500">{t('surfaceHelper')}</p>
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             onClick={handleSaveDraft}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            {t('buildings.saveDraft')}
+            {t('saveDraft')}
           </button>
           <button
             type="button"
@@ -534,7 +534,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             {isValidating && (
               <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             )}
-            {isValidating ? t('buildings.validating') : t('buildings.next')}
+            {isValidating ? t('validating') : t('next')}
           </button>
         </div>
       </form>

@@ -26,8 +26,10 @@ import SectionsList from './components/digitalbook/SectionsList'
 import SectionEditor from './components/digitalbook/SectionEditor'
 
 // Página de lista de secciones (opcional)
+import { useTranslation } from 'react-i18next';
 const SectionsListPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
@@ -35,7 +37,7 @@ const SectionsListPage = () => {
           <nav className="mb-4">
             <ol className="flex items-centered space-x-2 text-sm text-gray-500">
               <li>
-                <button onClick={() => navigate('/activos')} className="hover:text-blue-600">Activos</button>
+                <button onClick={() => navigate('/activos')} className="hover:text-blue-600">{t('assets', 'Activos')}</button>
               </li>
               <li>
                 <svg className="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20">
@@ -44,7 +46,7 @@ const SectionsListPage = () => {
               </li>
               <li>
                 <button onClick={() => navigate('/libro-digital/hub/building-1')} className="hover:text-blue-600">
-                  Libro Digital
+                  {t('digitalBook', 'Libro Digital')}
                 </button>
               </li>
               <li>
@@ -52,7 +54,7 @@ const SectionsListPage = () => {
                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>
               </li>
-              <li className="text-gray-900 font-medium">Secciones</li>
+              <li className="text-gray-900 font-medium">{t('sections', 'Secciones')}</li>
             </ol>
           </nav>
         </div>
@@ -67,16 +69,16 @@ function App() {
     <ToastProvider>
       <AuthProvider>
         <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/auth/register" element={<RegisterWithInvitation />} />
-            <Route path="/auth/invitation/:token" element={<InvitationHandler />} />
-            <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
-            <Route path="/" element={<Landing />} />
+          <Layout>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/auth/register" element={<RegisterWithInvitation />} />
+              <Route path="/auth/invitation/:token" element={<InvitationHandler />} />
+              <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
+              <Route path="/" element={<Landing />} />
 
-            {/* Rutas protegidas (con navbar y contenedor) */}
-            <Route element={<Layout />}>
+              {/* Rutas protegidas (con navbar y contenedor) */}
               <Route
                 path="/activos"
                 element={
@@ -159,22 +161,22 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Route>
 
-            {/* Rutas fullscreen protegidas */}
-            <Route
-              path="/edificios/crear"
-              element={
-                <ProtectedRoute requiredPermission="canCreateBuildings">
-                  <CreateBuildingWizard />
-                </ProtectedRoute>
-              }
-            />
+              {/* Rutas fullscreen protegidas */}
+              <Route
+                path="/edificios/crear"
+                element={
+                  <ProtectedRoute requiredPermission="canCreateBuildings">
+                    <CreateBuildingWizard />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Fallback */}
-            <Route path="*" element={<Landing />} />
-          </Routes>
-          <ToastContainer />
+              {/* Fallback */}
+              <Route path="*" element={<Landing />} />
+            </Routes>
+            <ToastContainer />
+          </Layout>
         </Router>
       </AuthProvider>
     </ToastProvider>

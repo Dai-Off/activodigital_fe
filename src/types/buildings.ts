@@ -1,23 +1,31 @@
 export interface Building {
+  valuePerM2?: number;
+  valuePerUnit?: number;
+  annualVariation?: number;
+  lastValuationDate?: string;
   id: string;
   name: string;
   address: string;
-  constructionYear: number;
+  cadastralReference?: string;
+  constructionYear?: number;
   typology: 'residential' | 'mixed' | 'commercial';
-  floors: number;
-  units: number;
-  latitude?: number;
-  longitude?: number;
-  status: 'draft' | 'created' | 'ready_for_book';
+  floors?: number;
+  units?: number;
+  numFloors?: number;
+  numUnits?: number;
+  lat?: number;
+  lng?: number;
+  images?: any[];
+  status: 'draft' | 'ready_book' | 'with_book';
   price?: number;
   technicianEmail?: string;
   cfoEmail?: string;
-  // Campos financieros
-  rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
-  potentialValue?: number;     // Valor potencial (por defecto 0)
-  squareMeters?: number;       // Superficie en metros cuadrados
-  createdAt: Date;
-  updatedAt: Date;
+  ownerId?: string;
+  rehabilitationCost?: number;
+  potentialValue?: number;
+  squareMeters?: number;
+  createdAt: string;
+  updatedAt: string;
   mainPhotoId?: string;
 }
 

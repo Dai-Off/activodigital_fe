@@ -21,57 +21,57 @@ interface SectionsListProps {
 const DEFAULT_SECTIONS: Section[] = [
   {
     id: 'general_data',
-    title: 'digitalbook.sections.general_data.title',
-    description: 'digitalbook.sections.general_data.description',
+  title: 'sections.general_data.title',
+  description: 'sections.general_data.description',
     icon: '🏢',
     status: 'pending'
   },
   {
     id: 'construction_features',
-    title: 'digitalbook.sections.construction_features.title',
-    description: 'digitalbook.sections.construction_features.description',
+  title: 'sections.construction_features.title',
+  description: 'sections.construction_features.description',
     icon: '🔧',
     status: 'pending'
   },
   {
     id: 'certificates',
-    title: 'digitalbook.sections.certificates.title',
-    description: 'digitalbook.sections.certificates.description',
+  title: 'sections.certificates.title',
+  description: 'sections.certificates.description',
     icon: '📜',
     status: 'pending'
   },
   {
     id: 'maintenance',
-    title: 'digitalbook.sections.maintenance.title',
-    description: 'digitalbook.sections.maintenance.description',
+  title: 'sections.maintenance.title',
+  description: 'sections.maintenance.description',
     icon: '🔨',
     status: 'pending'
   },
   {
     id: 'installations',
-    title: 'digitalbook.sections.installations.title',
-    description: 'digitalbook.sections.installations.description',
+  title: 'sections.installations.title',
+  description: 'sections.installations.description',
     icon: '⚡',
     status: 'pending'
   },
   {
     id: 'reforms',
-    title: 'digitalbook.sections.reforms.title',
-    description: 'digitalbook.sections.reforms.description',
+  title: 'sections.reforms.title',
+  description: 'sections.reforms.description',
     icon: '🏗️',
     status: 'pending'
   },
   {
     id: 'sustainability',
-    title: 'digitalbook.sections.sustainability.title',
-    description: 'digitalbook.sections.sustainability.description',
+  title: 'sections.sustainability.title',
+  description: 'sections.sustainability.description',
     icon: '🌱',
     status: 'pending'
   },
   {
     id: 'attachments',
-    title: 'digitalbook.sections.attachments.title',
-    description: 'digitalbook.sections.attachments.description',
+  title: 'sections.attachments.title',
+  description: 'sections.attachments.description',
     icon: '📎',
     status: 'pending'
   }
@@ -118,21 +118,21 @@ const SectionsList: React.FC<SectionsListProps> = ({
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm text-green-600 font-medium">{t('digitalbook.status.completed', 'Completada')}</span>
+            <span className="text-sm text-green-600 font-medium">{t('status.completed', 'Completada')}</span>
           </div>
         );
       case 'in-progress':
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <span className="text-sm text-yellow-600 font-medium">{t('digitalbook.status.inProgress', 'En progreso')}</span>
+            <span className="text-sm text-yellow-600 font-medium">{t('status.inProgress', 'En progreso')}</span>
           </div>
         );
       default:
         return (
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-            <span className="text-sm text-gray-500 font-medium">{t('digitalbook.status.pending', 'Pendiente')}</span>
+            <span className="text-sm text-gray-500 font-medium">{t('status.pending', 'Pendiente')}</span>
           </div>
         );
     }
@@ -143,10 +143,10 @@ const SectionsList: React.FC<SectionsListProps> = ({
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {t('digitalbook.sectionsList.title', 'Secciones del Libro Digital')}
+          {t('sectionsList.title', 'Secciones del Libro Digital')}
         </h2>
         <p className="text-gray-600">
-          {t('digitalbook.sectionsList.instructions', 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.')}
+          {t('sectionsList.instructions', 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.')}
         </p>
       </div>
 
@@ -192,7 +192,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
                   onClick={(e) => handleMarkComplete(e, section.id)}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                 >
-                  {t('digitalbook.sectionsList.markComplete', 'Marcar completa')}
+                  {t('sectionsList.markComplete', 'Marcar completa')}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -209,7 +209,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
           
           {/* Progreso */}
           <div className="text-sm text-gray-600">
-            {t('digitalbook.sectionsList.progress', {
+            {t('sectionsList.progress', {
               completed: sections.filter(s => s.status === 'completed').length,
               total: sections.length,
               defaultValue: '{{completed}} de {{total}} secciones completadas'
@@ -222,13 +222,13 @@ const SectionsList: React.FC<SectionsListProps> = ({
               onClick={() => navigate(`/libro-digital/hub/${buildingId}`)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {t('digitalbook.sectionsList.backToHub', 'Volver al Hub')}
+              {t('sectionsList.backToHub', 'Volver al Hub')}
             </button>
             <button
               onClick={() => navigate('/libro-digital/manual')}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {t('digitalbook.sectionsList.continueWizard', 'Continuar con Wizard')}
+              {t('sectionsList.continueWizard', 'Continuar con Wizard')}
             </button>
           </div>
         </div>

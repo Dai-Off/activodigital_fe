@@ -97,10 +97,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildings.assetSummary')}
+          {t('assetSummary')}
         </h1>
         <p className="text-gray-600">
-          {t('buildings.reviewBeforeCreating')}
+          {t('reviewBeforeCreating')}
         </p>
       </div>
 
@@ -112,7 +112,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           <div className="relative h-72 bg-gray-200">
             <img
               src={mainPhotoUrl}
-              alt={`${t('buildings.mainPhotoOf')} ${buildingData.name}`}
+              alt={`${t('mainPhotoOf')} ${buildingData.name}`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 console.error('Error cargando imagen:', e);
@@ -154,7 +154,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-                <p className="text-gray-500 text-sm">{t('buildings.noMainPhoto')}</p>
+                <p className="text-gray-500 text-sm">{t('noMainPhoto')}</p>
             </div>
             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 via-black/20 to-transparent">
               <div className="p-6">
@@ -177,13 +177,13 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {t('buildings.generalInfo')}
+                  {t('generalInfo')}
                 </h3>
                 <button
                   onClick={onEditData}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  {t('buildings.editData')}
+                  {t('editData')}
                 </button>
               </div>
 
@@ -194,63 +194,63 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.constructionYear')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('constructionYear')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.constructionYear}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.typology')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('typology')}:</span>
                   <span className="text-sm text-gray-900">{getTypologyLabel(buildingData.typology)}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.floors')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('floors')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.floors}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.units')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('units')}:</span>
                   <span className="text-sm text-gray-900">{buildingData.units}</span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.price')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('price')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.price ? `€${parseInt(buildingData.price).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
+                    {buildingData.price ? `€${parseInt(buildingData.price).toLocaleString('es-ES')}` : t('notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.assignedTechnician')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('assignedTechnician')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.technicianEmail || t('buildings.unassigned')}
+                    {buildingData.technicianEmail || t('unassigned')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.assignedCFO')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('assignedCFO')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.cfoEmail || t('buildings.unassigned')}
+                    {buildingData.cfoEmail || t('unassigned')}
                   </span>
                 </div>
                 
                 {/* Campos financieros */}
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.rehabilitationCostLabel')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('rehabilitationCostLabel')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.rehabilitationCost ? `€${parseInt(buildingData.rehabilitationCost).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
+                    {buildingData.rehabilitationCost ? `€${parseInt(buildingData.rehabilitationCost).toLocaleString('es-ES')}` : t('notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.potentialValueLabel')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('potentialValueLabel')}:</span>
                   <span className="text-sm text-gray-900">
-                    {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : t('buildings.notSpecified')}
+                    {buildingData.potentialValue ? `€${parseInt(buildingData.potentialValue).toLocaleString('es-ES')}` : t('notSpecified')}
                   </span>
                 </div>
                 
                 <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-600">{t('buildings.surfaceLabel')}:</span>
+                  <span className="text-sm font-medium text-gray-600">{t('surfaceLabel')}:</span>
                   <span className="text-sm text-gray-900">
                     {buildingData.squareMeters ? `${parseFloat(buildingData.squareMeters).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} m²` : t('buildings.notSpecified')}
                   </span>

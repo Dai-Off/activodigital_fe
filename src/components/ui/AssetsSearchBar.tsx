@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type SortField = 'name' | 'value' | 'status' | 'energyClass' | 'esgScore' | 'squareMeters';
 export type SortOrder = 'asc' | 'desc';
@@ -17,25 +18,32 @@ interface AssetsSearchBarProps {
   isLoading?: boolean;
 }
 
-const STATUS_OPTIONS = [
-  { value: 'draft', label: 'Pendiente' },
-  { value: 'ready_book', label: 'Listo' },
-  { value: 'with_book', label: 'En curso' },
-  { value: 'completed', label: 'Completado' },
-];
+// STATUS_OPTIONS will be created inside component for i18n
+// moved inside component function
 
 const ENERGY_CLASS_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
-const SORT_OPTIONS: { value: SortField; label: string }[] = [
-  { value: 'name', label: 'Nombre' },
-  { value: 'value', label: 'Valor' },
-  { value: 'status', label: 'Estado' },
-  { value: 'energyClass', label: 'Clase energética' },
-  { value: 'esgScore', label: 'ESG Score' },
-  { value: 'squareMeters', label: 'Superficie' },
-];
+// SORT_OPTIONS will be created inside component for i18n
+// moved inside component function
 
 export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoading }: AssetsSearchBarProps) {
+  const { t } = useTranslation();
+
+  const STATUS_OPTIONS = [
+    { value: 'draft', label: t('pending', 'Pendiente') },
+    { value: 'ready_book', label: t('ready', 'Listo') },
+    { value: 'with_book', label: t('inProgress', 'En curso') },
+    { value: 'completed', label: t('completed', 'Completado') },
+  ];
+
+  const SORT_OPTIONS: { value: SortField; label: string }[] = [
+    { value: 'name', label: t('name', 'Nombre') },
+    { value: 'value', label: t('value', 'Valor') },
+    { value: 'status', label: t('status', 'Estado') },
+    { value: 'energyClass', label: t('energyClass', 'Clase energética') },
+    { value: 'esgScore', label: t('esgScore', 'ESG Score') },
+    { value: 'squareMeters', label: t('squareMeters', 'Superficie') },
+  ];
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -128,7 +136,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             type="text"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Buscar activos..."
+            placeholder={t('searchAssets', 'Buscar activos...')}
             className="block w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           />
@@ -136,7 +144,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             <button
               onClick={() => handleSearchChange('')}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              aria-label="Limpiar búsqueda"
+              aria-label={t('clearSearch', 'Limpiar búsqueda')}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -171,8 +179,8 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             onClick={handleSortOrderToggle}
             className="px-3 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100/50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
-            aria-label={`Ordenar ${sortOrder === 'asc' ? 'descendente' : 'ascendente'}`}
-            title={sortOrder === 'asc' ? 'Ascendente (A-Z, menor-mayor)' : 'Descendente (Z-A, mayor-menor)'}
+            aria-label={t('sortOrder', 'Ordenar {{order}}', { order: sortOrder === 'asc' ? t('descending', 'descendente') : t('ascending', 'ascendente') })}
+            title={sortOrder === 'asc' ? t('ascendingSort', 'Ascendente (A-Z, menor-mayor)') : t('descendingSort', 'Descendente (Z-A, mayor-menor)')}
           >
             <svg
               className={`w-3.5 h-3.5 transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
@@ -194,7 +202,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                 : 'bg-gray-50/50 border border-gray-200/80 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={isLoading}
-            aria-label="Filtros adicionales"
+            aria-label={t('additionalFilters', 'Filtros adicionales')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path
@@ -203,7 +211,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                 d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
               />
             </svg>
-            <span className="hidden sm:inline">Filtros</span>
+            <span className="hidden sm:inline">{t('filters', 'Filtros')}</span>
             {activeFiltersCount > 0 && (
               <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
                 {activeFiltersCount}
@@ -226,7 +234,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Estado del Libro
+                {t('bookStatus', 'Estado del Libro')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {STATUS_OPTIONS.map((status) => (
@@ -254,7 +262,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Calificación Energética
+                {t('energyRating', 'Calificación Energética')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {ENERGY_CLASS_OPTIONS.map((energyClass) => {
@@ -297,7 +305,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
           {(activeFiltersCount > 0 || searchTerm || sortField !== 'name' || sortOrder !== 'asc') && (
             <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-between items-center">
               <span className="text-xs text-gray-500">
-                {activeFiltersCount > 0 && `${activeFiltersCount} ${activeFiltersCount === 1 ? 'filtro activo' : 'filtros activos'}`}
+                {activeFiltersCount > 0 && t('activeFilters', '{{count}} filtro{{s}} activo{{s}}', { count: activeFiltersCount, s: activeFiltersCount === 1 ? '' : 's' })}
               </span>
               <button
                 onClick={handleClearFilters}
@@ -306,7 +314,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                 <svg className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Limpiar filtros
+                {t('clearFilters', 'Limpiar filtros')}
               </button>
             </div>
           )}
@@ -320,16 +328,16 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" />
             <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
             <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-            <span>Cargando</span>
+            <span>{t('loading', 'Cargando')}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-gray-500">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
             <span>
               <span className="font-semibold text-gray-900">{totalResults}</span>{' '}
-              {totalResults === 1 ? 'activo' : 'activos'}
+              {totalResults === 1 ? t('asset', 'activo') : t('assets', 'activos')}
               {(searchTerm || activeFiltersCount > 0) && (
-                <span className="ml-1 text-gray-400">• filtrado{totalResults !== 1 ? 's' : ''}</span>
+                <span className="ml-1 text-gray-400">• {t('filtered', 'filtrado{{s}}', { s: totalResults !== 1 ? 's' : '' })}</span>
               )}
             </span>
           </div>

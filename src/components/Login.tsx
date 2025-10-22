@@ -31,7 +31,7 @@ export default function Login() {
     }
 
     if (invitationParam && messageParam === 'login') {
-      setInvitationMessage('Tienes una invitación pendiente. Inicia sesión para completarla.');
+      setInvitationMessage(t('invitationPendingMessage', 'Tienes una invitación pendiente. Inicia sesión para completarla.'));
       // Guardar token de invitación para procesar después del login
       localStorage.setItem('pendingInvitation', invitationParam);
     }
@@ -116,19 +116,19 @@ export default function Login() {
               <div className="flex flex-col items-center gap-4">
                 <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 flex flex-col items-center mb-2 animate-fadeInUp">
                   <svg className="w-8 h-8 text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2z"/><path d="M12 19c-4.418 0-8-1.79-8-4V7a2 2 0 012-2h12a2 2 0 012 2v8c0 2.21-3.582 4-8 4z"/></svg>
-                  <span className="text-blue-900 font-semibold text-base text-center">Verificación adicional de seguridad</span>
-                  <span className="text-blue-800 text-sm text-center mt-1">Para proteger tu cuenta y tus datos, te pedimos escanear este código QR y escribir el código recibido. Así evitamos accesos no autorizados y garantizamos que solo tú puedes ingresar.</span>
+                  <span className="text-blue-900 font-semibold text-base text-center">{t('additionalSecurityVerification', 'Verificación adicional de seguridad')}</span>
+                  <span className="text-blue-800 text-sm text-center mt-1">{t('qrSecurityMessage', 'Para proteger tu cuenta y tus datos, te pedimos escanear este código QR y escribir el código recibido. Así evitamos accesos no autorizados y garantizamos que solo tú puedes ingresar.')}</span>
                 </div>
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=mock-activo-digital" alt="QR de acceso" className="rounded-lg border-2 border-blue-200 shadow-md" />
-                <span className="text-gray-700 text-base font-medium text-center">Escanea el QR con tu app y escribe el código recibido</span>
+                <span className="text-gray-700 text-base font-medium text-center">{t('scanQrMessage', 'Escanea el QR con tu app y escribe el código recibido')}</span>
               </div>
               <div className="flex flex-col gap-2 items-center">
-                <label htmlFor="qr-code-input" className="text-sm font-semibold text-gray-800">Código del QR</label>
+                <label htmlFor="qr-code-input" className="text-sm font-semibold text-gray-800">{t('qrCode', 'Código del QR')}</label>
                 <input
                   id="qr-code-input"
                   type="text"
                   className="w-60 rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-lg px-4 py-3 transition-all placeholder-gray-400 tracking-widest text-center font-mono bg-blue-50 shadow-sm"
-                  placeholder="Ej: 123456"
+                  placeholder={t('qrCodePlaceholder', 'Ej: 123456')}
                   value={qrCodeInput}
                   onChange={e => setQrCodeInput(e.target.value)}
                   autoFocus
@@ -142,28 +142,28 @@ export default function Login() {
                 style={{letterSpacing: '0.03em'}}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M5 13l4 4L19 7" /></svg>
-                Validar código y entrar
+                {t('validateCodeAndEnter', 'Validar código y entrar')}
               </button>
-              <div className="text-xs text-gray-500 text-center mt-2">¿Problemas? Asegúrate de usar la app oficial o contacta a soporte.</div>
+              <div className="text-xs text-gray-500 text-center mt-2">{t('qrProblemsHelp', '¿Problemas? Asegúrate de usar la app oficial o contacta a soporte.')}</div>
             </form>
           ) : (
             <>
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
-                  <input id="email" type="email" autoComplete="email" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="tucorreo@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('email', 'Correo electrónico')}</label>
+                  <input id="email" type="email" autoComplete="email" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder={t('emailPlaceholder', 'tucorreo@ejemplo.com')} value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña</label>
-                    <Link to="#" className="text-sm text-blue-600 hover:text-blue-700">¿Olvidaste tu contraseña?</Link>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">{t('password', 'Contraseña')}</label>
+                    <Link to="#" className="text-sm text-blue-600 hover:text-blue-700">{t('forgotPassword', '¿Olvidaste tu contraseña?')}</Link>
                   </div>
-                  <input id="password" type="password" autoComplete="current-password" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  <input id="password" type="password" autoComplete="current-password" className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder={t('passwordPlaceholder', '••••••••')} value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <div className="flex items-center justify-between">
                   <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                     <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-                    Recuérdame
+                    {t('rememberMe', 'Recuérdame')}
                   </label>
                 </div>
                 <button 
@@ -171,12 +171,12 @@ export default function Login() {
                   disabled={loading} 
                   className={`w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 transition-colors ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
-                  {loading ? <FormLoader message="Ingresando..." /> : 'Entrar'}
+                  {loading ? <FormLoader message={t('signingIn', 'Ingresando...')} /> : t('signIn', 'Entrar')}
                 </button>
               </form>
               <p className="mt-4 text-center text-sm text-gray-600">
-                ¿No tienes cuenta?{' '}
-                <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">Crear cuenta</Link>
+                {t('dontHaveAccount', '¿No tienes cuenta?')}{' '}
+                <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">{t('createAccount', 'Crear cuenta')}</Link>
               </p>
             </>
           )}

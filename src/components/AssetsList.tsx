@@ -1,4 +1,8 @@
+import { Badge } from './ui/badge';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
+import { MapPin, Check, X, CircleCheck, RefreshCw, MinusCircle } from 'lucide-react';
+import { BuildingCarousel } from '../components/BuildingCarousel';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +21,7 @@ import {
   useLoadingState,
 } from './ui/LoadingSystem';
 
+
 import {
   EnergyCertificatesService,
   type PersistedEnergyCertificate,
@@ -33,6 +38,7 @@ import {
 } from '../services/esg';
 
 import AssetsSearchBar, { type SearchFilters } from './ui/AssetsSearchBar';
+import { Card } from './ui/card';
 
 /* -------------------------- Utils de presentación -------------------------- */
 function getCityAndDistrict(address: string): string {
@@ -490,7 +496,10 @@ export default function AssetsList() {
 
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
-    let result = [...buildings];
+  let result = [...buildings];
+
+  // Ordenar por fecha de creación descendente (más recientes primero)
+  result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Filtro de búsqueda por texto
     if (searchFilters.searchTerm) {
@@ -1072,182 +1081,148 @@ export default function AssetsList() {
           isLoading={loading}
         />
 
-        {/* Assets List */}
-        <div
-          className="bg-white rounded-xl border border-gray-200 overflow-hidden max-w-full"
-          style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}
-        >
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {t('assetsList', { defaultValue: 'Listado de Activos' })}
-            </h3>
-          </div>
-
+        {/* Assets List - Card Layout */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-full" style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('assetsList', { defaultValue: 'Listado de Activos' })}
+          </h3>
           {loading ? (
             <SkeletonBuildingList />
           ) : paginated.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      style={{ width: '20%' }}
-                      scope="col"
-                    >
-                      {t('name', { defaultValue: 'Nombre' })}
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                      style={{ width: '12%' }}
-                      scope="col"
-                    >
-                      {t('value', { defaultValue: 'Valor' })}
-                    </th>
-                    <th
-                      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                      style={{ width: '18%' }}
-                      scope="col"
-                    >
-                      {t('digitalBookStatus', { defaultValue: 'ESTADO LIBRO DIGITAL' })}
-                    </th>
-                    <th
-                      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                      style={{ width: '8%' }}
-                      scope="col"
-                    >
-                      {t('cee', { defaultValue: 'CEE' })}
-                    </th>
-                    <th
-                      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                      style={{ width: '12%' }}
-                      scope="col"
-                    >
-                      {t('esg', { defaultValue: 'ESG' })}
-                    </th>
-                    <th
-                      className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                      style={{ width: '10%' }}
-                      scope="col"
-                    >
-                      {t('squareMeters', { defaultValue: 'm²' })}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {paginated.map((building, index) => (
-                    <tr
-                      key={building.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      style={{
-                        animation: 'fadeInUp 0.4s ease-out both',
-                        animationDelay: `${index * 40}ms`,
-                      }}
+            <div className="flex flex-col gap-6">
+              {paginated.map((building, index) => {
+                const book = digitalBooks.get(building.id);
+                const completedSections = book?.progress || 0;
+                const totalSections = 8;
+                const ceeCerts = energyCertificates.filter((cert) => cert.buildingId === building.id);
+                const ceeRating = ceeCerts.length > 0 ? getLatestRating(ceeCerts) : '-';
+                const esg = esgScores.get(building.id);
+                const esgScore = esg?.status === 'complete' && esg.data ? esg.data.total : null;
+                const mainImage = building.images?.find(img => img.isMain) || building.images?.[0];
+                const imageUrl = mainImage?.url || 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80';
+                // Estado badge color
+                const getEstadoBadgeClassName = (estado: string) => {
+                  if (estado === t('operational', { defaultValue: 'Operativo' })) {
+                    return 'bg-green-500/20 text-green-400 border border-green-500/50';
+                  }
+                  if (estado === t('inRemodeling', { defaultValue: 'En remodelación' })) {
+                    return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50';
+                  }
+                  return 'bg-gray-700 text-gray-400 border border-gray-600';
+                };
+                return (
+                  <motion.div
+                    key={building.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+                    whileHover={{ y: -4 }}
+                  >
+                    <Card
+                      className={`bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all duration-300 overflow-hidden cursor-pointer h-[320px] flex`}
                       onClick={() => navigate(`/edificio/${building.id}`)}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') navigate(`/edificio/${building.id}`);
-                      }}
+                      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
                     >
-                      {/* Nombre con ubicación debajo */}
-                      <td className="px-4 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {building.name}
+                      <div className="flex flex-col md:flex-row w-full h-full">
+                        {/* Image Carousel */}
+                        <div className="md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800 h-full">
+                          <BuildingCarousel images={building.images?.map(img => img.url) ?? []} name={building.name} />
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 p-6 h-full flex flex-col justify-between">
+                          {/* Header */}
+                          <div className="mb-6">
+                            <h3 className="text-xl text-gray-900 mb-2">{building.name}</h3>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <MapPin className="w-4 h-4" />
+                              <span className="text-sm">{getCityAndDistrict(building.address)}</span>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {getCityAndDistrict(building.address)}
+                          {/* Info Grid */}
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">{t('value', { defaultValue: 'Valor' })}</p>
+                              <p className="text-lg text-gray-900">{formatBuildingValue(building.price)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">{t('squareMeters', { defaultValue: 'Superficie' })}</p>
+                              <p className="text-lg text-gray-900">{building.squareMeters ? `${building.squareMeters} m²` : '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">{t('status', { defaultValue: 'Estado' })}</p>
+                              <Badge className={getEstadoBadgeClassName(t('operational', { defaultValue: 'Operativo' })) + ' flex items-center gap-2'}>
+                                {(() => {
+                                  const estado = t('operational', { defaultValue: 'Operativo' });
+                                  if (estado === 'Operativo') {
+                                    return <CircleCheck className="w-4 h-4 text-green-400" />;
+                                  }
+                                  if (estado === 'En remodelación') {
+                                    return <RefreshCw className="w-4 h-4 text-yellow-400" />;
+                                  }
+                                  return <MinusCircle className="w-4 h-4 text-gray-400" />;
+                                })()}
+                                <span>{t('operational', { defaultValue: 'Operativo' })}</span>
+                              </Badge>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">{t('energyCertificate', { defaultValue: 'Certificación Energética' })}</p>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-sm">
+                                  {ceeRating}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {/* ESG and Libro */}
+                          <div className="flex items-center gap-8">
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-gray-500">ESG Score</span>
+                                <span className="text-sm text-gray-900">{esgScore !== null ? `${esgScore}/100` : '-'}</span>
+                              </div>
+                              <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${esgScore ?? 0}%` }}
+                                  transition={{ duration: 0.6, delay: 0.3 + index * 0.16 }}
+                                  className="absolute inset-y-0 left-0 bg-cyan-500 rounded-full"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">{t('digitalBook', { defaultValue: 'Libro Digital' })}</span>
+                              {completedSections === totalSections ? (
+                                <div className="w-8 h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">
+                                  <Check className="w-5 h-5 text-green-600" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                                  <X className="w-5 h-5 text-gray-500" />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </td>
-
-                      {/* Valor */}
-                      <td className="px-4 py-4 hidden md:table-cell">
-                        <div className="text-sm text-gray-900">
-                          {formatBuildingValue(building.price)}
-                        </div>
-                      </td>
-
-                      {/* Estado + progreso */}
-                      <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <BuildingStatusIndicator
-                          building={building}
-                          digitalBooks={digitalBooks}
-                        />
-                      </td>
-
-                      {/* CEE */}
-                      <td className="px-4 py-4 hidden md:table-cell">
-                        <div className="flex items-center justify-center">
-                          <CEERatingIndicator
-                            building={building}
-                            certificates={energyCertificates}
-                          />
-                        </div>
-                      </td>
-
-                      {/* ESG */}
-                      <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <ESGScoreIndicator building={building} esgData={esgScores} />
-                      </td>
-
-                      {/* m² */}
-                      <td className="px-4 py-4 text-center hidden md:table-cell">
-                        <SquareMetersIndicator building={building} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
             <div className="px-6 py-12 text-center">
-              <svg
-                className="w-12 h-12 mx-auto text-gray-400 mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6"
-                />
-              </svg>
+              <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" /></svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === 'propietario'
-                  ? t('noAssetsYet', { defaultValue: 'No tienes activos aún' })
-                  : t('noAssignedAssets', { defaultValue: 'No tienes activos asignados' })}
+                {user?.role === 'propietario' ? t('noAssetsYet', { defaultValue: 'No tienes activos aún' }) : t('noAssignedAssets', { defaultValue: 'No tienes activos asignados' })}
               </h3>
               <p className="text-gray-600 mb-4">
-                {user?.role === 'propietario'
-                  ? t('createFirstAsset', {
-                      defaultValue:
-                        'Comienza creando tu primer activo para gestionar tu cartera.',
-                    })
-                  : t('contactAdmin', {
-                      defaultValue:
-                        'Contacta con tu administrador para que te asigne activos.',
-                    })}
+                {user?.role === 'propietario' ? t('createFirstAsset', { defaultValue: 'Comienza creando tu primer activo para gestionar tu cartera.' }) : t('contactAdmin', { defaultValue: 'Contacta con tu administrador para que te asigne activos.' })}
               </p>
               {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
-                <Link
-                  to="/edificios/crear"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
+                <Link to="/edificios/crear" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                   {t('createFirstAssetBtn', { defaultValue: 'Crear primer activo' })}
                 </Link>
               )}

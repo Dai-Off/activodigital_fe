@@ -68,16 +68,16 @@ const CreateBuildingWizard: React.FC = () => {
   const { t } = useTranslation();
   const wizardSteps = [
     {
-      title: t('generalData', 'Datos Generales'),
-      description: t('generalDataDesc', 'Información básica del edificio')
+  title: t('generalData', 'Datos Generales'),
+  description: t('generalDataDesc', 'Información básica del edificio')
     },
     {
-      title: t('locationPhotos', 'Ubicación y Fotos'),
-      description: t('locationPhotosDesc', 'Localización y elementos visuales')
+  title: t('locationPhotos', 'Ubicación y Fotos'),
+  description: t('locationPhotosDesc', 'Localización y elementos visuales')
     },
     {
-      title: t('summary', 'Resumen'),
-      description: t('summaryDesc', 'Revisar información antes de continuar')
+  title: t('summary', 'Resumen'),
+  description: t('summaryDesc', 'Revisar información antes de continuar')
     }
   ];
 
@@ -88,9 +88,9 @@ const CreateBuildingWizard: React.FC = () => {
   };
 
   const handleStep1SaveDraft = (data: BuildingStep1Data) => {
-    setStep1Data(data);
-    // Mostrar notificación de borrador guardado
-    showInfo(t('buildings.draftSaved'), t('buildings.dataSavedTemporarily'));
+  setStep1Data(data);
+  // Mostrar notificación de borrador guardado
+  showInfo(t('draftSaved'), t('dataSavedTemporarily'));
   };
 
   // Manejar paso 2 - Ubicación y fotos
@@ -108,7 +108,7 @@ const CreateBuildingWizard: React.FC = () => {
     if (data.photos && data.photos.length > 0) {
       setStep2Data(prev => ({ ...prev, ...data } as BuildingStep2Data));
     }
-    showInfo(t('buildings.draftSaved'), t('buildings.locationAndPhotosSaved'));
+    showInfo(t('draftSaved'), t('locationAndPhotosSaved'));
   };
 
   // Manejar paso 3 - Resumen
@@ -322,7 +322,7 @@ const CreateBuildingWizard: React.FC = () => {
                   onClick={() => navigate('/activos')}
                   className="hover:text-blue-600"
                 >
-                  {t('buildings.assets')}
+                  {t('assets')}
                 </button>
               </li>
               <li>
@@ -331,7 +331,7 @@ const CreateBuildingWizard: React.FC = () => {
                 </svg>
               </li>
               <li className="text-gray-900 font-medium">
-                {t('buildings.createBuilding')}
+                {t('createBuilding')}
               </li>
             </ol>
           </nav>
@@ -353,13 +353,13 @@ const CreateBuildingWizard: React.FC = () => {
         {/* Footer con información adicional */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            {t('buildings.needHelp')}{' '}
+            {t('needHelp')}{' '}
             <a href="#" className="text-blue-600 hover:text-blue-700">
-              {t('buildings.buildingCreationGuide')}
+              {t('buildingCreationGuide')}
             </a>
-            {' '}{t('buildings.or')}{' '}
+            {' '}{t('or')}{' '}
             <a href="#" className="text-blue-600 hover:text-blue-700">
-              {t('buildings.contactSupport')}
+              {t('contactSupport')}
             </a>
           </p>
         </div>
