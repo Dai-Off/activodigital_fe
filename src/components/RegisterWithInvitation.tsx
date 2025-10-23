@@ -87,6 +87,8 @@ export default function RegisterWithInvitation() {
         navigate('/cfo-dashboard');
       } else if (roleName === 'propietario') {
         navigate('/activos');
+      } else if (roleName === 'tecnico') {
+        navigate('/activos');
       } else {
         navigate('/activos');
       }

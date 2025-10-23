@@ -254,16 +254,41 @@ const CreateBuildingWizard: React.FC = () => {
         lower.includes('owner') ||
         lower.includes('técnico') ||
         lower.includes('technician') ||
-        lower.includes('cfo');
+        lower.includes('cfo') ||
+        lower.includes('invitación') ||
+        lower.includes('invitation') ||
+        lower.includes('asignación') ||
+        lower.includes('assignment');
 
       if (roleConflict) {
         title = t('buildings.roleConflict', 'Conflicto de roles asignados');
-        if (step1Data.technicianEmail && step1Data.cfoEmail) {
+        if (step1Data.technicianEmail && step1Data.cfoEmail && step1Data.propietarioEmail) {
+          message =
+            t(
+              'buildings.roleConflictDetailAll',
+              'Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser CFO o propietario\n• CFO ({{cfo}}): No puede ser técnico o propietario\n• Propietario ({{prop}}): No puede ser técnico o CFO\n\nVerifica que todos los correos sean diferentes.',
+              { tech: step1Data.technicianEmail, cfo: step1Data.cfoEmail, prop: step1Data.propietarioEmail }
+            );
+        } else if (step1Data.technicianEmail && step1Data.cfoEmail) {
           message =
             t(
               'buildings.roleConflictDetailBoth',
               'Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser CFO o propietario\n• CFO ({{cfo}}): No puede ser técnico o propietario\n\nVerifica los correos.',
               { tech: step1Data.technicianEmail, cfo: step1Data.cfoEmail }
+            );
+        } else if (step1Data.technicianEmail && step1Data.propietarioEmail) {
+          message =
+            t(
+              'buildings.roleConflictDetailTechProp',
+              'Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser propietario\n• Propietario ({{prop}}): No puede ser técnico\n\nVerifica los correos.',
+              { tech: step1Data.technicianEmail, prop: step1Data.propietarioEmail }
+            );
+        } else if (step1Data.cfoEmail && step1Data.propietarioEmail) {
+          message =
+            t(
+              'buildings.roleConflictDetailCfoProp',
+              'Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• CFO ({{cfo}}): No puede ser propietario\n• Propietario ({{prop}}): No puede ser CFO\n\nVerifica los correos.',
+              { cfo: step1Data.cfoEmail, prop: step1Data.propietarioEmail }
             );
         } else if (step1Data.technicianEmail) {
           message = t(
@@ -276,6 +301,12 @@ const CreateBuildingWizard: React.FC = () => {
             'buildings.roleConflictDetailCfo',
             'El usuario "{{email}}" ya tiene un rol incompatible. Un CFO no puede ser técnico o propietario. Usa otro email o deja el campo vacío.',
             { email: step1Data.cfoEmail }
+          );
+        } else if (step1Data.propietarioEmail) {
+          message = t(
+            'buildings.roleConflictDetailProp',
+            'El usuario "{{email}}" ya tiene un rol incompatible. Un propietario no puede ser técnico o CFO. Usa otro email o deja el campo vacío.',
+            { email: step1Data.propietarioEmail }
           );
         } else {
           message = t(
