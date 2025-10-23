@@ -53,11 +53,11 @@ const calculatePermissions = (role: UserRole): UserPermissions => {
   switch (role) {
     case 'propietario':
       return {
-        canCreateBuildings: true,
-        canAssignTechnicians: true,
+        canCreateBuildings: false,
+        canAssignTechnicians: false,
         canManageDigitalBooks: false,
-        canViewOwnBuildings: true,
-        canViewAssignedBuildings: false,
+        canViewOwnBuildings: false,
+        canViewAssignedBuildings: true,
       };
     case 'tecnico':
       return {

@@ -639,7 +639,7 @@ export default function AssetsList() {
 
           {/* Botones de acción basados en permisos */}
           <div className="flex gap-3">
-            {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
+            {user?.role === 'administrador' && hasPermission('canCreateBuildings') && (
               <Link
                 to="/edificios/crear"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -1227,7 +1227,7 @@ export default function AssetsList() {
               <p className="text-gray-600 mb-4">
                 {user?.role === 'propietario' ? t('createFirstAsset', { defaultValue: 'Comienza creando tu primer activo para gestionar tu cartera.' }) : t('contactAdmin', { defaultValue: 'Contacta con tu administrador para que te asigne activos.' })}
               </p>
-              {user?.role === 'propietario' && hasPermission('canCreateBuildings') && (
+              {user?.role === 'administrador' && hasPermission('canCreateBuildings') && (
                 <Link to="/edificios/crear" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                   {t('createFirstAssetBtn', { defaultValue: 'Crear primer activo' })}

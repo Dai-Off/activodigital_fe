@@ -49,9 +49,10 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const [backgroundProcessing, setBackgroundProcessing] = useState(false);
   const [updatingSections, setUpdatingSections] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollingStartedRef = useRef(false);
 
-  // Propietario solo puede leer, no editar
-  const canEdit = user?.role !== 'propietario';
+  // Solo técnicos pueden editar, administradores, propietarios y CFO solo pueden leer
+  const canEdit = user?.role === 'tecnico';
 
   const { t } = useTranslation();
   const sections = useMemo(() => {
@@ -256,32 +257,14 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     (async () => {
       await loadBook();
     })();
-  }, [loadBook]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildingId]);
 
-  // Reload when window regains focus or tab becomes visible
-  useEffect(() => {
-    const onFocus = () => { 
-      loadBook(false); 
-      // Si había procesamiento en background, verificar si terminó
-      if (backgroundProcessing) {
-        checkBackgroundProcessing();
-      }
-    };
-    const onVisibility = () => { 
-      if (document.visibilityState === 'visible') {
-        loadBook(false);
-        if (backgroundProcessing) {
-          checkBackgroundProcessing();
-        }
-      }
-    };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [loadBook, backgroundProcessing]);
+  // useEffect deshabilitado - causaba peticiones infinitas
+  // useEffect(() => {
+  //   const onFocus = () => { loadBook(false); };
+  //   ...
+  // }, [loadBook, backgroundProcessing]);
 
   // Detectar cuando el usuario sale de la pantalla durante el procesamiento
   useEffect(() => {
@@ -328,32 +311,11 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.message]);
 
-  // Polling breve tras volver del procesamiento IA para asegurar consistencia
-  useEffect(() => {
-    if (!location.state?.refreshBook) return;
-
-    let attempts = 0;
-    const maxAttempts = 20; // ~30s si interval es 1500ms
-    const interval = setInterval(async () => {
-      attempts += 1;
-      try {
-        const refreshed = await getBookByBuilding(buildingId);
-        if (refreshed && Array.isArray(refreshed.sections) && refreshed.sections.length > 0) {
-          setBook(refreshed);
-          clearInterval(interval);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
-        }
-      } catch {
-        if (attempts >= maxAttempts) {
-          clearInterval(interval);
-        }
-      }
-    }, 1500);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildingId, location.state?.refreshBook]);
+  // Polling deshabilitado - causaba problemas de rendimiento
+  // useEffect(() => {
+  //   if (!location.state?.refreshBook || pollingStartedRef.current) return;
+  //   // ... polling code removed
+  // }, [buildingId]);
 
   const getStatusMessage = () => {
     if (completedSections === 0) return 'Libro en borrador – ninguna sección completada';

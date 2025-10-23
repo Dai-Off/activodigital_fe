@@ -29,6 +29,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     price: initialData.price || '',
     technicianEmail: initialData.technicianEmail || '',
     cfoEmail: initialData.cfoEmail || '',
+    propietarioEmail: initialData.propietarioEmail || '',
     rehabilitationCost: initialData.rehabilitationCost || '',
     potentialValue: initialData.potentialValue || '',
     squareMeters: initialData.squareMeters || '',
@@ -36,7 +37,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
   const [errors, setErrors] = useState<Partial<Record<keyof BuildingStep1Data, string>>>({});
   const [isValidating, setIsValidating] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{ technician?: string; cfo?: string }>(
+  const [validationErrors, setValidationErrors] = useState<{ technician?: string; cfo?: string; propietario?: string }>(
     {}
   );
 
@@ -110,6 +111,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       newErrors.cfoEmail = t('common.validation.email', 'Ingresa un correo válido');
     }
 
+    if (formData.propietarioEmail?.trim() && !emailRegex.test(formData.propietarioEmail)) {
+      newErrors.propietarioEmail = t('common.validation.email', 'Ingresa un correo válido');
+    }
+
     if (formData.rehabilitationCost?.trim()) {
       const v = Number.parseFloat(formData.rehabilitationCost);
       if (Number.isNaN(v) || v < 0) {
@@ -143,10 +148,12 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
     if ((field === 'technicianEmail' && validationErrors.technician) ||
-        (field === 'cfoEmail' && validationErrors.cfo)) {
+        (field === 'cfoEmail' && validationErrors.cfo) ||
+        (field === 'propietarioEmail' && validationErrors.propietario)) {
       setValidationErrors(prev => ({
         ...prev,
-        [field === 'technicianEmail' ? 'technician' : 'cfo']: undefined,
+        [field === 'technicianEmail' ? 'technician' : 
+         field === 'cfoEmail' ? 'cfo' : 'propietario']: undefined,
       }));
     }
   };
@@ -154,7 +161,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   const handleNext = async () => {
     if (!validateForm()) return;
 
-    if (formData.technicianEmail || formData.cfoEmail) {
+    if (formData.technicianEmail || formData.cfoEmail || formData.propietarioEmail) {
       setIsValidating(true);
       setValidationErrors({});
 
@@ -162,15 +169,19 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         const res = await BuildingsApiService.validateUserAssignments({
           technicianEmail: formData.technicianEmail || undefined,
           cfoEmail: formData.cfoEmail || undefined,
+          propietarioEmail: formData.propietarioEmail || undefined,
         });
 
         if (!res.overallValid) {
-          const newValErrs: { technician?: string; cfo?: string } = {};
+          const newValErrs: { technician?: string; cfo?: string; propietario?: string } = {};
           if (!res.technicianValidation.isValid && res.technicianValidation.errors.technician) {
             newValErrs.technician = res.technicianValidation.errors.technician;
           }
           if (!res.cfoValidation.isValid && res.cfoValidation.errors.cfo) {
             newValErrs.cfo = res.cfoValidation.errors.cfo;
+          }
+          if (!res.propietarioValidation?.isValid && res.propietarioValidation?.errors.propietario) {
+            newValErrs.propietario = res.propietarioValidation.errors.propietario;
           }
           setValidationErrors(newValErrs);
           setIsValidating(false);
@@ -411,6 +422,31 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             )}
             <p className="mt-1 text-xs text-gray-500">
               {t('buildings.helpers.cfoEmail', 'Opcional. Asignará el rol de CFO al usuario.')}
+            </p>
+          </div>
+
+          {/* Propietario email */}
+          <div>
+            <label htmlFor="propietarioEmail" className="block text-sm font-medium text-gray-700 mb-2">
+              {t('buildings.fields.propietarioEmail', 'Email del propietario')}
+            </label>
+            <input
+              id="propietarioEmail"
+              type="email"
+              value={formData.propietarioEmail}
+              onChange={e => handleInputChange('propietarioEmail', e.target.value)}
+              placeholder={t('buildings.placeholders.propietarioEmail', 'propietario@ejemplo.com')}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.propietarioEmail || validationErrors.propietario ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {(errors.propietarioEmail || validationErrors.propietario) && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.propietarioEmail || validationErrors.propietario}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              {t('buildings.helpers.propietarioEmail', 'Opcional. Asignará el rol de Propietario al usuario.')}
             </p>
           </div>
         </div>

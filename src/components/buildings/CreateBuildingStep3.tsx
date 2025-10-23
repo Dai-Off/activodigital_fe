@@ -29,6 +29,7 @@ interface BuildingSummaryData {
   price: string;
   technicianEmail: string;
   cfoEmail: string;
+  propietarioEmail: string;
 
   // Financial
   rehabilitationCost: string;
@@ -254,6 +255,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <Row
                   label={t('buildings.fields.cfoEmail', 'Email del CFO')}
                   value={buildingData.cfoEmail || t('common.unassigned', 'Sin asignar')}
+                />
+                <Row
+                  label={t('buildings.fields.propietarioEmail', 'Email del propietario')}
+                  value={buildingData.propietarioEmail || t('common.unassigned', 'Sin asignar')}
                 />
                 <Row
                   label={t('buildings.fields.rehabilitationCost', 'Coste de rehabilitación')}

@@ -30,6 +30,7 @@ export interface BuildingStep1Data {
   price: string;
   technicianEmail: string;
   cfoEmail: string;
+  propietarioEmail: string;
   rehabilitationCost: string;
   potentialValue: string;
   squareMeters: string;
@@ -53,6 +54,7 @@ interface CompleteBuildingData {
   price: string;
   technicianEmail: string;
   cfoEmail: string;
+  propietarioEmail: string;
   rehabilitationCost: string;
   potentialValue: string;
   squareMeters: string;
@@ -181,6 +183,7 @@ const CreateBuildingWizard: React.FC = () => {
         price,
         technicianEmail: step1Data.technicianEmail || undefined,
         cfoEmail: step1Data.cfoEmail || undefined,
+        propietarioEmail: step1Data.propietarioEmail || undefined,
         rehabilitationCost,
         potentialValue,
         squareMeters,

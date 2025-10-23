@@ -85,6 +85,8 @@ export default function RegisterWithInvitation() {
       const roleName = response.user.role.name;
       if (roleName === 'cfo') {
         navigate('/cfo-dashboard');
+      } else if (roleName === 'propietario') {
+        navigate('/activos');
       } else {
         navigate('/activos');
       }
@@ -174,7 +176,8 @@ export default function RegisterWithInvitation() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-medium text-blue-900">
-                Invitación para ser {invitationData.role === 'tecnico' ? 'Técnico' : 'CFO'}
+                Invitación para ser {invitationData.role === 'tecnico' ? 'Técnico' : 
+                                   invitationData.role === 'cfo' ? 'CFO' : 'Propietario'}
               </h3>
               <p className="text-sm text-blue-700 mt-1">
                 <strong>Edificio:</strong> {invitationData.buildingName}

@@ -17,6 +17,7 @@ export interface Building {
   price?: number;
   technicianEmail?: string;
   cfoEmail?: string;
+  propietarioEmail?: string;
   ownerId: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
@@ -49,6 +50,7 @@ export interface CreateBuildingPayload {
   price?: number;
   technicianEmail?: string;
   cfoEmail?: string;
+  propietarioEmail?: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number;     // Valor potencial (por defecto 0)
@@ -68,18 +70,21 @@ export interface ValidationResult {
   errors: {
     technician?: string;
     cfo?: string;
+    propietario?: string;
   };
 }
 
 export interface ValidateAssignmentsResponse {
   technicianValidation: ValidationResult;
   cfoValidation: ValidationResult;
+  propietarioValidation?: ValidationResult;
   overallValid: boolean;
 }
 
 export interface ValidateAssignmentsRequest {
   technicianEmail?: string;
   cfoEmail?: string;
+  propietarioEmail?: string;
 }
 
 export interface Technician {
