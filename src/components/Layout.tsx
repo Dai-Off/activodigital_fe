@@ -24,7 +24,12 @@ type ChatMsg = {
 };
 
 type OrquestadorResponse = {
-  respuesta: string;
+  respuesta: string | any[]; // Puede ser string o array (para lista de edificios)
+  tipo?: string;
+  success?: boolean;
+  edificios?: any[];
+  categoria?: string;
+  timestamp?: string;
   [k: string]: unknown;
 };
 
@@ -105,7 +110,7 @@ function injectTableThumbnails(html: string): string {
       image.setAttribute('data-thumb', '1');
       image.setAttribute(
         'style',
-        'width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;display:block;'
+        'width:80px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;display:block;'
       );
 
       const capText = (img.alt || '').trim();
@@ -289,6 +294,85 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  /* ========== Formatear Respuesta según Tipo ========== */
+  const formatearRespuesta = (data: OrquestadorResponse): string => {
+    console.log('🔍 Formateando respuesta:', data);
+
+    // Lista de edificios
+    if (data.tipo === 'lista_edificios' && data.edificios) {
+      const edificios = data.edificios;
+      if (!edificios || edificios.length === 0) {
+        return 'No tienes edificios registrados.';
+      }
+      
+      // Log completo del primer edificio para debug
+      console.log('🏢 Datos del primer edificio:', JSON.stringify(edificios[0], null, 2));
+      
+      // Generar tabla HTML con todos los campos disponibles
+      let html = `📋 **Tus edificios (${edificios.length}):**\n\n`;
+      html += '| Img | Nombre | Dirección | m² | Unidades | Pisos | Año | Tipología | Precio | Valor Potencial | Costo Rehab |\n';
+      html += '|-----|--------|-----------|-----|----------|-------|-----|-----------|--------|-----------------|-------------|\n';
+      
+      edificios.forEach((edificio: any) => {
+        // Detectar imagen principal
+        let imgUrl = '';
+        if (edificio.images && Array.isArray(edificio.images) && edificio.images.length > 0) {
+          // Buscar imagen principal (isMain: true) o tomar la primera
+          const mainImage = edificio.images.find((img: any) => img.isMain) || edificio.images[0];
+          imgUrl = mainImage?.url || '';
+        }
+        
+        // Fallback a otros campos de imagen por si acaso
+        if (!imgUrl) {
+          imgUrl = edificio.imagen 
+            || edificio.image 
+            || edificio.imageUrl 
+            || edificio.photo 
+            || edificio.imagenPrincipal
+            || edificio.coverImage
+            || edificio.thumbnail
+            || '';
+        }
+        
+        // Si hay imagen, crear markdown de imagen pequeña
+        const imgCell = imgUrl ? `![${edificio.name || edificio.nombre || 'Edificio'}](${imgUrl})` : '🏢';
+        
+        const nombre = edificio.name || edificio.nombre || 'Sin nombre';
+        const direccion = edificio.address || edificio.direccion || '-';
+        const superficie = edificio.square_meters || edificio.superficie || edificio.area || edificio.superficieTotal || '-';
+        const unidades = edificio.num_units || edificio.unidades || edificio.units || edificio.numeroUnidades || '-';
+        const pisos = edificio.num_floors || edificio.pisos || edificio.floors || '-';
+        const anio = edificio.construction_year || edificio.anio || edificio.year || edificio.yearBuilt || '-';
+        const tipologia = edificio.typology || edificio.tipologia || '-';
+        const precio = edificio.price ? `€${edificio.price.toLocaleString()}` : '-';
+        const valorPotencial = edificio.potential_value ? `€${edificio.potential_value.toLocaleString()}` : '-';
+        const costoRehab = edificio.rehabilitation_cost ? `€${edificio.rehabilitation_cost.toLocaleString()}` : '-';
+        
+        html += `| ${imgCell} | ${nombre} | ${direccion} | ${superficie} | ${unidades} | ${pisos} | ${anio} | ${tipologia} | ${precio} | ${valorPotencial} | ${costoRehab} |\n`;
+      });
+      
+      return html;
+    }
+
+    // Consulta específica financiera
+    if (data.categoria === 'financiero' && typeof data.respuesta === 'string') {
+      return data.respuesta;
+    }
+
+    // Respuesta general
+    if (typeof data.respuesta === 'string') {
+      return data.respuesta;
+    }
+
+    // Si respuesta es un array u objeto, intentar convertirlo a texto legible
+    if (Array.isArray(data.respuesta)) {
+      return JSON.stringify(data.respuesta, null, 2);
+    }
+
+    // Fallback
+    return 'Respuesta procesada correctamente.';
+  };
+
   /* ========== Send Message ========== */
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
@@ -310,11 +394,17 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
     try {
       const payload = {
+        prompt: trimmed,
+        usuario_id: user?.userId ?? 'anon',
+        user_role: user?.role ?? 'propietario',
         session_id: sessionIdRef.current,
-        user_id: user?.id ?? 'anon',
-        message: trimmed,
-        locale: navigator?.language ?? 'es',
       };
+
+      console.log('📤 Enviando al orquestador:', payload);
+      console.log('  - prompt:', trimmed);
+      console.log('  - usuario_id:', user?.userId);
+      console.log('  - user_role:', user?.role);
+      console.log('  - session_id:', sessionIdRef.current);
 
       const res = await fetch(ORQUESTADOR_URL, {
         method: 'POST',
@@ -324,6 +414,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       });
 
       const rawText = await res.text();
+      console.log('📥 Respuesta RAW del orquestador:', rawText);
 
       // Try JSON -> fallback loose parsing
       let parsed: OrquestadorResponse | null = null;
@@ -333,7 +424,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         parsed = parseLooselyForRespuesta(rawText);
       }
 
-      if (!parsed || typeof parsed.respuesta !== 'string') {
+      console.log('📥 Respuesta parseada:', parsed);
+
+      // Validar que tenga respuesta o datos válidos
+      if (!parsed || (!parsed.respuesta && !parsed.edificios)) {
         const fallbackMsg = rawText?.trim()
           ? rawText.trim().slice(0, 4000)
           : t(
@@ -351,10 +445,13 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         return;
       }
 
+      // Formatear la respuesta según el tipo
+      const contenidoFormateado = formatearRespuesta(parsed);
+
       const aiMsg: ChatMsg = {
         id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
         role: 'ai',
-        content: parsed.respuesta,
+        content: contenidoFormateado,
       };
       await new Promise((r) => setTimeout(r, 300));
       setMessages((prev) => [...prev, aiMsg]);
@@ -385,8 +482,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         const htmlRaw = markdownTableToHtml(m.content);
         const html = injectTableThumbnails(htmlRaw);
         return (
-          <div className="whitespace-pre-wrap ai-markdown-table">
-            <TableHtmlWithClicks html={html} onOpen={(img) => setModalImage(img)} />
+          <div className="ai-markdown-table">
+            <div className="ai-table-container">
+              <TableHtmlWithClicks html={html} onOpen={(img) => setModalImage(img)} />
+            </div>
           </div>
         );
       }
@@ -1017,10 +1116,71 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       <DiscreteNotification />
 
       <style>{`
-        .ai-table { border-collapse: collapse; width: 100%; margin: 0.5em 0; font-size: 0.95em; }
-        .ai-table th, .ai-table td { border: 1px solid #d1d5db; padding: 0.4em 0.7em; text-align: left; }
-        .ai-table th { background: #f3f4f6; font-weight: 600; }
+        .ai-table-container {
+          width: 100%;
+          overflow-x: auto;
+          overflow-y: visible;
+          margin: 0.5em 0;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ai-table { 
+          border-collapse: collapse; 
+          width: 100%; 
+          min-width: 800px;
+          font-size: 0.9em; 
+          background: white;
+        }
+        
+        .ai-table th, .ai-table td { 
+          border: 1px solid #d1d5db; 
+          padding: 0.7em 0.9em; 
+          text-align: left;
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+        
+        .ai-table th { 
+          background: #f3f4f6; 
+          font-weight: 600;
+          color: #374151;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+        
         .ai-table tr:nth-child(even) td { background: #f9fafb; }
+        .ai-table tr:hover td { background: #f3f4f6; transition: background 0.15s ease; }
+        
+        .ai-table td:first-child { 
+          text-align: center; 
+          padding: 0.4em;
+          width: 90px;
+          min-width: 90px;
+        }
+        
+        .ai-table figure { 
+          margin: 0 auto; 
+          display: inline-block; 
+        }
+        
+        .ai-table img[data-thumb] { 
+          width: 80px !important;
+          height: 80px !important;
+          object-fit: cover;
+          border-radius: 8px;
+          cursor: pointer;
+          border: 1px solid #e5e7eb;
+          display: block;
+          transition: transform 0.2s ease, box-shadow 0.2s ease; 
+        }
+        
+        .ai-table img[data-thumb]:hover { 
+          transform: scale(1.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 20;
+        }
 
         @keyframes slideDown {
           from { transform: translateY(-100%); opacity: 0; }
