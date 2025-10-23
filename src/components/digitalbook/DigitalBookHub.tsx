@@ -49,7 +49,6 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const [backgroundProcessing, setBackgroundProcessing] = useState(false);
   const [updatingSections, setUpdatingSections] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const pollingStartedRef = useRef(false);
 
   // Solo técnicos pueden editar, administradores, propietarios y CFO solo pueden leer
   const canEdit = user?.role === 'tecnico';
@@ -199,33 +198,6 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const checkBackgroundProcessing = async () => {
-    try {
-      setUpdatingSections(true);
-      const currentBook = await getBookByBuilding(buildingId);
-      if (currentBook && currentBook.sections && currentBook.sections.length > 0) {
-        // El procesamiento terminó exitosamente
-        setBackgroundProcessing(false);
-        setBook(currentBook);
-        
-        // Mostrar notificación de éxito después de un pequeño delay
-        setTimeout(() => {
-          showToast({
-            type: 'success',
-            title: 'Procesamiento completado',
-            message: 'El libro digital se ha creado exitosamente con IA',
-            duration: 5000
-          });
-          setUpdatingSections(false);
-        }, 1000);
-      } else {
-        setUpdatingSections(false);
-      }
-    } catch (error) {
-      console.error('Error verificando procesamiento en background:', error);
-      setUpdatingSections(false);
-    }
-  };
 
   // 👉 Aquí pasamos buildingId en la URL
   const handleSectionClick = (sectionId: string) => {

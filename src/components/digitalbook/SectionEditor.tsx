@@ -123,7 +123,7 @@ const SectionEditor: React.FC = () => {
   const navigate = useNavigate();
   const { sectionId, buildingId: buildingIdParam } = useParams<{ sectionId: string; buildingId: string }>();
   const location = useLocation();
-  const { isRole, user } = useAuth();
+  const { user } = useAuth();
 
   const buildingId = buildingIdParam || location.state?.buildingId || '';
   const buildingName = location.state?.buildingName || 'Torre Central';
@@ -421,7 +421,7 @@ const SectionEditor: React.FC = () => {
           <div className="p-6">
             {/* Form Fields */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sectionConfig.fields.map((field, index) => (
+              {sectionConfig.fields.map((field) => (
                 <div key={field.name} className={field.type === 'textarea' ? 'lg:col-span-2' : ''}>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {field.label}
