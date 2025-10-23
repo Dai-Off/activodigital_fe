@@ -47,18 +47,32 @@ function extractMarkdownImages(text: string): { alt: string; src: string }[] {
   const images: { alt: string; src: string }[] = [];
   const normalized = text.replace(/-\s*\n\s*!\[/g, '- ![');
 
-  // ![alt](url)
-  const imgMd = /!\{0,1}\[([^\]]*)\]\(([^)]+)\)/g;
+  // ![alt](url) - cualquier URL que empiece con http
+  const imgMd = /!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g;
   let match: RegExpExecArray | null;
   while ((match = imgMd.exec(normalized))) {
     images.push({ alt: match[1], src: match[2] });
   }
 
-  // [alt](url) con extensión de imagen
-  const linkImgMd = /\[([^\]]*)\]\(([^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi;
+  // [alt](url) con extensión de imagen explícita
+  const linkImgMd = /\[([^\]]*)\]\((https?:\/\/[^)]+\.(png|jpe?g|webp|gif|svg)(\?[^)]*)?)\)/gi;
   while ((match = linkImgMd.exec(normalized))) {
-    images.push({ alt: match[1], src: match[2] });
+    // Evitar duplicados de URLs ya agregadas
+    const urlExists = images.some(img => img.src === match![2]);
+    if (!urlExists) {
+      images.push({ alt: match[1], src: match[2] });
+    }
   }
+
+  // URLs de servicios de imágenes conocidos (Unsplash, Supabase) sin extensión
+  const imageServiceMd = /\[([^\]]*)\]\((https?:\/\/(?:images\.unsplash\.com|[^/]+\.supabase\.co\/storage)[^)]+)\)/gi;
+  while ((match = imageServiceMd.exec(normalized))) {
+    const urlExists = images.some(img => img.src === match![2]);
+    if (!urlExists) {
+      images.push({ alt: match[1], src: match[2] });
+    }
+  }
+
   return images;
 }
 
@@ -294,6 +308,50 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
   const isActive = (path: string) => location.pathname === path;
 
+  /* ========== Convertir URLs de imágenes a markdown ========== */
+  const convertImageUrlsToMarkdown = (text: string): string => {
+    console.log('🔄 Texto original a convertir:', text);
+    
+    // Detectar formato: **Título**: [Imagen]\n(url)
+    // Ejemplo: **Fachada Principal**: [Imagen]\n(https://...)
+    const titleImagePattern = /\*\*([^*]+)\*\*:\s*\[Imagen\]\s*\n?\s*\(([^)]+)\)/gi;
+    text = text.replace(titleImagePattern, (_match, title, url) => {
+      console.log('✅ Detectado patrón título+imagen:', title, url);
+      return `\n\n![${title}](${url.trim()})\n`;
+    });
+
+    // Detectar formato: número. **Título**: [Imagen]\n(url)
+    const numberedTitlePattern = /\d+\.\s*\*\*([^*]+)\*\*:\s*\[Imagen\]\s*\n?\s*\(([^)]+)\)/gi;
+    text = text.replace(numberedTitlePattern, (_match, title, url) => {
+      console.log('✅ Detectado patrón numerado:', title, url);
+      return `\n\n![${title}](${url.trim()})\n`;
+    });
+
+    // Detectar URLs de imágenes entre paréntesis solas en una línea
+    const urlInParenthesesPattern = /^\s*\((https?:\/\/[^\s)]+)\)\s*$/gm;
+    text = text.replace(urlInParenthesesPattern, (_match, url) => {
+      console.log('✅ Detectada URL en paréntesis:', url);
+      return `\n\n![Imagen](${url.trim()})\n\n`;
+    });
+
+    // Detectar URLs de Unsplash/Supabase sin extensión
+    const imageHostPattern = /\((https?:\/\/(?:images\.unsplash\.com|[^/]+\.supabase\.co\/storage)[^\s)]+)\)/gi;
+    text = text.replace(imageHostPattern, (_match, url) => {
+      console.log('✅ Detectada URL de servicio de imágenes:', url);
+      return `\n\n![Imagen](${url.trim()})\n\n`;
+    });
+
+    // Detectar formato markdown roto: ![alt]\n(url)
+    const brokenMarkdownPattern = /!\[([^\]]*)\]\s*\n\s*\(([^)]+)\)/gi;
+    text = text.replace(brokenMarkdownPattern, (_match, alt, url) => {
+      console.log('✅ Detectado markdown roto:', alt, url);
+      return `\n\n![${alt || 'Imagen'}](${url.trim()})\n\n`;
+    });
+
+    console.log('🔄 Texto convertido final:', text);
+    return text;
+  };
+
   /* ========== Formatear Respuesta según Tipo ========== */
   const formatearRespuesta = (data: OrquestadorResponse): string => {
     console.log('🔍 Formateando respuesta:', data);
@@ -356,12 +414,12 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
     // Consulta específica financiera
     if (data.categoria === 'financiero' && typeof data.respuesta === 'string') {
-      return data.respuesta;
+      return convertImageUrlsToMarkdown(data.respuesta);
     }
 
     // Respuesta general
     if (typeof data.respuesta === 'string') {
-      return data.respuesta;
+      return convertImageUrlsToMarkdown(data.respuesta);
     }
 
     // Si respuesta es un array u objeto, intentar convertirlo a texto legible
@@ -447,6 +505,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
       // Formatear la respuesta según el tipo
       const contenidoFormateado = formatearRespuesta(parsed);
+      console.log('📝 Contenido formateado antes de renderizar:', contenidoFormateado);
 
       const aiMsg: ChatMsg = {
         id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
@@ -499,12 +558,18 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           .trim();
 
         return (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            {/* Texto primero */}
+            {text ? (
+              <div className="whitespace-pre-wrap break-words overflow-auto">{text}</div>
+            ) : null}
+            
+            {/* Imágenes después */}
             <div className="flex flex-wrap gap-2">
               {unique.map((img) => (
                 <figure
                   key={img.src}
-                  className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer group"
+                  className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer group shadow-sm hover:shadow-md transition-shadow"
                 >
                   <img
                     src={img.src}
@@ -521,9 +586,6 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 </figure>
               ))}
             </div>
-            {text ? (
-              <div className="whitespace-pre-wrap break-words overflow-auto">{text}</div>
-            ) : null}
           </div>
         );
       }
