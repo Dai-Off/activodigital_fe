@@ -6,7 +6,6 @@ import { twMerge } from 'tailwind-merge';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
-import Layout from './Layout';
 import { CookieConsent } from './CookieConsent';
 // Imágenes del hero: usa la carpeta public
 const img1 = '/imageHero.jpg';
@@ -1558,14 +1557,12 @@ const ChatSection = memo(function ChatSection() {
 
 export default function Landing() {
   return (
-    <Layout>
-      <div className='min-h-screen overflow-x-hidden' style={{ backgroundColor: '#FFFFFF' }}>
-        <Hero />
-        <FeaturesSection />
-        <SecuritySection />
-        <ChatSection />
-        <CookieConsent />
-      </div>
-    </Layout>
+    <div className='min-h-screen overflow-x-hidden' style={{ backgroundColor: '#FFFFFF' }}>
+      <Hero />
+      <FeaturesSection />
+      <SecuritySection />
+      <ChatSection />
+      <CookieConsent />
+    </div>
   );
 }
