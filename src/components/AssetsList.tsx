@@ -734,220 +734,119 @@ export default function AssetsList() {
                 {/* Left Section */}
                 <div className="flex-1 w-full lg:pr-6">
                   {/* Main Metrics */}
-                  <div className="lg:grid lg:grid-cols-4 lg:gap-6 mb-4">
-                    {/* Mobile Carousel */}
-                    <div className="lg:hidden">
-                      <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
-                        {user?.role === 'propietario' ? (
-                          <>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600 mb-1">
-                                  {formatBuildingValue(dashboardStats.totalValue)}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('totalValue', { defaultValue: 'Valor total' })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {dashboardStats.totalAssets}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('assets', { defaultValue: 'Activos' })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-901 mb-1">
-                                  {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('totalSurface', { defaultValue: 'Superficie total' })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {(dashboardStats.totalEmissions ??
-                                    calculatedTotalEmissions
-                                  ).toLocaleString()}{' '}
-                                  tCO₂ eq
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('annualEmissions', {
-                                    defaultValue: 'Emisiones anuales',
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {dashboardStats.totalAssets}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('assignedBuildings', {
-                                    defaultValue: 'Edificios asignados',
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {dashboardStats.completedBooks}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('completedBooks', { defaultValue: 'Libros completados' })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {dashboardStats.pendingBooks}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('pendingBooks', { defaultValue: 'Pendientes' })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900 mb-1">
-                                  {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {t('totalSurface', { defaultValue: 'Superficie total' })}
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Desktop Grid */}
-                    <div className="hidden lg:contents">
-                      {user?.role === 'propietario' ? (
-                        <>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600 mb-1">
-                              {formatBuildingValue(dashboardStats.totalValue)}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('totalValue', { defaultValue: 'Valor total' })}
-                            </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4">
+                    {user?.role === 'propietario' ? (
+                      <>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mb-1">
+                            {formatBuildingValue(dashboardStats.totalValue)}
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.totalAssets}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('assets', { defaultValue: 'Activos' })}
-                            </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {t('totalValue', { defaultValue: 'Valor total' })}
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('totalSurface', { defaultValue: 'Superficie total' })}
-                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalAssets}
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {(dashboardStats.totalEmissions ??
-                                calculatedTotalEmissions
-                              ).toLocaleString()}{' '}
-                              tCO₂ eq
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('annualEmissions', { defaultValue: 'Emisiones anuales' })}
-                            </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {t('assets', { defaultValue: 'Activos' })}
                           </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.totalAssets}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('assignedBuildings', {
-                                defaultValue: 'Edificios asignados',
-                              })}
-                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.completedBooks}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('completedBooks', { defaultValue: 'Libros completados' })}
-                            </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {t('totalSurface', { defaultValue: 'Superficie total' })}
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.pendingBooks}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('pendingBooks', { defaultValue: 'Pendientes' })}
-                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {(dashboardStats.totalEmissions ??
+                              calculatedTotalEmissions
+                            ).toLocaleString()}{' '}
+                            <span className="text-sm sm:text-base">tCO₂ eq</span>
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-900 mb-1">
-                              {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {t('totalSurface', { defaultValue: 'Superficie total' })}
-                            </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {t('annualEmissions', {
+                              defaultValue: 'Emisiones anuales',
+                            })}
                           </div>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalAssets}
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                            {t('assignedBuildings', {
+                              defaultValue: 'Edificios asignados',
+                            })}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.completedBooks}
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                            {t('completedBooks', { defaultValue: 'Libros completados' })}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.pendingBooks}
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-500">
+                            {t('pendingBooks', { defaultValue: 'Pendientes' })}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                            {t('totalSurface', { defaultValue: 'Superficie total' })}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Separator Line */}
                   <div className="border-t border-gray-200 mb-4" />
 
                   {/* Performance Details */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {user?.role === 'propietario' ? (
                       <>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
                             {t('averageEnergyClass', {
-                              defaultValue: 'Clase energética promedio:',
+                              defaultValue: 'Clase energética promedio',
                             })}
                           </div>
                           <div className="flex items-center justify-center">
                             {dashboardStats.averageEnergyClass ? (
                               <div
-                                className={`w-6 h-6 rounded-full flex items-center justify-center ${getCEEColor(
+                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getCEEColor(
                                   dashboardStats.averageEnergyClass,
                                 )}`}
                               >
-                                <span className="text-xs font-medium text-white">
+                                <span className="text-sm sm:text-base font-bold text-white">
                                   {dashboardStats.averageEnergyClass}
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-400">-</span>
+                              <span className="text-lg font-bold text-gray-400">-</span>
                             )}
                           </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
-                            {t('averageESGScore', { defaultValue: 'ESG Score medio:' })}
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                            {t('averageESGScore', { defaultValue: 'ESG Score medio' })}
                           </div>
                           <div className="flex flex-col items-center justify-center gap-1">
                             {dashboardStats.averageESGScore ? (
@@ -956,7 +855,7 @@ export default function AssetsList() {
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
                                   fill={getESGColorFromScore(dashboardStats.averageESGScore)}
-                                  className="w-6 h-6"
+                                  className="w-8 h-8 sm:w-10 sm:h-10"
                                   style={{
                                     filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))',
                                   }}
@@ -964,36 +863,38 @@ export default function AssetsList() {
                                 >
                                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                 </svg>
-                                <span className="text-xs font-medium text-gray-700">
+                                <span className="text-sm font-bold text-gray-700">
                                   {dashboardStats.averageESGScore}
                                 </span>
                               </>
                             ) : (
-                              <span className="text-sm text-gray-400">-</span>
+                              <span className="text-lg font-bold text-gray-400">-</span>
                             )}
                           </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
+                        <div className="bg-gray-50 rounded-lg p-4 text-center sm:col-span-2 lg:col-span-1">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
                             {t('completedDigitalBook', {
-                              defaultValue: 'Libro Digital completo:',
+                              defaultValue: 'Libros completados',
                             })}
                           </div>
-                          <div className="text-sm font-bold text-gray-900">
-                            {dashboardStats.completedBooks} {t('of', { defaultValue: 'de' })}{' '}
-                            {dashboardStats.totalAssets}
+                          <div className="text-lg sm:text-xl font-bold text-gray-900">
+                            {dashboardStats.completedBooks}{' '}
+                            <span className="text-sm font-normal text-gray-500">
+                              {t('of', { defaultValue: 'de' })} {dashboardStats.totalAssets}
+                            </span>
                           </div>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
                             {t('mostCommonTypology', {
-                              defaultValue: 'Tipología más común:',
+                              defaultValue: 'Tipología más común',
                             })}
                           </div>
-                          <div className="text-sm font-bold text-gray-900">
+                          <div className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
                             {dashboardStats.mostCommonTypology
                               ? getBuildingTypologyLabel(
                                   dashboardStats.mostCommonTypology as any,
@@ -1001,21 +902,23 @@ export default function AssetsList() {
                               : 'N/A'}
                           </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
-                            {t('averageUnits', { defaultValue: 'Promedio de unidades:' })}
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                            {t('averageUnits', { defaultValue: 'Promedio unidades' })}
                           </div>
-                          <div className="text-sm font-bold text-gray-900">
+                          <div className="text-lg sm:text-xl font-bold text-gray-900">
                             {dashboardStats.averageUnitsPerBuilding}
                           </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">
-                            {t('averageAge', { defaultValue: 'Edad promedio:' })}
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                            {t('averageAge', { defaultValue: 'Edad promedio' })}
                           </div>
-                          <div className="text-sm font-bold text-gray-900">
+                          <div className="text-lg sm:text-xl font-bold text-gray-900">
                             {dashboardStats.averageBuildingAge}{' '}
-                            {t('years', { defaultValue: 'años' })}
+                            <span className="text-sm font-normal text-gray-500">
+                              {t('years', { defaultValue: 'años' })}
+                            </span>
                           </div>
                         </div>
                       </>
@@ -1024,9 +927,9 @@ export default function AssetsList() {
                 </div>
 
                 {/* Right Section - Progress Chart */}
-                <div className="flex flex-col items-center justify-center w-full lg:w-auto">
-                  <div className="relative w-24 h-24 mb-3" aria-hidden="true">
-                    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                <div className="flex flex-col items-center justify-center w-full lg:w-auto mt-6 lg:mt-0">
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-3" aria-hidden="true">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                       <path
                         className="text-gray-200"
                         stroke="currentColor"
@@ -1053,7 +956,7 @@ export default function AssetsList() {
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-green-500">
+                        <div className="text-base sm:text-lg lg:text-xl font-bold text-green-500">
                           {user?.role === 'propietario'
                             ? `${dashboardStats.greenFinancingEligiblePercentage}%`
                             : `${dashboardStats.completionPercentage}%`}
@@ -1062,8 +965,8 @@ export default function AssetsList() {
                     </div>
                   </div>
 
-                  <div className="text-center max-w-[120px]">
-                    <div className="text-xs text-gray-500 leading-tight">
+                  <div className="text-center max-w-[140px] sm:max-w-[160px]">
+                    <div className="text-xs sm:text-sm text-gray-500 leading-tight">
                       {user?.role === 'propietario'
                         ? t('greenFinancingEligible', {
                             defaultValue: '% cartera apta para financiación verde',
@@ -1126,90 +1029,92 @@ export default function AssetsList() {
                     whileHover={{ y: -4 }}
                   >
                     <Card
-                      className={`bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all duration-300 overflow-hidden cursor-pointer h-[320px] flex`}
+                      className="bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col sm:flex-row sm:h-[280px] lg:h-[224px]"
                       onClick={() => navigate(`/edificio/${building.id}`)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
                     >
-                      <div className="flex flex-col md:flex-row w-full h-full">
-                        {/* Image Carousel */}
-                        <div className="md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800 h-full">
-                          <BuildingCarousel images={building.images?.map(img => img.url) ?? []} name={building.name} />
+                      {/* Image Carousel */}
+                      <div className="w-full h-48 sm:w-64 sm:h-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800">
+                        <BuildingCarousel images={building.images?.map(img => img.url) ?? []} name={building.name} />
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1 pt-8 px-4 pb-4 sm:p-6 flex flex-col justify-between min-h-0">
+                        {/* Header */}
+                        <div className="mb-4">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-1">{building.name}</h3>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm line-clamp-1">{getCityAndDistrict(building.address)}</span>
+                          </div>
                         </div>
-                        {/* Content */}
-                        <div className="flex-1 p-6 h-full flex flex-col justify-between">
-                          {/* Header */}
-                          <div className="mb-6">
-                            <h3 className="text-xl text-gray-900 mb-2">{building.name}</h3>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <MapPin className="w-4 h-4" />
-                              <span className="text-sm">{getCityAndDistrict(building.address)}</span>
-                            </div>
+                        
+                        {/* Info Grid - Responsive layout */}
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">{t('value', { defaultValue: 'Valor' })}</p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900 truncate">{formatBuildingValue(building.price)}</p>
                           </div>
-                          {/* Info Grid */}
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">{t('value', { defaultValue: 'Valor' })}</p>
-                              <p className="text-lg text-gray-900">{formatBuildingValue(building.price)}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">{t('squareMeters', { defaultValue: 'Superficie' })}</p>
-                              <p className="text-lg text-gray-900">{building.squareMeters ? `${building.squareMeters} m²` : '-'}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">{t('status', { defaultValue: 'Estado' })}</p>
-                              <Badge className={getEstadoBadgeClassName(t('operational', { defaultValue: 'Operativo' })) + ' flex items-center gap-2'}>
-                                {(() => {
-                                  const estado = t('operational', { defaultValue: 'Operativo' });
-                                  if (estado === 'Operativo') {
-                                    return <CircleCheck className="w-4 h-4 text-green-400" />;
-                                  }
-                                  if (estado === 'En remodelación') {
-                                    return <RefreshCw className="w-4 h-4 text-yellow-400" />;
-                                  }
-                                  return <MinusCircle className="w-4 h-4 text-gray-400" />;
-                                })()}
-                                <span>{t('operational', { defaultValue: 'Operativo' })}</span>
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">{t('energyCertificate', { defaultValue: 'Certificación Energética' })}</p>
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-sm">
-                                  {ceeRating}
-                                </div>
-                              </div>
-                            </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">{t('squareMeters', { defaultValue: 'Superficie' })}</p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900">{building.squareMeters ? `${building.squareMeters} m²` : '-'}</p>
                           </div>
-                          {/* ESG and Libro */}
-                          <div className="flex items-center gap-8">
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs text-gray-500">ESG Score</span>
-                                <span className="text-sm text-gray-900">{esgScore !== null ? `${esgScore}/100` : '-'}</span>
-                              </div>
-                              <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${esgScore ?? 0}%` }}
-                                  transition={{ duration: 0.6, delay: 0.3 + index * 0.16 }}
-                                  className="absolute inset-y-0 left-0 bg-cyan-500 rounded-full"
-                                />
-                              </div>
-                            </div>
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-xs text-gray-500 mb-1">{t('status', { defaultValue: 'Estado' })}</p>
+                            <Badge className={getEstadoBadgeClassName(t('operational', { defaultValue: 'Operativo' })) + ' flex items-center gap-1 sm:gap-2 text-xs'}>
+                              {(() => {
+                                const estado = t('operational', { defaultValue: 'Operativo' });
+                                if (estado === 'Operativo') {
+                                  return <CircleCheck className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />;
+                                }
+                                if (estado === 'En remodelación') {
+                                  return <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />;
+                                }
+                                return <MinusCircle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />;
+                              })()}
+                              <span className="truncate">{t('operational', { defaultValue: 'Operativo' })}</span>
+                            </Badge>
+                          </div>
+                          <div className="col-span-1">
+                            <p className="text-xs text-gray-500 mb-1">{t('energyCertificate', { defaultValue: 'Cert. Energética' })}</p>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">{t('digitalBook', { defaultValue: 'Libro Digital' })}</span>
-                              {completedSections === totalSections ? (
-                                <div className="w-8 h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">
-                                  <Check className="w-5 h-5 text-green-600" />
-                                </div>
-                              ) : (
-                                <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
-                                  <X className="w-5 h-5 text-gray-500" />
-                                </div>
-                              )}
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-xs sm:text-sm font-medium">
+                                {ceeRating}
+                              </div>
                             </div>
+                          </div>
+                        </div>
+                        
+                        {/* ESG and Digital Book - Bottom section */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
+                          <div className="flex-1 w-full sm:w-auto">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs text-gray-500">ESG Score</span>
+                              <span className="text-sm font-medium text-gray-900">{esgScore !== null ? `${esgScore}/100` : '-'}</span>
+                            </div>
+                            <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${esgScore ?? 0}%` }}
+                                transition={{ duration: 0.6, delay: 0.3 + index * 0.16 }}
+                                className="absolute inset-y-0 left-0 bg-cyan-500 rounded-full"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-xs text-gray-500 hidden sm:block">{t('digitalBook', { defaultValue: 'Libro Digital' })}</span>
+                            <span className="text-xs text-gray-500 sm:hidden">{t('digitalBook', { defaultValue: 'Libro' })}</span>
+                            {completedSections === totalSections ? (
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">
+                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
+                                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1255,6 +1160,29 @@ export default function AssetsList() {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Line clamp utilities for text truncation */
+        .line-clamp-1 {
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 1;
+          overflow: hidden;
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+        }
+        
+        /* Smooth scrolling for mobile cards */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>

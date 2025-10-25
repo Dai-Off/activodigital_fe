@@ -615,8 +615,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               </div>
 
               <nav className="hidden md:flex space-x-1">
-                {/* Public links - always visible */}
-               {user && ( <Link
+                {/* Public links - siempre visibles */}
+                <Link
                   to="/documentos"
                   className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive('/documentos')
@@ -628,9 +628,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   {isActive('/documentos') && (
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
                   )}
-                </Link>)}
+                </Link>
 
-                {/* Authenticated user links */}
+                {/* Enlaces privados solo si hay usuario */}
                 {user && (
                   <>
                     <Link

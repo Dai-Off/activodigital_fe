@@ -6,10 +6,11 @@ import { twMerge } from 'tailwind-merge';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from '@radix-ui/react-slot';
 import * as React from 'react';
+import Layout from './Layout';
 import { CookieConsent } from './CookieConsent';
-// Placeholder images - replace these with actual image imports from your assets
-const img1 = 'imageHero.jpg';
-const img2 = 'imageHero1.jpg';
+// Imágenes del hero: usa la carpeta public
+const img1 = '/imageHero.jpg';
+const img2 = '/imageHero1.jpg';
 
 // Utils
 function cn(...inputs: ClassValue[]) {
@@ -263,7 +264,7 @@ const Hero = memo(function Hero() {
                   <motion.img
                     key={currentSlide}
                     src={slides[currentSlide]}
-                    alt="Property"
+                    alt="Property2"
                     initial={{ opacity: 0, scale: 1.08, filter: 'blur(10px)' }}
                     animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
@@ -700,11 +701,10 @@ const FeaturesSection = memo(function FeaturesSection() {
             className='relative'
           >
             <div 
-              className='relative overflow-hidden rounded-[20px] lg:shadow-[0_4px_24px_rgba(91,141,239,0.15)] shadow-[0_8px_32px_rgba(91,141,239,0.12)]'
+              className='relative overflow-hidden rounded-[16px] sm:rounded-[20px] shadow-[0_4px_20px_rgba(91,141,239,0.12)] lg:shadow-[0_4px_24px_rgba(91,141,239,0.15)] h-[463px] sm:h-[529px] lg:h-[520px]'
               style={{ 
                 backgroundColor: 'white',
-                border: '1px solid rgba(91, 141, 239, 0.08)',
-                height: '520px'
+                border: '1px solid rgba(91, 141, 239, 0.08)'
               }}
             >
               <AnimatePresence mode='wait'>
@@ -714,8 +714,7 @@ const FeaturesSection = memo(function FeaturesSection() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.6 }}
-                  className='w-full p-4 sm:p-5 md:p-6 flex flex-col'
-                  style={{ height: '520px' }}
+                  className='w-full p-3 sm:p-4 md:p-5 lg:p-6 pb-10 sm:pb-8 lg:pb-6 flex flex-col h-full'
                 >
                   <div className='flex items-center justify-between mb-4 sm:mb-5'>
                     <h3 className='text-sm sm:text-base' style={{ color: '#1E293B', fontWeight: 600 }}>
@@ -741,7 +740,8 @@ const FeaturesSection = memo(function FeaturesSection() {
 
                   {tableSlides[currentTableSlide].type === 'documents' && (
                     <div className='space-y-2 flex-1 overflow-hidden'>
-                      <div className='grid grid-cols-12 gap-2 px-3 py-2 text-xs' style={{ color: '#64748B', fontWeight: 500 }}>
+                      {/* Desktop Header */}
+                      <div className='hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs' style={{ color: '#64748B', fontWeight: 500 }}>
                         <div className='col-span-4'>Documento</div>
                         <div className='col-span-2'>Categoría</div>
                         <div className='col-span-2'>Sistema</div>
@@ -755,34 +755,67 @@ const FeaturesSection = memo(function FeaturesSection() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.1 }}
-                          className='grid grid-cols-12 gap-2 px-3 py-3 rounded-lg items-center'
+                          className='px-3 py-3 rounded-lg'
                           style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F5F9' }}
                         >
-                          <div className='col-span-4'>
+                          {/* Mobile Layout */}
+                          <div className='md:hidden space-y-2'>
                             <div className='flex items-center gap-2'>
-                              <input type='checkbox' className='w-4 h-4 rounded' style={{ accentColor: '#5B8DEF' }} />
-                              <div>
-                                <p className='text-xs' style={{ color: '#1E293B', fontWeight: 500 }}>{doc.name}</p>
-                                <p className='text-xs' style={{ color: '#94A3B8' }}>{doc.version}</p>
+                              <input type='checkbox' className='w-4 h-4 rounded flex-shrink-0' style={{ accentColor: '#5B8DEF' }} />
+                              <div className='flex-1 min-w-0'>
+                                <p className='text-xs font-medium truncate' style={{ color: '#1E293B' }}>{doc.name}</p>
+                                <p className='text-xs truncate' style={{ color: '#94A3B8' }}>{doc.version}</p>
+                              </div>
+                              <div className='flex-shrink-0'>
+                                {doc.status === 'complete' ? (
+                                  <CheckCircle2 className='w-5 h-5' style={{ color: '#4ECCA3' }} />
+                                ) : (
+                                  <Clock className='w-5 h-5' style={{ color: '#F59E0B' }} />
+                                )}
+                              </div>
+                            </div>
+                            <div className='flex items-center justify-between gap-2 text-xs'>
+                              <span 
+                                className='px-2 py-1 rounded text-xs'
+                                style={{ backgroundColor: `${doc.categoryColor}15`, color: doc.categoryColor, fontWeight: 500 }}
+                              >
+                                {doc.category}
+                              </span>
+                              <div className='flex gap-4 text-xs' style={{ color: '#64748B' }}>
+                                <span>{doc.system}</span>
+                                <span>{doc.date}</span>
                               </div>
                             </div>
                           </div>
-                          <div className='col-span-2'>
-                            <span 
-                              className='px-2 py-1 rounded text-xs'
-                              style={{ backgroundColor: `${doc.categoryColor}15`, color: doc.categoryColor, fontWeight: 500 }}
-                            >
-                              {doc.category}
-                            </span>
-                          </div>
-                          <div className='col-span-2 text-xs' style={{ color: '#64748B' }}>{doc.system}</div>
-                          <div className='col-span-2 text-xs' style={{ color: '#64748B' }}>{doc.date}</div>
-                          <div className='col-span-2'>
-                            {doc.status === 'complete' ? (
-                              <CheckCircle2 className='w-5 h-5' style={{ color: '#4ECCA3' }} />
-                            ) : (
-                              <Clock className='w-5 h-5' style={{ color: '#F59E0B' }} />
-                            )}
+                          
+                          {/* Desktop Layout */}
+                          <div className='hidden md:grid grid-cols-12 gap-2 items-center'>
+                            <div className='col-span-4'>
+                              <div className='flex items-center gap-2'>
+                                <input type='checkbox' className='w-4 h-4 rounded' style={{ accentColor: '#5B8DEF' }} />
+                                <div>
+                                  <p className='text-xs' style={{ color: '#1E293B', fontWeight: 500 }}>{doc.name}</p>
+                                  <p className='text-xs' style={{ color: '#94A3B8' }}>{doc.version}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className='col-span-2'>
+                              <span 
+                                className='px-2 py-1 rounded text-xs'
+                                style={{ backgroundColor: `${doc.categoryColor}15`, color: doc.categoryColor, fontWeight: 500 }}
+                              >
+                                {doc.category}
+                              </span>
+                            </div>
+                            <div className='col-span-2 text-xs' style={{ color: '#64748B' }}>{doc.system}</div>
+                            <div className='col-span-2 text-xs' style={{ color: '#64748B' }}>{doc.date}</div>
+                            <div className='col-span-2'>
+                              {doc.status === 'complete' ? (
+                                <CheckCircle2 className='w-5 h-5' style={{ color: '#4ECCA3' }} />
+                              ) : (
+                                <Clock className='w-5 h-5' style={{ color: '#F59E0B' }} />
+                              )}
+                            </div>
                           </div>
                         </motion.div>
                       ))}
@@ -791,7 +824,70 @@ const FeaturesSection = memo(function FeaturesSection() {
 
                   {tableSlides[currentTableSlide].type === 'maintenance' && (
                     <div className='space-y-4 flex-1 overflow-hidden'>
-                      <div className='grid grid-cols-2 gap-4'>
+                      {/* Mobile Layout - Stack vertically */}
+                      <div className='block sm:hidden space-y-4'>
+                        {/* Calendar Section */}
+                        <div>
+                          <p className='text-xs mb-3' style={{ color: '#64748B', fontWeight: 500 }}>Calendario de Mantenimiento</p>
+                          <div className='grid grid-cols-7 gap-0.5 text-center text-xs mb-2' style={{ color: '#94A3B8' }}>
+                            {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(day => (
+                              <div key={day} className='py-1'>{day}</div>
+                            ))}
+                          </div>
+                          <div className='grid grid-cols-7 gap-0.5 text-center'>
+                            {[...Array(35)].map((_, i) => {
+                              const day = i - 2;
+                              const isHighlighted = [2, 10, 24].includes(day);
+                              return (
+                                <div 
+                                  key={i} 
+                                  className='text-xs py-1'
+                                  style={{ 
+                                    color: isHighlighted ? 'white' : '#64748B',
+                                    backgroundColor: isHighlighted ? '#5B8DEF' : 'transparent',
+                                    borderRadius: '3px',
+                                    fontWeight: isHighlighted ? 600 : 400,
+                                    minHeight: '24px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  {day > 0 && day <= 31 ? day : ''}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        
+                        {/* Stats Section - Mobile grid */}
+                        <div>
+                          <p className='text-xs mb-3' style={{ color: '#64748B', fontWeight: 500 }}>Estado de Tareas</p>
+                          <div className='grid grid-cols-2 gap-2'>
+                            {[
+                              { label: 'Completadas', value: '24', color: '#4ECCA3' },
+                              { label: 'En progreso', value: '8', color: '#5B8DEF' },
+                              { label: 'Programadas', value: '12', color: '#F59E0B' },
+                              { label: 'Vencidas', value: '3', color: '#EF4444' }
+                            ].map((stat, idx) => (
+                              <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className='p-2 rounded-lg text-center'
+                                style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F5F9' }}
+                              >
+                                <div className='text-base font-bold mb-1' style={{ color: stat.color }}>{stat.value}</div>
+                                <div className='text-xs' style={{ color: '#64748B' }}>{stat.label}</div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Desktop/Tablet Layout - Side by side */}
+                      <div className='hidden sm:grid grid-cols-2 gap-4'>
                         <div>
                           <p className='text-xs mb-3' style={{ color: '#64748B', fontWeight: 500 }}>Calendario de Mantenimiento</p>
                           <div className='grid grid-cols-7 gap-1 text-center text-xs mb-2' style={{ color: '#94A3B8' }}>
@@ -806,7 +902,7 @@ const FeaturesSection = memo(function FeaturesSection() {
                               return (
                                 <div 
                                   key={i} 
-                                  className={`text-xs py-1`}
+                                  className='text-xs py-1'
                                   style={{ 
                                     color: isHighlighted ? 'white' : '#64748B',
                                     backgroundColor: isHighlighted ? '#5B8DEF' : 'transparent',
@@ -846,6 +942,7 @@ const FeaturesSection = memo(function FeaturesSection() {
                         </div>
                       </div>
 
+                      {/* Task List Section */}
                       <div>
                         <p className='text-xs mb-3' style={{ color: '#64748B', fontWeight: 500 }}>Tareas de Mantenimiento</p>
                         <div className='space-y-2'>
@@ -855,10 +952,10 @@ const FeaturesSection = memo(function FeaturesSection() {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: idx * 0.15 }}
-                              className='flex items-center justify-between p-3 rounded-lg'
+                              className='flex items-center justify-between p-2 sm:p-3 rounded-lg'
                               style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F5F9' }}
                             >
-                              <div className='flex items-center gap-3'>
+                              <div className='flex items-center gap-2 sm:gap-3 min-w-0 flex-1'>
                                 <div 
                                   className='w-2 h-2 rounded-full flex-shrink-0'
                                   style={{ 
@@ -866,13 +963,13 @@ const FeaturesSection = memo(function FeaturesSection() {
                                                    task.status === 'in-progress' ? '#5B8DEF' : '#F59E0B' 
                                   }}
                                 />
-                                <div>
-                                  <p className='text-xs' style={{ color: '#1E293B', fontWeight: 500 }}>{task.name}</p>
-                                  <p className='text-xs' style={{ color: '#94A3B8' }}>{task.subtitle}</p>
+                                <div className='min-w-0 flex-1'>
+                                  <p className='text-xs truncate' style={{ color: '#1E293B', fontWeight: 500 }}>{task.name}</p>
+                                  <p className='text-xs truncate sm:block hidden' style={{ color: '#94A3B8' }}>{task.subtitle}</p>
                                 </div>
                               </div>
                               <button 
-                                className='px-2 py-1 rounded text-xs'
+                                className='px-2 py-1 rounded text-xs flex-shrink-0 ml-2'
                                 style={{ 
                                   backgroundColor: task.status === 'urgent' ? '#EF4444' : 
                                                   task.status === 'in-progress' ? '#5B8DEF' : '#F59E0B',
@@ -893,37 +990,41 @@ const FeaturesSection = memo(function FeaturesSection() {
 
                   {tableSlides[currentTableSlide].type === 'compliance' && (
                     <div className='space-y-4 flex-1 overflow-hidden'>
-                      <div className='grid grid-cols-2 gap-3'>
+                      {/* Certificates Grid - Responsive */}
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3'>
                         {tableSlides[currentTableSlide].certificates?.map((cert, idx) => (
                           <motion.div
                             key={idx}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: idx * 0.08 }}
-                            className='p-3 rounded-lg relative'
+                            className='p-2 sm:p-3 rounded-lg relative'
                             style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F5F9' }}
                           >
                             <div 
-                              className='w-2 h-2 rounded-full absolute top-3 right-3'
+                              className='w-2 h-2 rounded-full absolute top-2 sm:top-3 right-2 sm:right-3'
                               style={{ backgroundColor: cert.statusColor }}
                             />
-                            <p className='text-xs mb-1' style={{ color: '#1E293B', fontWeight: 600 }}>{cert.name}</p>
-                            <p className='text-xs mb-2' style={{ color: '#94A3B8' }}>
+                            <p className='text-xs mb-1 pr-4' style={{ color: '#1E293B', fontWeight: 600 }}>{cert.name}</p>
+                            <p className='text-xs mb-1 sm:mb-2' style={{ color: '#94A3B8' }}>
                               Estado: <span style={{ color: cert.statusColor, fontWeight: 500 }}>{cert.status}</span>
                             </p>
-                            {cert.expiry && (
-                              <p className='text-xs' style={{ color: '#64748B' }}>Vencimiento: {cert.expiry}</p>
-                            )}
-                            {cert.calification && (
-                              <p className='text-xs' style={{ color: '#64748B' }}>Calificación: {cert.calification}</p>
-                            )}
-                            {cert.type && (
-                              <p className='text-xs' style={{ color: '#64748B' }}>Tipo: {cert.type}</p>
-                            )}
+                            <div className='space-y-0.5 text-xs' style={{ color: '#64748B' }}>
+                              {cert.expiry && (
+                                <p>Vencimiento: {cert.expiry}</p>
+                              )}
+                              {cert.calification && (
+                                <p>Calificación: {cert.calification}</p>
+                              )}
+                              {cert.type && (
+                                <p className='truncate'>Tipo: {cert.type}</p>
+                              )}
+                            </div>
                           </motion.div>
                         ))}
                       </div>
 
+                      {/* Timeline Section */}
                       <div>
                         <p className='text-xs mb-3' style={{ color: '#64748B', fontWeight: 500 }}>Cronograma de Vencimientos</p>
                         <div className='space-y-2'>
@@ -933,10 +1034,10 @@ const FeaturesSection = memo(function FeaturesSection() {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: idx * 0.1 }}
-                              className='flex items-center justify-between p-3 rounded-lg'
+                              className='flex items-center justify-between p-2 sm:p-3 rounded-lg gap-2'
                               style={{ backgroundColor: '#FFFFFF', border: '1px solid #F1F5F9' }}
                             >
-                              <div className='flex items-center gap-3'>
+                              <div className='flex items-center gap-2 sm:gap-3 min-w-0 flex-1'>
                                 <div 
                                   className='w-2 h-2 rounded-full flex-shrink-0'
                                   style={{ 
@@ -945,13 +1046,13 @@ const FeaturesSection = memo(function FeaturesSection() {
                                                    item.urgency === 'normal' ? '#5B8DEF' : '#4ECCA3'
                                   }}
                                 />
-                                <div>
-                                  <p className='text-xs' style={{ color: '#1E293B', fontWeight: 500 }}>{item.name}</p>
-                                  <p className='text-xs' style={{ color: '#94A3B8' }}>{item.date}</p>
+                                <div className='min-w-0 flex-1'>
+                                  <p className='text-xs truncate' style={{ color: '#1E293B', fontWeight: 500 }}>{item.name}</p>
+                                  <p className='text-xs truncate sm:block hidden' style={{ color: '#94A3B8' }}>{item.date}</p>
                                 </div>
                               </div>
                               <span 
-                                className='text-xs px-2 py-1 rounded'
+                                className='text-xs px-2 py-1 rounded flex-shrink-0'
                                 style={{ 
                                   backgroundColor: item.urgency === 'urgent' ? '#FEE2E2' : 
                                                   item.urgency === 'warning' ? '#FEF3C7' : 
@@ -973,7 +1074,7 @@ const FeaturesSection = memo(function FeaturesSection() {
                 </motion.div>
               </AnimatePresence>
               
-              <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2'>
+              <div className='absolute bottom-5 sm:bottom-4 lg:bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2'>
                 {tableSlides.map((_, idx) => (
                   <div
                     key={idx}
@@ -1457,12 +1558,14 @@ const ChatSection = memo(function ChatSection() {
 
 export default function Landing() {
   return (
-    <div className='min-h-screen overflow-x-hidden' style={{ backgroundColor: '#FFFFFF' }}>
-      <Hero />
-      <FeaturesSection />
-      <SecuritySection />
-      <ChatSection />
-      <CookieConsent />
-    </div>
+    <Layout>
+      <div className='min-h-screen overflow-x-hidden' style={{ backgroundColor: '#FFFFFF' }}>
+        <Hero />
+        <FeaturesSection />
+        <SecuritySection />
+        <ChatSection />
+        <CookieConsent />
+      </div>
+    </Layout>
   );
 }
