@@ -16,7 +16,9 @@ import AcceptAssignment from './components/AcceptAssignment'
 import InvitationHandler from './components/InvitationHandler'
 import Landing from './components/Landing'
 import AssetsList from './components/AssetsList'
+import CFOAssetsList from './components/CFOAssetsList'
 import BuildingDetail from './components/BuildingDetail'
+import CFOIntakeForm from './components/cfo/CFOIntakeForm'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -96,6 +98,16 @@ function App() {
                   }
                 />
                 <Route
+                  path="/cfo-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <CFOAssetsList />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/documentos"
                   element={
                     <ProtectedRoute>
@@ -170,6 +182,14 @@ function App() {
               </Route>
 
               {/* Rutas fullscreen protegidas */}
+              <Route
+                path="/cfo-intake/:buildingId"
+                element={
+                  <ProtectedRoute>
+                    <CFOIntakeForm />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/edificios/crear"
                 element={

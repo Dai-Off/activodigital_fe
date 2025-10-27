@@ -533,11 +533,19 @@ export const resources = {
         editDataButton: 'Editar datos',
         editLocationButton: 'Editar ubicación',
         createAsset: 'Crear activo',
-        creating: 'Creando...',
-        address: 'Dirección',
-        addressRequired: 'La dirección es obligatoria',
-        locationRequired: 'La ubicación es obligatoria',
-        maxPhotos: 'Máximo {{n}} fotos',
+      creating: 'Creando...',
+      address: 'Dirección',
+      addressRequired: 'La dirección es obligatoria',
+      locationRequired: 'La ubicación es obligatoria',
+      maxPhotos: 'Máximo {{n}} fotos',
+      
+      // --- Protected Route ---
+      protectedRoute: {
+        verifyingAuth: 'Verificando acceso...',
+        accessRestricted: 'Acceso restringido',
+        noPermission: 'No tienes permisos para acceder a esta página.',
+        goBack: 'Volver'
+      },
         buildingCreatedSuccess: 'El activo se ha creado correctamente.',
         errorCreatingAsset: 'Error al crear el activo',
         roleConflict: 'Conflicto de roles',
@@ -1154,6 +1162,14 @@ export const resources = {
         addressRequired: 'Address is required',
         locationRequired: 'Location is required',
         maxPhotos: 'Maximum {{n}} photos',
+        
+        // --- Protected Route ---
+        protectedRoute: {
+          verifyingAuth: 'Verifying access...',
+          accessRestricted: 'Access restricted',
+          noPermission: 'You do not have permission to access this page.',
+          goBack: 'Go back'
+        },
         buildingCreatedSuccess: 'The asset was created successfully.',
         errorCreatingAsset: 'Error creating asset',
         roleConflict: 'Role conflict',
