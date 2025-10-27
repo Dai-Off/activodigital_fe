@@ -704,7 +704,7 @@ export default function AssetsList() {
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t(user.role, { defaultValue: user.role })}
+                  {t(`roles.${user.role}`, { defaultValue: user.role })}
                 </span>
               </div>
 

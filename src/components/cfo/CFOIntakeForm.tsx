@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { BuildingsApiService } from '../../services/buildingsApi';
 import { FinancialSnapshotsService } from '../../services/financialSnapshots';
@@ -10,42 +9,41 @@ import { AppSpinner } from '../ui/LoadingSystem';
 
 interface CFOIntakeData {
   // 1. Precio & Mercado (solo datos adicionales)
-  eur_m2_ref_p50?: number;
-  dom_dias?: number;
+  eur_m2_ref_p50?: number | null;
+  dom_dias?: number | null;
 
   // 2. Ingresos (últimos 12m)
   ingresos_brutos_anuales_eur: number;
-  otros_ingresos_anuales_eur?: number;
+  otros_ingresos_anuales_eur?: number | null;
   walt_meses: number;
   concentracion_top1_pct_noi: number;
-  indexacion_ok?: boolean;
-  mora_pct_12m?: number;
+  indexacion_ok?: boolean | null;
+  mora_pct_12m?: number | null;
 
   // 3. OPEX (últimos 12m)
   opex_total_anual_eur: number;
   opex_energia_anual_eur: number;
-  opex_mantenimiento_anual_eur?: number;
+  opex_mantenimiento_anual_eur?: number | null;
 
   // 4. Documentación (Semáforo)
   libro_edificio_estado: 'completo' | 'parcial' | 'faltante';
   ite_iee_estado: 'ok' | 'pendiente' | 'no_aplica';
   mantenimientos_criticos_ok: boolean;
-  planos_estado?: 'ok' | 'faltante';
+  planos_estado?: 'ok' | 'faltante' | null;
 
   // 5. Deuda (si aplica)
-  dscr?: number;
-  penalidad_prepago_alta?: boolean;
+  dscr?: number | null;
+  penalidad_prepago_alta?: boolean | null;
 
   // 6. Rehabilitación (quick wins)
-  capex_rehab_estimado_eur?: number;
-  ahorro_energia_pct_estimado?: number;
+  capex_rehab_estimado_eur?: number | null;
+  ahorro_energia_pct_estimado?: number | null;
 }
 
 export default function CFOIntakeForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { buildingId } = useParams<{ buildingId: string }>();
-  const { user } = useAuth();
   const { showSuccess } = useToast();
 
   const [activeSection, setActiveSection] = useState(1);
@@ -142,7 +140,7 @@ export default function CFOIntakeForm() {
         building_id: buildingId || '',
         period_start: oneYearAgo.toISOString().split('T')[0],
         period_end: today.toISOString().split('T')[0],
-        currency: 'EUR',
+        currency: 'EUR' as const,
         ingresos_brutos_anuales_eur: formData.ingresos_brutos_anuales_eur || 0,
         otros_ingresos_anuales_eur: formData.otros_ingresos_anuales_eur ?? null,
         walt_meses: formData.walt_meses || 0,
@@ -161,9 +159,9 @@ export default function CFOIntakeForm() {
           libro_edificio_estado: formData.libro_edificio_estado,
           ite_iee_estado: formData.ite_iee_estado,
           mantenimientos_criticos_ok: formData.mantenimientos_criticos_ok,
-          planos_estado: formData.planos_estado ?? null,
-          eur_m2_ref_p50: formData.eur_m2_ref_p50 ?? null,
-          dom_dias: formData.dom_dias ?? null,
+          planos_estado: formData.planos_estado ?? undefined,
+          eur_m2_ref_p50: formData.eur_m2_ref_p50 ?? undefined,
+          dom_dias: formData.dom_dias ?? undefined,
         }
       };
 

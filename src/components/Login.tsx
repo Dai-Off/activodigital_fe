@@ -7,7 +7,7 @@ import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

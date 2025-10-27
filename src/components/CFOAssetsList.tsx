@@ -67,27 +67,6 @@ function getCityAndDistrict(address: string): string {
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
 }
 
-// Función helper para obtener el color de la clase energética
-function getCEEColor(rating: string): string {
-  switch (rating) {
-    case 'A':
-      return 'bg-green-600';
-    case 'B':
-      return 'bg-green-500';
-    case 'C':
-      return 'bg-yellow-400';
-    case 'D':
-      return 'bg-yellow-300';
-    case 'E':
-      return 'bg-orange-500';
-    case 'F':
-      return 'bg-red-500';
-    case 'G':
-      return 'bg-red-600';
-    default:
-      return 'bg-gray-400';
-  }
-}
 
 function PaginationBar({
   page,
@@ -677,7 +656,7 @@ export default function CFOAssetsList() {
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t('cfo', { defaultValue: 'cfo' })}
+                  {t('roles.cfo', { defaultValue: 'cfo' })}
                 </span>
               </div>
 

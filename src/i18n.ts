@@ -32,9 +32,9 @@ export const resources = {
 
       // --- Roles ---
       roles: {
-        propietario: 'propietario',
-        tecnico: 'técnico',
-        cfo: 'CFO',
+        propietario: 'Propietario',
+        tecnico: 'Asset Manager',
+        cfo: 'Chief Financial Manager',
       },
 
       // --- Auth / Sesión ---

@@ -303,7 +303,8 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <div className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
+      <div className="pt-2 pb-8 max-w-full">
+        <div className="px-4 sm:px-6 lg:px-8">
         {loading && (<PageLoader message="Cargando libro digital..." />)}
         {/* Header */}
         <div className="mb-8">
@@ -568,6 +569,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
               </button>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
