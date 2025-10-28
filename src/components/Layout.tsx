@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,7 @@ type ChatMsg = {
   content: string;
   imageSrc?: string;
   imageAlt?: string;
+  data?: any; // Para datos adicionales como edificios
   toolCallPreview?: {
     name: string;
     params: Record<string, string | number | boolean>;
@@ -151,9 +152,11 @@ function injectTableThumbnails(html: string): string {
 function TableHtmlWithClicks({
   html,
   onOpen,
+  onTableClick,
 }: {
   html: string;
   onOpen: (img: { src: string; alt?: string }) => void;
+  onTableClick?: () => void;
 }) {
   const ref = useRef<HTMLSpanElement | null>(null);
 
@@ -164,15 +167,26 @@ function TableHtmlWithClicks({
     const handler = (ev: Event) => {
       const target = ev.target as HTMLElement | null;
       if (!target) return;
+      
+      // Click en imagen (abrir modal)
       if (target.tagName === 'IMG' && (target as HTMLElement).getAttribute('data-thumb') === '1') {
         const imgEl = target as HTMLImageElement;
         onOpen({ src: imgEl.src, alt: imgEl.alt });
+        return;
+      }
+      
+      // Click en tabla (expandir a pantalla completa)
+      if (target.tagName === 'TABLE' || target.closest('table')) {
+        if (onTableClick) {
+          onTableClick();
+        }
+        return;
       }
     };
 
     el.addEventListener('click', handler);
     return () => el.removeEventListener('click', handler);
-  }, [onOpen, html]);
+  }, [onOpen, onTableClick, html]);
 
   return <span ref={ref} dangerouslySetInnerHTML={{ __html: html }} />;
 }
@@ -181,7 +195,7 @@ function TableHtmlWithClicks({
    JSON Parse Helpers
 ============================= */
 function findBalancedJson(raw: string, startIdx: number): string | null {
-  let depth = 0;
+          let depth = 0;
   let i = startIdx;
   let inStr = false;
   let esc = false;
@@ -201,14 +215,14 @@ function findBalancedJson(raw: string, startIdx: number): string | null {
       if (ch === '"') inStr = true;
       else if (ch === '{') depth++;
       else if (ch === '}') {
-        depth--;
+              depth--;
         if (depth === 0) {
           return raw.slice(startIdx, i + 1);
         }
       }
-    }
-  }
-  return null;
+            }
+          }
+          return null;
 }
 
 function parseLooselyForRespuesta(rawText: string): OrquestadorResponse | null {
@@ -221,35 +235,35 @@ function parseLooselyForRespuesta(rawText: string): OrquestadorResponse | null {
     // continue
   }
 
-  let idx = rawText.indexOf('{');
-  while (idx !== -1) {
-    const candidate = findBalancedJson(rawText, idx);
-    if (candidate) {
-      try {
-        const parsed = JSON.parse(candidate);
+        let idx = rawText.indexOf('{');
+        while (idx !== -1) {
+          const candidate = findBalancedJson(rawText, idx);
+          if (candidate) {
+            try {
+              const parsed = JSON.parse(candidate);
         if (parsed && typeof parsed === 'object' && typeof (parsed as any).respuesta === 'string') {
           return parsed as OrquestadorResponse;
-        }
-      } catch {
+              }
+            } catch {
         // try next
-      }
-    }
-    idx = rawText.indexOf('{', idx + 1);
-  }
+            }
+          }
+          idx = rawText.indexOf('{', idx + 1);
+        }
 
-  const guessStart = rawText.indexOf('{"success"');
-  if (guessStart !== -1) {
-    const candidate = findBalancedJson(rawText, guessStart);
-    if (candidate) {
-      try {
+          const guessStart = rawText.indexOf('{"success"');
+          if (guessStart !== -1) {
+            const candidate = findBalancedJson(rawText, guessStart);
+            if (candidate) {
+              try {
         const parsed = JSON.parse(candidate) as any;
         const fallback = parsed?.respuesta ?? JSON.stringify(parsed);
         return { respuesta: String(fallback), ...parsed };
-      } catch {
-        // no-op
-      }
-    }
-  }
+              } catch {
+                // no-op
+              }
+            }
+          }
   return null;
 }
 
@@ -307,6 +321,23 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   }, [isChatOpen]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  /* ========== Limpiar texto para hacerlo profesional ========== */
+  const cleanProfessionalText = (text: string): string => {
+    // Eliminar emojis
+    text = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+    
+    // Eliminar negritas **texto**
+    text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
+    
+    // Eliminar cursivas *texto*
+    text = text.replace(/\*([^*]+)\*/g, '$1');
+    
+    // Limpiar espacios múltiples
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    return text;
+  };
 
   /* ========== Convertir URLs de imágenes a markdown ========== */
   const convertImageUrlsToMarkdown = (text: string): string => {
@@ -366,10 +397,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       // Log completo del primer edificio para debug
       console.log('🏢 Datos del primer edificio:', JSON.stringify(edificios[0], null, 2));
       
-      // Generar tabla HTML con todos los campos disponibles
-      let html = `📋 **Tus edificios (${edificios.length}):**\n\n`;
-      html += '| Img | Nombre | Dirección | m² | Unidades | Pisos | Año | Tipología | Precio | Valor Potencial | Costo Rehab |\n';
-      html += '|-----|--------|-----------|-----|----------|-------|-----|-----------|--------|-----------------|-------------|\n';
+      // Si el chat está en fullscreen, mostrar tabla completa
+      if (isChatFullscreen) {
+        return generateFullTable(edificios);
+      }
+      
+      // Generar tabla HTML responsive (solo imagen y nombre inicialmente)
+      let html = `Tus edificios (${edificios.length}):\n\n`;
+      html += '| Img | Nombre |\n';
+      html += '|-----|--------|\n';
       
       edificios.forEach((edificio: any) => {
         // Detectar imagen principal
@@ -393,20 +429,11 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         }
         
         // Si hay imagen, crear markdown de imagen pequeña
-        const imgCell = imgUrl ? `![${edificio.name || edificio.nombre || 'Edificio'}](${imgUrl})` : '🏢';
+        const imgCell = imgUrl ? `![${edificio.name || edificio.nombre || 'Edificio'}](${imgUrl})` : 'Edificio';
         
         const nombre = edificio.name || edificio.nombre || 'Sin nombre';
-        const direccion = edificio.address || edificio.direccion || '-';
-        const superficie = edificio.square_meters || edificio.superficie || edificio.area || edificio.superficieTotal || '-';
-        const unidades = edificio.num_units || edificio.unidades || edificio.units || edificio.numeroUnidades || '-';
-        const pisos = edificio.num_floors || edificio.pisos || edificio.floors || '-';
-        const anio = edificio.construction_year || edificio.anio || edificio.year || edificio.yearBuilt || '-';
-        const tipologia = edificio.typology || edificio.tipologia || '-';
-        const precio = edificio.price ? `€${edificio.price.toLocaleString()}` : '-';
-        const valorPotencial = edificio.potential_value ? `€${edificio.potential_value.toLocaleString()}` : '-';
-        const costoRehab = edificio.rehabilitation_cost ? `€${edificio.rehabilitation_cost.toLocaleString()}` : '-';
         
-        html += `| ${imgCell} | ${nombre} | ${direccion} | ${superficie} | ${unidades} | ${pisos} | ${anio} | ${tipologia} | ${precio} | ${valorPotencial} | ${costoRehab} |\n`;
+        html += `| ${imgCell} | ${nombre} |\n`;
       });
       
       return html;
@@ -414,12 +441,12 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
     // Consulta específica financiera
     if (data.categoria === 'financiero' && typeof data.respuesta === 'string') {
-      return convertImageUrlsToMarkdown(data.respuesta);
+      return cleanProfessionalText(convertImageUrlsToMarkdown(data.respuesta));
     }
 
     // Respuesta general
     if (typeof data.respuesta === 'string') {
-      return convertImageUrlsToMarkdown(data.respuesta);
+      return cleanProfessionalText(convertImageUrlsToMarkdown(data.respuesta));
     }
 
     // Si respuesta es un array u objeto, intentar convertirlo a texto legible
@@ -430,6 +457,50 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     // Fallback
     return 'Respuesta procesada correctamente.';
   };
+
+  /* ========== Generar Tabla Completa para Pantalla Completa ========== */
+  const generateFullTable = useCallback((edificios: any[]): string => {
+    let html = `Tus edificios (${edificios.length}):\n\n`;
+    html += '| Img | Nombre | Dirección | m² | Unidades | Pisos | Año | Tipología | Precio | Valor Potencial | Costo Rehab |\n';
+    html += '|-----|--------|-----------|-----|----------|-------|-----|-----------|--------|-----------------|-------------|\n';
+    
+    edificios.forEach((edificio: any) => {
+      // Detectar imagen principal
+      let imgUrl = '';
+      if (edificio.images && Array.isArray(edificio.images) && edificio.images.length > 0) {
+        const mainImage = edificio.images.find((img: any) => img.isMain) || edificio.images[0];
+        imgUrl = mainImage?.url || '';
+      }
+      
+      if (!imgUrl) {
+        imgUrl = edificio.imagen 
+          || edificio.image 
+          || edificio.imageUrl 
+          || edificio.photo 
+          || edificio.imagenPrincipal
+          || edificio.coverImage
+          || edificio.thumbnail
+          || '';
+      }
+      
+      const imgCell = imgUrl ? `![${edificio.name || edificio.nombre || 'Edificio'}](${imgUrl})` : '🏢';
+      
+      const nombre = edificio.name || edificio.nombre || 'Sin nombre';
+      const direccion = edificio.address || edificio.direccion || '-';
+      const superficie = edificio.square_meters || edificio.superficie || edificio.area || edificio.superficieTotal || '-';
+      const unidades = edificio.num_units || edificio.unidades || edificio.units || edificio.numeroUnidades || '-';
+      const pisos = edificio.num_floors || edificio.pisos || edificio.floors || '-';
+      const anio = edificio.construction_year || edificio.anio || edificio.year || edificio.yearBuilt || '-';
+      const tipologia = edificio.typology || edificio.tipologia || '-';
+      const precio = edificio.price ? `€${edificio.price.toLocaleString()}` : '-';
+      const valorPotencial = edificio.potential_value ? `€${edificio.potential_value.toLocaleString()}` : '-';
+      const costoRehab = edificio.rehabilitation_cost ? `€${edificio.rehabilitation_cost.toLocaleString()}` : '-';
+      
+      html += `| ${imgCell} | ${nombre} | ${direccion} | ${superficie} | ${unidades} | ${pisos} | ${anio} | ${tipologia} | ${precio} | ${valorPotencial} | ${costoRehab} |\n`;
+    });
+    
+    return html;
+  }, []);
 
   /* ========== Send Message ========== */
   const sendMessage = async (text: string) => {
@@ -493,9 +564,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               'Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta de nuevo.'
             );
 
-        const aiMsg: ChatMsg = {
+      const aiMsg: ChatMsg = {
           id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
-          role: 'ai',
+        role: 'ai',
           content: fallbackMsg,
         };
         await new Promise((r) => setTimeout(r, 300));
@@ -511,6 +582,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())) as string,
         role: 'ai',
         content: contenidoFormateado,
+        data: parsed.tipo === 'lista_edificios' ? { edificios: parsed.edificios } : undefined,
       };
       await new Promise((r) => setTimeout(r, 300));
       setMessages((prev) => [...prev, aiMsg]);
@@ -538,12 +610,81 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       const hasImgs = imgs.length > 0;
 
       if (m.role === 'ai' && containsTable) {
+        // Detectar si es tabla de edificios (contiene "Tus edificios")
+        const isBuildingTable = m.content.includes('Tus edificios');
+        
+        // Si es tabla de edificios y tenemos datos, regenerar contenido según el estado del chat
+        if (isBuildingTable && m.data?.edificios) {
+          const edificios = m.data.edificios;
+          let tableContent: string;
+          
+          if (isChatFullscreen) {
+            // Mostrar tabla completa en fullscreen
+            tableContent = generateFullTable(edificios);
+          } else {
+            // Mostrar tabla responsive (solo imagen y nombre)
+            let html = `Tus edificios (${edificios.length}):\n\n`;
+            html += '| Img | Nombre |\n';
+            html += '|-----|--------|\n';
+            
+            edificios.forEach((edificio: any) => {
+              // Detectar imagen principal
+              let imgUrl = '';
+              if (edificio.images && Array.isArray(edificio.images) && edificio.images.length > 0) {
+                const mainImage = edificio.images.find((img: any) => img.isMain) || edificio.images[0];
+                imgUrl = mainImage?.url || '';
+              }
+              
+              if (!imgUrl) {
+                imgUrl = edificio.imagen 
+                  || edificio.image 
+                  || edificio.imageUrl 
+                  || edificio.photo 
+                  || edificio.imagenPrincipal
+                  || edificio.coverImage
+                  || edificio.thumbnail
+                  || '';
+              }
+              
+              const imgCell = imgUrl ? `![${edificio.name || edificio.nombre || 'Edificio'}](${imgUrl})` : 'Edificio';
+              const nombre = edificio.name || edificio.nombre || 'Sin nombre';
+              
+              html += `| ${imgCell} | ${nombre} |\n`;
+            });
+            
+            tableContent = html;
+          }
+          
+          const htmlRaw = markdownTableToHtml(tableContent);
+          const html = injectTableThumbnails(htmlRaw);
+          return (
+            <div className="ai-markdown-table">
+              <div className="ai-table-container">
+                <TableHtmlWithClicks 
+                  html={html} 
+                  onOpen={(img) => setModalImage(img)}
+                  onTableClick={isBuildingTable ? () => setIsChatFullscreen(true) : undefined}
+                />
+                {isBuildingTable && !isChatFullscreen && (
+                  <div className="mt-2 text-sm text-gray-500 text-center">
+                    Haz clic en la tabla para ver todos los detalles
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+        
+        // Para otras tablas (no edificios), usar contenido original
         const htmlRaw = markdownTableToHtml(m.content);
         const html = injectTableThumbnails(htmlRaw);
         return (
           <div className="ai-markdown-table">
             <div className="ai-table-container">
-              <TableHtmlWithClicks html={html} onOpen={(img) => setModalImage(img)} />
+              <TableHtmlWithClicks 
+                html={html} 
+                onOpen={(img) => setModalImage(img)}
+              />
             </div>
           </div>
         );
@@ -592,7 +733,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
       return <div className="whitespace-pre-wrap break-words overflow-auto">{m.content}</div>;
     };
-  }, [t]);
+  }, [t, isChatFullscreen, generateFullTable]);
 
   /* ========== JSX ========== */
   return (
@@ -612,7 +753,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   alt="Logo" 
                   className="w-48 h-28 object-contain"
                 />
-              </div>
+                </div>
 
               <nav className="hidden md:flex space-x-1">
                 {/* Public links - siempre visibles */}
@@ -633,61 +774,61 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 {/* Enlaces privados solo si hay usuario */}
                 {user && (
                   <>
-                    <Link
+                <Link
                       to="/activos"
-                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         isActive('/activos')
-                          ? 'text-blue-600 bg-blue-50 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
+                      ? 'text-blue-600 bg-blue-50 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
                       {t('nav.assets', 'Activos')}
                       {isActive('/activos') && (
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                      )}
-                    </Link>
+                  )}
+                </Link>
 
-                    <Link
-                      to="/mantenimiento"
-                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive('/mantenimiento')
-                          ? 'text-blue-600 bg-blue-50 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
+                <Link
+                  to="/mantenimiento"
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive('/mantenimiento')
+                      ? 'text-blue-600 bg-blue-50 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
                       {t('nav.maintenance', 'Mantenimiento')}
-                      {isActive('/mantenimiento') && (
+                  {isActive('/mantenimiento') && (
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                      )}
-                    </Link>
+                  )}
+                </Link>
 
-                    <Link
-                      to="/cumplimiento"
-                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive('/cumplimiento')
-                          ? 'text-blue-600 bg-blue-50 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
+                <Link
+                  to="/cumplimiento"
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive('/cumplimiento')
+                      ? 'text-blue-600 bg-blue-50 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
                       {t('nav.compliance', 'Cumplimiento')}
-                      {isActive('/cumplimiento') && (
+                  {isActive('/cumplimiento') && (
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                      )}
-                    </Link>
+                  )}
+                </Link>
 
-                    <Link
-                      to="/unidades"
-                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive('/unidades')
-                          ? 'text-blue-600 bg-blue-50 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
+                <Link
+                  to="/unidades"
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive('/unidades')
+                      ? 'text-blue-600 bg-blue-50 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
                       {t('nav.units', 'Unidades')}
-                      {isActive('/unidades') && (
+                  {isActive('/unidades') && (
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                      )}
-                    </Link>
+                  )}
+                </Link>
                   </>
                 )}
               </nav>
@@ -732,36 +873,36 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 <>
                   <NotificationBell />
                   {/* Perfil */}
-                  <button
+              <button 
                     className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                     aria-label={t('profile', 'Perfil')}
                     title={t('profile', 'Perfil')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <circle cx="12" cy="7" r="4" />
-                      <path d="M5.5 20a6.5 6.5 0 0113 0" />
-                    </svg>
+                  <circle cx="12" cy="7" r="4" />
+                  <path d="M5.5 20a6.5 6.5 0 0113 0" />
+                </svg>
                   </button>
                   {/* Cerrar sesión */}
-                  <button
-                    onClick={() => {
-                      try {
-                        window.localStorage.removeItem('access_token');
-                        window.sessionStorage.removeItem('access_token');
-                      } catch {
+              <button
+                onClick={() => {
+                  try {
+                    window.localStorage.removeItem('access_token');
+                    window.sessionStorage.removeItem('access_token');
+                  } catch {
                         // ignore
-                      }
-                      navigate('/login');
-                    }}
+                  }
+                  navigate('/login');
+                }}
                     className="inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gray-50 text-gray-600 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200"
                     aria-label={t('logout', 'Cerrar sesión')}
                     title={t('logout', 'Cerrar sesión')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
-                    </svg>
-                  </button>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15l3-3m0 0l-3-3m3 3H3" />
+                </svg>
+              </button>
                 </>
               ) : (
                 <>
@@ -827,16 +968,16 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 <span className="font-semibold text-gray-900">{t('chatAI', 'Chat IA')}</span>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setIsChatOpen(false)}
-                  className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <button
+                onClick={() => setIsChatOpen(false)}
+                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label={t('closeChatTitle', 'Cerrar chat IA')}
                   title={t('closeChatTitle', 'Cerrar chat IA')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
               </div>
             </div>
 
@@ -1002,7 +1143,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   <span className="font-semibold text-gray-900">{t('chatAI', 'Chat IA')}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button
+                <button
                     onClick={() => setIsChatFullscreen((f) => !f)}
                     className="rounded-md p-2 bg-white border border-gray-300 text-blue-600 hover:bg-blue-50 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     aria-label={
@@ -1028,14 +1169,14 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                       setIsChatFullscreen(false);
                       setIsChatOpen(false);
                     }}
-                    className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label={t('close', 'Cerrar')}
                     title={t('close', 'Cerrar')}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
-                  </button>
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
                 </div>
               </div>
 
@@ -1045,32 +1186,32 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                   className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 gn-chat-bg scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-blue-50"
                   style={{ height: 'calc(100vh - 140px)', overflowY: 'auto' }}
                 >
-                  {messages.map((m) => (
-                    <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div
-                        className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                          m.role === 'user'
-                            ? 'bg-blue-600 text-white rounded-br-sm'
-                            : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                        }`}
-                      >
+                {messages.map((m) => (
+                  <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                        m.role === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-sm'
+                          : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                      }`}
+                    >
                         <RenderMessageContent m={m} />
 
-                        {m.toolCallPreview && (
-                          <div className="mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700">
-                            <div className="font-semibold text-gray-900 mb-1">{m.toolCallPreview.name}</div>
-                            <div className="grid grid-cols-1 gap-1">
-                              {Object.entries(m.toolCallPreview.params).map(([k, v]) => (
-                                <div key={k} className="flex justify-between gap-2">
-                                  <span className="text-gray-500">{k}</span>
-                                  <span className="font-mono">{String(v)}</span>
-                                </div>
-                              ))}
-                            </div>
+                      {m.toolCallPreview && (
+                        <div className="mt-2 rounded-md border border-gray-200 bg-white p-2 text-xs text-gray-700">
+                          <div className="font-semibold text-gray-900 mb-1">{m.toolCallPreview.name}</div>
+                          <div className="grid grid-cols-1 gap-1">
+                            {Object.entries(m.toolCallPreview.params).map(([k, v]) => (
+                              <div key={k} className="flex justify-between gap-2">
+                                <span className="text-gray-500">{k}</span>
+                                <span className="font-mono">{String(v)}</span>
+                              </div>
+                            ))}
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {m.imageSrc && (
+                      {m.imageSrc && (
                           <figure className="mt-2 overflow-hidden rounded-lg border border-gray-200 cursor-pointer group">
                             <img
                               src={m.imageSrc}
@@ -1079,29 +1220,29 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                               onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
                               style={{ maxWidth: 128, maxHeight: 128 }}
                             />
-                            {m.imageAlt && (
-                              <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
-                                {m.imageAlt}
-                              </figcaption>
-                            )}
-                          </figure>
-                        )}
-                      </div>
+                          {m.imageAlt && (
+                            <figcaption className="px-2 py-1 text-[11px] text-gray-500 bg-gray-50 border-t border-gray-200">
+                              {m.imageAlt}
+                            </figcaption>
+                          )}
+                        </figure>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                ))}
 
-                  {isLoadingResponse && (
-                    <div className="flex justify-start">
-                      <div className="max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed bg-gray-100 text-gray-800 rounded-bl-sm">
-                        <div className="flex items-center gap-1">
+                {isLoadingResponse && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed bg-gray-100 text-gray-800 rounded-bl-sm">
+                      <div className="flex items-center gap-1">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
                       </div>
                     </div>
-                  )}
-                  <div ref={endRef} />
+                  </div>
+                )}
+                <div ref={endRef} />
                 </div>
 
                 {/* Input */}
@@ -1172,7 +1313,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <Footer />
+        <Footer />
 
       {/* Notificación discreta */}
       <DiscreteNotification />
@@ -1242,6 +1383,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           transform: scale(1.15);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           z-index: 20;
+        }
+        
+        /* Cursor pointer para tabla clickeable */
+        .ai-table-container table {
+          cursor: pointer;
+        }
+        
+        .ai-table-container table:hover {
+          background-color: #f8fafc;
         }
 
         @keyframes slideDown {
