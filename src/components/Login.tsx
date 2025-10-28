@@ -1,13 +1,13 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { loginRequest, processPendingAssignments } from '../services/auth';
+import { loginRequest, processPendingAssignments, fetchMe } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,14 +42,17 @@ export default function Login() {
     startLoading();
     try {
       const resp = await loginRequest({ email, password });
-      // Usar el contexto de autenticación para hacer login
-      await login(resp.access_token);
       // Guardar en storage según preferencia del usuario
       if (remember) {
         localStorage.setItem('access_token', resp.access_token);
       } else {
         sessionStorage.setItem('access_token', resp.access_token);
       }
+      
+      // Obtener información del usuario para determinar el rol
+      const meResp = await fetchMe();
+      const userRole = meResp?.role?.name || 'tecnico';
+      
       // Procesar invitación pendiente si existe
       const pendingInvitation = localStorage.getItem('pendingInvitation');
       if (pendingInvitation) {
@@ -67,9 +70,13 @@ export default function Login() {
           // No bloquear el login por errores de invitación
         }
       }
+      
+      // Usar el contexto de autenticación para hacer login
+      await login(resp.access_token);
+      
       // MOCK: mostrar QR y pedir código antes de navegar
       setShowQrStep(true);
-      setPendingRedirect(user?.role === 'cfo' ? 'cfo' : 'activos');
+      setPendingRedirect(userRole === 'cfo' ? 'cfo' : 'activos');
       stopLoading();
     } catch (err: any) {
       stopLoading(err?.message || 'Error al iniciar sesión');

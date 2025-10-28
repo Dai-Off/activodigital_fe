@@ -1,7 +1,6 @@
-import { Badge } from './ui/badge';
-import { useTranslation } from 'react-i18next';
+﻿import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { MapPin, Check, X, CircleCheck, RefreshCw, MinusCircle } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { BuildingCarousel } from '../components/BuildingCarousel';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
@@ -10,8 +9,6 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   BuildingsApiService,
   formatBuildingValue,
-  // getBuildingStatusLabel,
-  getBuildingTypologyLabel,
 } from '../services/buildingsApi';
 import type { Building, DashboardStats } from '../services/buildingsApi';
 
@@ -30,17 +27,14 @@ import {
 import { getLatestRating } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 import {
-  calculateESGScore,
   getESGScore,
-  // getESGLabelColor,
-  getESGColorFromScore,
   type ESGResponse,
 } from '../services/esg';
 
 import AssetsSearchBar, { type SearchFilters } from './ui/AssetsSearchBar';
 import { Card } from './ui/card';
 
-/* -------------------------- Utils de presentación -------------------------- */
+/* -------------------------- Utils de presentaciÃ³n -------------------------- */
 function getCityAndDistrict(address: string): string {
   if (!address) return '';
 
@@ -73,27 +67,6 @@ function getCityAndDistrict(address: string): string {
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
 }
 
-// Función helper para obtener el color de la clase energética
-function getCEEColor(rating: string): string {
-  switch (rating) {
-    case 'A':
-      return 'bg-green-600';
-    case 'B':
-      return 'bg-green-500';
-    case 'C':
-      return 'bg-yellow-400';
-    case 'D':
-      return 'bg-yellow-300';
-    case 'E':
-      return 'bg-orange-500';
-    case 'F':
-      return 'bg-red-500';
-    case 'G':
-      return 'bg-red-600';
-    default:
-      return 'bg-gray-400';
-  }
-}
 
 function PaginationBar({
   page,
@@ -121,26 +94,26 @@ function PaginationBar({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3">
       <div className="text-xs text-gray-600">
         {t('showing', { defaultValue: 'Mostrando' })}{' '}
-        <span className="font-medium">{start}</span>–<span className="font-medium">{end}</span>{' '}
+        <span className="font-medium">{start}</span>â€“<span className="font-medium">{end}</span>{' '}
         {t('of', { defaultValue: 'de' })}{' '}
         <span className="font-medium">{total}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <label className="sr-only" htmlFor="page-size">
-          {t('pageSize', { defaultValue: 'Tamaño de página' })}
+          {t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
         </label>
         <select
           id="page-size"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-          aria-label={t('pageSize', { defaultValue: 'Tamaño de página' })}
-          title={t('pageSize', { defaultValue: 'Tamaño de página' })}
+          aria-label={t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
+          title={t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
         >
           {pageSizeOptions.map((opt) => (
             <option key={opt} value={opt}>
-              {opt} {t('perPage', { defaultValue: '/página' })}
+              {opt} {t('perPage', { defaultValue: '/pÃ¡gina' })}
             </option>
           ))}
         </select>
@@ -150,8 +123,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(1)}
             disabled={page === 1}
-            title={t('firstPage', { defaultValue: 'Primera página' })}
-            aria-label={t('firstPage', { defaultValue: 'Primera página' })}
+            title={t('firstPage', { defaultValue: 'Primera pÃ¡gina' })}
+            aria-label={t('firstPage', { defaultValue: 'Primera pÃ¡gina' })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -187,7 +160,7 @@ function PaginationBar({
           </button>
 
           <span className="px-2 text-xs text-gray-600">
-            {t('page', { defaultValue: 'Página' })}{' '}
+            {t('page', { defaultValue: 'PÃ¡gina' })}{' '}
             <span className="font-medium">{page}</span> / {totalPages}
           </span>
 
@@ -214,8 +187,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(totalPages)}
             disabled={page === totalPages}
-            title={t('lastPage', { defaultValue: 'Última página' })}
-            aria-label={t('lastPage', { defaultValue: 'Última página' })}
+            title={t('lastPage', { defaultValue: 'Ãšltima pÃ¡gina' })}
+            aria-label={t('lastPage', { defaultValue: 'Ãšltima pÃ¡gina' })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -238,7 +211,7 @@ function PaginationBar({
 
 /* ------------------------- Componentes de Indicadores ------------------------- */
 
-// Componente para el indicador CEE (Certificado de Eficiencia Energética)
+// Componente para el indicador CEE (Certificado de Eficiencia EnergÃ©tica)
 /*
 function _CEERatingIndicator({
   building,
@@ -315,7 +288,7 @@ function _SquareMetersIndicator({ building }: { building: Building }) {
 }
 */
 
-// Componente para mostrar el estado del edificio (incluye “Completado” si el libro está completo)
+// Componente para mostrar el estado del edificio (incluye â€œCompletadoâ€ si el libro estÃ¡ completo)
 /*
 function _BuildingStatusIndicator({
   building,
@@ -360,8 +333,8 @@ function _BuildingStatusIndicator({
   );
 }
 
-/* --------------------------------- Página --------------------------------- */
-export default function AssetsList() {
+/* --------------------------------- PÃ¡gina --------------------------------- */
+export default function CFOAssetsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoading: authLoading, hasPermission } = useAuth();
@@ -376,7 +349,7 @@ export default function AssetsList() {
     stopLoading: stopStatsLoading,
   } = useLoadingState(true);
 
-  // Estados para certificados energéticos, libros digitales y ESG
+  // Estados para certificados energÃ©ticos, libros digitales y ESG
   const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
   const [digitalBooks, setDigitalBooks] = useState<Map<string, DigitalBook>>(new Map());
   const [esgScores, setEsgScores] = useState<Map<string, ESGResponse>>(new Map());
@@ -385,7 +358,7 @@ export default function AssetsList() {
   const [page, setPage] = useState(1); // 1-based
   const [pageSize, setPageSize] = useState(10);
 
-  // Filtros de búsqueda y ordenamiento
+  // Filtros de bÃºsqueda y ordenamiento
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     searchTerm: '',
     sortField: 'name',
@@ -418,15 +391,13 @@ export default function AssetsList() {
         // Cargar certificados, libros digitales y ESG para todos los edificios en paralelo
         const certsAndBooksPromises = buildingsData.map(async (building) => {
           try {
-            const esgFunction = user?.role === 'tecnico' ? calculateESGScore : getESGScore;
-
             const [certsResponse, book, esgScore] = await Promise.all([
               EnergyCertificatesService.getByBuilding(building.id).catch(() => ({
                 sessions: [],
                 certificates: [],
               })),
               getBookByBuilding(building.id),
-              esgFunction(building.id).catch(() => null),
+              getESGScore(building.id).catch(() => null),
             ]);
 
             return {
@@ -482,33 +453,14 @@ export default function AssetsList() {
     };
   }, [user, authLoading, startLoading, stopLoading, startStatsLoading, stopStatsLoading]);
 
-  // Calcular emisiones totales de CO₂ en el frontend
-  const calculatedTotalEmissions = useMemo(() => {
-    if (!buildings.length || !energyCertificates.length) return 0;
-
-    let totalEmissions = 0;
-
-    buildings.forEach((building) => {
-      const cert = energyCertificates.find((c) => c.buildingId === building.id);
-
-      if (cert && cert.emissionsKgCo2PerM2Year && cert.emissionsKgCo2PerM2Year > 0) {
-        const surfaceArea = building.squareMeters || (building.numUnits || 0) * 70;
-        const buildingEmissions = (cert.emissionsKgCo2PerM2Year * surfaceArea) / 1000;
-        totalEmissions += buildingEmissions;
-      }
-    });
-
-    return Math.round(totalEmissions);
-  }, [buildings, energyCertificates]);
-
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
   let result = [...buildings];
 
-  // Ordenar por fecha de creación descendente (más recientes primero)
+  // Ordenar por fecha de creaciÃ³n descendente (mÃ¡s recientes primero)
   result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // Filtro de búsqueda por texto
+    // Filtro de bÃºsqueda por texto
     if (searchFilters.searchTerm) {
       const term = searchFilters.searchTerm.toLowerCase();
       result = result.filter(
@@ -533,7 +485,7 @@ export default function AssetsList() {
       });
     }
 
-    // Filtro por clase energética
+    // Filtro por clase energÃ©tica
     if (searchFilters.energyClassFilter.length > 0) {
       result = result.filter((building) => {
         const certs = energyCertificates.filter((cert) => cert.buildingId === building.id);
@@ -601,13 +553,13 @@ export default function AssetsList() {
     return filteredAndSortedBuildings.slice(start, start + pageSize);
   }, [filteredAndSortedBuildings, pageSize, safePage]);
 
-  // al cambiar tamaño, volver a pág. 1
+  // al cambiar tamaÃ±o, volver a pÃ¡g. 1
   const handlePageSizeChange = (s: number) => {
     setPageSize(s);
     setPage(1);
   };
 
-  // Al cambiar filtros, volver a página 1
+  // Al cambiar filtros, volver a pÃ¡gina 1
   const handleFiltersChange = (filters: SearchFilters) => {
     setSearchFilters(filters);
     setPage(1);
@@ -616,7 +568,7 @@ export default function AssetsList() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="pt-2 pb-8 max-w-full">
-        {/* Botones de acción basados en permisos */}
+        {/* Botones de acciÃ³n basados en permisos */}
         <div className="flex justify-end gap-3 mb-6">
             {user?.role === 'administrador' && hasPermission('canCreateBuildings') && (
               <Link
@@ -704,203 +656,94 @@ export default function AssetsList() {
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t(`roles.${user.role}`, { defaultValue: user.role })}
+                  {t('roles.cfo', { defaultValue: 'cfo' })}
                 </span>
               </div>
 
               <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
                 {/* Left Section */}
                 <div className="flex-1 w-full lg:pr-6">
-                  {/* Main Metrics */}
+                  {/* Main Metrics - CFO Indicators */}
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4">
-                    {user?.role === 'propietario' ? (
-                      <>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mb-1">
-                            {formatBuildingValue(dashboardStats.totalValue)}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t('totalValue', { defaultValue: 'Valor total' })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalAssets}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t('assets', { defaultValue: 'Activos' })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t('totalSurface', { defaultValue: 'Superficie total' })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {(dashboardStats.totalEmissions ??
-                              calculatedTotalEmissions
-                            ).toLocaleString()}{' '}
-                            <span className="text-sm sm:text-base">tCO₂ eq</span>
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t('annualEmissions', {
-                              defaultValue: 'Emisiones anuales',
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalAssets}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t('assignedBuildings', {
-                              defaultValue: 'Edificios asignados',
-                            })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.completedBooks}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t('completedBooks', { defaultValue: 'Libros completados' })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.pendingBooks}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t('pendingBooks', { defaultValue: 'Pendientes' })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()} m²
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t('totalSurface', { defaultValue: 'Superficie total' })}
-                          </div>
-                        </div>
-                      </>
-                    )}
+                    {/* 1. Valor total estimado de cartera */}
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mb-1">
+                        {formatBuildingValue(
+                          dashboardStats.totalValue || 
+                          buildings.reduce((sum, b) => sum + (b.price || 0), 0)
+                        )}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {t('cfo.indicator.portfolioValue', { defaultValue: 'Valor total cartera' })}
+                      </div>
+                    </div>
+                    {/* 2. ROI promedio */}
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        -
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {t('cfo.indicator.avgROI', { defaultValue: 'ROI promedio' })}
+                      </div>
+                    </div>
+                    {/* 3. Coste rehabilitación */}
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        -
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {t('cfo.indicator.rehabCost', { defaultValue: 'Coste rehabilitación' })}
+                      </div>
+                    </div>
+                    {/* 4. TIR promedio */}
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        -
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {t('cfo.indicator.avgIRR', { defaultValue: 'TIR promedio' })}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Separator Line */}
                   <div className="border-t border-gray-200 mb-4" />
 
-                  {/* Performance Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {user?.role === 'propietario' ? (
-                      <>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('averageEnergyClass', {
-                              defaultValue: 'Clase energética promedio',
-                            })}
-                          </div>
-                          <div className="flex items-center justify-center">
-                            {dashboardStats.averageEnergyClass ? (
-                              <div
-                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getCEEColor(
-                                  dashboardStats.averageEnergyClass,
-                                )}`}
-                              >
-                                <span className="text-sm sm:text-base font-bold text-white">
-                                  {dashboardStats.averageEnergyClass}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-lg font-bold text-gray-400">-</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('averageESGScore', { defaultValue: 'ESG Score medio' })}
-                          </div>
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            {dashboardStats.averageESGScore ? (
-                              <>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill={getESGColorFromScore(dashboardStats.averageESGScore)}
-                                  className="w-8 h-8 sm:w-10 sm:h-10"
-                                  style={{
-                                    filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))',
-                                  }}
-                                  aria-hidden="true"
-                                >
-                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg>
-                                <span className="text-sm font-bold text-gray-700">
-                                  {dashboardStats.averageESGScore}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-lg font-bold text-gray-400">-</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center sm:col-span-2 lg:col-span-1">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('completedDigitalBook', {
-                              defaultValue: 'Libros completados',
-                            })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.completedBooks}{' '}
-                            <span className="text-sm font-normal text-gray-500">
-                              {t('of', { defaultValue: 'de' })} {dashboardStats.totalAssets}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('mostCommonTypology', {
-                              defaultValue: 'Tipología más común',
-                            })}
-                          </div>
-                          <div className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
-                            {dashboardStats.mostCommonTypology
-                              ? getBuildingTypologyLabel(
-                                  dashboardStats.mostCommonTypology as any,
-                                )
-                              : 'N/A'}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('averageUnits', { defaultValue: 'Promedio unidades' })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.averageUnitsPerBuilding}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t('averageAge', { defaultValue: 'Edad promedio' })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.averageBuildingAge}{' '}
-                            <span className="text-sm font-normal text-gray-500">
-                              {t('years', { defaultValue: 'años' })}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                  {/* Performance Details - CFO */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t('cfo.indicator.greenRating', { defaultValue: '% rating verde (A-B-C)' })}
+                      </div>
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
+                        {/* Calcular % de activos con rating A, B o C */}
+                        {(() => {
+                          const ratingCount = buildings.filter(b => {
+                            const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
+                            const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
+                            return rating && ['A', 'B', 'C'].includes(rating);
+                          }).length;
+                          const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                          return `${percentage}%`;
+                        })()}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t('cfo.indicator.avgPayback', { defaultValue: 'Payback promedio' })}
+                      </div>
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
+                        - <span className="text-sm font-normal text-gray-500">{t('years', { defaultValue: 'años' })}</span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t('cfo.indicator.totalAssets', { defaultValue: 'Total activos' })}
+                      </div>
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
+                        {dashboardStats.totalAssets}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -922,11 +765,15 @@ export default function AssetsList() {
                         stroke="currentColor"
                         strokeWidth="3"
                         fill="transparent"
-                        strokeDasharray={`${
-                          user?.role === 'propietario'
-                            ? dashboardStats.greenFinancingEligiblePercentage
-                            : dashboardStats.completionPercentage
-                        }, 100`}
+                        strokeDasharray={`${(() => {
+                          const ratingCount = buildings.filter(b => {
+                            const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
+                            const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
+                            return rating && ['A', 'B', 'C'].includes(rating);
+                          }).length;
+                          const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                          return percentage;
+                        })()}, 100`}
                         d="M18 2.0845
                           a 15.9155 15.9155 0 0 1 0 31.831
                           a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -935,9 +782,15 @@ export default function AssetsList() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-base sm:text-lg lg:text-xl font-bold text-green-500">
-                          {user?.role === 'propietario'
-                            ? `${dashboardStats.greenFinancingEligiblePercentage}%`
-                            : `${dashboardStats.completionPercentage}%`}
+                          {(() => {
+                            const ratingCount = buildings.filter(b => {
+                              const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
+                              const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
+                              return rating && ['A', 'B', 'C'].includes(rating);
+                            }).length;
+                            const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                            return `${percentage}%`;
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -945,14 +798,47 @@ export default function AssetsList() {
 
                   <div className="text-center max-w-[140px] sm:max-w-[160px]">
                     <div className="text-xs sm:text-sm text-gray-500 leading-tight">
-                      {user?.role === 'propietario'
-                        ? t('greenFinancingEligible', {
-                            defaultValue: '% cartera apta para financiación verde',
-                          })
-                        : t('completedDigitalBooksPercent', {
-                            defaultValue: '% libros digitales completados',
-                          })}
+                      {t('cfo.indicator.greenRatingShort', { defaultValue: '% rating verde' })}
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activos con mayor riesgo financiero - Abajo del todo */}
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  {t('cfo.riskAssets.title', { defaultValue: 'Activos con mayor riesgo financiero' })}
+                </h3>
+                <div className="space-y-2">
+                          <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-red-600">1.</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Edificio Centro - Madrid</p>
+                        <p className="text-xs text-gray-500">ROI: -5.2% • Sin rating</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">Alto riesgo</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-orange-600">2.</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Complejo Residencial Norte</p>
+                        <p className="text-xs text-gray-500">ROI: 0.5% • Rating D</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-orange-100 text-orange-700">Medio riesgo</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-yellow-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-yellow-600">3.</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Torre Comercial Sur</p>
+                        <p className="text-xs text-gray-500">ROI: 2.1% • Rating E</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">Bajo riesgo</span>
                   </div>
                 </div>
               </div>
@@ -962,7 +848,7 @@ export default function AssetsList() {
           )}
         </div>
 
-        {/* Barra de búsqueda y filtros */}
+        {/* Barra de bÃºsqueda y filtros */}
         <AssetsSearchBar
           onFiltersChange={handleFiltersChange}
           totalResults={total}
@@ -979,25 +865,9 @@ export default function AssetsList() {
           ) : paginated.length > 0 ? (
             <div className="flex flex-col gap-6">
               {paginated.map((building, index) => {
-                const book = digitalBooks.get(building.id);
-                const completedSections = book?.progress || 0;
-                const totalSections = 8;
                 const ceeCerts = energyCertificates.filter((cert) => cert.buildingId === building.id);
                 const ceeRating = ceeCerts.length > 0 ? getLatestRating(ceeCerts) : '-';
-                const esg = esgScores.get(building.id);
-                const esgScore = esg?.status === 'complete' && esg.data ? esg.data.total : null;
-                /* const mainImage = building.images?.find(img => img.isMain) || building.images?.[0]; */
-                /* const _imageUrl = mainImage?.url || 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80'; */
-                // Estado badge color
-                const getEstadoBadgeClassName = (estado: string) => {
-                  if (estado === t('operational', { defaultValue: 'Operativo' })) {
-                    return 'bg-green-500/20 text-green-400 border border-green-500/50';
-                  }
-                  if (estado === t('inRemodeling', { defaultValue: 'En remodelación' })) {
-                    return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50';
-                  }
-                  return 'bg-gray-700 text-gray-400 border border-gray-600';
-                };
+                
                 return (
                   <motion.div
                     key={building.id}
@@ -1008,10 +878,10 @@ export default function AssetsList() {
                   >
                     <Card
                       className="bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col sm:flex-row sm:h-[280px] lg:h-[224px]"
-                      onClick={() => navigate(`/edificio/${building.id}`)}
+                      onClick={() => navigate(`/cfo-intake/${building.id}`)}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/edificio/${building.id}`); }}
+                      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/cfo-intake/${building.id}`); }}
                     >
                       {/* Image Carousel */}
                       <div className="w-full h-48 sm:w-64 sm:h-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800">
@@ -1029,71 +899,59 @@ export default function AssetsList() {
                           </div>
                         </div>
                         
-                        {/* Info Grid - Responsive layout */}
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
+                        {/* Info Grid - CFO Specific Fields */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                          {/* Valor actual */}
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 mb-1">{t('value', { defaultValue: 'Valor' })}</p>
+                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.currentValue', { defaultValue: 'Valor actual (€)' })}</p>
                             <p className="text-sm sm:text-lg font-medium text-gray-900 truncate">{formatBuildingValue(building.price)}</p>
                           </div>
+                          {/* Coste rehabilitación */}
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 mb-1">{t('squareMeters', { defaultValue: 'Superficie' })}</p>
-                            <p className="text-sm sm:text-lg font-medium text-gray-900">{building.squareMeters ? `${building.squareMeters} m²` : '-'}</p>
+                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.rehabCost', { defaultValue: 'Coste rehab. (€)' })}</p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900">-</p>
                           </div>
-                          <div className="col-span-2 sm:col-span-1">
-                            <p className="text-xs text-gray-500 mb-1">{t('status', { defaultValue: 'Estado' })}</p>
-                            <Badge className={getEstadoBadgeClassName(t('operational', { defaultValue: 'Operativo' })) + ' flex items-center gap-1 sm:gap-2 text-xs'}>
-                              {(() => {
-                                const estado = t('operational', { defaultValue: 'Operativo' });
-                                if (estado === 'Operativo') {
-                                  return <CircleCheck className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />;
-                                }
-                                if (estado === 'En remodelación') {
-                                  return <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />;
-                                }
-                                return <MinusCircle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />;
-                              })()}
-                              <span className="truncate">{t('operational', { defaultValue: 'Operativo' })}</span>
-                            </Badge>
+                          {/* ROI estimado */}
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.estimatedROI', { defaultValue: 'ROI estimado (%)' })}</p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900">-</p>
                           </div>
-                          <div className="col-span-1">
-                            <p className="text-xs text-gray-500 mb-1">{t('energyCertificate', { defaultValue: 'Cert. Energética' })}</p>
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-xs sm:text-sm font-medium">
-                                {ceeRating}
-                              </div>
+                        </div>
+
+                        {/* Rating y Estado financiero */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4">
+                          {/* Rating energético */}
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-gray-500">{t('cfo.card.energyRating', { defaultValue: 'Rating energético' })}:</p>
+                            <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-sm font-medium">
+                              {ceeRating}
+                            </div>
+                          </div>
+                          {/* Estado financiero */}
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-gray-500">{t('cfo.card.financialStatus', { defaultValue: 'Estado financiero' })}:</p>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3 h-3 rounded-full bg-orange-500" title="Indefinido" />
+                              <span className="text-sm font-medium text-gray-900">{t('cfo.card.undefined', { defaultValue: 'Indefinido' })}</span>
                             </div>
                           </div>
                         </div>
-                        
-                        {/* ESG and Digital Book - Bottom section */}
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-                          <div className="flex-1 w-full sm:w-auto">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-gray-500">ESG Score</span>
-                              <span className="text-sm font-medium text-gray-900">{esgScore !== null ? `${esgScore}/100` : '-'}</span>
-                            </div>
-                            <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${esgScore ?? 0}%` }}
-                                transition={{ duration: 0.6, delay: 0.3 + index * 0.16 }}
-                                className="absolute inset-y-0 left-0 bg-cyan-500 rounded-full"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-xs text-gray-500 hidden sm:block">{t('digitalBook', { defaultValue: 'Libro Digital' })}</span>
-                            <span className="text-xs text-gray-500 sm:hidden">{t('digitalBook', { defaultValue: 'Libro' })}</span>
-                            {completedSections === totalSections ? (
-                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">
-                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center">
-                                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                              </div>
-                            )}
-                          </div>
+
+                        {/* Botón de acciones */}
+                        <div className="flex items-center justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/cfo-intake/${building.id}`);
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 border border-blue-200"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            {t('cfo.card.viewDetail', { defaultValue: 'Ver detalle' })}
+                          </button>
                         </div>
                       </div>
                     </Card>
@@ -1105,7 +963,7 @@ export default function AssetsList() {
             <div className="px-6 py-12 text-center">
               <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" /></svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === 'propietario' ? t('noAssetsYet', { defaultValue: 'No tienes activos aún' }) : t('noAssignedAssets', { defaultValue: 'No tienes activos asignados' })}
+                {user?.role === 'propietario' ? t('noAssetsYet', { defaultValue: 'No tienes activos aÃºn' }) : t('noAssignedAssets', { defaultValue: 'No tienes activos asignados' })}
               </h3>
               <p className="text-gray-600 mb-4">
                 {user?.role === 'propietario' ? t('createFirstAsset', { defaultValue: 'Comienza creando tu primer activo para gestionar tu cartera.' }) : t('contactAdmin', { defaultValue: 'Contacta con tu administrador para que te asigne activos.' })}
@@ -1120,7 +978,7 @@ export default function AssetsList() {
           )}
         </div>
 
-        {/* Barra de paginación */}
+        {/* Barra de paginaciÃ³n */}
         {!loading && total > 0 && (
           <PaginationBar
             page={safePage}
