@@ -333,8 +333,26 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     // Eliminar cursivas *texto*
     text = text.replace(/\*([^*]+)\*/g, '$1');
     
-    // Limpiar espacios múltiples
-    text = text.replace(/\s+/g, ' ').trim();
+    // Eliminar encabezados markdown (###, ##, #)
+    text = text.replace(/^#{1,3}\s+/gm, '');
+    
+    // Convertir listas con guiones a formato simple
+    text = text.replace(/^[-•]\s+/gm, '');
+    
+    // Convertir listas numeradas a formato simple
+    text = text.replace(/^\d+\.\s+/gm, '');
+    
+    // Limpiar líneas vacías múltiples
+    text = text.replace(/\n{3,}/g, '\n\n');
+    
+    // Limpiar espacios múltiples dentro de las líneas
+    text = text.replace(/[ \t]+/g, ' ');
+    
+    // Eliminar espacios al inicio y final de cada línea
+    text = text.split('\n').map(line => line.trim()).join('\n');
+    
+    // Limpiar espacios múltiples al final
+    text = text.trim();
     
     return text;
   };
@@ -522,11 +540,18 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     const timeout = setTimeout(() => controller.abort(), 30000);
 
     try {
+      // Obtener token de Supabase
+      const token = 
+        window.sessionStorage.getItem('access_token') || 
+        window.localStorage.getItem('access_token') || 
+        '';
+
       const payload = {
         prompt: trimmed,
         usuario_id: user?.userId ?? 'anon',
         user_role: user?.role ?? 'propietario',
         session_id: sessionIdRef.current,
+        token,
       };
 
       console.log('📤 Enviando al orquestador:', payload);
@@ -534,6 +559,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       console.log('  - usuario_id:', user?.userId);
       console.log('  - user_role:', user?.role);
       console.log('  - session_id:', sessionIdRef.current);
+      console.log('  - token:', token ? '✅ Token presente' : '❌ Sin token');
 
       const res = await fetch(ORQUESTADOR_URL, {
         method: 'POST',
