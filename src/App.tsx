@@ -19,6 +19,8 @@ import AssetsList from './components/AssetsList'
 import CFOAssetsList from './components/CFOAssetsList'
 import BuildingDetail from './components/BuildingDetail'
 import CFOIntakeForm from './components/cfo/CFOIntakeForm'
+import CFODueDiligenceDashboard from './components/cfo/screens/CFODueDiligenceDashboard'
+import CFODueDiligenceSimulation from './components/cfo/screens/CFODueDiligenceSimulation'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -187,6 +189,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <CFOIntakeForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cfo-due-diligence/:buildingId"
+                element={
+                  <ProtectedRoute>
+                    <CFODueDiligenceDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cfo-simulation"
+                element={
+                  <ProtectedRoute>
+                    <CFODueDiligenceSimulation />
                   </ProtectedRoute>
                 }
               />

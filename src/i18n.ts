@@ -631,6 +631,51 @@ export const resources = {
       potentialValueLabel: 'Valor potencial',
       surfaceLabel: 'Superficie',
       editData: 'Editar datos',
+      
+      // --- CFO Intake Form ---
+      cfo: {
+        intake: {
+          title: 'Datos Financieros del Activo',
+          description: 'Complete la información financiera y operativa del activo',
+          edit: 'Editar',
+          loadData: 'Cargar Datos',
+          cancel: 'Cancelar',
+          previous: 'Anterior',
+          next: 'Siguiente',
+          save: 'Guardar',
+          saving: 'Guardando...',
+          editTitle: 'Editar Datos Financieros del Activo',
+          progress: 'Progreso',
+          section1: 'Precio & Mercado',
+          section2: 'Ingresos (últimos 12m)',
+          section3: 'OPEX (últimos 12m)',
+          section4: 'Documentación (Semáforo)',
+          section5: 'Deuda (si aplica)',
+          section6: 'Rehabilitación (quick wins)',
+        },
+        indicator: {
+          portfolioValue: 'Valor total cartera',
+          avgROI: 'ROI promedio',
+          rehabCost: 'Coste rehabilitación',
+          avgIRR: 'TIR promedio',
+          greenRating: '% rating verde (A-B-C)',
+          greenRatingShort: '% rating verde',
+          avgPayback: 'Payback promedio',
+          totalAssets: 'Total activos',
+        },
+        card: {
+          currentValue: 'Valor actual (€)',
+          rehabCost: 'Coste rehab. (€)',
+          estimatedROI: 'ROI estimado (%)',
+          energyRating: 'Rating energético',
+          financialStatus: 'Estado financiero',
+          undefined: 'Indefinido',
+          viewDetail: 'Ver detalle',
+        },
+        riskAssets: {
+          title: 'Activos con mayor riesgo financiero',
+        },
+      },
     }
   },
 
@@ -1254,6 +1299,51 @@ export const resources = {
       potentialValueLabel: 'Potential value',
       surfaceLabel: 'Surface',
       editData: 'Edit data',
+      
+      // --- CFO Intake Form ---
+      cfo: {
+        intake: {
+          title: 'Asset Financial Data',
+          description: 'Complete the asset\'s financial and operational information',
+          edit: 'Edit',
+          loadData: 'Load Data',
+          cancel: 'Cancel',
+          previous: 'Previous',
+          next: 'Next',
+          save: 'Save',
+          saving: 'Saving...',
+          editTitle: 'Edit Asset Financial Data',
+          progress: 'Progress',
+          section1: 'Price & Market',
+          section2: 'Income (last 12m)',
+          section3: 'OPEX (last 12m)',
+          section4: 'Documentation (Status)',
+          section5: 'Debt (if applicable)',
+          section6: 'Rehabilitation (quick wins)',
+        },
+        indicator: {
+          portfolioValue: 'Total portfolio value',
+          avgROI: 'Average ROI',
+          rehabCost: 'Rehabilitation cost',
+          avgIRR: 'Average IRR',
+          greenRating: '% green rating (A-B-C)',
+          greenRatingShort: '% green rating',
+          avgPayback: 'Average payback',
+          totalAssets: 'Total assets',
+        },
+        card: {
+          currentValue: 'Current value (€)',
+          rehabCost: 'Rehab cost (€)',
+          estimatedROI: 'Estimated ROI (%)',
+          energyRating: 'Energy rating',
+          financialStatus: 'Financial status',
+          undefined: 'Undefined',
+          viewDetail: 'View detail',
+        },
+        riskAssets: {
+          title: 'Assets with highest financial risk',
+        },
+      },
     }
   }
 } as const;

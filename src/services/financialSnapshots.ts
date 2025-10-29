@@ -43,22 +43,37 @@ export interface FinancialSnapshot {
 export interface CreateFinancialSnapshotRequest extends Omit<FinancialSnapshot, 'id' | 'created_at' | 'updated_at'> {}
 
 export class FinancialSnapshotsService {
+  // Helper para parsear el meta si viene como string
+  private static parseSnapshot(snapshot: any): FinancialSnapshot {
+    if (snapshot.meta && typeof snapshot.meta === 'string') {
+      try {
+        snapshot.meta = JSON.parse(snapshot.meta);
+      } catch (e) {
+        console.warn('Error parsing meta field:', e);
+      }
+    }
+    return snapshot;
+  }
+
   static async createFinancialSnapshot(data: CreateFinancialSnapshotRequest): Promise<FinancialSnapshot> {
     const response = await apiFetch('/financial-snapshots', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.data || response;
+    const snapshot = response.data || response;
+    return this.parseSnapshot(snapshot);
   }
 
   static async getFinancialSnapshots(buildingId: string): Promise<FinancialSnapshot[]> {
     const response = await apiFetch(`/financial-snapshots/building/${buildingId}`);
-    return response.data || [];
+    const snapshots = response.data || [];
+    return snapshots.map((s: any) => this.parseSnapshot(s));
   }
 
   static async getFinancialSnapshot(id: string): Promise<FinancialSnapshot> {
     const response = await apiFetch(`/financial-snapshots/${id}`);
-    return response.data || response;
+    const snapshot = response.data || response;
+    return this.parseSnapshot(snapshot);
   }
 
   static async updateFinancialSnapshot(id: string, data: Partial<FinancialSnapshot>): Promise<FinancialSnapshot> {
@@ -66,7 +81,8 @@ export class FinancialSnapshotsService {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return response.data || response;
+    const snapshot = response.data || response;
+    return this.parseSnapshot(snapshot);
   }
 
   static async deleteFinancialSnapshot(id: string): Promise<void> {
