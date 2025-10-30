@@ -701,7 +701,7 @@ export default function CFOIntakeForm() {
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all duration-200"
               >
                 <BarChart3 className="w-4 h-4" />
-                Due Diligence
+                Análisis Financiero
               </button>
               <button
                 onClick={() => navigate('/cfo-simulation')}

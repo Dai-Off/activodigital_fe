@@ -19,8 +19,8 @@ import AssetsList from './components/AssetsList'
 import CFOAssetsList from './components/CFOAssetsList'
 import BuildingDetail from './components/BuildingDetail'
 import CFOIntakeForm from './components/cfo/CFOIntakeForm'
-import CFODueDiligenceDashboard from './components/cfo/screens/CFODueDiligenceDashboard'
-import CFODueDiligenceSimulation from './components/cfo/screens/CFODueDiligenceSimulation'
+import CFOFinancialAnalysisDashboard from './components/cfo/screens/CFOFinancialAnalysisDashboard'
+import CFOFinancialAnalysisSimulation from './components/cfo/screens/CFOFinancialAnalysisSimulation'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -85,10 +85,12 @@ function App() {
 
               {/* Rutas públicas sin autenticación */}
               <Route path="/terminos" element={<TermsAndConditions />} />
+              
+              {/* Landing page sin Layout (tiene su propio header y footer) */}
+              <Route path="/" element={<Landing />} />
 
               {/* Rutas con navbar y footer (Layout) */}
               <Route element={<Layout />}>
-                <Route path="/" element={<Landing />} />
                 <Route
                   path="/activos"
                   element={
@@ -196,7 +198,7 @@ function App() {
                 path="/cfo-due-diligence/:buildingId"
                 element={
                   <ProtectedRoute>
-                    <CFODueDiligenceDashboard />
+                    <CFOFinancialAnalysisDashboard />
                   </ProtectedRoute>
                 }
               />
@@ -204,7 +206,7 @@ function App() {
                 path="/cfo-simulation"
                 element={
                   <ProtectedRoute>
-                    <CFODueDiligenceSimulation />
+                    <CFOFinancialAnalysisSimulation />
                   </ProtectedRoute>
                 }
               />
