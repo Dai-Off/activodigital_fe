@@ -83,10 +83,12 @@ function App() {
 
               {/* Rutas públicas sin autenticación */}
               <Route path="/terminos" element={<TermsAndConditions />} />
+              
+              {/* Landing page sin Layout (tiene su propio header y footer) */}
+              <Route path="/" element={<Landing />} />
 
               {/* Rutas con navbar y footer (Layout) */}
               <Route element={<Layout />}>
-                <Route path="/" element={<Landing />} />
                 <Route
                   path="/activos"
                   element={
