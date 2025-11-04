@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { signupWithInvitation, validateInvitation, setup2FA, verify2FASetup, verify2FALogin, fetchMe, loginRequest } from '../services/auth';
+import { signupWithInvitation, validateInvitation, setup2FA, verify2FASetup, verify2FALogin, fetchMe } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 import type { ValidateInvitationResponse } from '../services/auth';
