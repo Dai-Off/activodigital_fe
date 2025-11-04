@@ -20,7 +20,7 @@ const detectBackendAvailability = async (url: string): Promise<boolean> => {
     console.log(`🔍 Probando conectividad con: ${url}/health`);
     const response = await fetch(`${url}/health`, {
       method: 'GET',
-      signal: AbortSignal.timeout(2000) // 2 segundos timeout
+      signal: AbortSignal.timeout(5000) // 5 segundos timeout (aumentado)
     });
     console.log(`📡 Respuesta de ${url}:`, response.status, response.ok);
     return response.ok;
@@ -35,8 +35,11 @@ const getApiBaseUrl = async (): Promise<string> => {
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
 
-  // 1. Si hay VITE_API_BASE, usarlo (dev o prod)
-  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  // 1. Si hay VITE_API_BASE, usarlo directamente sin detección (prioridad máxima)
+  if (import.meta.env.VITE_API_BASE) {
+    console.log('✅ Usando VITE_API_BASE:', import.meta.env.VITE_API_BASE);
+    return import.meta.env.VITE_API_BASE;
+  }
 
   // 2. Si estamos en localhost → detectar automáticamente
   if (isLocalhost) {

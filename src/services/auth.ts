@@ -22,7 +22,7 @@ export interface SignupPayload {
   full_name: string;
 }
 
-export async function signupRequest(payload: SignupPayload): Promise<{ message?: string }> {
+export async function signupRequest(payload: SignupPayload): Promise<{ message?: string; userId?: string }> {
   return apiFetch('/auth/signup', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -46,6 +46,59 @@ export interface MeResponse {
 
 export async function fetchMe(): Promise<MeResponse> {
   return apiFetch('/auth/me', { method: 'GET' });
+}
+
+// ===== Interfaces y servicios para 2FA con Google Authenticator =====
+
+export interface Setup2FAResponse {
+  secret: string;           // Secret para Google Authenticator
+  qrCodeUrl: string;        // URL del QR code para escanear
+  manualEntryKey: string;   // Clave para entrada manual si no puede escanear
+}
+
+export interface Verify2FASetupPayload {
+  userId: string;
+  token: string;  // Código de 6 dígitos de Google Authenticator
+}
+
+export interface Verify2FASetupResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface Verify2FALoginPayload {
+  email: string;
+  token: string;  // Código de 6 dígitos
+}
+
+export interface Verify2FALoginResponse {
+  success: boolean;
+  access_token?: string;
+  message?: string;
+}
+
+// Setup inicial de 2FA después del registro
+export async function setup2FA(userId: string): Promise<Setup2FAResponse> {
+  return apiFetch('/auth/setup-2fa', {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+// Verificar código 2FA durante setup (primera vez)
+export async function verify2FASetup(payload: Verify2FASetupPayload): Promise<Verify2FASetupResponse> {
+  return apiFetch('/auth/verify-2fa-setup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// Verificar código 2FA durante login
+export async function verify2FALogin(payload: Verify2FALoginPayload): Promise<Verify2FALoginResponse> {
+  return apiFetch('/auth/verify-2fa-login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 // Nuevas interfaces para el sistema de invitaciones

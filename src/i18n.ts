@@ -56,6 +56,32 @@ export const resources = {
       qrCodePlaceholder: 'Ej: 123456',
       validateCodeAndEnter: 'Validar código y entrar',
       qrProblemsHelp: '¿Problemas? Usa la app oficial o contacta a soporte.',
+      
+      // 2FA Setup (registro)
+      setup2FATitle: 'Configura tu autenticación de dos factores',
+      setup2FADescription: 'Para mayor seguridad, configura Google Authenticator antes de continuar.',
+      setup2FAStep1: 'Descarga Google Authenticator en tu móvil',
+      setup2FAStep2: 'Escanea este código QR con la aplicación',
+      setup2FAStep3: 'Introduce el código de 6 dígitos que aparece',
+      cannotScanQR: '¿No puedes escanear el QR?',
+      manualEntry: 'Entrada manual',
+      manualEntryInstructions: 'Introduce esta clave manualmente en Google Authenticator:',
+      copyKey: 'Copiar clave',
+      keyCopied: 'Clave copiada',
+      verificationCode: 'Código de verificación',
+      verificationCodePlaceholder: '000000',
+      verifyAndContinue: 'Verificar y continuar',
+      verifying2FA: 'Verificando código...',
+      invalid2FACode: 'Código inválido. Intenta nuevamente.',
+      setup2FASuccess: '¡2FA configurado correctamente!',
+      downloadGoogleAuth: 'Descargar para Android o iOS',
+      
+      // 2FA Login
+      enter2FACode: 'Introduce tu código de autenticación',
+      enter2FACodeDesc: 'Abre Google Authenticator y escribe el código de 6 dígitos',
+      codeFromAuthenticator: 'Código de 6 dígitos',
+      verifyCode: 'Verificar código',
+      
       close: 'Cerrar',
       send: 'Enviar',
 
@@ -725,6 +751,32 @@ export const resources = {
       qrCodePlaceholder: 'e.g., 123456',
       validateCodeAndEnter: 'Validate code and enter',
       qrProblemsHelp: 'Problems? Use the official app or contact support.',
+      
+      // 2FA Setup (registration)
+      setup2FATitle: 'Set up two-factor authentication',
+      setup2FADescription: 'For added security, set up Google Authenticator before continuing.',
+      setup2FAStep1: 'Download Google Authenticator on your phone',
+      setup2FAStep2: 'Scan this QR code with the app',
+      setup2FAStep3: 'Enter the 6-digit code that appears',
+      cannotScanQR: "Can't scan the QR?",
+      manualEntry: 'Manual entry',
+      manualEntryInstructions: 'Enter this key manually in Google Authenticator:',
+      copyKey: 'Copy key',
+      keyCopied: 'Key copied',
+      verificationCode: 'Verification code',
+      verificationCodePlaceholder: '000000',
+      verifyAndContinue: 'Verify and continue',
+      verifying2FA: 'Verifying code...',
+      invalid2FACode: 'Invalid code. Please try again.',
+      setup2FASuccess: '2FA successfully configured!',
+      downloadGoogleAuth: 'Download for Android or iOS',
+      
+      // 2FA Login
+      enter2FACode: 'Enter your authentication code',
+      enter2FACodeDesc: 'Open Google Authenticator and enter the 6-digit code',
+      codeFromAuthenticator: '6-digit code',
+      verifyCode: 'Verify code',
+      
       close: 'Close',
       send: 'Send',
 
