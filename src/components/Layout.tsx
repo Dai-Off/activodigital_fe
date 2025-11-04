@@ -422,8 +422,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       
       // Generar tabla HTML responsive (solo imagen y nombre inicialmente)
       let html = `Tus edificios (${edificios.length}):\n\n`;
-      html += '| Img | Nombre |\n';
-      html += '|-----|--------|\n';
+      html += '| Imagenes | Nombre |\n';
+      html += '|----------|--------|\n';
       
       edificios.forEach((edificio: any) => {
         // Detectar imagen principal
@@ -479,8 +479,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
   /* ========== Generar Tabla Completa para Pantalla Completa ========== */
   const generateFullTable = useCallback((edificios: any[]): string => {
     let html = `Tus edificios (${edificios.length}):\n\n`;
-    html += '| Img | Nombre | Dirección | m² | Unidades | Pisos | Año | Tipología | Precio | Valor Potencial | Costo Rehab |\n';
-    html += '|-----|--------|-----------|-----|----------|-------|-----|-----------|--------|-----------------|-------------|\n';
+    html += '| Imagenes | Nombre | Dirección | m² | Unidades | Pisos | Año | Tipología | Precio | Valor Potencial | Costo Rehab |\n';
+    html += '|----------|--------|-----------|-----|----------|-------|-----|-----------|--------|-----------------|-------------|\n';
     
     edificios.forEach((edificio: any) => {
       // Detectar imagen principal
@@ -505,14 +505,20 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       
       const nombre = edificio.name || edificio.nombre || 'Sin nombre';
       const direccion = edificio.address || edificio.direccion || '-';
-      const superficie = edificio.square_meters || edificio.superficie || edificio.area || edificio.superficieTotal || '-';
-      const unidades = edificio.num_units || edificio.unidades || edificio.units || edificio.numeroUnidades || '-';
-      const pisos = edificio.num_floors || edificio.pisos || edificio.floors || '-';
-      const anio = edificio.construction_year || edificio.anio || edificio.year || edificio.yearBuilt || '-';
+      const superficieValue = edificio.squareMeters ?? edificio.square_meters ?? edificio.superficie ?? edificio.area ?? edificio.superficieTotal;
+      const superficie = superficieValue != null ? superficieValue : '-';
+      const unidadesValue = edificio.numUnits ?? edificio.num_units ?? edificio.unidades ?? edificio.units ?? edificio.numeroUnidades;
+      const unidades = unidadesValue != null ? unidadesValue : '-';
+      const pisosValue = edificio.numFloors ?? edificio.num_floors ?? edificio.pisos ?? edificio.floors;
+      const pisos = pisosValue != null ? pisosValue : '-';
+      const anioValue = edificio.constructionYear ?? edificio.construction_year ?? edificio.anio ?? edificio.year ?? edificio.yearBuilt;
+      const anio = anioValue != null ? anioValue : '-';
       const tipologia = edificio.typology || edificio.tipologia || '-';
-      const precio = edificio.price ? `€${edificio.price.toLocaleString()}` : '-';
-      const valorPotencial = edificio.potential_value ? `€${edificio.potential_value.toLocaleString()}` : '-';
-      const costoRehab = edificio.rehabilitation_cost ? `€${edificio.rehabilitation_cost.toLocaleString()}` : '-';
+      const precio = edificio.price != null ? `€${edificio.price.toLocaleString()}` : '-';
+      const valorPotencialValue = edificio.potentialValue ?? edificio.potential_value;
+      const valorPotencial = valorPotencialValue != null ? `€${valorPotencialValue.toLocaleString()}` : '-';
+      const costoRehabValue = edificio.rehabilitationCost ?? edificio.rehabilitation_cost;
+      const costoRehab = costoRehabValue != null ? `€${costoRehabValue.toLocaleString()}` : '-';
       
       html += `| ${imgCell} | ${nombre} | ${direccion} | ${superficie} | ${unidades} | ${pisos} | ${anio} | ${tipologia} | ${precio} | ${valorPotencial} | ${costoRehab} |\n`;
     });
@@ -650,8 +656,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           } else {
             // Mostrar tabla responsive (solo imagen y nombre)
             let html = `Tus edificios (${edificios.length}):\n\n`;
-            html += '| Img | Nombre |\n';
-            html += '|-----|--------|\n';
+            html += '| Imagenes | Nombre |\n';
+            html += '|----------|--------|\n';
             
             edificios.forEach((edificio: any) => {
               // Detectar imagen principal
@@ -977,7 +983,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             id="chat-sidebar"
             aria-label={t('chatAI', 'Chat IA')}
             className={`hidden md:flex md:flex-col md:border-l md:border-gray-200 md:bg-white
-              ${isChatFullscreen ? 'fixed inset-0 z-[1100] w-screen h-screen top-0 left-0' : 'md:h-screen md:fixed md:right-0 md:top-0 md:z-40 md:w-96'}
+              ${isChatFullscreen ? 'fixed inset-0 z-[1100] w-screen h-screen top-0 left-0' : 'md:h-screen md:fixed md:right-0 md:top-0 md:z-[60] md:w-96'}
               ${isChatOpen ? 'md:opacity-100' : 'md:opacity-0 pointer-events-none'}
               transition-all duration-300 bg-white`}
             style={isChatFullscreen ? { border: 'none', borderRadius: 0 } : {}}
@@ -985,13 +991,14 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-md bg-blue-600 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 20l9-5-9-5-9 5 9 5z" />
-                    <path d="M12 12l9-5-9-5-9 5 9 5z" />
-                  </svg>
+                <div className="h-7 w-7 rounded-md flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/diamondStarsIA.png" 
+                    alt="AI Assistant" 
+                    className="h-full w-full object-contain"
+                  />
                 </div>
-                <span className="font-semibold text-gray-900">{t('chatAI', 'Chat IA')}</span>
+                <span className="font-semibold text-gray-900">{t('assistant', 'Asistente')}</span>
               </div>
               <div className="flex items-center gap-1">
               <button
@@ -1134,7 +1141,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
 
           {/* Mobile overlay */}
           <div
-            className={`fixed inset-x-0 top-16 z-40 md:hidden ${
+            className={`fixed inset-x-0 top-16 z-[60] md:hidden ${
               isChatOpen ? 'pointer-events-auto' : 'pointer-events-none'
             } ${isChatFullscreen ? 'fixed inset-0 top-0 left-0 h-screen w-screen z-[1100]' : ''}`}
             style={isChatFullscreen ? { bottom: 0 } : { bottom: isChatOpen ? `${FOOTER_HEIGHT_PX}px` : '0px' }}
@@ -1160,13 +1167,14 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
               {/* Header */}
               <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-md bg-blue-600 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 20l9-5-9-5-9 5 9 5z" />
-                      <path d="M12 12l9-5-9-5-9 5 9 5z" />
-                    </svg>
+                  <div className="h-7 w-7 rounded-md flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/diamondStarsIA.png" 
+                      alt="AI Assistant" 
+                      className="h-full w-full object-contain"
+                    />
                   </div>
-                  <span className="font-semibold text-gray-900">{t('chatAI', 'Chat IA')}</span>
+                  <span className="font-semibold text-gray-900">{t('assistant', 'Asistente')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                 <button
@@ -1347,7 +1355,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       <style>{`
         .ai-table-container {
           width: 100%;
-          overflow-x: auto;
+          overflow-x: hidden;
           overflow-y: visible;
           margin: 0.5em 0;
           border-radius: 8px;
@@ -1357,9 +1365,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
         .ai-table { 
           border-collapse: collapse; 
           width: 100%; 
-          min-width: 800px;
+          min-width: 0;
           font-size: 0.9em; 
           background: white;
+        }
+        
+        @media (min-width: 768px) {
+          .ai-table {
+            min-width: 800px;
+          }
         }
         
         .ai-table th, .ai-table td { 
@@ -1370,8 +1384,15 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           white-space: nowrap;
         }
         
+        @media (max-width: 767px) {
+          .ai-table th, .ai-table td {
+            white-space: normal;
+            word-wrap: break-word;
+          }
+        }
+        
         .ai-table th { 
-          background: #f3f4f6; 
+          background: #eff6ff; 
           font-weight: 600;
           color: #374151;
           position: sticky;

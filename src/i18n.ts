@@ -61,6 +61,7 @@ export const resources = {
 
       // --- Topbar / UI ---
       chatAI: 'Chat IA',
+      assistant: 'Asistente',
       chatWelcome: '¡Hola! Soy tu asistente de activos digitales. ¿En qué puedo ayudarte hoy?',
       chatUserError: 'Error: No se pudo identificar tu usuario. Intenta iniciar sesión nuevamente.',
       chatTimeoutError: 'El servicio está tardando más de lo esperado. Intenta de nuevo en unos segundos.',
@@ -730,6 +731,7 @@ export const resources = {
 
       // --- Topbar / UI ---
       chatAI: 'AI Chat',
+      assistant: 'Assistant',
       chatWelcome: "Hello! I'm your digital assets assistant. How can I help you today?",
       chatUserError: 'Error: Could not identify your user. Please sign in again.',
       chatTimeoutError: 'The service is taking longer than expected. Try again in a few seconds.',
