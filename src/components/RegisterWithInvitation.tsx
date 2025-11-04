@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { signupWithInvitation, validateInvitation, setup2FA, verify2FASetup, verify2FALogin, fetchMe } from '../services/auth';
+import { signupWithInvitation, validateInvitation, setup2FA, verify2FASetup, verify2FALogin, fetchMe, loginRequest } from '../services/auth';
 import { useAuth } from '../contexts/AuthContext';
 import { FormLoader, useLoadingState } from './ui/LoadingSystem';
 import type { ValidateInvitationResponse } from '../services/auth';
@@ -33,6 +33,7 @@ export default function RegisterWithInvitation() {
   const [error2FA, setError2FA] = useState('');
   const [tempUserId, setTempUserId] = useState('');
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [tempPassword, setTempPassword] = useState(''); // Guardar password temporalmente para login después del setup
   const [success, setSuccess] = useState<string | null>(null);
 
   // Validar token al cargar el componente
@@ -94,6 +95,8 @@ export default function RegisterWithInvitation() {
       setQrCodeUrl(setup2FAResponse.qrCodeUrl);
       setManualEntryKey(setup2FAResponse.manualEntryKey);
       setTempUserId(userId);
+      // Guardar password temporalmente para login después del setup
+      setTempPassword(password);
       
       stopLoading();
       setShow2FASetup(true);
@@ -123,36 +126,78 @@ export default function RegisterWithInvitation() {
       });
 
       if (verifyResponse.success) {
-        // Setup verificado, ahora hacer login con 2FA
-        const login2FAResponse = await verify2FALogin({
-          email,
-          token: twoFactorCode,
-        });
-
-        if (login2FAResponse.access_token) {
-          // Login exitoso con 2FA
-          await login(login2FAResponse.access_token);
-          localStorage.setItem('access_token', login2FAResponse.access_token);
-
-          // Obtener información del usuario
-          const me = await fetchMe();
-          const roleName = me?.role?.name || 'tecnico';
+        // Setup verificado exitosamente - ahora hacer login automáticamente
+        try {
+          console.log('Setup 2FA verificado, haciendo login automático...');
           
-          // Redirigir según rol
-          if (roleName === 'cfo') {
-            navigate('/cfo-dashboard');
+          // Verificar con 2FA y password - el backend crea la sesión internamente
+          const login2FAResponse = await verify2FALogin({
+            email,
+            token: twoFactorCode,
+            password: tempPassword,
+          });
+
+          console.log('Respuesta verify2FALogin:', login2FAResponse);
+
+          if (login2FAResponse.success && login2FAResponse.access_token) {
+            // Login exitoso con 2FA
+            const token = login2FAResponse.access_token;
+            console.log('Token recibido, guardando...');
+            
+            // Guardar token en localStorage
+            localStorage.setItem('access_token', token);
+            
+            // Limpiar password temporal
+            setTempPassword('');
+            
+            console.log('Haciendo login en el contexto...');
+            
+            // Hacer login en el contexto y esperar a que se complete
+            await login(token);
+            
+            console.log('Login en contexto completado, obteniendo info del usuario...');
+            
+            // Obtener información del usuario
+            const me = await fetchMe();
+            const roleName = me?.role?.name || 'tecnico';
+            
+            console.log('Usuario obtenido, rol:', roleName);
+            
+            // Esperar un momento para asegurar que todo esté listo
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Redirigir según rol
+            console.log('Redirigiendo...');
+            if (roleName === 'cfo') {
+              navigate('/cfo-dashboard');
+            } else {
+              navigate('/activos');
+            }
           } else {
-            navigate('/activos');
+            console.error('verify2FALogin no devolvió access_token:', login2FAResponse);
+            setError2FA(t('loginError', 'Error al iniciar sesión después del registro. Por favor inicia sesión manualmente.'));
+            
+            // Redirigir al login después de un tiempo
+            setTimeout(() => {
+              navigate(`/login?email=${encodeURIComponent(email)}`);
+            }, 3000);
           }
-        } else {
-          setError2FA(t('loginError', 'Error al iniciar sesión'));
+        } catch (loginErr: any) {
+          console.error('Error en login después del setup:', loginErr);
+          setError2FA(t('loginError', 'Error al iniciar sesión. Redirigiendo al login...'));
+          
+          // Redirigir al login después de un tiempo
+          setTimeout(() => {
+            navigate(`/login?email=${encodeURIComponent(email)}`);
+          }, 3000);
         }
       } else {
-        setError2FA(t('invalid2FACode', 'Código inválido. Intenta nuevamente.'));
+        setError2FA(verifyResponse.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.'));
       }
     } catch (err: any) {
       console.error('Error 2FA:', err);
-      setError2FA(err?.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.'));
+      const errorMessage = err?.body?.message || err?.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.');
+      setError2FA(errorMessage);
     } finally {
       setVerifying2FA(false);
     }

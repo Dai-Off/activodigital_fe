@@ -69,6 +69,7 @@ export interface Verify2FASetupResponse {
 export interface Verify2FALoginPayload {
   email: string;
   token: string;  // Código de 6 dígitos
+  password: string;  // Password requerido para crear sesión
 }
 
 export interface Verify2FALoginResponse {

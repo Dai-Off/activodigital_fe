@@ -76,6 +76,7 @@ export default function Login() {
       const verifyResponse = await verify2FALogin({
         email: tempEmail,
         token: twoFactorCode,
+        password: password,  // ← Agregar password
       });
 
       if (verifyResponse.success && verifyResponse.access_token) {
@@ -112,11 +113,15 @@ export default function Login() {
           navigate('/activos');
         }
       } else {
-        setError2FA(t('invalid2FACode', 'Código inválido. Intenta nuevamente.'));
+        // Respuesta exitosa pero sin access_token
+        const errorMsg = verifyResponse.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.');
+        setError2FA(errorMsg);
+        console.error('verify2FALogin returned success but no access_token:', verifyResponse);
       }
     } catch (err: any) {
       console.error('Error 2FA:', err);
-      setError2FA(err?.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.'));
+      const errorMessage = err?.body?.message || err?.message || t('invalid2FACode', 'Código inválido. Intenta nuevamente.');
+      setError2FA(errorMessage);
     } finally {
       setVerifying2FA(false);
     }

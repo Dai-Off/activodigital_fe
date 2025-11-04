@@ -163,12 +163,40 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   // Cargar datos iniciales y iniciar polling
   useEffect(() => {
-    fetchNotifications({ limit: 20 });
-    refreshUnreadCount();
-    
-    // Iniciar polling automáticamente
-    startDiscretePolling();
-  }, [fetchNotifications, refreshUnreadCount, startDiscretePolling]);
+    const checkTokenAndLoad = () => {
+      // Verificar si hay token antes de hacer peticiones
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+      
+      if (token) {
+        fetchNotifications({ limit: 20 });
+        refreshUnreadCount();
+        
+        // Iniciar polling automáticamente solo si hay token
+        startDiscretePolling();
+      } else {
+        // Si no hay token, detener polling y limpiar datos
+        stopDiscretePolling();
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    // Verificar inmediatamente
+    checkTokenAndLoad();
+
+    // Escuchar cambios en localStorage para detectar login/logout
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'access_token') {
+        checkTokenAndLoad();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [fetchNotifications, refreshUnreadCount, startDiscretePolling, stopDiscretePolling]);
 
   // Limpiar polling al desmontar
   useEffect(() => {
