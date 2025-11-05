@@ -143,7 +143,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {t('sectionsList.title', 'Secciones del Libro Digital')}
+          {t('sectionsList.title', 'Secciones del Libro del Edificio')}
         </h2>
         <p className="text-gray-600">
           {t('sectionsList.instructions', 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.')}

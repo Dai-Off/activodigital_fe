@@ -135,7 +135,7 @@ export default function Login() {
             <span className="text-white font-semibold">LE</span>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">{t('loginTitle', 'Iniciar sesión')}</h1>
-          <p className="text-gray-600 mt-1">{t('loginSubtitle', 'Accede a Activo Digital')}</p>
+          <p className="text-gray-600 mt-1">{t('loginSubtitle', 'Accede a tu plataforma')}</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm animate-fadeInUp" style={{animationDelay: '0.05s'}}>
@@ -266,10 +266,6 @@ export default function Login() {
             </>
           )}
         </div>
-        <style>{`
-          @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-          .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
-        `}</style>
       </div>
     </div>
   );

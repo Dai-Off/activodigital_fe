@@ -1082,7 +1082,7 @@ export default function AssetsList() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-xs text-gray-500 hidden sm:block">{t('digitalBook', { defaultValue: 'Libro Digital' })}</span>
+                            <span className="text-xs text-gray-500 hidden sm:block">{t('digitalBook', { defaultValue: 'Libro del Edificio' })}</span>
                             <span className="text-xs text-gray-500 sm:hidden">{t('digitalBook', { defaultValue: 'Libro' })}</span>
                             {completedSections === totalSections ? (
                               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">

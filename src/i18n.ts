@@ -13,11 +13,11 @@ export const resources = {
   es: {
     translation: {
   // --- Alias globales ---
-  appTitle: 'Activo digital',
+  appTitle: 'Arkia',
   profile: 'Perfil',
   // --- Navegación / Menú / Idioma ---
       nav: {
-        productName: 'Activo digital',
+        productName: 'Arkia',
         assets: 'Activos',
         documentation: 'Documentación',
         maintenance: 'Mantenimiento',
@@ -88,7 +88,7 @@ export const resources = {
       // --- Topbar / UI ---
       chatAI: 'Chat IA',
       assistant: 'Asistente',
-      chatWelcome: '¡Hola! Soy tu asistente de activos digitales. ¿En qué puedo ayudarte hoy?',
+      chatWelcome: '¡Hola! Soy tu asistente inmobiliario. ¿En qué puedo ayudarte hoy?',
       chatUserError: 'Error: No se pudo identificar tu usuario. Intenta iniciar sesión nuevamente.',
       chatTimeoutError: 'El servicio está tardando más de lo esperado. Intenta de nuevo en unos segundos.',
       chatProcessingError: 'Lo siento, hubo un error al procesar tu mensaje. Intenta de nuevo.',
@@ -122,11 +122,11 @@ export const resources = {
       annualEmissions: 'Emisiones anuales',
       averageEnergyClass: 'Clase energética promedio',
       averageESGScore: 'ESG Score medio',
-      completedDigitalBook: 'Libro digital completo',
+      completedDigitalBook: 'Libro del edificio completo',
       of: 'de',
       assetsList: 'Listado de activos',
       name: 'Nombre',
-      digitalBookStatus: 'Estado libro digital',
+      digitalBookStatus: 'Estado libro del edificio',
       noAssignedAssets: 'No tienes activos asignados',
       createFirstAssetBtn: 'Crear primer activo',
       showing: 'Mostrando',
@@ -140,7 +140,7 @@ export const resources = {
       ready: 'Listo',
       inProgress: 'En curso',
       status: 'Estado',
-      digitalBook: 'Libro Digital',
+      digitalBook: 'Libro del Edificio',
       energyCertificate: 'Certificación Energética',
       squareMeters: 'Superficie',
       price: 'Precio',
@@ -148,7 +148,7 @@ export const resources = {
       myAssets: 'Mis Activos',
       assignedAssets: 'Activos Asignados',
       managePortfolio: 'Gestiona tu cartera de activos inmobiliarios y asigna técnicos',
-      assignedAssetsDesc: 'Activos que tienes asignados para gestionar libros digitales',
+      assignedAssetsDesc: 'Inmuebles que tienes asignados para gestionar sus libros técnicos',
       assignedBuildings: 'Edificios asignados',
       completedBooks: 'Libros completados',
       pendingBooks: 'Pendientes',
@@ -157,7 +157,7 @@ export const resources = {
       averageAge: 'Edad promedio',
       years: 'años',
       greenFinancingEligible: '% cartera apta para financiación verde',
-      completedDigitalBooksPercent: '% libros digitales completados',
+      completedDigitalBooksPercent: '% libros del edificio completados',
       userDataLoadWarning: 'No se pudieron cargar los datos del usuario, pero puedes continuar navegando.',
       noAssetsYet: 'No tienes activos aún',
       createFirstAsset: 'Comienza creando tu primer activo para gestionar tu cartera.',
@@ -299,10 +299,10 @@ export const resources = {
         potentialValue: 'Valor potencial',
         estimatedROI: 'ROI estimado',
         returnOnInvestment: 'Retorno de inversión',
-        title: 'Libro del Edificio Digital',
+        title: 'Libro del Edificio',
         digitalBookAccess: 'Accede a documentación técnica, certificados y normativas del edificio',
-        digitalBookTechnicianWorking: 'El técnico está trabajando en el libro digital',
-        digitalBookCreate: 'Crea el libro digital con información técnica detallada',
+        digitalBookTechnicianWorking: 'El técnico está trabajando en el libro del edificio',
+        digitalBookCreate: 'Crea el libro técnico con información detallada del inmueble',
         completed: 'Completado',
         notCompleted: 'No completado',
         exportCompletedBook: 'Exportar Libro Completado',
@@ -318,8 +318,8 @@ export const resources = {
         review: 'Revisar',
         technicianAssigned: 'Técnico asignado',
         noTechnicianAssigned: 'Sin técnico asignado aún',
-        noDigitalBookReady: 'Sin libro digital • Listo para crear',
-        viewDigitalBook: 'Ver Libro Digital'
+        noDigitalBookReady: 'Sin libro del edificio • Listo para crear',
+        viewDigitalBook: 'Ver Libro del Edificio'
       },
 
       // --- Dashboard (aggregates) ---
@@ -338,7 +338,7 @@ export const resources = {
         high: 'Alto',
         complianceByType: 'Cumplimiento por tipología',
         tertiary: 'Terciario',
-        digitalBuildingBook: 'Libro del Edificio Digital',
+        digitalBuildingBook: 'Libro del Edificio',
         published: 'Publicado',
         version: 'Versión',
         updated: 'Actualizado',
@@ -350,7 +350,7 @@ export const resources = {
         certificates: 'Certificados',
         maintenance: 'Mantenimiento',
         inspections: 'Inspecciones',
-        openDigitalBook: 'Abrir Libro Digital',
+        openDigitalBook: 'Abrir Libro del Edificio',
         legalCompliance: 'Cumplimiento legal',
         upcomingExpirations: 'Próximos vencimientos',
         maintenanceTasks: 'Tareas de mantenimiento',
@@ -422,7 +422,7 @@ export const resources = {
         cookies: 'Cookies',
         supportEmail: 'soporte@tudominio.com',
         supportPhone: '+351 210 000 000',
-        productName: 'Activo digital',
+        productName: 'Arkia',
         copyright: '©',
         operational: 'Operativo',
         up: 'Arriba'
@@ -430,7 +430,7 @@ export const resources = {
 
       // --- Digital Book (editor estructurado) ---
       digitalbook: {
-        title: 'Libro Digital',
+        title: 'Libro del Edificio',
         pending: 'Pendiente',
         notCreated: 'No creado',
         completed: 'Completado',
@@ -439,10 +439,10 @@ export const resources = {
         certificates: 'Certificados',
         maintenance: 'Mantenimiento',
         inspections: 'Inspecciones',
-        digitalBookTitle: 'Libro Digital del Edificio',
-        digitalBookTechnicianWorking: 'El técnico está trabajando en el libro digital.',
+        digitalBookTitle: 'Libro del Edificio',
+        digitalBookTechnicianWorking: 'El técnico está trabajando en el libro del edificio.',
         technicianAssigned: 'Técnico asignado:',
-        waitingForCreation: 'Esperando creación del libro digital',
+        waitingForCreation: 'Esperando creación del libro del edificio',
         sections: {
           general_data: { title: 'Datos generales del edificio', description: 'Información básica y características principales' },
           construction_features: { title: 'Características constructivas y técnicas', description: 'Especificaciones técnicas de construcción' },
@@ -504,7 +504,7 @@ export const resources = {
           progress: '{{completed}} de {{total}} secciones completadas',
           backToHub: 'Volver al Hub',
           continueWizard: 'Continuar con Wizard',
-          viewDigitalBook: 'Ver Libro Digital'
+          viewDigitalBook: 'Ver Libro del Edificio'
         },
         options: {
           residential: 'Residencial',
@@ -515,7 +515,7 @@ export const resources = {
           safetyCompliance: { full: 'Cumple toda la normativa', pending: 'Pendiente de actualización', none: 'No conforme / en infracción' }
         },
         sectionsList: {
-          title: 'Secciones del Libro Digital',
+          title: 'Secciones del Libro del Edificio',
           instructions: 'Revisa y completa cada sección. Haz clic para editar.',
           markComplete: 'Marcar como completada',
           progress: '{{completed}} de {{total}} secciones completadas',
@@ -818,11 +818,11 @@ export const resources = {
       annualEmissions: 'Annual emissions',
       averageEnergyClass: 'Average energy class',
       averageESGScore: 'Average ESG Score',
-      completedDigitalBook: 'Completed Digital Book',
+      completedDigitalBook: 'Completed Building Book',
       of: 'of',
       assetsList: 'Assets List',
       name: 'Name',
-      digitalBookStatus: 'Digital Book Status',
+      digitalBookStatus: 'Building Book Status',
       noAssignedAssets: 'You have no assigned assets',
       createFirstAssetBtn: 'Create first asset',
       showing: 'Showing',
@@ -836,7 +836,7 @@ export const resources = {
       ready: 'Ready',
       inProgress: 'In progress',
       status: 'Status',
-      digitalBook: 'Digital Book',
+      digitalBook: 'Building Book',
       energyCertificate: 'Energy Certificate',
       squareMeters: 'Surface',
       price: 'Price',
@@ -844,7 +844,7 @@ export const resources = {
       myAssets: 'My Assets',
       assignedAssets: 'Assigned Assets',
       managePortfolio: 'Manage your real estate portfolio and assign technicians',
-      assignedAssetsDesc: 'Assets assigned to you to manage digital books',
+      assignedAssetsDesc: 'Properties assigned to you to manage their technical records',
       assignedBuildings: 'Assigned buildings',
       completedBooks: 'Completed books',
       pendingBooks: 'Pending',
@@ -853,7 +853,7 @@ export const resources = {
       averageAge: 'Average age',
       years: 'years',
       greenFinancingEligible: '% portfolio eligible for green financing',
-      completedDigitalBooksPercent: '% completed digital books',
+      completedDigitalBooksPercent: '% completed building books',
       userDataLoadWarning: 'We could not load user data, but you can continue browsing.',
       noAssetsYet: 'You have no assets yet',
       createFirstAsset: 'Start by creating your first asset to manage your portfolio.',
@@ -995,10 +995,10 @@ export const resources = {
         potentialValue: 'Potential Value',
         estimatedROI: 'Estimated ROI',
         returnOnInvestment: 'Return on investment',
-        title: 'Building Digital Book',
+        title: 'Building Book',
         digitalBookAccess: 'Access all technical documentation, certificates, and regulations of the building',
-        digitalBookTechnicianWorking: 'The technician is working to create the digital book',
-        digitalBookCreate: 'Create the digital book with detailed technical information',
+        digitalBookTechnicianWorking: 'The technician is working on the building book',
+        digitalBookCreate: 'Create the technical book with detailed building information',
         completed: 'Completed',
         notCompleted: 'Not completed',
         exportCompletedBook: 'Export Completed Book',
@@ -1014,8 +1014,8 @@ export const resources = {
         review: 'Review',
         technicianAssigned: 'Technician assigned',
         noTechnicianAssigned: 'No technician assigned yet',
-        noDigitalBookReady: 'No digital book • Ready to create',
-        viewDigitalBook: 'View Digital Book'
+        noDigitalBookReady: 'No building book • Ready to create',
+        viewDigitalBook: 'View Building Book'
       },
 
       // --- Dashboard (aggregates) ---
@@ -1046,7 +1046,7 @@ export const resources = {
         certificates: 'Certificates',
         maintenance: 'Maintenance',
         inspections: 'Inspections',
-        openDigitalBook: 'Open Digital Book',
+        openDigitalBook: 'Open Building Book',
         legalCompliance: 'Legal compliance',
         upcomingExpirations: 'Upcoming expirations',
         maintenanceTasks: 'Maintenance tasks',
@@ -1126,7 +1126,7 @@ export const resources = {
 
       // --- Digital Book ---
       digitalbook: {
-        title: 'Digital Book',
+        title: 'Building Book',
         pending: 'Pending',
         notCreated: 'Not created',
         completed: 'Completed',
@@ -1135,10 +1135,10 @@ export const resources = {
         certificates: 'Certificates',
         maintenance: 'Maintenance',
         inspections: 'Inspections',
-        digitalBookTitle: 'Digital Building Book',
-        digitalBookTechnicianWorking: 'The technician is working on the Digital Book.',
+        digitalBookTitle: 'Building Book',
+        digitalBookTechnicianWorking: 'The technician is working on the building book.',
         technicianAssigned: 'Technician assigned:',
-        waitingForCreation: 'Waiting for Digital Book creation',
+        waitingForCreation: 'Waiting for building book creation',
         sections: {
           general_data: { title: 'General building data', description: 'Basic information and main features' },
           construction_features: { title: 'Construction and technical features', description: 'Technical construction specifications' },
@@ -1200,7 +1200,7 @@ export const resources = {
           progress: '{{completed}} of {{total}} sections completed',
           backToHub: 'Back to Hub',
           continueWizard: 'Continue with Wizard',
-          viewDigitalBook: 'View Digital Book'
+          viewDigitalBook: 'View Building Book'
         },
         options: {
           residential: 'Residential',
@@ -1211,7 +1211,7 @@ export const resources = {
           safetyCompliance: { full: 'Compliant with all regulations', pending: 'Pending update', none: 'Not compliant / in violation' }
         },
         sectionsList: {
-          title: 'Digital Book Sections',
+          title: 'Building Book Sections',
           instructions: 'Review and complete each section. Click to edit.',
           markComplete: 'Mark complete',
           progress: '{{completed}} of {{total}} sections completed',

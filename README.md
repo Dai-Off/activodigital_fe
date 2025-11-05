@@ -1,4 +1,4 @@
-# Activo Digital - Frontend
+# Arkia - Frontend
 
 Plataforma web para la gestión digital de edificios y cumplimiento normativo.
 
@@ -144,7 +144,7 @@ El sistema usa JWT tokens manejados por el backend:
 - `/mantenimiento` - Gestión de mantenimiento
 - `/cumplimiento` - Gestión de cumplimiento
 - `/unidades` - Gestión de unidades
-- `/libro-digital` - Libro digital del edificio
+- `/libro-digital` - Libro del edificio
 
 ## Configuración de Desarrollo
 
@@ -210,4 +210,4 @@ Si el deploy falla:
 
 ## Licencia
 
-Proyecto privado de Activo Digital.
+Proyecto privado de Arkia.

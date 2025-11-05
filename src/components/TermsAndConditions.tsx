@@ -1,5 +1,5 @@
 import { Header } from "./Header";
-import Footer from "./Footer";
+import { LandingFooter as Footer } from "./LandingFooter";
 
 export default function TermsAndConditions() {
   return (
@@ -33,14 +33,14 @@ export default function TermsAndConditions() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Objeto de los términos</h2>
             <p>
-              El presente documento regula el acceso y uso de la plataforma tecnológica de gestión inmobiliaria automatizada ofrecida por Activo Digital (en adelante, la Plataforma), a través de acceso privado concedido tras la contratación del servicio.
+              El presente documento regula el acceso y uso de la plataforma tecnológica de gestión inmobiliaria automatizada ofrecida por Arkia (en adelante, la Plataforma), a través de acceso privado concedido tras la contratación del servicio.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">3. Funcionalidad del servicio</h2>
             <p>
-              Activo Digital ofrece servicios de gestión inmobiliaria integral mediante inteligencia artificial. Los usuarios acceden a la Plataforma mediante un login individual facilitado tras la contratación. La plataforma incluye gestión de documentos, seguimiento de mantenimiento, cumplimiento normativo y análisis inteligente de carteras inmobiliarias.
+              Arkia ofrece servicios de gestión inmobiliaria integral mediante inteligencia artificial. Los usuarios acceden a la Plataforma mediante un login individual facilitado tras la contratación. La plataforma incluye gestión de documentos, seguimiento de mantenimiento, cumplimiento normativo y análisis inteligente de carteras inmobiliarias.
             </p>
           </section>
 

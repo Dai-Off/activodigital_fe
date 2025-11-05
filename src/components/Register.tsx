@@ -532,14 +532,6 @@ export default function Register() {
             </div>
           </div>
         )}
-
-        <style>{`
-          @keyframes fadeInUp { 
-            from { transform: translateY(20px); opacity: 0; } 
-            to { transform: translateY(0); opacity: 1; } 
-          }
-          .animate-fadeInUp { animation: fadeInUp 0.6s ease-out both; }
-        `}</style>
       </div>
     </div>
   );

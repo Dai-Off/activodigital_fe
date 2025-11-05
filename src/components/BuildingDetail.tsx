@@ -195,7 +195,7 @@ const BuildingDetail: React.FC = () => {
         startLoading();
         const buildingData = await BuildingsApiService.getBuildingById(id);
         setBuilding(buildingData);
-        // Cargar estado del libro digital (si existe)
+        // Cargar estado del libro del edificio (si existe)
         try {
           const book = await getBookByBuilding(id);
           setDigitalBook(book);
@@ -250,7 +250,7 @@ const BuildingDetail: React.FC = () => {
     }
   }, [user?.role, building?.id]);
 
-  // Recargar datos ESG cuando el usuario regrese del libro digital
+  // Recargar datos ESG cuando el usuario regrese del libro del edificio
   useEffect(() => {
     const handleFocus = () => {
       loadESGData();
@@ -307,7 +307,7 @@ const BuildingDetail: React.FC = () => {
       
       stopLoading();
     } catch (error) {
-      showError('Error al crear el libro digital');
+      showError('Error al crear el libro del edificio');
       stopLoading();
     }
   };
@@ -695,7 +695,7 @@ const BuildingDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Libro del Edificio Digital (estado) */}
+                {/* Libro del Edificio (estado) */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">{t('digitalbook.digitalBookTitle', { defaultValue: 'Digital Building Book' })}</h4>
                   <div className="flex items-center gap-3">
@@ -837,25 +837,25 @@ const BuildingDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Libro Digital Button */}
+      {/* Libro del Edificio Button */}
       <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold mb-2">{t('digitalBookTitle', { defaultValue: 'Libro Digital del Edificio' })}</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('digitalBookTitle', { defaultValue: 'Libro del Edificio' })}</h3>
               <p className="text-blue-100 mb-4">
                 {user?.role === 'propietario' ? (
                   digitalBook 
                     ? t('digitalBookDescOwner', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescOwnerPending', { defaultValue: 'El técnico estará trabajando para crear el libro digital. En cuanto esté listo podrás verlo accediendo aquí' })
+                    : t('digitalBookDescOwnerPending', { defaultValue: 'El técnico estará trabajando para crear el libro del edificio. En cuanto esté listo podrás verlo accediendo aquí' })
                 ) : user?.role === 'administrador' ? (
                   digitalBook 
                     ? t('digitalBookDescAdmin', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescAdminPending', { defaultValue: 'El técnico asignado creará el libro digital. Una vez completado podrás verlo aquí' })
+                    : t('digitalBookDescAdminPending', { defaultValue: 'El técnico asignado creará el libro del edificio. Una vez completado podrás verlo aquí' })
                 ) : (
                   digitalBook 
                     ? t('digitalBookDescTech', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescTechCreate', { defaultValue: 'Crea el libro digital con información técnica detallada, certificados y normativas' })
+                    : t('digitalBookDescTechCreate', { defaultValue: 'Crea el libro del edificio con información técnica detallada, certificados y normativas' })
                 )}
               </p>
               <div className="flex items-center gap-2 text-sm text-blue-100">
@@ -871,7 +871,7 @@ const BuildingDetail: React.FC = () => {
                         ? (building.technicianEmail 
                             ? `Técnico asignado: ${building.technicianEmail}` 
                             : 'Sin técnico asignado aún')
-                        : 'Sin libro digital • Listo para crear'
+                        : 'Sin libro del edificio • Listo para crear'
                   }
                 </span>
               </div>
@@ -890,7 +890,7 @@ const BuildingDetail: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        {t('viewDigitalBook', { defaultValue: 'Ver Libro Digital' })}
+                        {t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' })}
                       </button>
                     );
                   } else {
@@ -898,7 +898,7 @@ const BuildingDetail: React.FC = () => {
                       <button
                         disabled
                         className="inline-flex items-center px-4 py-2.5 bg-gray-200 text-gray-500 font-medium rounded-md cursor-not-allowed shadow-sm"
-                        title="El técnico debe crear el libro digital"
+                        title="El técnico debe crear el libro del edificio"
                       >
                         <svg className="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -921,7 +921,7 @@ const BuildingDetail: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        {t('viewDigitalBook', { defaultValue: 'Ver Libro Digital' })}
+                        {t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' })}
                       </button>
                     );
                   } else {
@@ -929,7 +929,7 @@ const BuildingDetail: React.FC = () => {
                       <button
                         disabled
                         className="inline-flex items-center px-4 py-2.5 bg-gray-200 text-gray-500 font-medium rounded-md cursor-not-allowed shadow-sm"
-                        title="El técnico debe crear el libro digital"
+                        title="El técnico debe crear el libro del edificio"
                       >
                         <svg className="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -945,7 +945,7 @@ const BuildingDetail: React.FC = () => {
                 const done = digitalBook?.sections?.filter(s => s.complete).length ?? 0;
                 const hasAny = total > 0;
                 const allDone = hasAny && done === total;
-                const label = !hasAny ? t('createDigitalBook', { defaultValue: 'Crear Libro Digital' }) : (allDone ? t('viewDigitalBook', { defaultValue: 'Ver Libro Digital' }) : t('continueCreating', { defaultValue: 'Continuar creando' }));
+                const label = !hasAny ? t('createDigitalBook', { defaultValue: 'Crear Libro del Edificio' }) : (allDone ? t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' }) : t('continueCreating', { defaultValue: 'Continuar creando' }));
                 const onClick = !hasAny ? handleCreateDigitalBook : handleViewDigitalBook;
                 return (
                   <button
@@ -1012,7 +1012,7 @@ const BuildingDetail: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    {t('missingESGDataDesc', { defaultValue: 'Para calcular el score ESG, faltan algunos datos críticos. Completa la información en el Libro Digital para obtener un análisis completo.' })}
+                    {t('missingESGDataDesc', { defaultValue: 'Para calcular el score ESG, faltan algunos datos críticos. Completa la información en el Libro del Edificio para obtener un análisis completo.' })}
                   </p>
                   <div className="space-y-3">
                       <div className="text-sm font-medium text-gray-700">{t('missingData', { defaultValue: 'Datos faltantes' })} ({esgData.missingData.length}):</div>

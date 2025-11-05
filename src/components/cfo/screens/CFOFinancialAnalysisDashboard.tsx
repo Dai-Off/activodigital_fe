@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, AlertCircle, Loader2, DollarSign, Settings, Wrench, FileText, Plus } from 'lucide-react';
+import { ArrowLeft, TrendingUp, AlertCircle, Loader2, Euro, Settings, Wrench, FileText, Plus } from 'lucide-react';
 
 // Servicios
 import { BuildingsApiService } from '../../../services/buildingsApi';
@@ -266,7 +266,7 @@ export default function CFOFinancialAnalysisDashboard() {
         {/* Scores por Categoría - Compactos y Modernos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {[
-            { label: 'Financiero', value: scores.financial, Icon: DollarSign },
+            { label: 'Financiero', value: scores.financial, Icon: Euro },
             { label: 'Operacional', value: scores.operational, Icon: Settings },
             { label: 'Técnico', value: scores.technical, Icon: Wrench },
             { label: 'Mercado', value: scores.market, Icon: TrendingUp },

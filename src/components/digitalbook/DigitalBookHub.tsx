@@ -127,7 +127,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         'Extrayendo texto del PDF...',
         'Procesando con IA...',
         'Validando datos...',
-        'Creando libro digital...'
+        'Creando libro del edificio...'
       ];
       
       let stepIndex = 0;
@@ -215,7 +215,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       setBook(b);
     } catch (error) {
       // Errores reales (no 404, que ya se maneja en getBookByBuilding)
-      console.error('Error cargando libro digital:', error);
+      console.error('Error cargando libro del edificio:', error);
       setBook(null);
     } finally {
       if (showLoading) {
@@ -291,7 +291,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
   const getStatusMessage = () => {
     if (completedSections === 0) return 'Libro en borrador – ninguna sección completada';
-    if (completedSections === totalSections) return '¡Libro Digital completado!';
+    if (completedSections === totalSections) return '¡Libro del Edificio completado!';
     return `En progreso – ${completedSections} de ${totalSections} secciones completadas`;
   };
 
@@ -305,7 +305,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="pt-2 pb-8 max-w-full">
         <div className="px-4 sm:px-6 lg:px-8">
-        {loading && (<PageLoader message="Cargando libro digital..." />)}
+        {loading && (<PageLoader message="Cargando libro del edificio..." />)}
         {/* Header */}
         <div className="mb-8">
           {/* Breadcrumb */}
@@ -325,13 +325,13 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                   />
                 </svg>
               </li>
-              <li className="text-gray-900 font-medium">Libro Digital - {buildingNameFinal}</li>
+              <li className="text-gray-900 font-medium">Libro del Edificio - {buildingNameFinal}</li>
             </ol>
           </nav>
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Libro Digital</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Libro del Edificio</h1>
               <p className="text-sm sm:text-base text-gray-600">{buildingNameFinal}</p>
             </div>
 
@@ -354,7 +354,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
           <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Progreso del Libro Digital</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Progreso del Libro del Edificio</h2>
                 <p className="text-sm text-gray-600 mt-1">Completar todas las secciones para finalizar el libro</p>
               </div>
               <div className="text-right">
@@ -479,7 +479,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         {/* Checklist de secciones */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Secciones del Libro Digital</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Secciones del Libro del Edificio</h2>
             <p className="mt-1 text-sm text-gray-600">
               {canEdit 
                 ? 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.'
@@ -562,7 +562,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
             {completedSections === totalSections && (
               <button
-                onClick={() => alert('¡Libro Digital completado! Funcionalidad de exportación próximamente.')}
+                onClick={() => alert('¡Libro del Edificio completado! Funcionalidad de exportación próximamente.')}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 Exportar Libro Completado

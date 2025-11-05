@@ -5,7 +5,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
 
-// Mock data del libro digital
+// Mock data del libro del edificio
 const libroData = {
   // Se sustituyen los IDs UUID por códigos más legibles para mock/demo
   libroId: 'LDE-0001',
@@ -197,7 +197,7 @@ export function LibroDigital() {
       // Título principal
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-  pdf.text(t('digitalBookTitle', 'LIBRO DIGITAL DEL EDIFICIO'), pageWidth / 2, yPosition, { align: 'center' });
+  pdf.text(t('digitalBookTitle', 'LIBRO DEL EDIFICIO'), pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
 
       // Nombre del edificio
@@ -350,7 +350,7 @@ export function LibroDigital() {
       yPosition += 5;
 
       // Secciones del libro
-  addText(t('digitalBookSections', 'SECCIONES DEL LIBRO DIGITAL'), 14, true);
+  addText(t('digitalBookSections', 'SECCIONES DEL LIBRO DEL EDIFICIO'), 14, true);
       libroData.secciones.forEach(seccion => {
         addText(`${seccion.titulo}`, 12, true);
         addText(`Estado: ${seccion.estado.toUpperCase()}`);
@@ -454,7 +454,7 @@ export function LibroDigital() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('digitalBookTitle', 'Libro Digital del Edificio')}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('digitalBookTitle', 'Libro del Edificio')}</h1>
             <p className="text-gray-600">{t('buildingName', 'Hotel RIU PLAZA España')}</p>
             <div className="flex items-center gap-4 mt-3">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">

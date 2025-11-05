@@ -175,7 +175,7 @@ const SectionEditor: React.FC = () => {
         
         if (!b) {
           console.log('❌ SectionEditor - No se encontró libro');
-          setLoadError('No se encontró libro digital.');
+          setLoadError('No se encontró el libro del edificio.');
           setLoading(false);
           return;
         }

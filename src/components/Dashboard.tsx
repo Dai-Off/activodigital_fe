@@ -149,7 +149,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Libro del Edificio Digital (estado) */}
+                {/* Libro del Edificio (estado) */}
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">{t('dashboard.digitalBuildingBook')}</h4>
                   <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Libro Digital Button */}
+      {/* Libro del Edificio Button */}
       <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">

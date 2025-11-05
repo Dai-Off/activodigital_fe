@@ -266,7 +266,7 @@ export const getBuildingStatusLabel = (status: Building['status']): string => {
     case 'ready_book':
       return 'Listo para libro';
     case 'with_book':
-      return 'Con libro digital';
+      return 'Con libro del edificio';
     default:
       return status;
   }

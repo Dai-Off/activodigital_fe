@@ -196,7 +196,7 @@ export async function getOrCreateBookForBuilding(buildingId: string): Promise<Di
     return created;
   } catch (err: any) {
     const msg = String(err?.message ?? '');
-    if (/ya tiene un libro digital/i.test(msg) || /ya existe/i.test(msg)) {
+    if (/ya tiene un libro del edificio/i.test(msg) || /ya existe/i.test(msg)) {
       const again = await getBookByBuilding(buildingId);
       if (again && again.id) return again;
     }
@@ -207,13 +207,13 @@ export async function getOrCreateBookForBuilding(buildingId: string): Promise<Di
 /** Helper: devolver solo el ID del libro (creándolo si hace falta) */
 export async function getBookIdOrThrow(buildingId: string): Promise<string> {
   const book = await getOrCreateBookForBuilding(buildingId);
-  if (!book?.id) throw new Error('No se pudo obtener/crear el libro digital.');
+  if (!book?.id) throw new Error('No se pudo obtener/crear el libro del edificio.');
   return book.id;
 }
 
 /**
  * POST /libros-digitales/upload-ai
- * Procesa un PDF con IA y crea/actualiza el libro digital automáticamente
+ * Procesa un PDF con IA y crea/actualiza el libro del edificio automáticamente
  */
 export async function processPDFWithAI(
   buildingId: string,

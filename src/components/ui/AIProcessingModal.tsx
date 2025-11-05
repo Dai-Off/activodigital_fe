@@ -59,7 +59,7 @@ const AIProcessingModal: React.FC<AIProcessingModalProps> = ({
     },
     {
       id: 'create',
-      label: 'Creando libro digital',
+      label: 'Creando libro del edificio',
       description: 'Guardando las secciones en la base de datos',
       status: 'pending',
       estimatedDuration: 2
@@ -93,7 +93,7 @@ const AIProcessingModal: React.FC<AIProcessingModalProps> = ({
           if (onComplete) {
             onComplete({
               success: true,
-              message: 'Libro digital creado exitosamente',
+              message: 'Libro del edificio creado exitosamente',
               sectionsGenerated: 8
             });
           }

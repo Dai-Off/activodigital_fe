@@ -3,7 +3,7 @@
  * Muestra las métricas clave del análisis
  */
 
-import { TrendingUp, DollarSign, Activity, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Euro, Activity, AlertTriangle } from 'lucide-react';
 import type { FinancialAnalysisMetrics } from '../../../types/financialAnalysis';
 
 interface Props {
@@ -36,7 +36,7 @@ export function FinancialAnalysisMetrics({ metrics }: Props) {
     {
       label: 'Cap Rate',
       value: metrics.capRate !== null ? formatPercent(metrics.capRate) : '-',
-      icon: DollarSign,
+      icon: Euro,
       trend: metrics.capRate && metrics.capRate > 6 ? 'up' : 'neutral',
       color: metrics.capRate && metrics.capRate > 6 ? 'green' : 'yellow',
     },

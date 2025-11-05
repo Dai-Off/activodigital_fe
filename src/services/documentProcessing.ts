@@ -8,7 +8,7 @@ type ApiEnvelope<T> = { data: T };
 
 /**
  * POST /documents/create-book
- * Crea un libro digital procesando un documento con IA
+ * Crea un libro del edificio procesando un documento con IA
  */
 export async function createBookFromDocument(
   buildingId: string,
@@ -34,7 +34,7 @@ export async function createBookFromDocument(
 
 /**
  * POST /documents/update-book/:id
- * Actualiza un libro digital existente procesando un documento con IA
+ * Actualiza un libro del edificio existente procesando un documento con IA
  */
 export async function updateBookFromDocument(
   bookId: string,

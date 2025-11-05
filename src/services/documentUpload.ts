@@ -60,7 +60,7 @@ export interface DocumentUploadResult {
 /**
  * Sube un documento a Supabase Storage
  * @param file - Archivo a subir
- * @param bookId - ID del libro digital
+ * @param bookId - ID del libro del edificio
  * @param sectionType - Tipo de sección (proyecto_tecnico, documentacion_administrativa, etc.)
  * @param userId - ID del usuario que sube el archivo
  * @returns Resultado de la subida
@@ -158,7 +158,7 @@ export async function uploadDocument(
 /**
  * Sube múltiples documentos para una sección
  * @param files - Array de archivos
- * @param bookId - ID del libro digital
+ * @param bookId - ID del libro del edificio
  * @param sectionType - Tipo de sección
  * @param userId - ID del usuario
  * @returns Array de resultados de subida
@@ -223,7 +223,7 @@ export async function deleteDocument(documentUrl: string): Promise<{ success: bo
 
 /**
  * Obtiene todos los documentos de una sección
- * @param bookId - ID del libro digital
+ * @param bookId - ID del libro del edificio
  * @param sectionType - Tipo de sección
  * @returns Array de URLs de documentos
  */

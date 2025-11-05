@@ -24,7 +24,7 @@ import CFOFinancialAnalysisSimulation from './components/cfo/screens/CFOFinancia
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 
-// Nuevos componentes para edificios y libro digital
+// Nuevos componentes para edificios y libro del edificio
 import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
 import DigitalBookHub from './components/digitalbook/DigitalBookHub'
 import SectionsList from './components/digitalbook/SectionsList'
@@ -52,7 +52,7 @@ const SectionsListPage = () => {
               </li>
               <li>
                 <button onClick={() => navigate('/libro-digital/hub/building-1')} className="hover:text-blue-600">
-                  {t('digitalBook', 'Libro Digital')}
+                  {t('digitalBook', 'Libro del Edificio')}
                 </button>
               </li>
               <li>

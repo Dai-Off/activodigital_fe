@@ -803,45 +803,6 @@ export default function CFOAssetsList() {
                   </div>
                 </div>
               </div>
-
-              {/* Activos con mayor riesgo financiero - Abajo del todo */}
-              <div className="mt-4 border-t border-gray-200 pt-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  {t('cfo.riskAssets.title', { defaultValue: 'Activos con mayor riesgo financiero' })}
-                </h3>
-                <div className="space-y-2">
-                          <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-300">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-red-600">1.</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Edificio Centro - Madrid</p>
-                        <p className="text-xs text-gray-500">ROI: -5.2% • Sin rating</p>
-                      </div>
-                    </div>
-                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">Alto riesgo</span>
-                  </div>
-                  <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-300">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-orange-600">2.</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Complejo Residencial Norte</p>
-                        <p className="text-xs text-gray-500">ROI: 0.5% • Rating D</p>
-                      </div>
-                    </div>
-                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-orange-100 text-orange-700">Medio riesgo</span>
-                  </div>
-                  <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-yellow-300">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-yellow-600">3.</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Torre Comercial Sur</p>
-                        <p className="text-xs text-gray-500">ROI: 2.1% • Rating E</p>
-                      </div>
-                    </div>
-                    <span className="px-2 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">Bajo riesgo</span>
-                  </div>
-                </div>
-              </div>
             </div>
           ) : (
             <SkeletonDashboardSummary />

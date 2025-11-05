@@ -3,7 +3,7 @@
  * Muestra la recomendación principal y detalles del análisis
  */
 
-import { CheckCircle, TrendingUp, AlertCircle, DollarSign, Calendar, Target, Clock, FileText, Settings, Wrench, Check } from 'lucide-react';
+import { CheckCircle, TrendingUp, AlertCircle, Euro, Calendar, Target, Clock, FileText, Settings, Wrench, Check } from 'lucide-react';
 import type { FinancialAnalysisRecommendation, ActionItem } from '../../../types/financialAnalysis';
 
 interface Props {
@@ -74,7 +74,7 @@ export function FinancialAnalysisRecommendationComponent({ recommendation }: Pro
   const getCategoryIcon = (category: ActionItem['category']) => {
     switch (category) {
       case 'financiero':
-        return <DollarSign className="w-4 h-4 text-blue-600" />;
+        return <Euro className="w-4 h-4 text-blue-600" />;
       case 'operacional':
         return <Settings className="w-4 h-4 text-blue-600" />;
       case 'técnico':
@@ -125,7 +125,7 @@ export function FinancialAnalysisRecommendationComponent({ recommendation }: Pro
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border rounded-xl shadow-sm p-4" style={{ borderColor: 'rgba(91, 141, 239, 0.08)', boxShadow: '0 1px 8px rgba(91, 141, 239, 0.06)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-blue-600" />
+            <Euro className="w-4 h-4 text-blue-600" />
             <p className="text-xs font-medium" style={{ color: '#64748B' }}>Valor Actual</p>
           </div>
           <p className="text-xl font-bold" style={{ color: '#1E293B' }}>
@@ -194,7 +194,7 @@ export function FinancialAnalysisRecommendationComponent({ recommendation }: Pro
                   <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: '#64748B' }}>
                     {action.estimatedCost && (
                       <span className="flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-blue-600" />
+                        <Euro className="w-3.5 h-3.5 text-blue-600" />
                         {formatCurrency(action.estimatedCost)}
                       </span>
                     )}

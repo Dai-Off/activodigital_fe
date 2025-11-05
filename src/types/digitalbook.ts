@@ -1,4 +1,4 @@
-// Tipos para el Libro Digital
+// Tipos para el Libro del Edificio
 
 // Archivo de documento cargado en Supabase Storage
 export interface DocumentFile {
@@ -12,7 +12,7 @@ export interface DocumentFile {
   uploadedBy: string; // userId que subió el archivo
 }
 
-// Estado del libro digital
+// Estado del libro del edificio
 export const LibroDigitalEstado = {
   EN_BORRADOR: 'en_borrador',
   VALIDADO: 'validado',

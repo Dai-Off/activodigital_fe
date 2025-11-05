@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import LanguageSwitcher from './LanguageSwitcher';
-import Footer from './Footer';
+import { AppFooter as Footer } from './AppFooter';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './ui/NotificationBell';
 import DiscreteNotification from './ui/DiscreteNotification';
