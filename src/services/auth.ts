@@ -88,6 +88,15 @@ export async function setup2FA(userId: string): Promise<Setup2FAResponse> {
 
 // Verificar código 2FA durante setup (primera vez)
 export async function verify2FASetup(payload: Verify2FASetupPayload): Promise<Verify2FASetupResponse> {
+  // Modo desarrollo: bypass 2FA si VITE_DEV_MODE_2FA está activado
+  if (import.meta.env.VITE_DEV_MODE_2FA === 'true') {
+    console.warn('🔓 Modo Dev 2FA activado - Bypass de verificación');
+    return {
+      success: true,
+      message: '2FA configurado correctamente (modo dev)',
+    };
+  }
+
   return apiFetch('/auth/verify-2fa-setup', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -96,6 +105,48 @@ export async function verify2FASetup(payload: Verify2FASetupPayload): Promise<Ve
 
 // Verificar código 2FA durante login
 export async function verify2FALogin(payload: Verify2FALoginPayload): Promise<Verify2FALoginResponse> {
+  // Modo desarrollo: bypass 2FA si VITE_DEV_MODE_2FA está activado
+  if (import.meta.env.VITE_DEV_MODE_2FA === 'true') {
+    console.warn('🔓 Modo Dev 2FA activado - Bypass de verificación de login');
+    
+    // Hacer login normal sin 2FA (solo email y password)
+    const loginResponse = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: payload.email,
+        password: payload.password,
+      }),
+    });
+
+    console.log('Respuesta del backend (modo dev):', loginResponse);
+
+    // Si el backend devuelve access_token directamente, usarlo
+    if (loginResponse.access_token) {
+      return {
+        success: true,
+        access_token: loginResponse.access_token,
+        message: 'Login exitoso (modo dev - sin 2FA)',
+      };
+    }
+
+    // Si no devuelve token, asumir que es un backend que requiere 2FA obligatorio
+    // En ese caso, enviar cualquier código al endpoint de 2FA
+    console.warn('Backend requiere 2FA, enviando código dummy...');
+    const verify2FAResponse = await apiFetch('/auth/verify-2fa-login', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...payload,
+        token: '000000', // Código dummy para modo dev
+      }),
+    });
+
+    return {
+      success: true,
+      access_token: verify2FAResponse.access_token,
+      message: 'Login exitoso (modo dev - con código dummy)',
+    };
+  }
+
   return apiFetch('/auth/verify-2fa-login', {
     method: 'POST',
     body: JSON.stringify(payload),
