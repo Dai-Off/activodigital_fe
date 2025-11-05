@@ -259,10 +259,11 @@ export default function Login() {
                   {loading ? <FormLoader message={t('signingIn', 'Ingresando...')} /> : t('signIn', 'Entrar')}
                 </button>
               </form>
-              <p className="mt-4 text-center text-sm text-gray-600">
+              {/* Opción de registro temporalmente deshabilitada */}
+              {/* <p className="mt-4 text-center text-sm text-gray-600">
                 {t('dontHaveAccount', '¿No tienes cuenta?')}{' '}
                 <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">{t('createAccount', 'Crear cuenta')}</Link>
-              </p>
+              </p> */}
             </>
           )}
         </div>

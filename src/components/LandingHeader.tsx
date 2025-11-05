@@ -148,7 +148,8 @@ export const LandingHeader = memo(function Header() {
           >
             {t.header.login}
           </Button>
-          <Button 
+          {/* Botón de registro temporalmente deshabilitado */}
+          {/* <Button 
             onClick={() => navigate('/register')}
             className="inline-flex rounded-full px-3 sm:px-4 md:px-5 py-1.5 md:py-2 transition-all duration-300 border-0 text-xs sm:text-sm md:text-base hover:brightness-110 hover:scale-105 hover:shadow-lg active:scale-95"
             style={{ 
@@ -161,7 +162,7 @@ export const LandingHeader = memo(function Header() {
             aria-label="Solicitar demo gratuita de ARKIA"
           >
             {t.header.register}
-          </Button>
+          </Button> */}
         </div>
       </div>
     </header>
