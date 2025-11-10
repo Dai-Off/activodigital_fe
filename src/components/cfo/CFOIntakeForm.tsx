@@ -39,6 +39,8 @@ interface CFOIntakeData {
   // 6. Rehabilitación (quick wins)
   capex_rehab_estimado_eur?: number | null;
   ahorro_energia_pct_estimado?: number | null;
+  rehabilitationCost?: number | null;
+  potentialValue?: number | null;
 }
 
 export default function CFOIntakeForm() {
@@ -65,6 +67,8 @@ export default function CFOIntakeForm() {
     libro_edificio_estado: 'faltante',
     ite_iee_estado: 'no_aplica',
     mantenimientos_criticos_ok: false,
+    rehabilitationCost: null,
+    potentialValue: null,
   });
 
   // Cargar datos del edificio y datos financieros al montar el componente
@@ -79,6 +83,17 @@ export default function CFOIntakeForm() {
         const buildingData = await BuildingsApiService.getBuildingById(buildingId);
         setBuilding(buildingData);
         console.log('🏢 Edificio cargado:', buildingData);
+        setFormData(prev => ({
+          ...prev,
+          rehabilitationCost:
+            buildingData.rehabilitationCost !== undefined && buildingData.rehabilitationCost !== null && buildingData.rehabilitationCost !== 0
+              ? buildingData.rehabilitationCost
+              : null,
+          potentialValue:
+            buildingData.potentialValue !== undefined && buildingData.potentialValue !== null && buildingData.potentialValue !== 0
+              ? buildingData.potentialValue
+              : null,
+        }));
         
         // Cargar datos financieros existentes
         try {
@@ -111,6 +126,14 @@ export default function CFOIntakeForm() {
               ahorro_energia_pct_estimado: latestSnapshot.ahorro_energia_pct_estimado,
               eur_m2_ref_p50: latestSnapshot.meta?.eur_m2_ref_p50,
               dom_dias: latestSnapshot.meta?.dom_dias,
+              rehabilitationCost:
+                buildingData.rehabilitationCost !== undefined && buildingData.rehabilitationCost !== null && buildingData.rehabilitationCost !== 0
+                  ? buildingData.rehabilitationCost
+                  : null,
+              potentialValue:
+                buildingData.potentialValue !== undefined && buildingData.potentialValue !== null && buildingData.potentialValue !== 0
+                  ? buildingData.potentialValue
+                  : null,
             });
           } else {
             console.log('ℹ️ No hay datos financieros previos');
@@ -148,6 +171,8 @@ export default function CFOIntakeForm() {
     setIsSubmitting(true);
 
     try {
+      let latestBuilding = building || null;
+
       // Mapear datos del formulario al schema del backend
       const today = new Date();
       const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
@@ -182,6 +207,23 @@ export default function CFOIntakeForm() {
           dom_dias: formData.dom_dias ?? undefined,
         }
       };
+
+      // Actualizar campos financieros del edificio (rehabilitationCost & potentialValue)
+      if (buildingId) {
+        const rehabilitationCostValue =
+          typeof formData.rehabilitationCost === 'number' ? formData.rehabilitationCost : undefined;
+        const potentialValueValue =
+          typeof formData.potentialValue === 'number' ? formData.potentialValue : undefined;
+
+        if (rehabilitationCostValue !== undefined || potentialValueValue !== undefined) {
+          const updatedBuilding = await BuildingsApiService.updateBuilding(buildingId, {
+            rehabilitationCost: rehabilitationCostValue,
+            potentialValue: potentialValueValue,
+          });
+          setBuilding(updatedBuilding);
+          latestBuilding = updatedBuilding;
+        }
+      }
 
       console.log('📤 Payload para backend:', payload);
       console.log('📤 Concentración (debería estar entre 0-1):', payload.concentracion_top1_pct_noi);
@@ -229,9 +271,28 @@ export default function CFOIntakeForm() {
             ahorro_energia_pct_estimado: latestSnapshot.ahorro_energia_pct_estimado,
             eur_m2_ref_p50: latestSnapshot.meta?.eur_m2_ref_p50,
             dom_dias: latestSnapshot.meta?.dom_dias,
+            rehabilitationCost:
+              latestBuilding?.rehabilitationCost !== undefined && latestBuilding?.rehabilitationCost !== null && latestBuilding?.rehabilitationCost !== 0
+                ? latestBuilding?.rehabilitationCost
+                : null,
+            potentialValue:
+              latestBuilding?.potentialValue !== undefined && latestBuilding?.potentialValue !== null && latestBuilding?.potentialValue !== 0
+                ? latestBuilding?.potentialValue
+                : null,
           });
         } else {
           console.warn('⚠️ No se encontraron snapshots después de guardar');
+          setFormData(prev => ({
+            ...prev,
+            rehabilitationCost:
+              latestBuilding?.rehabilitationCost !== undefined && latestBuilding?.rehabilitationCost !== null && latestBuilding?.rehabilitationCost !== 0
+                ? latestBuilding?.rehabilitationCost
+                : null,
+            potentialValue:
+              latestBuilding?.potentialValue !== undefined && latestBuilding?.potentialValue !== null && latestBuilding?.potentialValue !== 0
+                ? latestBuilding?.potentialValue
+                : null,
+          }));
         }
       } finally {
         setIsLoadingData(false);
@@ -540,6 +601,25 @@ export default function CFOIntakeForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Coste de rehabilitación del edificio (€)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Se reflejará en la ficha del activo para todos los roles</p>
+              <input
+                type="number"
+                min="0"
+                value={formData.rehabilitationCost ?? ''}
+                onChange={(e) =>
+                  handleInputChange(
+                    'rehabilitationCost',
+                    e.target.value === '' ? null : parseFloat(e.target.value),
+                  )
+                }
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Reducción Estimada de Consumo Energético (%)
               </label>
               <p className="text-xs text-gray-500 mb-2">Porcentaje de ahorro energético esperado tras rehabilitación</p>
@@ -549,6 +629,22 @@ export default function CFOIntakeForm() {
                 max="100"
                 value={formData.ahorro_energia_pct_estimado || ''}
                 onChange={(e) => handleInputChange('ahorro_energia_pct_estimado', parseFloat(e.target.value) || undefined)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Valor potencial del edificio (€)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Proyección posterior a la rehabilitación</p>
+              <input
+                type="number"
+                min="0"
+                value={formData.potentialValue ?? ''}
+                onChange={(e) =>
+                  handleInputChange('potentialValue', e.target.value === '' ? null : parseFloat(e.target.value))
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -828,10 +924,30 @@ export default function CFOIntakeForm() {
                     <p className="text-xs text-gray-600 mb-1">CAPEX Estimado</p>
                     <p className="text-2xl font-bold text-gray-900">{existingData?.capex_rehab_estimado_eur ? formatCurrency(existingData.capex_rehab_estimado_eur) : '-'}</p>
                   </div>
+              <div className="bg-white rounded-lg p-4 border border-blue-200">
+                  <p className="text-xs text-gray-600 mb-1">Coste de rehabilitación (edificio)</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {building?.rehabilitationCost !== undefined &&
+                    building?.rehabilitationCost !== null &&
+                    building?.rehabilitationCost !== 0
+                      ? formatCurrency(building.rehabilitationCost)
+                      : '-'}
+                  </p>
+              </div>
                   <div className="bg-white rounded-lg p-4 border border-blue-200">
                     <p className="text-xs text-gray-600 mb-1">Ahorro Energía Estimado</p>
                     <p className="text-2xl font-bold text-gray-900">{existingData?.ahorro_energia_pct_estimado ? formatPercent(existingData.ahorro_energia_pct_estimado) : '-'}</p>
                   </div>
+              <div className="bg-white rounded-lg p-4 border border-blue-200">
+                <p className="text-xs text-gray-600 mb-1">Valor potencial (edificio)</p>
+                <p className="text-2xl font-bold text-gray-900">
+                    {building?.potentialValue !== undefined &&
+                    building?.potentialValue !== null &&
+                    building?.potentialValue !== 0
+                      ? formatCurrency(building.potentialValue)
+                      : '-'}
+                </p>
+              </div>
                 </div>
               </div>
 
@@ -857,14 +973,6 @@ export default function CFOIntakeForm() {
             </div>
           </div>
 
-          <div className="flex gap-4 pt-6">
-            <button
-              onClick={() => navigate('/cfo-dashboard')}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Volver
-            </button>
-          </div>
         </div>
       </div>
     );

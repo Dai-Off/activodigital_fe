@@ -4,8 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { FinancialAnalysisService } from '../../../services/financialAnalysisService';
 import type { FinancialSnapshot } from '../../../services/financialSnapshots';
 import type { FinancialAnalysis } from '../../../types/financialAnalysis';
@@ -53,7 +52,6 @@ interface SimulationData {
 }
 
 export default function CFOFinancialAnalysisSimulation() {
-  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<FinancialAnalysis | null>(null);
@@ -454,17 +452,6 @@ export default function CFOFinancialAnalysisSimulation() {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <button
-            onClick={() => navigate('/cfo-dashboard')}
-            className="inline-flex items-center gap-2 mb-4 text-sm transition-colors"
-            style={{ color: '#64748B' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1E293B'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver</span>
-          </button>
-
           <div className="bg-white rounded-xl shadow-sm border p-6" style={{ borderColor: 'rgba(91, 141, 239, 0.08)', boxShadow: '0 1px 8px rgba(91, 141, 239, 0.06)' }}>
             <h1 className="text-2xl font-bold mb-2" style={{ color: '#1E293B' }}>
               Simulación de Análisis Financiero

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DocumentManager, { type DocumentFile } from '../ui/DocumentManager';
 import { PageLoader } from '../ui/LoadingSystem';
@@ -120,7 +120,6 @@ type UiSectionKey = keyof ReturnType<typeof getSectionConfigs>;
 
 const SectionEditor: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { sectionId, buildingId: buildingIdParam } = useParams<{ sectionId: string; buildingId: string }>();
   const location = useLocation();
   const { user } = useAuth();
@@ -286,10 +285,6 @@ const SectionEditor: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate(`/edificios/${buildingId}/libro-digital`);
-  };
-
   const SECTION_CONFIGS = getSectionConfigs(t);
   const sectionConfig = sectionId && SECTION_CONFIGS[sectionId as UiSectionKey] ? SECTION_CONFIGS[sectionId as UiSectionKey] : null;
 
@@ -298,9 +293,6 @@ const SectionEditor: React.FC = () => {
       return (
       <div className="p-4">
         <p className="text-red-600">{loadError}</p>
-        <button onClick={handleBack} className="mt-4 px-4 py-2 bg-gray-200 rounded">
-          Volver
-        </button>
         </div>
       );
     }
@@ -308,9 +300,6 @@ const SectionEditor: React.FC = () => {
     return (
       <div className="p-4">
         <p className="text-red-600">Sección no encontrada.</p>
-        <button onClick={handleBack} className="mt-4 px-4 py-2 bg-gray-200 rounded">
-          Volver
-          </button>
       </div>
     );
   }
@@ -321,16 +310,6 @@ const SectionEditor: React.FC = () => {
         <div className="px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={handleBack}
-            className="mb-6 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            {t('back', 'Volver')}
-                </button>
-          
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg">
               <span className="text-2xl">{sectionConfig.icon}</span>

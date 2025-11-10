@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { NotificationProvider } from './contexts/NotificationContext'
@@ -71,6 +72,12 @@ const SectionsListPage = () => {
 };
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.lang = (i18n.language || 'es').split('-')[0];
+  }, [i18n.language]);
+
   return (
     <ToastProvider>
       <AuthProvider>

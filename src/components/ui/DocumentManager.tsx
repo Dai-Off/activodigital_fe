@@ -48,8 +48,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
   description = 'Arrastra archivos aquí o haz clic para seleccionar'
 }) => {
   const { t } = useTranslation();
-  label = t('uploadDocuments', label);
-  description = t('dragOrClick', description);
+  const uploadLabel = t('documentManager.uploadLabel', label);
+  const uploadDescription = t('documentManager.uploadDescription', description);
   const { showSuccess, showError, showInfo } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -61,14 +61,21 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
     // Verificar límite de documentos
     if (existingDocuments.length + files.length > maxDocuments) {
       showError(
-        'Límite de documentos excedido',
-        `Solo puedes subir hasta ${maxDocuments} documentos. Actualmente tienes ${existingDocuments.length}.`
+        t('documentManager.limitExceededTitle', 'Límite de documentos excedido'),
+        t('documentManager.limitExceededMessage', {
+          max: maxDocuments,
+          current: existingDocuments.length,
+          defaultValue: 'Solo puedes subir hasta {{max}} documentos. Actualmente tienes {{current}}.',
+        })
       );
       return;
     }
 
     setIsUploading(true);
-    showInfo('Subiendo documentos...', 'Los documentos se están procesando');
+    showInfo(
+      t('documentManager.uploadingTitle', 'Subiendo documentos...'),
+      t('documentManager.uploadingMessage', 'Los documentos se están procesando')
+    );
 
     try {
       const uploadPromises = files.map((file) => 
@@ -84,8 +91,12 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
       if (failedUploads.length > 0) {
         console.warn('Algunos documentos no se pudieron subir:', failedUploads);
         showError(
-          'Error en algunos documentos',
-          `${failedUploads.length} de ${uploadResults.length} documentos no se pudieron subir.`
+          t('documentManager.partialErrorTitle', 'Error en algunos documentos'),
+          t('documentManager.partialErrorMessage', {
+            failed: failedUploads.length,
+            total: uploadResults.length,
+            defaultValue: '{{failed}} de {{total}} documentos no se pudieron subir.',
+          })
         );
       }
 
@@ -107,16 +118,19 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
         onDocumentsUpdated(updatedDocuments);
 
         showSuccess(
-          'Documentos subidos',
-          `${successfulUploads.length} documento(s) subido(s) correctamente.`
+          t('documentManager.uploadSuccessTitle', 'Documentos subidos'),
+          t('documentManager.uploadSuccessMessage', {
+            count: successfulUploads.length,
+            defaultValue: '{{count}} documento(s) subido(s) correctamente.',
+          })
         );
       }
 
     } catch (error) {
       console.error('Error subiendo documentos:', error);
       showError(
-        'Error subiendo documentos',
-        error instanceof Error ? error.message : 'Error desconocido'
+        t('documentManager.uploadErrorTitle', 'Error subiendo documentos'),
+        error instanceof Error ? error.message : t('common.unknownError', 'Error desconocido')
       );
     } finally {
       setIsUploading(false);
@@ -125,7 +139,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
 
   // Manejar eliminación de documento
   const handleDeleteDocument = useCallback(async (documentId: string, documentUrl: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este documento?')) {
+    if (!confirm(t('documentManager.confirmDelete', '¿Estás seguro de que quieres eliminar este documento?'))) {
       return;
     }
 
@@ -143,13 +157,16 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
       const updatedDocuments = existingDocuments.filter(doc => doc.id !== documentId);
       onDocumentsUpdated(updatedDocuments);
 
-      showSuccess('Documento eliminado', 'El documento se ha eliminado correctamente.');
+      showSuccess(
+        t('documentManager.deleteSuccessTitle', 'Documento eliminado'),
+        t('documentManager.deleteSuccessMessage', 'El documento se ha eliminado correctamente.')
+      );
 
     } catch (error) {
       console.error('Error eliminando documento:', error);
       showError(
-        'Error eliminando documento',
-        error instanceof Error ? error.message : 'Error desconocido'
+        t('documentManager.deleteErrorTitle', 'Error eliminando documento'),
+        error instanceof Error ? error.message : t('common.unknownError', 'Error desconocido')
       );
     } finally {
       setIsDeleting(null);
@@ -195,8 +212,8 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
           acceptedTypes={acceptedTypes}
           maxFiles={maxDocuments - existingDocuments.length}
           maxSizeInMB={maxSizeMB}
-          label={label}
-          description={description}
+          label={uploadLabel}
+          description={uploadDescription}
           disabled={isUploading}
         />
       )}
@@ -205,7 +222,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
       {isUploading && (
         <div className="flex items-center gap-2 text-blue-600">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-sm">Subiendo documentos...</span>
+          <span className="text-sm">{t('documentManager.uploadingTitle', 'Subiendo documentos...')}</span>
         </div>
       )}
 
@@ -213,7 +230,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
       {existingDocuments.length > 0 && (
         <div className="space-y-1.5">
           <h3 className="text-sm font-medium text-gray-700">
-            Documentos ({existingDocuments.length}/{maxDocuments})
+            {t('documentManager.listTitle', 'Documentos', { count: existingDocuments.length })} ({existingDocuments.length}/{maxDocuments})
           </h3>
           
           <div className="space-y-1.5">
@@ -245,7 +262,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
                       type="button"
                       onClick={() => handleDownloadDocument(document.url, document.fileName)}
                       className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Descargar documento"
+                      title={t('documentManager.downloadDocument', 'Descargar documento')}
                       disabled={isDeletingThis}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +275,7 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
                       type="button"
                       onClick={() => handleDeleteDocument(document.id, document.url)}
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Eliminar documento"
+                      title={t('documentManager.deleteDocument', 'Eliminar documento')}
                       disabled={isDeletingThis}
                     >
                       {isDeletingThis ? (
@@ -280,14 +297,17 @@ const DocumentManager: React.FC<DocumentManagerProps> = ({
       {/* Mensaje cuando no hay documentos */}
       {existingDocuments.length === 0 && !isUploading && (
         <p className="text-sm text-gray-500 text-center py-4">
-          No hay documentos subidos. Arrastra archivos o haz clic arriba para comenzar.
+          {t('documentManager.emptyState', 'No hay documentos subidos. Arrastra archivos o haz clic arriba para comenzar.')}
         </p>
       )}
 
       {/* Información de límite */}
       {existingDocuments.length >= maxDocuments && (
         <p className="text-sm text-gray-500 text-center">
-          Has alcanzado el límite máximo de {maxDocuments} documentos.
+          {t('documentManager.limitReached', {
+            max: maxDocuments,
+            defaultValue: 'Has alcanzado el límite máximo de {{max}} documentos.',
+          })}
         </p>
       )}
     </div>

@@ -1,9 +1,9 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { LandingHeader as Header } from "./LandingHeader";
 import { LandingHero as Hero } from "./LandingHero";
 import { LandingFooter as Footer } from "./LandingFooter";
-import { LanguageProvider } from "./i18n/LanguageContext";
 // import { LandingCookieBanner as CookieBanner } from "./LandingCookieBanner";
+import { useTranslation } from "react-i18next";
 
 // Lazy load sections
 const FeaturesSection = lazy(() => import("./LandingFeatures").then(module => ({ default: module.LandingFeatures })));
@@ -28,31 +28,43 @@ const SectionSkeleton = () => (
   );
 
 export default function Landing() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const baseLang = (i18n.language || 'es').split('-')[0];
+    const seoTitle =
+      baseLang === 'en'
+        ? 'ARKIA - Global Real Estate Asset Management'
+        : 'ARKIA - Gestión Global de Activos Inmobiliarios';
+
+    document.title = seoTitle;
+    document.documentElement.lang = baseLang;
+    localStorage.setItem('arkia-language', baseLang.toUpperCase());
+  }, [i18n.language]);
+
   return (
-    <LanguageProvider>
-      <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: '#FFFFFF' }}>
-        <Header />
-        <main role="main" aria-label="Contenido principal">
-          <Hero />
-          <Suspense fallback={<SectionSkeleton />}>
-            <FeaturesSection />
-          </Suspense>
-          <Suspense fallback={<SectionSkeleton />}>
-            <HowItWorksSection />
-          </Suspense>
-          <Suspense fallback={<SectionSkeleton />}>
-            <SecuritySection />
-          </Suspense>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ChatSection />
-          </Suspense>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ComplianceSection />
-          </Suspense>
-        </main>
-        <Footer />
-        {/* <CookieBanner /> */}
-      </div>
-    </LanguageProvider>
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: '#FFFFFF' }}>
+      <Header />
+      <main role="main" aria-label="Contenido principal">
+        <Hero />
+        <Suspense fallback={<SectionSkeleton />}>
+          <FeaturesSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <HowItWorksSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <SecuritySection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <ChatSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <ComplianceSection />
+        </Suspense>
+      </main>
+      <Footer />
+      {/* <CookieBanner /> */}
+    </div>
   );
 }

@@ -3,15 +3,23 @@ import { memo, useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const logo = "/logoArkia.png";
-import { useLanguage } from "./i18n/LanguageContext";
 import { useTranslations } from "./i18n/useTranslations";
+import { useTranslation } from "react-i18next";
 
 export const LandingHeader = memo(function Header() {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const { language, setLanguage } = useLanguage();
   const t = useTranslations();
+  const { i18n } = useTranslation();
+
+  const normalizedLanguage = i18n.language?.split('-')[0] === 'en' ? 'EN' : 'ES';
+
+  const handleLanguageChange = (lang: 'es' | 'en') => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('arkia-language', lang.toUpperCase());
+    setShowLangMenu(false);
+  };
 
   useEffect(() => {
     // Trigger animation on mount con requestAnimationFrame para mejor rendimiento
@@ -78,7 +86,7 @@ export const LandingHeader = memo(function Header() {
               }}
             >
               <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm md:text-base">{language}</span>
+              <span className="text-xs sm:text-sm md:text-base">{normalizedLanguage}</span>
             </Button>
             {showLangMenu && (
               <div 
@@ -92,44 +100,24 @@ export const LandingHeader = memo(function Header() {
                 }}
               >
                 <button 
-                  onClick={() => { setLanguage("ES"); setShowLangMenu(false); }}
+                  onClick={() => handleLanguageChange('es')}
                   className="w-full text-left px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-blue-50"
                   style={{ 
-                    color: language === "ES" ? '#5B8DEF' : '#64748B',
-                    fontWeight: language === "ES" ? 600 : 400
+                    color: normalizedLanguage === "ES" ? '#5B8DEF' : '#64748B',
+                    fontWeight: normalizedLanguage === "ES" ? 600 : 400
                   }}
                 >
                   🇪🇸 Español
                 </button>
                 <button 
-                  onClick={() => { setLanguage("EN"); setShowLangMenu(false); }}
+                  onClick={() => handleLanguageChange('en')}
                   className="w-full text-left px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-blue-50"
                   style={{ 
-                    color: language === "EN" ? '#5B8DEF' : '#64748B',
-                    fontWeight: language === "EN" ? 600 : 400
+                    color: normalizedLanguage === "EN" ? '#5B8DEF' : '#64748B',
+                    fontWeight: normalizedLanguage === "EN" ? 600 : 400
                   }}
                 >
                   🇬🇧 English
-                </button>
-                <button 
-                  onClick={() => { setLanguage("FR"); setShowLangMenu(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-blue-50"
-                  style={{ 
-                    color: language === "FR" ? '#5B8DEF' : '#64748B',
-                    fontWeight: language === "FR" ? 600 : 400
-                  }}
-                >
-                  🇫🇷 Français
-                </button>
-                <button 
-                  onClick={() => { setLanguage("DE"); setShowLangMenu(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-blue-50"
-                  style={{ 
-                    color: language === "DE" ? '#5B8DEF' : '#64748B',
-                    fontWeight: language === "DE" ? 600 : 400
-                  }}
-                >
-                  🇩🇪 Deutsch
                 </button>
               </div>
             )}

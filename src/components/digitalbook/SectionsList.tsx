@@ -219,12 +219,6 @@ const SectionsList: React.FC<SectionsListProps> = ({
           {/* Botones */}
           <div className="flex gap-3">
             <button
-              onClick={() => navigate(`/libro-digital/hub/${buildingId}`)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              {t('sectionsList.backToHub', 'Volver al Hub')}
-            </button>
-            <button
               onClick={() => navigate('/libro-digital/manual')}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >

@@ -35,13 +35,17 @@ const ImageManager: React.FC<ImageManagerProps> = ({
     if (existingImages.length + files.length > maxImages) {
       showError(
         t('imageLimitExceeded', 'Límite de imágenes excedido'),
-        t('maxImagesMsg', `Solo puedes subir hasta ${maxImages} imágenes. Actualmente tienes ${existingImages.length}.`)
+        t('maxImagesMsg', {
+          max: maxImages,
+          current: existingImages.length,
+          defaultValue: 'Solo puedes subir hasta {{max}} imágenes. Actualmente tienes {{current}}.',
+        })
       );
       return;
     }
 
     setIsUploading(true);
-  showInfo(t('uploadingImages', 'Subiendo imágenes...'), t('imagesProcessing', 'Las imágenes se están procesando'));
+    showInfo(t('uploadingImages', 'Subiendo imágenes...'), t('imagesProcessing', 'Las imágenes se están procesando'));
 
     try {
       const uploadPromises = files.map((file, index) => {
@@ -60,7 +64,11 @@ const ImageManager: React.FC<ImageManagerProps> = ({
         console.warn('Algunas imágenes no se pudieron subir:', failedUploads);
         showError(
           t('someImagesError', 'Error en algunas imágenes'),
-          t('someImagesErrorMsg', `${failedUploads.length} de ${uploadResults.length} imágenes no se pudieron subir.`)
+          t('someImagesErrorMsg', {
+            failed: failedUploads.length,
+            total: uploadResults.length,
+            defaultValue: '{{failed}} de {{total}} imágenes no se pudieron subir.',
+          })
         );
       }
 
@@ -83,16 +91,19 @@ const ImageManager: React.FC<ImageManagerProps> = ({
         onImagesUpdated(updatedImages);
 
         showSuccess(
-          'Imágenes subidas',
-          `${successfulUploads.length} imagen(es) subida(s) correctamente.`
+          t('imageManager.uploadSuccessTitle', 'Imágenes subidas'),
+          t('imageManager.uploadSuccessMessage', {
+            count: successfulUploads.length,
+            defaultValue: '{{count}} imagen(es) subida(s) correctamente.',
+          })
         );
       }
 
     } catch (error) {
       console.error('Error subiendo imágenes:', error);
       showError(
-        'Error subiendo imágenes',
-        error instanceof Error ? error.message : 'Error desconocido'
+        t('imageManager.uploadErrorTitle', 'Error subiendo imágenes'),
+        error instanceof Error ? error.message : t('common.unknownError', 'Error desconocido')
       );
     } finally {
       setIsUploading(false);
@@ -101,7 +112,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
 
   // Manejar eliminación de imagen
   const handleDeleteImage = useCallback(async (imageId: string, imageUrl: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
+    if (!confirm(t('imageManager.confirmDelete', '¿Estás seguro de que quieres eliminar esta imagen?'))) {
       return;
     }
 
@@ -138,13 +149,16 @@ const ImageManager: React.FC<ImageManagerProps> = ({
       }
 
       onImagesUpdated(updatedImages);
-      showSuccess('Imagen eliminada', 'La imagen se ha eliminado correctamente.');
+      showSuccess(
+        t('imageManager.deleteSuccessTitle', 'Imagen eliminada'),
+        t('imageManager.deleteSuccessMessage', 'La imagen se ha eliminado correctamente.')
+      );
 
     } catch (error) {
       console.error('Error eliminando imagen:', error);
       showError(
-        'Error eliminando imagen',
-        error instanceof Error ? error.message : 'Error desconocido'
+        t('imageManager.deleteErrorTitle', 'Error eliminando imagen'),
+        error instanceof Error ? error.message : t('common.unknownError', 'Error desconocido')
       );
     } finally {
       setIsDeleting(null);
@@ -169,13 +183,16 @@ const ImageManager: React.FC<ImageManagerProps> = ({
 
       // Actualizar estado local
       onImagesUpdated(updatedImages);
-      showSuccess('Imagen principal actualizada', 'La imagen principal se ha cambiado correctamente.');
+      showSuccess(
+        t('imageManager.updateMainSuccessTitle', 'Imagen principal actualizada'),
+        t('imageManager.updateMainSuccessMessage', 'La imagen principal se ha cambiado correctamente.')
+      );
 
     } catch (error) {
       console.error('Error actualizando imagen principal:', error);
       showError(
-        'Error actualizando imagen principal',
-        error instanceof Error ? error.message : 'Error desconocido'
+        t('imageManager.updateMainErrorTitle', 'Error actualizando imagen principal'),
+        error instanceof Error ? error.message : t('common.unknownError', 'Error desconocido')
       );
     }
   }, [allowMainImageSelection, buildingId, existingImages, onImagesUpdated, showError, showSuccess]);
@@ -192,8 +209,8 @@ const ImageManager: React.FC<ImageManagerProps> = ({
           acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
           maxFiles={maxImages - existingImages.length}
           maxSizeInMB={10}
-          label="Subir imágenes"
-          description="Arrastra imágenes aquí o haz clic para seleccionar"
+          label={t('imageManager.uploadLabel', 'Subir imágenes')}
+          description={t('imageManager.uploadDescription', 'Arrastra imágenes aquí o haz clic para seleccionar')}
           disabled={isUploading}
         />
       )}
@@ -202,7 +219,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
       {isUploading && (
         <div className="flex items-center gap-2 text-blue-600">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-          <span className="text-sm">Subiendo imágenes...</span>
+          <span className="text-sm">{t('imageManager.uploading', 'Subiendo imágenes...')}</span>
         </div>
       )}
 
@@ -237,7 +254,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
                   {isMain && (
                     <div className="absolute top-2 left-2">
                       <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
-                        Principal
+                        {t('imageManager.mainBadge', 'Principal')}
                       </span>
                     </div>
                   )}
@@ -249,7 +266,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
                         type="button"
                         onClick={() => handleSetMainImage(image.id)}
                         className="p-1 text-white bg-black bg-opacity-50 rounded hover:bg-opacity-70"
-                        title="Establecer como principal"
+                        title={t('imageManager.setAsMain', 'Establecer como principal')}
                         disabled={isDeletingThis}
                       >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -262,7 +279,7 @@ const ImageManager: React.FC<ImageManagerProps> = ({
                       type="button"
                       onClick={() => handleDeleteImage(image.id, image.url)}
                       className="p-1 text-white bg-red-500 bg-opacity-70 rounded hover:bg-opacity-90"
-                      title="Eliminar imagen"
+                      title={t('imageManager.deleteImage', 'Eliminar imagen')}
                       disabled={isDeletingThis}
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -285,7 +302,10 @@ const ImageManager: React.FC<ImageManagerProps> = ({
       {/* Información de límite */}
       {existingImages.length >= maxImages && (
         <p className="text-sm text-gray-500 text-center">
-          Has alcanzado el límite máximo de {maxImages} imágenes.
+          {t('imageManager.limitReached', {
+            max: maxImages,
+            defaultValue: 'Has alcanzado el límite máximo de {{max}} imágenes.',
+          })}
         </p>
       )}
     </div>

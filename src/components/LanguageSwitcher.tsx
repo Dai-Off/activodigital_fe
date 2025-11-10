@@ -8,6 +8,7 @@ const LanguageSwitcher = () => {
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+    localStorage.setItem('arkia-language', lng.toUpperCase());
     setShowLangMenu(false);
   };
 
@@ -20,7 +21,7 @@ const LanguageSwitcher = () => {
   }, [showLangMenu]);
 
   const getCurrentLanguage = () => {
-    const lang = i18n.language.toUpperCase();
+    const lang = (i18n.language || 'es').split('-')[0].toUpperCase();
     return lang === 'ES' || lang === 'EN' ? lang : 'ES';
   };
 

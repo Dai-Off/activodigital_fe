@@ -194,9 +194,6 @@ export interface BuildingFormStep1 {
   price: string;
   technicianEmail: string;
   cfoEmail: string;
-  // Campos financieros
-  rehabilitationCost: string; // Coste de rehabilitación
-  potentialValue: string;     // Valor potencial
   squareMeters: string;       // Superficie en metros cuadrados
 }
 

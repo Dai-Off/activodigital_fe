@@ -31,8 +31,6 @@ export interface BuildingStep1Data {
   technicianEmail: string;
   cfoEmail: string;
   propietarioEmail: string;
-  rehabilitationCost: string;
-  potentialValue: string;
   squareMeters: string;
 }
 
@@ -55,8 +53,6 @@ interface CompleteBuildingData {
   technicianEmail: string;
   cfoEmail: string;
   propietarioEmail: string;
-  rehabilitationCost: string;
-  potentialValue: string;
   squareMeters: string;
   latitude: number;
   longitude: number;
@@ -158,8 +154,6 @@ const CreateBuildingWizard: React.FC = () => {
     const floors = Number.parseInt(step1Data.floors, 10);
     const units = Number.parseInt(step1Data.units, 10);
     const price = step1Data.price ? Number.parseFloat(step1Data.price) : undefined;
-    const rehabilitationCost = step1Data.rehabilitationCost ? Number.parseFloat(step1Data.rehabilitationCost) : 0;
-    const potentialValue = step1Data.potentialValue ? Number.parseFloat(step1Data.potentialValue) : 0;
     const squareMeters = step1Data.squareMeters ? Number.parseFloat(step1Data.squareMeters) : undefined;
 
     if (Number.isNaN(year) || Number.isNaN(floors) || Number.isNaN(units)) {
@@ -184,8 +178,6 @@ const CreateBuildingWizard: React.FC = () => {
         technicianEmail: step1Data.technicianEmail || undefined,
         cfoEmail: step1Data.cfoEmail || undefined,
         propietarioEmail: step1Data.propietarioEmail || undefined,
-        rehabilitationCost,
-        potentialValue,
         squareMeters,
         lat: step2Data.latitude,
         lng: step2Data.longitude,

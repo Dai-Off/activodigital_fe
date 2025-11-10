@@ -1,15 +1,17 @@
 import { Mail, MapPin } from "lucide-react";
 const logo = "/logoArkia.png";
 import { PrivacyModal, TermsModal, CookiesModal } from "./LegalModals";
+import { useTranslation } from "react-i18next";
 
 export function AppFooter() {
+  const { t } = useTranslation();
 
   return (
-    <footer 
-      role="contentinfo" 
-      aria-label="Información de contacto y pie de página"
+    <footer
+      role="contentinfo"
+      aria-label={t("footer.accessibilityLabel", "Información de contacto y pie de página")}
       className="relative bg-gradient-to-b from-white to-gray-50 pt-10 sm:pt-12 md:pt-14 lg:pt-16 pb-6 sm:pb-8 px-4 md:px-6 border-t border-gray-100"
-      itemScope 
+      itemScope
       itemType="https://schema.org/WPFooter"
     >
       <style>{`
@@ -44,7 +46,7 @@ export function AppFooter() {
           {/* Contact Column */}
           <div>
             <h3 className="mb-3 sm:mb-4 text-sm sm:text-base" style={{ color: '#1E293B', fontWeight: 600 }}>
-              Contacto
+              {t("footer.contact", "Contacto")}
             </h3>
             <ul className="space-y-3 sm:space-y-4" itemScope itemType="https://schema.org/Organization">
               <li className="flex items-start gap-2 sm:gap-3">
@@ -61,7 +63,7 @@ export function AppFooter() {
                   className="text-xs sm:text-sm hover:underline break-all"
                   style={{ color: '#64748B' }}
                   itemProp="email"
-                  aria-label="Enviar email a ARKIA"
+                  aria-label={t("footer.contactEmailAria", "Enviar email a ARKIA")}
                 >
                   gestion@arkialabs.es
                 </a>
@@ -72,7 +74,7 @@ export function AppFooter() {
           {/* Policies Column */}
           <div>
             <h3 className="mb-4 text-sm sm:text-base" style={{ color: '#1E293B' }}>
-              Legal
+              {t("footer.legal", "Legal")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -82,7 +84,7 @@ export function AppFooter() {
                       className="text-sm footer-link block text-left cursor-pointer"
                       style={{ color: '#64748B', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
                     >
-                      Política de Privacidad
+                      {t("footer.privacy", "Política de Privacidad")}
                     </button>
                   }
                 />
@@ -94,7 +96,7 @@ export function AppFooter() {
                       className="text-sm footer-link block text-left cursor-pointer"
                       style={{ color: '#64748B', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
                     >
-                      Términos de Servicio
+                      {t("footer.terms", "Términos")}
                     </button>
                   }
                 />
@@ -106,7 +108,7 @@ export function AppFooter() {
                       className="text-sm footer-link block text-left cursor-pointer"
                       style={{ color: '#64748B', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
                     >
-                      Política de Cookies
+                      {t("footer.cookies", "Cookies")}
                     </button>
                   }
                 />
@@ -119,7 +121,7 @@ export function AppFooter() {
         <div className="pt-8 border-t border-gray-200">
           <div className="flex justify-center md:justify-start">
             <p className="text-sm text-center md:text-left" style={{ color: '#94A3B8' }}>
-              © 2024 ARKIA. Todos los derechos reservados.
+              {t("footer.rights", "© 2024 ARKIA. Todos los derechos reservados.")}
             </p>
           </div>
         </div>

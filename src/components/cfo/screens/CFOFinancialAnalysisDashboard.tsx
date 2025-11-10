@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, AlertCircle, Loader2, Euro, Settings, Wrench, FileText, Plus } from 'lucide-react';
+import { TrendingUp, AlertCircle, Loader2, Euro, Settings, Wrench, FileText, Plus } from 'lucide-react';
 
 // Servicios
 import { BuildingsApiService } from '../../../services/buildingsApi';
@@ -112,17 +112,6 @@ export default function CFOFinancialAnalysisDashboard() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-6">
-            <button
-              onClick={() => navigate('/cfo-dashboard')}
-              className="inline-flex items-center gap-2 mb-4 text-sm transition-colors"
-              style={{ color: '#64748B' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#1E293B'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Volver</span>
-            </button>
-
             <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6" style={{ borderColor: 'rgba(91, 141, 239, 0.08)', boxShadow: '0 1px 8px rgba(91, 141, 239, 0.06)' }}>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#E0EDFF' }}>
@@ -184,12 +173,6 @@ export default function CFOFinancialAnalysisDashboard() {
             <p className="mb-6" style={{ color: '#64748B' }}>{error || 'No se pudo completar el análisis'}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
-                onClick={() => navigate(-1)}
-                className="px-4 py-2.5 bg-blue-600 text-white rounded-lg transition-colors hover:bg-blue-700"
-              >
-                Volver
-              </button>
-              <button
                 onClick={loadAnalysis}
                 className="px-4 py-2.5 border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -209,17 +192,6 @@ export default function CFOFinancialAnalysisDashboard() {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header Mejorado */}
         <div className="mb-6">
-          <button
-            onClick={() => navigate('/cfo-dashboard')}
-            className="inline-flex items-center gap-2 mb-4 text-sm transition-colors"
-            style={{ color: '#64748B' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1E293B'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver</span>
-          </button>
-
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6" style={{ borderColor: 'rgba(91, 141, 239, 0.08)', boxShadow: '0 1px 8px rgba(91, 141, 239, 0.06)' }}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
               <div className="flex-1 min-w-0">

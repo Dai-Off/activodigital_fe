@@ -553,6 +553,18 @@ export default function CFOAssetsList() {
     return filteredAndSortedBuildings.slice(start, start + pageSize);
   }, [filteredAndSortedBuildings, pageSize, safePage]);
 
+  const totalAssignedAssets = useMemo(() => {
+    if (!user?.email) {
+      return buildings.length;
+    }
+
+    const normalizedEmail = user.email.toLowerCase();
+
+    return buildings.filter(
+      (building) => building.cfoEmail?.toLowerCase() === normalizedEmail,
+    ).length;
+  }, [buildings, user?.email]);
+
   // al cambiar tamaÃ±o, volver a pÃ¡g. 1
   const handlePageSizeChange = (s: number) => {
     setPageSize(s);
@@ -738,10 +750,10 @@ export default function CFOAssetsList() {
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t('cfo.indicator.totalAssets', { defaultValue: 'Total activos' })}
+                        {t('cfo.indicator.assignedAssets', { defaultValue: 'Activos asignados' })}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
-                        {dashboardStats.totalAssets}
+                        {totalAssignedAssets}
                       </div>
                     </div>
                   </div>

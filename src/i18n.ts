@@ -172,6 +172,49 @@ export const resources = {
       exitFullscreen: 'Salir de pantalla completa',
       closeImage: 'Cerrar imagen',
 
+      imageManager: {
+        uploadSuccessTitle: 'Imágenes subidas',
+        uploadSuccessMessage: '{{count}} imagen(es) subida(s) correctamente.',
+        uploadErrorTitle: 'Error subiendo imágenes',
+        confirmDelete: '¿Estás seguro de que quieres eliminar esta imagen?',
+        deleteSuccessTitle: 'Imagen eliminada',
+        deleteSuccessMessage: 'La imagen se ha eliminado correctamente.',
+        deleteErrorTitle: 'Error eliminando imagen',
+        updateMainSuccessTitle: 'Imagen principal actualizada',
+        updateMainSuccessMessage: 'La imagen principal se ha cambiado correctamente.',
+        updateMainErrorTitle: 'Error actualizando imagen principal',
+        uploadLabel: 'Subir imágenes',
+        uploadDescription: 'Arrastra imágenes aquí o haz clic para seleccionar',
+        uploading: 'Subiendo imágenes...',
+        mainBadge: 'Principal',
+        setAsMain: 'Establecer como principal',
+        deleteImage: 'Eliminar imagen',
+        limitReached: 'Has alcanzado el límite máximo de {{max}} imágenes.',
+      },
+
+      documentManager: {
+        uploadLabel: 'Subir documentos',
+        uploadDescription: 'Arrastra archivos aquí o haz clic para seleccionar',
+        limitExceededTitle: 'Límite de documentos excedido',
+        limitExceededMessage: 'Solo puedes subir hasta {{max}} documentos. Actualmente tienes {{current}}.',
+        uploadingTitle: 'Subiendo documentos...',
+        uploadingMessage: 'Los documentos se están procesando',
+        partialErrorTitle: 'Error en algunos documentos',
+        partialErrorMessage: '{{failed}} de {{total}} documentos no se pudieron subir.',
+        uploadSuccessTitle: 'Documentos subidos',
+        uploadSuccessMessage: '{{count}} documento(s) subido(s) correctamente.',
+        uploadErrorTitle: 'Error subiendo documentos',
+        confirmDelete: '¿Estás seguro de que quieres eliminar este documento?',
+        deleteSuccessTitle: 'Documento eliminado',
+        deleteSuccessMessage: 'El documento se ha eliminado correctamente.',
+        deleteErrorTitle: 'Error eliminando documento',
+        listTitle: 'Documentos',
+        downloadDocument: 'Descargar documento',
+        deleteDocument: 'Eliminar documento',
+        emptyState: 'No hay documentos subidos. Arrastra archivos o haz clic arriba para comenzar.',
+        limitReached: 'Has alcanzado el límite máximo de {{max}} documentos.',
+      },
+
       // --- Common (incluye alias de formularios) ---
       common: {
         ok: 'OK',
@@ -425,7 +468,335 @@ export const resources = {
         productName: 'Arkia',
         copyright: '©',
         operational: 'Operativo',
-        up: 'Arriba'
+        up: 'Arriba',
+        accessibilityLabel: 'Información de contacto y pie de página',
+        contactEmailAria: 'Enviar email a ARKIA',
+      },
+
+      legal: {
+        terms: {
+          title: 'Términos y Condiciones de Uso',
+          updated: 'Última actualización: Octubre 2024',
+          sections: [
+            {
+              heading: '1. Identificación del titular',
+              paragraphs: [
+                { type: 'labelValue', label: 'Titular del sitio web:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'CIF:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Domicilio social:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, España' },
+                { type: 'labelValue', label: 'Correo electrónico:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+            {
+              heading: '2. Objeto de los términos',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'El presente documento regula el acceso y uso de la plataforma tecnológica ARKIA para la gestión y optimización de activos inmobiliarios mediante inteligencia artificial, accesible únicamente tras la contratación del servicio.',
+                },
+              ],
+            },
+            {
+              heading: '3. Funcionalidad del servicio',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'ARKIA ofrece servicios de análisis y optimización de carteras inmobiliarias mediante inteligencia artificial, integrando análisis financiero, técnico y regulatorio con foco en cumplimiento EPBD 2024 y criterios ESG. El acceso se realiza mediante credenciales individuales proporcionadas tras la contratación. No se permite el uso gratuito salvo demostraciones autorizadas por la empresa.',
+                },
+              ],
+            },
+            {
+              heading: '4. Condiciones de uso de la Plataforma',
+              list: [
+                'El uso de la Plataforma está restringido a usuarios autorizados que hayan contratado el servicio.',
+                'No está permitida la cesión, sublicencia, distribución o alteración de la tecnología ni de las licencias de acceso.',
+                'Se prohíbe expresamente cualquier intento de ingeniería inversa, scraping automatizado o uso con fines ilegales.',
+                'El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso.',
+              ],
+            },
+            {
+              heading: '5. Exclusión de asesoramiento profesional personalizado',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'El contenido generado por la Plataforma no constituye asesoramiento profesional individualizado en materia técnica, legal o financiera. Las recomendaciones del Motor Prescriptivo IA son orientativas y deben validarse por profesionales cualificados antes de tomar decisiones de inversión o ejecución de obras.',
+                },
+              ],
+            },
+            {
+              heading: '6. Propiedad intelectual',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Todos los contenidos de la Plataforma (software, algoritmos, textos, estructura, diseño, código fuente, modelos de IA) son propiedad de Tech AI Solutions S.L. o se utilizan bajo licencia. Se prohíbe cualquier reproducción o uso no autorizado.',
+                },
+              ],
+            },
+            {
+              heading: '7. Limitación de responsabilidad',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. no será responsable de los daños derivados del uso indebido de la Plataforma ni de decisiones basadas únicamente en los resultados automatizados del sistema. El usuario asume la responsabilidad final sobre la gestión de su cartera inmobiliaria.',
+                },
+              ],
+            },
+            {
+              heading: '8. Protección de datos',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'El tratamiento de datos personales se regula conforme a la Política de Privacidad y al Reglamento General de Protección de Datos (RGPD). Los datos técnicos de los activos se tratan con máxima confidencialidad y seguridad.',
+                },
+              ],
+            },
+            {
+              heading: '9. Modificación de los términos',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento. Las modificaciones se publicarán en el sitio web y se comunicarán a los usuarios activos, aplicándose desde el momento de su publicación.',
+                },
+              ],
+            },
+            {
+              heading: '10. Legislación aplicable y jurisdicción',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Estos Términos se rigen por la legislación española. En caso de conflicto, las partes se someten a los juzgados y tribunales de Madrid, renunciando a cualquier otro fuero que pudiera corresponder.',
+                },
+              ],
+            },
+          ],
+        },
+        privacy: {
+          title: 'Política de Privacidad',
+          updated: 'Última actualización: Octubre 2024',
+          sections: [
+            {
+              heading: '1. Responsable del tratamiento',
+              paragraphs: [
+                { type: 'labelValue', label: 'Responsable:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'CIF:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Domicilio:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, España' },
+                { type: 'labelValue', label: 'Contacto:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+            {
+              heading: '2. Datos que recopilamos',
+              paragraphs: [
+                { type: 'text', text: 'En ARKIA recopilamos los siguientes tipos de datos:' },
+              ],
+              list: [
+                { label: 'Datos de registro:', description: 'nombre, email, empresa, teléfono.' },
+                { label: 'Datos de uso:', description: 'interacciones con la plataforma y consultas al Motor Prescriptivo IA.' },
+                { label: 'Datos técnicos de activos:', description: 'características de propiedades, certificaciones energéticas y datos de cumplimiento regulatorio.' },
+                { label: 'Datos de navegación:', description: 'cookies técnicas, analíticas y de preferencias.' },
+              ],
+            },
+            {
+              heading: '3. Finalidad del tratamiento',
+              paragraphs: [
+                { type: 'text', text: 'Utilizamos sus datos para:' },
+              ],
+              list: [
+                'Gestionar su cuenta y acceso a la Plataforma.',
+                'Proporcionar análisis y recomendaciones mediante IA.',
+                'Mejorar nuestros servicios y modelos predictivos.',
+                'Enviar comunicaciones relacionadas con el servicio contratado.',
+                'Cumplir con obligaciones legales y contractuales.',
+              ],
+            },
+            {
+              heading: '4. Base legal',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'El tratamiento de datos se basa en la ejecución del contrato de servicios, el cumplimiento de obligaciones legales y el consentimiento expreso para comunicaciones comerciales (opcional y revocable).',
+                },
+              ],
+            },
+            {
+              heading: '5. Conservación de datos',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Conservamos los datos mientras dure la relación contractual y posteriormente durante los plazos legalmente exigibles para obligaciones fiscales y mercantiles (mínimo 6 años).',
+                },
+              ],
+            },
+            {
+              heading: '6. Cesión de datos',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'No cedemos datos a terceros salvo obligación legal o proveedores tecnológicos necesarios para prestar el servicio (hosting, analítica), siempre bajo acuerdos de confidencialidad y cumplimiento RGPD.',
+                },
+              ],
+            },
+            {
+              heading: '7. Derechos del usuario',
+              paragraphs: [
+                { type: 'text', text: 'Usted tiene derecho a:' },
+              ],
+              list: [
+                'Acceder a sus datos personales.',
+                'Rectificar datos inexactos o incompletos.',
+                'Solicitar la supresión de sus datos.',
+                'Oponerse al tratamiento.',
+                'Solicitar la limitación del tratamiento.',
+                'Solicitar la portabilidad de los datos.',
+                'Revocar el consentimiento en cualquier momento.',
+              ],
+              note: { label: 'Para ejercer sus derechos:', text: 'gestion@arkialabs.es.' },
+            },
+            {
+              heading: '8. Seguridad',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Implementamos medidas técnicas y organizativas avanzadas para proteger los datos frente a accesos no autorizados, pérdida o alteración: cifrado de comunicaciones, autenticación robusta y auditorías periódicas de seguridad.',
+                },
+              ],
+            },
+            {
+              heading: '9. Reclamaciones',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Si considera que el tratamiento vulnera la normativa, puede presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es).',
+                },
+              ],
+            },
+          ],
+        },
+        cookies: {
+          title: 'Política de Cookies',
+          updated: 'Última actualización: Octubre 2024',
+          sections: [
+            {
+              heading: '1. ¿Qué son las cookies?',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Las cookies son archivos de texto que los sitios web almacenan en el navegador del usuario. Permiten garantizar el funcionamiento técnico del sitio, personalizar la experiencia y recopilar estadísticas de uso.',
+                },
+              ],
+            },
+            {
+              heading: '2. Uso de cookies en este sitio web',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Este sitio utiliza cookies propias y de terceros. Al acceder por primera vez, el usuario puede aceptar, rechazar o configurar el uso de cookies mediante el banner de consentimiento, y modificar sus preferencias en cualquier momento.',
+                },
+              ],
+            },
+            {
+              heading: '3. Gestión del consentimiento',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'El consentimiento se solicita mediante un banner que permite aceptar todas las cookies, rechazarlas o configurarlas por categorías. El sistema registra las decisiones para garantizar el cumplimiento normativo.',
+                },
+              ],
+            },
+            {
+              heading: '4. Categorías de cookies utilizadas',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Las cookies en este sitio se clasifican en las siguientes categorías:',
+                },
+              ],
+              subsections: [
+                {
+                  title: 'Necesarias',
+                  description: 'Imprescindibles para el funcionamiento del sitio. Incluyen cookies de sesión, autenticación y seguridad.',
+                  list: [
+                    'Gestión de sesión de usuario.',
+                    'Preferencias de idioma.',
+                    'Seguridad y prevención de fraude.',
+                  ],
+                },
+                {
+                  title: 'Preferencias',
+                  description: 'Permiten recordar información que modifica el comportamiento del sitio.',
+                  list: [
+                    'Preferencias de visualización.',
+                    'Configuración del dashboard.',
+                    'Idioma y región seleccionados.',
+                  ],
+                },
+                {
+                  title: 'Estadísticas',
+                  description: 'Ayudan a comprender cómo interactúan los usuarios con el sitio. Los datos se anonimizan.',
+                  list: [
+                    'Google Analytics (anonimizado).',
+                    'Métricas de rendimiento y uso.',
+                    'Análisis de comportamiento de navegación.',
+                  ],
+                },
+                {
+                  title: 'Marketing',
+                  description: 'Se utilizan para rastrear visitantes y mostrar contenidos y anuncios relevantes.',
+                  list: [
+                    'Seguimiento de campañas.',
+                    'Personalización de contenidos.',
+                    'Análisis de conversión.',
+                  ],
+                },
+              ],
+            },
+            {
+              heading: '5. Cookies empleadas',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Las cookies activas pueden variar según la configuración y herramientas utilizadas. El listado actualizado, con nombre, duración, finalidad y proveedor, está disponible en el sistema de gestión de consentimiento.',
+                },
+              ],
+            },
+            {
+              heading: '6. Desactivación desde el navegador',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Además de gestionar las cookies desde el banner de consentimiento, el usuario puede eliminarlas o bloquearlas desde su navegador web. Las instrucciones varían según el navegador:',
+                },
+              ],
+              list: [
+                { label: 'Google Chrome:', description: 'Configuración > Privacidad y seguridad > Cookies y otros datos de sitios.' },
+                { label: 'Mozilla Firefox:', description: 'Opciones > Privacidad y seguridad > Cookies y datos del sitio.' },
+                { label: 'Safari:', description: 'Preferencias > Privacidad > Gestionar datos de sitios web.' },
+                { label: 'Microsoft Edge:', description: 'Configuración > Privacidad, búsqueda y servicios > Cookies.' },
+              ],
+              note: {
+                label: 'Nota importante:',
+                text: 'Bloquear o eliminar ciertas cookies puede afectar al funcionamiento correcto de la Plataforma ARKIA.',
+              },
+            },
+            {
+              heading: '7. Cambios en la Política de Cookies',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. podrá modificar esta Política de Cookies por motivos técnicos, normativos o por cambios en los servicios. Cualquier actualización se publicará en esta página y se comunicará a los usuarios activos.',
+                },
+              ],
+            },
+            {
+              heading: '8. Responsable del tratamiento',
+              paragraphs: [
+                { type: 'labelValue', label: 'Responsable:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'CIF:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Domicilio:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, España' },
+                { type: 'labelValue', label: 'Email de contacto:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+          ],
+        },
       },
 
       // --- Digital Book (editor estructurado) ---
@@ -689,6 +1060,7 @@ export const resources = {
           greenRatingShort: '% rating verde',
           avgPayback: 'Payback promedio',
           totalAssets: 'Total activos',
+          assignedAssets: 'Activos asignados',
         },
         card: {
           currentValue: 'Valor actual (€)',
@@ -867,6 +1239,49 @@ export const resources = {
       fullscreen: 'Fullscreen',
       exitFullscreen: 'Exit fullscreen',
       closeImage: 'Close image',
+
+      imageManager: {
+        uploadSuccessTitle: 'Images uploaded',
+        uploadSuccessMessage: '{{count}} image(s) uploaded successfully.',
+        uploadErrorTitle: 'Error uploading images',
+        confirmDelete: 'Are you sure you want to delete this image?',
+        deleteSuccessTitle: 'Image deleted',
+        deleteSuccessMessage: 'The image was deleted successfully.',
+        deleteErrorTitle: 'Error deleting image',
+        updateMainSuccessTitle: 'Main image updated',
+        updateMainSuccessMessage: 'The main image has been changed successfully.',
+        updateMainErrorTitle: 'Error updating main image',
+        uploadLabel: 'Upload images',
+        uploadDescription: 'Drag images here or click to select',
+        uploading: 'Uploading images...',
+        mainBadge: 'Main',
+        setAsMain: 'Set as main',
+        deleteImage: 'Delete image',
+        limitReached: 'You have reached the maximum limit of {{max}} images.',
+      },
+
+      documentManager: {
+        uploadLabel: 'Upload documents',
+        uploadDescription: 'Drag files here or click to select',
+        limitExceededTitle: 'Document limit exceeded',
+        limitExceededMessage: 'You can upload up to {{max}} documents. You currently have {{current}}.',
+        uploadingTitle: 'Uploading documents...',
+        uploadingMessage: 'Documents are being processed',
+        partialErrorTitle: 'Error with some documents',
+        partialErrorMessage: '{{failed}} of {{total}} documents could not be uploaded.',
+        uploadSuccessTitle: 'Documents uploaded',
+        uploadSuccessMessage: '{{count}} document(s) uploaded successfully.',
+        uploadErrorTitle: 'Error uploading documents',
+        confirmDelete: 'Are you sure you want to delete this document?',
+        deleteSuccessTitle: 'Document deleted',
+        deleteSuccessMessage: 'The document was deleted successfully.',
+        deleteErrorTitle: 'Error deleting document',
+        listTitle: 'Documents',
+        downloadDocument: 'Download document',
+        deleteDocument: 'Delete document',
+        emptyState: 'No documents uploaded yet. Drag files or click above to get started.',
+        limitReached: 'You have reached the maximum limit of {{max}} documents.',
+      },
 
       // --- Common ---
       common: {
@@ -1121,7 +1536,335 @@ export const resources = {
         productName: 'Digital Asset',
         copyright: '©',
         operational: 'Operational',
-        up: 'Up'
+        up: 'Up',
+        accessibilityLabel: 'Contact information and footer',
+        contactEmailAria: 'Send email to ARKIA',
+      },
+
+      legal: {
+        terms: {
+          title: 'Terms and Conditions of Use',
+          updated: 'Last updated: October 2024',
+          sections: [
+            {
+              heading: '1. Company identification',
+              paragraphs: [
+                { type: 'labelValue', label: 'Website owner:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'Tax ID:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Registered office:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, Spain' },
+                { type: 'labelValue', label: 'Email:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+            {
+              heading: '2. Purpose of these terms',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'This document governs access to and use of the ARKIA technology platform for real estate asset management and optimization through artificial intelligence, available exclusively after purchasing the service.',
+                },
+              ],
+            },
+            {
+              heading: '3. Service functionality',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'ARKIA provides portfolio analysis and optimization services using artificial intelligence, combining financial, technical, and regulatory insights focused on EPBD 2024 compliance and ESG criteria. Access is granted via individual credentials supplied after contracting the service. Free access is not allowed, except for demonstrations explicitly authorized by the company.',
+                },
+              ],
+            },
+            {
+              heading: '4. Platform usage conditions',
+              list: [
+                'Use of the Platform is limited to authorized users who have contracted the service.',
+                'Assigning, sublicensing, distributing, or altering the technology or access licenses is prohibited.',
+                'Any attempt at reverse engineering, automated scraping, or unlawful use is expressly forbidden.',
+                'Users are responsible for keeping their access credentials confidential.',
+              ],
+            },
+            {
+              heading: '5. No personalized professional advice',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Content generated by the Platform does not constitute personalized technical, legal, or financial advice. Recommendations provided by the AI Prescriptive Engine are indicative and must be validated by qualified professionals before making investment decisions or undertaking works.',
+                },
+              ],
+            },
+            {
+              heading: '6. Intellectual property',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'All Platform content (software, algorithms, text, structure, design, source code, AI models) is owned by Tech AI Solutions S.L. or used under license. Any reproduction or unauthorized use is prohibited.',
+                },
+              ],
+            },
+            {
+              heading: '7. Limitation of liability',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. is not liable for damages arising from misuse of the Platform or decisions made solely on automated outputs. Users assume final responsibility for managing their real estate portfolios.',
+                },
+              ],
+            },
+            {
+              heading: '8. Data protection',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Personal data processing is governed by our Privacy Policy and the General Data Protection Regulation (GDPR). Technical data about real estate assets is handled with maximum confidentiality and security.',
+                },
+              ],
+            },
+            {
+              heading: '9. Changes to the terms',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. may amend these Terms and Conditions at any time. Updates will be published on the website and communicated to active users, becoming effective immediately upon publication.',
+                },
+              ],
+            },
+            {
+              heading: '10. Governing law and jurisdiction',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'These Terms are governed by Spanish law. In case of dispute, both parties expressly submit to the courts and tribunals of Madrid, waiving any other jurisdiction that may apply.',
+                },
+              ],
+            },
+          ],
+        },
+        privacy: {
+          title: 'Privacy Policy',
+          updated: 'Last updated: October 2024',
+          sections: [
+            {
+              heading: '1. Data controller',
+              paragraphs: [
+                { type: 'labelValue', label: 'Controller:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'Tax ID:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Address:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, Spain' },
+                { type: 'labelValue', label: 'Contact:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+            {
+              heading: '2. Data we collect',
+              paragraphs: [
+                { type: 'text', text: 'At ARKIA we collect the following categories of data:' },
+              ],
+              list: [
+                { label: 'Registration data:', description: 'name, email, company, phone number.' },
+                { label: 'Usage data:', description: 'interactions within the platform and AI Prescriptive Engine queries.' },
+                { label: 'Asset technical data:', description: 'property characteristics, energy certificates, regulatory compliance information.' },
+                { label: 'Browsing data:', description: 'technical, analytical, and preference cookies.' },
+              ],
+            },
+            {
+              heading: '3. Purpose of processing',
+              paragraphs: [
+                { type: 'text', text: 'We use your data to:' },
+              ],
+              list: [
+                'Manage your account and access to the Platform.',
+                'Provide analyses and AI-driven recommendations.',
+                'Improve our services and predictive models.',
+                'Send communications related to the contracted service.',
+                'Comply with legal and contractual obligations.',
+              ],
+            },
+            {
+              heading: '4. Lawful basis',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Data processing is based on performance of the service contract, compliance with legal obligations, and explicit consent for marketing communications (optional and revocable).',
+                },
+              ],
+            },
+            {
+              heading: '5. Data retention',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'We retain data for the duration of the contractual relationship and subsequently for legally required periods related to tax and commercial obligations (minimum 6 years).',
+                },
+              ],
+            },
+            {
+              heading: '6. Data disclosure',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'We do not share data with third parties unless there is a legal obligation or it is necessary to provide the service (cloud hosting, analytics). In such cases, strict confidentiality and GDPR-compliant agreements are enforced.',
+                },
+              ],
+            },
+            {
+              heading: '7. User rights',
+              paragraphs: [
+                { type: 'text', text: 'You have the right to:' },
+              ],
+              list: [
+                'Access your personal data.',
+                'Rectify inaccurate or incomplete data.',
+                'Request data erasure.',
+                'Object to processing.',
+                'Request restriction of processing.',
+                'Request data portability.',
+                'Withdraw consent at any time.',
+              ],
+              note: { label: 'To exercise your rights:', text: 'gestion@arkialabs.es.' },
+            },
+            {
+              heading: '8. Security',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'We apply robust technical and organizational measures to protect data against unauthorized access, loss, or alteration— including encrypted communications, strong authentication, and periodic security audits.',
+                },
+              ],
+            },
+            {
+              heading: '9. Complaints',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'If you believe your data is being processed in breach of regulations, you may file a complaint with the Spanish Data Protection Agency (www.aepd.es).',
+                },
+              ],
+            },
+          ],
+        },
+        cookies: {
+          title: 'Cookie Policy',
+          updated: 'Last updated: October 2024',
+          sections: [
+            {
+              heading: '1. What are cookies?',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Cookies are small text files that websites store in the user’s browser. They ensure the technical operation of the site, personalize the experience, and gather usage statistics.',
+                },
+              ],
+            },
+            {
+              heading: '2. Use of cookies on this website',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'We use first-party and third-party cookies. When you first access the site, you can accept, reject, or configure cookies through the consent banner and modify your preferences at any time.',
+                },
+              ],
+            },
+            {
+              heading: '3. Consent management',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Consent is requested via a banner that allows you to accept all cookies, reject them, or configure them by category. The system logs your choices to ensure regulatory compliance.',
+                },
+              ],
+            },
+            {
+              heading: '4. Cookie categories used',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Cookies on this site fall into the following categories:',
+                },
+              ],
+              subsections: [
+                {
+                  title: 'Necessary',
+                  description: 'Essential for the site to operate, including session, authentication, and security cookies.',
+                  list: [
+                    'User session management.',
+                    'Language preferences.',
+                    'Security and fraud prevention.',
+                  ],
+                },
+                {
+                  title: 'Preferences',
+                  description: 'Allow the site to remember information that changes its behavior or appearance.',
+                  list: [
+                    'Display preferences.',
+                    'Dashboard configuration.',
+                    'Selected language and region.',
+                  ],
+                },
+                {
+                  title: 'Statistics',
+                  description: 'Help understand how users interact with the site. Data is anonymized.',
+                  list: [
+                    'Google Analytics (anonymized).',
+                    'Performance and usage metrics.',
+                    'Navigation behavior analytics.',
+                  ],
+                },
+                {
+                  title: 'Marketing',
+                  description: 'Used to track visitors and display relevant content and advertising.',
+                  list: [
+                    'Campaign tracking.',
+                    'Content personalization.',
+                    'Conversion analysis.',
+                  ],
+                },
+              ],
+            },
+            {
+              heading: '5. Cookies in use',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Active cookies may vary depending on configuration and integrated tools. The updated list—including name, duration, purpose, and provider—is available through the consent management system.',
+                },
+              ],
+            },
+            {
+              heading: '6. Disabling cookies in your browser',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'In addition to the consent banner, you can delete or block cookies directly from your browser. Instructions differ between browsers:',
+                },
+              ],
+              list: [
+                { label: 'Google Chrome:', description: 'Settings > Privacy and security > Cookies and other site data.' },
+                { label: 'Mozilla Firefox:', description: 'Options > Privacy & Security > Cookies and site data.' },
+                { label: 'Safari:', description: 'Preferences > Privacy > Manage website data.' },
+                { label: 'Microsoft Edge:', description: 'Settings > Privacy, search, and services > Cookies.' },
+              ],
+              note: {
+                label: 'Important note:',
+                text: 'Blocking or deleting certain cookies may affect the correct operation of the ARKIA Platform.',
+              },
+            },
+            {
+              heading: '7. Changes to the Cookie Policy',
+              paragraphs: [
+                {
+                  type: 'text',
+                  text: 'Tech AI Solutions S.L. may update this Cookie Policy for technical, regulatory, or service-related reasons. Any changes will be published on this page and communicated to active users.',
+                },
+              ],
+            },
+            {
+              heading: '8. Data controller',
+              paragraphs: [
+                { type: 'labelValue', label: 'Controller:', value: 'Tech AI Solutions S.L.' },
+                { type: 'labelValue', label: 'Tax ID:', value: 'B56350796' },
+                { type: 'labelValue', label: 'Address:', value: 'Calle Frida Kahlo 26, 4B, 28051, Madrid, Spain' },
+                { type: 'labelValue', label: 'Contact email:', value: 'gestion@arkialabs.es' },
+              ],
+            },
+          ],
+        },
       },
 
       // --- Digital Book ---
@@ -1384,6 +2127,7 @@ export const resources = {
           greenRatingShort: '% green rating',
           avgPayback: 'Average payback',
           totalAssets: 'Total assets',
+          assignedAssets: 'Assigned assets',
         },
         card: {
           currentValue: 'Current value (€)',
@@ -1408,14 +2152,15 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
-    supportedLngs: ['en', 'es'],
+    fallbackLng: 'es',
+    supportedLngs: ['es', 'en'],
     defaultNS: 'translation',
     ns: ['translation'],
     interpolation: { escapeValue: false },
+    load: 'languageOnly',
     returnNull: false,
     detection: {
-      order: ['localStorage', 'querystring', 'navigator', 'htmlTag'],
+      order: ['localStorage', 'querystring', 'cookie'],
       caches: ['localStorage'],
     },
     react: { useSuspense: false },

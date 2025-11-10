@@ -30,8 +30,6 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     technicianEmail: initialData.technicianEmail || '',
     cfoEmail: initialData.cfoEmail || '',
     propietarioEmail: initialData.propietarioEmail || '',
-    rehabilitationCost: initialData.rehabilitationCost || '',
-    potentialValue: initialData.potentialValue || '',
     squareMeters: initialData.squareMeters || '',
   });
 
@@ -113,20 +111,6 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
     if (formData.propietarioEmail?.trim() && !emailRegex.test(formData.propietarioEmail)) {
       newErrors.propietarioEmail = t('common.validation.email', 'Ingresa un correo válido');
-    }
-
-    if (formData.rehabilitationCost?.trim()) {
-      const v = Number.parseFloat(formData.rehabilitationCost);
-      if (Number.isNaN(v) || v < 0) {
-        newErrors.rehabilitationCost = t('buildings.validation.validCost', 'Costo inválido');
-      }
-    }
-
-    if (formData.potentialValue?.trim()) {
-      const v = Number.parseFloat(formData.potentialValue);
-      if (Number.isNaN(v) || v < 0) {
-        newErrors.potentialValue = t('buildings.validation.validValue', 'Valor inválido');
-      }
     }
 
     if (formData.squareMeters?.trim()) {
@@ -448,69 +432,6 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             <p className="mt-1 text-xs text-gray-500">
               {t('buildings.helpers.propietarioEmail', 'Opcional. Asignará el rol de Propietario al usuario.')}
             </p>
-          </div>
-        </div>
-
-        {/* Financial section */}
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t('buildings.sections.financialInfo', 'Información financiera')}
-          </h3>
-          <p className="text-sm text-gray-600 mb-6">
-            {t(
-              'buildings.sections.financialInfoDesc',
-              'Estos datos ayudan a estimar el ROI y el valor potencial. Son opcionales.'
-            )}
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="rehabilitationCost" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildings.fields.rehabilitationCost', 'Coste de rehabilitación')}
-              </label>
-              <input
-                id="rehabilitationCost"
-                type="number"
-                value={formData.rehabilitationCost}
-                onChange={e => handleInputChange('rehabilitationCost', e.target.value)}
-                placeholder={t('buildings.placeholders.rehabilitationCost', '125000')}
-                min={0}
-                step="1000"
-                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.rehabilitationCost ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.rehabilitationCost && (
-                <p className="mt-1 text-sm text-red-600">{errors.rehabilitationCost}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                {t('buildings.helpers.rehabilitationCost', 'Estimado de inversión en mejoras.')}
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="potentialValue" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildings.fields.potentialValue', 'Valor potencial')}
-              </label>
-              <input
-                id="potentialValue"
-                type="number"
-                value={formData.potentialValue}
-                onChange={e => handleInputChange('potentialValue', e.target.value)}
-                placeholder={t('buildings.placeholders.potentialValue', '950000')}
-                min={0}
-                step="1000"
-                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.potentialValue ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.potentialValue && (
-                <p className="mt-1 text-sm text-red-600">{errors.potentialValue}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                {t('buildings.helpers.potentialValue', 'Valor estimado después de rehabilitar.')}
-              </p>
-            </div>
           </div>
         </div>
 

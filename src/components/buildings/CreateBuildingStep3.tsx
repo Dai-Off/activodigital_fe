@@ -32,8 +32,6 @@ interface BuildingSummaryData {
   propietarioEmail: string;
 
   // Financial
-  rehabilitationCost: string;
-  potentialValue: string;
   squareMeters: string;
 
   // Location / photos
@@ -107,16 +105,6 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   const priceText =
     buildingData.price?.trim()
       ? fmtCurrency(parseFloat(buildingData.price))
-      : t('common.notSpecified', 'No especificado');
-
-  const rehabText =
-    buildingData.rehabilitationCost?.trim()
-      ? fmtCurrency(parseFloat(buildingData.rehabilitationCost))
-      : t('common.notSpecified', 'No especificado');
-
-  const potentialText =
-    buildingData.potentialValue?.trim()
-      ? fmtCurrency(parseFloat(buildingData.potentialValue))
       : t('common.notSpecified', 'No especificado');
 
   const surfaceText =
@@ -260,14 +248,17 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   label={t('buildings.fields.propietarioEmail', 'Email del propietario')}
                   value={buildingData.propietarioEmail || t('common.unassigned', 'Sin asignar')}
                 />
-                <Row
-                  label={t('buildings.fields.rehabilitationCost', 'Coste de rehabilitación')}
-                  value={rehabText}
-                />
-                <Row
-                  label={t('buildings.fields.potentialValue', 'Valor potencial')}
-                  value={potentialText}
-                />
+                <div className="py-2">
+                  <span className="text-sm font-medium text-gray-600 block mb-1">
+                    {t('buildings.sections.financialInfo', 'Información financiera')}
+                  </span>
+                  <p className="text-sm text-gray-500">
+                    {t(
+                      'buildings.financialInfoHandledByCfo',
+                      'El CFO añadirá los datos financieros una vez creado el activo.'
+                    )}
+                  </p>
+                </div>
                 <Row
                   label={t('buildings.fields.surface', 'Superficie')}
                   value={surfaceText}
