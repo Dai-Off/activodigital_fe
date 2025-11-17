@@ -4,11 +4,11 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import ToastContainer from './components/ui/Toast'
-import Layout from './components/Layout'
-import Documentos from './components/Documentos'
+import NewLayout from './components/NewLayout'
 import Mantenimiento from './components/Mantenimiento'
 import Cumplimiento from './components/Cumplimiento'
-import Unidades from './components/Unidades'
+import BuildingUnits from './components/BuildingUnits'
+import BuildingDocuments from './components/BuildingDocuments'
 import { LibroDigital } from './components/LibroDigital'
 import Login from './components/Login'
 import Register from './components/Register'
@@ -16,7 +16,6 @@ import RegisterWithInvitation from './components/RegisterWithInvitation'
 import AcceptAssignment from './components/AcceptAssignment'
 import InvitationHandler from './components/InvitationHandler'
 import Landing from './components/Landing'
-import AssetsList from './components/AssetsList'
 import CFOAssetsList from './components/CFOAssetsList'
 import BuildingDetail from './components/BuildingDetail'
 import CFOIntakeForm from './components/cfo/CFOIntakeForm'
@@ -96,14 +95,14 @@ function App() {
               {/* Landing page sin Layout (tiene su propio header y footer) */}
               <Route path="/" element={<Landing />} />
 
-              {/* Rutas con navbar y footer (Layout) */}
-              <Route element={<Layout />}>
+              {/* Rutas con nuevo diseño (NewLayout) */}
+              <Route element={<NewLayout />}>
                 <Route
                   path="/activos"
                   element={
                     <ProtectedRoute>
                       <ErrorBoundary>
-                        <AssetsList />
+                        <div />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
@@ -115,14 +114,6 @@ function App() {
                       <ErrorBoundary>
                         <CFOAssetsList />
                       </ErrorBoundary>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/documentos"
-                  element={
-                    <ProtectedRoute>
-                      <Documentos />
                     </ProtectedRoute>
                   }
                 />
@@ -143,10 +134,18 @@ function App() {
                   }
                 />
                 <Route
-                  path="/unidades"
+                  path="/edificio/:id/unidades"
                   element={
                     <ProtectedRoute>
-                      <Unidades />
+                      <BuildingUnits />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/edificio/:id/documentacion"
+                  element={
+                    <ProtectedRoute>
+                      <BuildingDocuments />
                     </ProtectedRoute>
                   }
                 />
@@ -190,25 +189,25 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/cfo-intake/:buildingId"
+                  element={
+                    <ProtectedRoute>
+                      <CFOIntakeForm />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/cfo-due-diligence/:buildingId"
+                  element={
+                    <ProtectedRoute>
+                      <CFOFinancialAnalysisDashboard />
+                    </ProtectedRoute>
+                  }
+                />
               </Route>
 
-              {/* Rutas fullscreen protegidas */}
-              <Route
-                path="/cfo-intake/:buildingId"
-                element={
-                  <ProtectedRoute>
-                    <CFOIntakeForm />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cfo-due-diligence/:buildingId"
-                element={
-                  <ProtectedRoute>
-                    <CFOFinancialAnalysisDashboard />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Rutas fullscreen protegidas (sin sidebar) */}
               <Route
                 path="/cfo-simulation"
                 element={
@@ -220,7 +219,7 @@ function App() {
               <Route
                 path="/edificios/crear"
                 element={
-                  <ProtectedRoute requiredPermission="canCreateBuildings">
+                  <ProtectedRoute>
                     <CreateBuildingWizard />
                   </ProtectedRoute>
                 }

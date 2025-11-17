@@ -6,7 +6,6 @@ import { Edit, Plus, BarChart3, Zap } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import { BuildingsApiService } from '../../services/buildingsApi';
 import { FinancialSnapshotsService } from '../../services/financialSnapshots';
-import { AppSpinner } from '../ui/LoadingSystem';
 
 interface CFOIntakeData {
   // 1. Precio & Mercado (solo datos adicionales)
@@ -667,13 +666,51 @@ export default function CFOIntakeForm() {
     return `${value.toFixed(2)}%`;
   };
 
-  // Mostrar loading mientras se cargan los datos
+  // Mostrar skeleton mientras se cargan los datos
   if (isLoadingData) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#fdfdfd' }}>
-        <div className="text-center">
-          <AppSpinner size="lg" className="mx-auto mb-4" />
-          <p className="text-gray-600 text-sm font-medium">Cargando...</p>
+      <div className="min-h-screen bg-gray-50 py-6 overflow-x-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-16 h-16 rounded-lg bg-gray-200 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Skeleton */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+            <div className="space-y-6">
+              {/* Section Navigation Skeleton */}
+              <div className="flex gap-2 mb-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse" />
+                ))}
+              </div>
+
+              {/* Form Fields Skeleton */}
+              <div className="space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons Skeleton */}
+              <div className="flex gap-3 pt-4">
+                <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

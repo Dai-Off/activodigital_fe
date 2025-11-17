@@ -233,11 +233,12 @@ export async function processPDFWithAI(
   formData.append('document', file);
   formData.append('buildingId', buildingId);
 
+  // Timeout aumentado para procesamiento de PDFs con IA (5 minutos)
   const resp = await apiFetch('/libros-digitales/upload-ai', {
     method: 'POST',
     cache: 'no-store',
     body: formData,
-  });
+  }, 300000); // 5 minutos = 300,000 ms
 
   return resp as any;
 }

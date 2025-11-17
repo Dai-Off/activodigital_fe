@@ -2,10 +2,25 @@ import React from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DocumentManager, { type DocumentFile } from '../ui/DocumentManager';
-import { PageLoader } from '../ui/LoadingSystem';
+import { SkeletonBase, SkeletonText } from '../ui/LoadingSystem';
 import { getBookByBuilding, updateBookSection, type DigitalBook, sectionIdToApiType } from '../../services/digitalbook';
 import { useToast } from '../../contexts/ToastContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { 
+  Building2, 
+  Wrench, 
+  FileCheck, 
+  Settings, 
+  Zap, 
+  Hammer, 
+  Leaf, 
+  Paperclip,
+  CheckCircle2,
+  Clock,
+  Edit,
+  Eye,
+  FileText,
+  Save
+} from 'lucide-react';
 
 
 function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
@@ -13,7 +28,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     general_data: {
   title: t('sections.general_data.title', 'Datos generales del edificio'),
   description: t('sections.general_data.description', 'Información básica y características principales'),
-      icon: '🏢',
+      icon: Building2,
+      color: 'blue',
       fields: [
   { name: 'identification', label: t('fields.identification', 'Identificación del edificio'), type: 'textarea', required: true },
   { name: 'ownership', label: t('fields.ownership', 'Titularidad'), type: 'text', required: true },
@@ -25,7 +41,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     construction_features: {
   title: t('sections.construction_features.title', 'Características constructivas y técnicas'),
   description: t('sections.construction_features.description', 'Especificaciones técnicas de construcción'),
-      icon: '🔧',
+      icon: Wrench,
+      color: 'purple',
       fields: [
   { name: 'materials', label: t('fields.materials', 'Materiales principales'), type: 'textarea', required: true },
   { name: 'insulation_systems', label: t('fields.insulation_systems', 'Sistemas de aislamiento'), type: 'textarea', required: true },
@@ -37,7 +54,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     certificates: {
   title: t('sections.certificates.title', 'Certificados y licencias'),
   description: t('sections.certificates.description', 'Documentación legal y certificaciones'),
-      icon: '📜',
+      icon: FileCheck,
+      color: 'green',
       fields: [
   { name: 'energy_certificate', label: t('fields.energy_certificate', 'Certificado energético (CEE)'), type: 'text', required: true },
   { name: 'building_permits', label: t('fields.building_permits', 'Licencias de obra'), type: 'textarea', required: true },
@@ -49,7 +67,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     maintenance: {
   title: t('sections.maintenance.title', 'Mantenimiento y conservación'),
   description: t('sections.maintenance.description', 'Historial y planes de mantenimiento'),
-      icon: '🔨',
+      icon: Settings,
+      color: 'orange',
       fields: [
   { name: 'preventive_plan', label: t('fields.preventive_plan', 'Plan de mantenimiento preventivo'), type: 'textarea', required: true },
   { name: 'inspection_schedule', label: t('fields.inspection_schedule', 'Programa de revisiones'), type: 'textarea', required: true },
@@ -60,7 +79,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     installations: {
       title: t('digitalbook.sections.installations.title', 'Instalaciones y consumos'),
       description: t('digitalbook.sections.installations.description', 'Sistemas e instalaciones del edificio'),
-      icon: '⚡',
+      icon: Zap,
+      color: 'yellow',
       fields: [
         { name: 'electrical_system', label: t('digitalbook.fields.electrical_system', 'Sistema eléctrico'), type: 'textarea', required: true },
         { name: 'water_system', label: t('digitalbook.fields.water_system', 'Sistema de agua'), type: 'textarea', required: true },
@@ -72,7 +92,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     reforms: {
       title: t('digitalbook.sections.reforms.title', 'Reformas y rehabilitaciones'),
       description: t('digitalbook.sections.reforms.description', 'Historial de modificaciones y mejoras'),
-      icon: '🏗️',
+      icon: Hammer,
+      color: 'red',
       fields: [
         { name: 'renovation_history', label: t('digitalbook.fields.renovation_history', 'Historial de obras'), type: 'textarea', required: true },
         { name: 'structural_modifications', label: t('digitalbook.fields.structural_modifications', 'Modificaciones estructurales'), type: 'textarea', required: false },
@@ -83,7 +104,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     sustainability: {
       title: t('digitalbook.sections.sustainability.title', 'Sostenibilidad y ESG'),
       description: t('digitalbook.sections.sustainability.description', 'Criterios ambientales y sostenibilidad'),
-      icon: '🌱',
+      icon: Leaf,
+      color: 'emerald',
       fields: [
         { name: 'renewableSharePercent', label: t('digitalbook.fields.renewableSharePercent', 'Porcentaje de energía renovable (%)'), type: 'number', required: true },
         { name: 'waterFootprintM3PerM2Year', label: t('digitalbook.fields.waterFootprintM3PerM2Year', 'Huella hídrica (m³/m²·año)'), type: 'number', required: true },
@@ -103,7 +125,8 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
     documentation: {
       title: t('digitalbook.sections.documentation.title', 'Documentación complementaria'),
       description: t('digitalbook.sections.documentation.description', 'Archivos y documentos técnicos'),
-      icon: '📁',
+      icon: Paperclip,
+      color: 'indigo',
       fields: [
         { name: 'technical_drawings', label: t('digitalbook.fields.technical_drawings', 'Planos técnicos'), type: 'textarea', required: false },
         { name: 'operation_manuals', label: t('digitalbook.fields.operation_manuals', 'Manuales de funcionamiento'), type: 'textarea', required: false },
@@ -122,7 +145,6 @@ const SectionEditor: React.FC = () => {
   const { t } = useTranslation();
   const { sectionId, buildingId: buildingIdParam } = useParams<{ sectionId: string; buildingId: string }>();
   const location = useLocation();
-  const { user } = useAuth();
 
   const buildingId = buildingIdParam || location.state?.buildingId || '';
   const buildingName = location.state?.buildingName || 'Torre Central';
@@ -139,8 +161,8 @@ const SectionEditor: React.FC = () => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const { showSuccess, showError } = useToast();
   
-  // Solo técnicos pueden editar
-  const canEdit = user?.role === 'tecnico';
+  // Todos los roles pueden editar
+  const canEdit = true;
 
   // Cargar UNA SOLA VEZ al montar - SIN DEPENDENCIAS
   React.useEffect(() => {
@@ -288,7 +310,6 @@ const SectionEditor: React.FC = () => {
   const SECTION_CONFIGS = getSectionConfigs(t);
   const sectionConfig = sectionId && SECTION_CONFIGS[sectionId as UiSectionKey] ? SECTION_CONFIGS[sectionId as UiSectionKey] : null;
 
-  if (loading) return <PageLoader message={t('loading', 'Cargando sección...')} />;
   if (loadError) {
       return (
       <div className="p-4">
@@ -310,100 +331,146 @@ const SectionEditor: React.FC = () => {
         <div className="px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg">
-              <span className="text-2xl">{sectionConfig.icon}</span>
+          {loading ? (
+            <div className="flex items-center gap-4 mb-4">
+              <SkeletonBase className="w-16 h-16 rounded-lg" />
+              <div className="flex-1">
+                <SkeletonText lines={1} widths={['w-64']} className="mb-2" />
+                <SkeletonText lines={1} widths={['w-96']} className="mb-2" />
+                <SkeletonText lines={1} widths={['w-48']} />
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{sectionConfig.title}</h1>
-              <p className="text-lg text-gray-600 mt-1">{sectionConfig.description}</p>
-              <p className="text-sm text-gray-500 mt-2">{buildingName}</p>
+          ) : (
+            <div className="flex items-center gap-3 mb-4">
+              {sectionConfig.icon && typeof sectionConfig.icon !== 'string' ? (
+                <div className="flex items-center justify-center w-12 h-12 rounded-md bg-gray-50">
+                  {React.createElement(sectionConfig.icon, {
+                    className: 'w-5 h-5 text-gray-600',
+                    strokeWidth: 2
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-12 h-12 bg-gray-50 rounded-md">
+                  <span className="text-xl">{sectionConfig.icon}</span>
+                </div>
+              )}
+              <div>
+                <h1 className="text-lg font-medium text-gray-900">{sectionConfig.title}</h1>
+                <p className="text-xs text-gray-500 mt-0.5">{sectionConfig.description}</p>
+                <p className="text-xs text-gray-400 mt-1">{buildingName}</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isCompleted ? 'bg-green-100' : 'bg-yellow-100'
-                }`}>
-                  {isCompleted ? (
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {loading ? (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center">
+                    <SkeletonBase className="w-8 h-8 rounded-md" />
+                    <div className="ml-3 flex-1">
+                      <SkeletonText lines={1} widths={['w-16']} className="mb-1.5" />
+                      <SkeletonText lines={1} widths={['w-24']} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Estado</h3>
-                <p className={`text-sm ${isCompleted ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {isCompleted ? 'Completa' : 'En progreso'}
-                </p>
-              </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-md flex items-center justify-center ${
+                      isCompleted ? 'bg-blue-50' : 'bg-gray-50'
+                    }`}>
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                      ) : (
+                        <Clock className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                      )}
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-xs font-medium text-gray-500 mb-0.5">Estado</h3>
+                    <p className={`text-sm font-medium ${isCompleted ? 'text-blue-600' : 'text-gray-600'}`}>
+                      {isCompleted ? 'Completa' : 'En progreso'}
+                    </p>
+                  </div>
                 </div>
               </div>
               
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="w-9 h-9 rounded-md bg-gray-50 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-xs font-medium text-gray-500 mb-0.5">Campos</h3>
+                    <p className="text-sm font-medium text-gray-600">{sectionConfig.fields.length} campos</p>
+                  </div>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Campos</h3>
-                <p className="text-sm text-gray-600">{sectionConfig.fields.length} campos</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  canEdit ? 'bg-green-100' : 'bg-gray-100'
-                }`}>
-                  {canEdit ? (
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-md flex items-center justify-center ${
+                      canEdit ? 'bg-gray-50' : 'bg-gray-50'
+                    }`}>
+                      {canEdit ? (
+                        <Edit className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                      )}
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-xs font-medium text-gray-500 mb-0.5">Permisos</h3>
+                    <p className="text-sm font-medium text-gray-600">{canEdit ? 'Editable' : 'Solo lectura'}</p>
+                  </div>
                 </div>
               </div>
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-900">Permisos</h3>
-                <p className="text-sm text-gray-600">{canEdit ? 'Editable' : 'Solo lectura'}</p>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Información de la Sección</h2>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="px-5 py-3 border-b border-gray-200">
+            {loading ? (
+              <SkeletonText lines={1} widths={['w-48']} />
+            ) : (
+              <h2 className="text-sm font-medium text-gray-900">Información de la Sección</h2>
+            )}
           </div>
           
-          <div className="p-6">
-            {/* Form Fields */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {sectionConfig.fields.map((field) => (
+          <div className="p-5">
+            {loading ? (
+              /* Form Fields Skeleton */
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className={i > 4 ? 'lg:col-span-2' : ''}>
+                    <SkeletonText lines={1} widths={['w-32']} className="mb-2" />
+                    {i > 4 ? (
+                      <SkeletonBase className="h-24 w-full rounded-md" />
+                    ) : (
+                      <SkeletonBase className="h-10 w-full rounded-md" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Form Fields */
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {sectionConfig.fields.map((field) => (
                 <div key={field.name} className={field.type === 'textarea' ? 'lg:col-span-2' : ''}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
                     {field.label}
                     {field.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
@@ -414,7 +481,7 @@ const SectionEditor: React.FC = () => {
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder={`Ingresa ${field.label.toLowerCase()}...`}
                     />
                   ) : field.type === 'select' ? (
@@ -422,7 +489,7 @@ const SectionEditor: React.FC = () => {
                       disabled={!canEdit}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Selecciona una opción</option>
                       {Array.isArray(field.options) &&
@@ -448,49 +515,52 @@ const SectionEditor: React.FC = () => {
                       type={field.type || 'text'}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder={`Ingresa ${field.label.toLowerCase()}...`}
                     />
                   )}
                 </div>
               ))}
-            </div>
+              </div>
+            )}
 
             {/* Documents Section */}
-            {canEdit && (
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Documentos Adjuntos</h3>
-                  <DocumentManager
+            {!loading && canEdit && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Documentos Adjuntos</h3>
+                <DocumentManager
                   bookId={buildingId}
                   sectionType={sectionId || ''}
-                    userId={userId}
+                  userId={userId}
                   existingDocuments={documents || []}
-                    onDocumentsUpdated={handleDocumentsChange}
+                  onDocumentsUpdated={handleDocumentsChange}
                 />
-                  </div>
-                )}
-            </div>
+              </div>
+            )}
           </div>
 
-        {/* Action Buttons */}
-        {canEdit && (
-          <div className="mt-8 flex justify-end gap-4">
-                <button
-                      onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-              {isSaving ? 'Guardando...' : 'Guardar Borrador'}
-                </button>
-                <button
-                  onClick={handleSave}
-                    disabled={isSaving}
-              className="px-6 py-3 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-              {isSaving ? 'Guardando...' : 'Guardar Sección'}
-                </button>
+          {/* Action Buttons */}
+          {!loading && canEdit && (
+            <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
+              <button
+                onClick={handleSaveDraft}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" strokeWidth={2} />
+                {isSaving ? 'Guardando...' : 'Guardar Borrador'}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
+                {isSaving ? 'Guardando...' : 'Guardar Sección'}
+              </button>
+            </div>
+          )}
         </div>
-        )}
         </div>
       </div>
     </div>

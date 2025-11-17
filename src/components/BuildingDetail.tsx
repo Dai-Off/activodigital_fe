@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { BuildingsApiService } from '../services/buildingsApi';
 import type { Building, BuildingImage } from '../services/buildingsApi';
@@ -9,8 +8,7 @@ import ImageManager from './ui/ImageManager';
 import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
 import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
 import { uploadCertificateImage } from '../services/certificateUpload';
-import { getLatestRating, getLatestCO2Emissions, getRatingStars } from '../utils/energyCalculations';
-import { PageLoader, useLoadingState } from './ui/LoadingSystem';
+import { useLoadingState } from './ui/LoadingSystem';
 import FileUpload from './ui/FileUpload';
 import {
   Chart as ChartJS,
@@ -18,13 +16,13 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
-import { RatingCircle, RatingStars } from './RatingCircle';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
+import { getBookByBuilding, getOrCreateBookForBuilding, type DigitalBook } from '../services/digitalbook';
+import { FileCheck2, Building as BuildingIcon, Zap, Wrench, Activity, ChevronLeft, ChevronRight, MapPin, AlertTriangle, Clock, Info, Trash2 } from 'lucide-react';
 import { calculateESGScore, getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
+import { FinancialSnapshotsService } from '../services/financialSnapshots';
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -40,13 +38,11 @@ const BuildingDetail: React.FC = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, hasPermission } = useAuth();
   const { showError, showSuccess } = useToast();
-  
+
   const [building, setBuilding] = useState<Building | null>(null);
   const { loading, startLoading, stopLoading } = useLoadingState(true);
   const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
-  const [mapReady, setMapReady] = useState(false);
   const [showImageManager, setShowImageManager] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadStep, setUploadStep] = useState<'select' | 'review'>('select');
@@ -58,63 +54,13 @@ const BuildingDetail: React.FC = () => {
   const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [selectedCertificateForView, setSelectedCertificateForView] = useState<PersistedEnergyCertificate | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('todos');
   const [esgData, setEsgData] = useState<ESGResponse | null>(null);
-  const [isLoadingESG, setIsLoadingESG] = useState(false);
-
-  // Función para cargar datos ESG
-  const loadESGData = async () => {
-    if (!building?.id) return;
-    
-    setIsLoadingESG(true);
-    try {
-      if (user?.role === 'tecnico') {
-        // TÉCNICO: SIEMPRE calcular en tiempo real (POST)
-        const calculatedESG = await calculateESGScore(building.id);
-        setEsgData(calculatedESG);
-      } else {
-        // PROPIETARIO: Leer ESG guardado en BD (GET)
-        const storedESG = await getESGScore(building.id);
-        setEsgData(storedESG);
-      }
-    } catch (error) {
-      setEsgData(null);
-    } finally {
-      setIsLoadingESG(false);
-    }
-  };
-
-  // Funciones de paginación
-  const totalPages = Math.ceil(energyCertificates.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentCertificates = energyCertificates.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  // Función para abrir modal de confirmación de eliminación
-  const handleDeleteCertificate = (certificate: PersistedEnergyCertificate) => {
-    setCertificateToDelete(certificate);
-    setDeleteModalOpen(true);
-  };
+  const [esgLoading, setEsgLoading] = useState(false);
+  const [hasFinancialData, setHasFinancialData] = useState<boolean | null>(null);
 
   // Función para confirmar eliminación
   const confirmDeleteCertificate = async () => {
@@ -128,9 +74,10 @@ const BuildingDetail: React.FC = () => {
       await loadEnergyCertificates();
       // Recalcular ESG después de eliminar certificado
       await loadESGData();
-      // Cerrar modal
+      // Cerrar modales
       setDeleteModalOpen(false);
       setCertificateToDelete(null);
+      setSelectedCertificateForView(null);
     } catch (error) {
       showError('Error al eliminar el certificado');
     } finally {
@@ -142,6 +89,7 @@ const BuildingDetail: React.FC = () => {
   const cancelDeleteCertificate = () => {
     setDeleteModalOpen(false);
     setCertificateToDelete(null);
+    // No cerramos el modal de vista, solo el de confirmación
   };
 
   // Función helper para obtener clases CSS del rating energético según escala oficial española
@@ -178,12 +126,36 @@ const BuildingDetail: React.FC = () => {
   // Función para cargar certificados energéticos reales del backend
   const loadEnergyCertificates = async () => {
     if (!building?.id) return;
-    
+
     try {
       const certificatesData = await EnergyCertificatesService.getByBuilding(building.id);
       setEnergyCertificates(certificatesData.certificates || []);
     } catch (error) {
       // Mantener estado vacío en caso de error - no mostrar error al usuario en esta carga inicial
+    }
+  };
+
+  // Función para cargar datos ESG
+  const loadESGData = async () => {
+    const buildingId = building?.id || id;
+    if (!buildingId) return;
+
+    setEsgLoading(true);
+    try {
+      // Intentar calcular ESG (esto devuelve completo o incompleto)
+      const esgResponse = await calculateESGScore(buildingId);
+      setEsgData(esgResponse);
+    } catch (error) {
+      console.error('Error cargando ESG:', error);
+      // Si falla, intentar obtener el score guardado
+      try {
+        const savedESG = await getESGScore(buildingId);
+        setEsgData(savedESG);
+      } catch {
+        setEsgData(null);
+      }
+    } finally {
+      setEsgLoading(false);
     }
   };
 
@@ -202,18 +174,39 @@ const BuildingDetail: React.FC = () => {
         } catch (e) {
           setDigitalBook(null);
         }
-        
+
         // Cargar certificados energéticos del edificio - ahora buildingData.id está disponible
         const certificatesData = await EnergyCertificatesService.getByBuilding(buildingData.id);
         setEnergyCertificates(certificatesData.certificates || []);
         
-        // Cargar datos ESG
-        await loadESGData();
-        
-        // Activar mapa después de cargar datos
-        setTimeout(() => setMapReady(true), 500);
+        // Cargar datos financieros
+        try {
+          const snapshots = await FinancialSnapshotsService.getFinancialSnapshots(buildingData.id);
+          setHasFinancialData(snapshots && snapshots.length > 0);
+        } catch (error) {
+          console.error('Error cargando datos financieros:', error);
+          setHasFinancialData(false);
+        }
+
+        // Cargar datos ESG para este edificio específico
+        setEsgLoading(true);
+        try {
+          const esgResponse = await calculateESGScore(buildingData.id);
+          setEsgData(esgResponse);
+        } catch (error) {
+          console.error('Error cargando ESG:', error);
+          try {
+            const savedESG = await getESGScore(buildingData.id);
+            setEsgData(savedESG);
+          } catch {
+            setEsgData(null);
+          }
+        } finally {
+          setEsgLoading(false);
+        }
+
         stopLoading();
-        
+
       } catch (error) {
         showError('Error al cargar edificio', 'No se pudo cargar la información del edificio');
         navigate('/activos');
@@ -238,38 +231,7 @@ const BuildingDetail: React.FC = () => {
     checkAIService();
   }, []);
 
-  // Resetear página cuando cambien los certificados
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [energyCertificates.length]);
 
-  // Cargar datos ESG cuando el componente se monta
-  useEffect(() => {
-    if (building?.id) {
-      loadESGData();
-    }
-  }, [user?.role, building?.id]);
-
-  // Recargar datos ESG cuando el usuario regrese del libro del edificio
-  useEffect(() => {
-    const handleFocus = () => {
-      loadESGData();
-    };
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadESGData();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [user?.role, building?.id]);
 
   // Bloquear scroll de fondo cuando la modal está abierta
   useEffect(() => {
@@ -284,18 +246,15 @@ const BuildingDetail: React.FC = () => {
 
   const handleCreateDigitalBook = async () => {
     if (!building?.id) return;
-    
+
     try {
       startLoading();
-      // Importar la función desde el servicio
-      const { getOrCreateBookForBuilding } = await import('../services/digitalbook');
-      
       // Crear el libro en el backend
       const createdBook = await getOrCreateBookForBuilding(building.id);
-      
+
       // Actualizar el estado local
       setDigitalBook(createdBook);
-      
+
       // Navegar al hub
       navigate(`/libro-digital/hub/${building.id}`, {
         state: {
@@ -304,7 +263,7 @@ const BuildingDetail: React.FC = () => {
           isNewBook: true
         }
       });
-      
+
       stopLoading();
     } catch (error) {
       showError('Error al crear el libro del edificio');
@@ -323,19 +282,26 @@ const BuildingDetail: React.FC = () => {
     });
   };
 
-  const handleOpenUpload = () => {
-    setSelectedFile(null);
-    setSelectedFileUrl(null);
-    setUploadStep('select');
-    setIsUploadModalOpen(true);
+  // Función para manejar la navegación a datos financieros
+  const handleFinancialData = () => {
+    if (!building?.id) return;
+    // Si hay datos, navegar al dashboard para ver los datos en cards
+    // Si no hay datos, navegar al formulario para cargar datos
+    if (hasFinancialData) {
+      navigate(`/cfo-due-diligence/${building.id}`);
+    } else {
+      // Navegar al formulario para cargar datos financieros
+      navigate(`/cfo-intake/${building.id}`);
+    }
   };
+
 
   const handleCloseUpload = () => {
     setIsUploadModalOpen(false);
     setUploadStep('select');
     setSelectedFile(null);
     if (selectedFileUrl) {
-      try { URL.revokeObjectURL(selectedFileUrl); } catch {}
+      try { URL.revokeObjectURL(selectedFileUrl); } catch { }
     }
     setSelectedFileUrl(null);
     setCurrentSessionId(null);
@@ -371,7 +337,7 @@ const BuildingDetail: React.FC = () => {
 
     try {
       setIsProcessingAI(true);
-      
+
       // Verificar si el servicio de IA está disponible
       if (aiServiceAvailable === false) {
         showError('Servicio de IA no disponible', 'El servicio de extracción de certificados no está disponible en este momento.');
@@ -391,7 +357,7 @@ const BuildingDetail: React.FC = () => {
       // 3. Extraer datos con IA
       const aiResponse = await extractCertificateData(selectedFile);
       const mappedData = mapAIResponseToReviewData(aiResponse);
-      
+
       // 4. Actualizar sesión con datos extraídos por IA e información de la imagen
       const extractedData = {
         rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: 'AI OCR' },
@@ -410,7 +376,7 @@ const BuildingDetail: React.FC = () => {
       };
 
       await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
-      
+
       // 5. Actualizar datos de revisión para el usuario
       setReviewData({
         rating: (mappedData.rating as any) ?? '',
@@ -429,9 +395,9 @@ const BuildingDetail: React.FC = () => {
         imageUploadedAt: uploadResult.image.uploadedAt.toISOString(),
       });
       setUploadStep('review');
-      
+
       showSuccess('Datos extraídos', 'La imagen del certificado se ha guardado y los datos han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
-      
+
     } catch (error) {
       showError('Error al procesar certificado', error instanceof Error ? error.message : 'Error desconocido al procesar el certificado');
     } finally {
@@ -451,8 +417,8 @@ const BuildingDetail: React.FC = () => {
 
     try {
       // Validar campos requeridos antes de enviar
-      if (!reviewData.rating || !reviewData.certificateNumber || !reviewData.issuerName || 
-          !reviewData.issueDate || !reviewData.expiryDate) {
+      if (!reviewData.rating || !reviewData.certificateNumber || !reviewData.issuerName ||
+        !reviewData.issueDate || !reviewData.expiryDate) {
         showError('Campos requeridos', 'Por favor completa todos los campos obligatorios antes de guardar.');
         return;
       }
@@ -486,15 +452,15 @@ const BuildingDetail: React.FC = () => {
         currentSessionId,
         finalData
       );
-      
+
       showSuccess('Certificado guardado', `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`);
-      
+
       // Recargar la lista de certificados para mostrar el nuevo
       await loadEnergyCertificates();
-      
+
       // Recalcular ESG después de agregar certificado
       await loadESGData();
-      
+
       // Limpiar estado y cerrar modal
       setCurrentSessionId(null);
       setReviewData({
@@ -514,7 +480,7 @@ const BuildingDetail: React.FC = () => {
         imageUploadedAt: '',
       });
       handleCloseUpload();
-      
+
     } catch (error) {
       showError('Error al guardar', error instanceof Error ? error.message : 'Error desconocido al guardar el certificado');
     }
@@ -530,16 +496,101 @@ const BuildingDetail: React.FC = () => {
     }
   };
 
-  // (eliminado) funciones antiguas sin uso
-
   if (loading) {
-  return <PageLoader message={t('building.loadingBuilding', { defaultValue: 'Loading building...' })} />;
+    return (
+      <div className="space-y-6 md:space-y-8">
+        {/* Skeleton para las pestañas */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex gap-1 overflow-x-auto">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-10 flex-1 rounded-md bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+
+        {/* Skeleton para el contenido - Layout similar al diseño */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Columna izquierda */}
+          <div className="space-y-4">
+            {/* Skeleton Info básica */}
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-5 w-12 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div>
+                  <div className="h-3 w-16 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-5 w-8 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div>
+                  <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-5 w-10 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            {/* Skeleton Libro del Edificio */}
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-3" />
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-8 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+
+            {/* Skeleton Ubicación */}
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg h-48 relative overflow-hidden flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-200 rounded-full animate-pulse" />
+              </div>
+              <div className="mt-3 space-y-1">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Columna derecha */}
+          <div className="space-y-4">
+            {/* Skeleton Galería de imágenes */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+              <div className="relative w-full aspect-[4/3] bg-gray-200 animate-pulse" />
+            </div>
+
+            {/* Skeleton Banner Libro */}
+            <div className="bg-blue-600 rounded-lg p-5">
+              <div className="h-4 w-32 bg-blue-500 rounded animate-pulse mb-2" />
+              <div className="h-3 w-48 bg-blue-500 rounded animate-pulse mb-1" />
+              <div className="h-3 w-40 bg-blue-500 rounded animate-pulse" />
+            </div>
+
+            {/* Skeleton Banner Datos Financieros */}
+            <div className="bg-blue-600 rounded-lg p-5">
+              <div className="h-4 w-32 bg-blue-500 rounded animate-pulse mb-2" />
+              <div className="h-3 w-48 bg-blue-500 rounded animate-pulse mb-1" />
+              <div className="h-3 w-40 bg-blue-500 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!building) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center bg-white rounded-lg shadow-sm p-6 max-w-md">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('digitalbook.fields.buildingNotFound', { defaultValue: 'Building not found' })}</h2>
           <p className="text-gray-600 mb-4">{t('digitalbook.fields.buildingNotFoundOrNoPermissions', { defaultValue: 'Building not found or you do not have permission to view it.' })}</p>
           <button
@@ -554,967 +605,918 @@ const BuildingDetail: React.FC = () => {
   }
 
 
-  // Datos para el gráfico de dona
-  const chartData = {
-    labels: [
-      t('dashboard.completed', { defaultValue: 'Completed' }),
-      t('dashboard.inProgress', { defaultValue: 'In progress' }),
-      t('dashboard.scheduled', { defaultValue: 'Scheduled' }),
-      t('dashboard.expired', { defaultValue: 'Expired' })
-    ],
-    datasets: [
-      {
-        data: [24, 8, 12, 3],
-        backgroundColor: [
-          "#10B981", // green-500
-          "#3B82F6", // blue-500
-          "#F59E0B", // yellow-500
-          "#EF4444", // red-500
-        ],
-        borderWidth: 0,
-      },
-    ],
+
+  // Si el activeTab es 'dashboard', cambiar a 'todos' por defecto
+  const currentTab = activeTab === 'dashboard' ? 'todos' : activeTab;
+
+  const tabs = [
+    { id: 'todos', label: t('generalView', 'Vista General'), icon: BuildingIcon },
+    { id: 'eficiencia', label: t('energyEfficiency', 'Eficiencia Energética'), icon: Zap },
+    { id: 'certificados', label: t('certificates', 'Certificados'), icon: FileCheck2 },
+    { id: 'mantenimiento', label: t('maintenance', 'Mantenimiento'), icon: Wrench },
+    { id: 'actividad', label: t('activity', 'Actividad'), icon: Activity },
+  ];
+
+  const totalDigitalSections = digitalBook?.sections?.length ?? 0;
+  const completedDigitalSections = digitalBook?.sections?.filter((section) => section.complete).length ?? 0;
+
+  // Función para extraer información de ubicación de la dirección
+  const parseAddressInfo = (address: string) => {
+    if (!address) return { city: null, province: null, postalCode: null };
+
+    // Intentar extraer información común de direcciones españolas
+    const addressLower = address.toLowerCase();
+
+    // Detectar Madrid (más común)
+    if (addressLower.includes('castellana') || addressLower.includes('gran vía') || addressLower.includes('madrid')) {
+      // Extraer código postal si está en la dirección
+      const postalMatch = address.match(/\b(28\d{3})\b/);
+      const postalCode = postalMatch ? postalMatch[1] : null;
+
+      return {
+        city: 'Madrid',
+        province: 'Madrid',
+        postalCode: postalCode || (addressLower.includes('castellana') ? '28046' : '28013')
+      };
+    }
+
+    // Detectar Barcelona
+    if (addressLower.includes('barcelona') || addressLower.includes('passeig') || addressLower.includes('rambla')) {
+      const postalMatch = address.match(/\b(08\d{3})\b/);
+      return {
+        city: 'Barcelona',
+        province: 'Barcelona',
+        postalCode: postalMatch ? postalMatch[1] : '08001'
+      };
+    }
+
+    // Detectar Valencia
+    if (addressLower.includes('valencia')) {
+      const postalMatch = address.match(/\b(46\d{3})\b/);
+      return {
+        city: 'Valencia',
+        province: 'Valencia',
+        postalCode: postalMatch ? postalMatch[1] : '46001'
+      };
+    }
+
+    // Detectar Sevilla
+    if (addressLower.includes('sevilla') || addressLower.includes('seville')) {
+      const postalMatch = address.match(/\b(41\d{3})\b/);
+      return {
+        city: 'Sevilla',
+        province: 'Sevilla',
+        postalCode: postalMatch ? postalMatch[1] : '41001'
+      };
+    }
+
+    // Por defecto, intentar extraer código postal
+    const postalMatch = address.match(/\b(\d{5})\b/);
+
+    return {
+      city: null,
+      province: null,
+      postalCode: postalMatch ? postalMatch[1] : null
+    };
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          font: { size: 12 },
-        },
-      },
-    },
+  // Preparar imágenes del edificio
+  const buildingImages = building.images && building.images.length > 0
+    ? building.images.map(img => img.url)
+    : building.images?.[0]?.url
+      ? [building.images[0].url]
+      : ['/image.png'];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
   };
 
-  const mainImage = building.images?.find(img => img.isMain) || building.images?.[0];
-  const currentImage = building.images?.[currentImageIndex] || mainImage;
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + buildingImages.length) % buildingImages.length);
+  };
 
   return (
-    <div className="max-w-full py-8">
-      {/* Botón superior eliminado por petición: se deja solo el de la sección */}
-
-      {/* Building Header */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.1s both'}}>
-        <div className="grid grid-cols-12 gap-4 items-start">
-          <div className="col-span-12 lg:col-span-8">
-            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">{building.name}</h2>
-            <p className="text-gray-600 text-sm mt-0.5">{building.address} • {t('cadastralRef', { defaultValue: 'Ref. Cat:' })} {building.cadastralReference || '1234567890'}</p>
-
-            {/* Meta compacta */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-              <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">{t('building.constructionYear', { defaultValue: 'Year of construction' })}</span>
-                <span className="font-medium text-gray-900">{building.constructionYear || '1953'}</span>
-              </div>
-              <div className="hidden sm:block h-4 w-px bg-gray-200" />
-              <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">{t('building.floors', { defaultValue: 'Floors' })}</span>
-                <span className="font-medium text-gray-900">{building.numFloors || '45'}</span>
-              </div>
-              <div className="hidden sm:block h-4 w-px bg-gray-200" />
-              <div className="flex items-baseline gap-2">
-                <span className="text-gray-500">{t('building.units', { defaultValue: 'Units' })}</span>
-                <span className="font-medium text-gray-900">{building.numUnits || '550'}</span>
-              </div>
-            </div>
-
-            {/* KPIs compactos */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">{t('building.energyRating', { defaultValue: 'Energy rating' })}</span>
-                <div className="mt-1.5 flex items-center gap-2">
-                  {energyCertificates.length === 0 ? (
-                    <>
-                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-400">
-                        ?
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {user?.role === 'tecnico' 
-                          ? t('building.noCertificates', { defaultValue: 'No certificates registered' })
-                          : t('building.technicianNoCertificates', { defaultValue: 'Technician has not uploaded certificates yet' })
-                        }
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <RatingCircle rating={getLatestRating(energyCertificates)} size="sm" />
-                      <RatingStars stars={getRatingStars(getLatestRating(energyCertificates))} />
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">{t('building.carbonFootprint', { defaultValue: 'Carbon footprint' })}</span>
-                <div className="mt-1.5 flex items-center gap-2">
-                  {energyCertificates.length === 0 ? (
-                    <>
-                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-400">
-                        ?
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {user?.role === 'tecnico' 
-                          ? t('building.noCertificates', { defaultValue: 'No certificates registered' })
-                          : t('building.technicianNoCertificates', { defaultValue: 'Technician has not uploaded certificates yet' })
-                        }
-                      </span>
-                    </>
-                  ) : (
-                    <p className="font-medium text-gray-900">
-                      {getLatestCO2Emissions(energyCertificates)} kg CO₂eq/m²·año
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="rounded-lg border border-gray-200 p-3">
-                <span className="block text-xs text-gray-500">{t('building.financingAccess', { defaultValue: 'Financing access' })}</span>
-                <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full border border-green-200 text-green-800 bg-green-50">{t('building.high', { defaultValue: 'High' })}</span>
-              </div>
-            </div>
-
-            {/* Bloques adicionales en la misma card */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Cumplimiento por tipología */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('building.complianceByType', { defaultValue: 'Compliance by type' })}</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>{t('dashboard.tertiary', { defaultValue: 'Tertiary' })}</span>
-                        <span className="font-medium text-gray-900">81%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-blue-500 rounded-full" style={{ width: '81%' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Libro del Edificio (estado) */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('digitalbook.digitalBookTitle', { defaultValue: 'Digital Building Book' })}</h4>
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const total = digitalBook?.sections?.length ?? 0;
-                      const done = digitalBook?.sections?.filter(s => s.complete).length ?? 0;
-                      const statusLabel = done === 0 && total === 0 ? t('digitalbook.pending', { defaultValue: 'Pending' }) : (done === total && total > 0 ? t('digitalbook.completed', { defaultValue: 'Completed' }) : t('digitalbook.status.inProgress', { defaultValue: 'In progress' }));
-                      const statusCls = done === total && total > 0
-                        ? 'bg-green-100 text-green-700 border-green-200'
-                        : (done === 0 && total === 0 ? 'bg-gray-100 text-gray-700 border-gray-200' : 'bg-blue-100 text-blue-700 border-blue-200');
-                      return (
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusCls}`}>
-                          {statusLabel}
-                        </span>
-                      );
-                    })()}
-                    <span className="text-xs text-gray-500">
-                      {digitalBook ? `${t('building.updated', { defaultValue: 'Updated' })} ${new Date(digitalBook.updatedAt).toLocaleDateString('en-US')}` : t('digitalbook.notCreated', { defaultValue: 'Not created' })}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                      <span>{t('digitalbook.completed', { defaultValue: 'Completed' })}</span>
-                      <span className="font-medium text-gray-900">
-                        {digitalBook ? `${digitalBook.sections.filter(s => s.complete).length}/${digitalBook.sections.length}` : '0/8'}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full">
-                      <div className="h-2 bg-green-500 rounded-l-full" style={{ width: digitalBook ? `${Math.round((digitalBook.sections.filter(s => s.complete).length / (digitalBook.sections.length || 1)) * 100)}%` : '0%' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Progreso de secciones + Estado por sección */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('digitalbook.sectionStatus', { defaultValue: 'Section status' })}</h4>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-green-200 bg-green-50 text-green-800 text-center">{t('digitalbook.status.ok', { defaultValue: 'OK' })}</div>
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 text-yellow-800 text-center">{t('digitalbook.status.pending', { defaultValue: 'Pending' })}</div>
-                    <div className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-200 bg-red-50 text-red-800 text-center">{t('digitalbook.status.expiring', { defaultValue: 'Expiring' })}</div>
-                  </div>
-                  <div className="mt-3 space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-gray-600">
-                      <span>{t('digitalbook.installations', { defaultValue: 'Installations' })}</span><span className="font-medium text-green-700">{t('digitalbook.status.ok', { defaultValue: 'OK' })}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-gray-600">
-                      <span>{t('digitalbook.certificates', { defaultValue: 'Certificates' })}</span><span className="font-medium text-yellow-700">{t('digitalbook.status.pending', { defaultValue: 'Pending' })}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-gray-600">
-                      <span>{t('digitalbook.maintenance', { defaultValue: 'Maintenance' })}</span><span className="font-medium text-green-700">{t('digitalbook.status.ok', { defaultValue: 'OK' })}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-gray-600">
-                      <span>{t('digitalbook.inspections', { defaultValue: 'Inspections' })}</span><span className="font-medium text-red-700">{t('digitalbook.status.expiring', { defaultValue: 'Expiring' })}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-12 lg:col-span-4 lg:self-stretch">
-            <div className="relative group h-80 lg:h-[500px]">
-              {/* Imagen principal */}
-              <img 
-                src={currentImage?.url || "/image.png"} 
-                alt={building.name} 
-                className="w-full h-full object-cover rounded-lg" 
-              />
-              
-              {/* Botón para gestionar imágenes */}
-              {hasPermission('canCreateBuildings') && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setShowImageManager(true)}
-                    className="p-2 bg-white bg-opacity-90 rounded-lg shadow-sm hover:bg-opacity-100 transition-colors"
-                    title="Gestionar imágenes"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-              
-              {/* Navegación de imágenes (solo si hay más de una) */}
-              {building.images && building.images.length > 1 && (
-                <>
-                  {/* Botón anterior */}
-                  <button
-                    onClick={() => setCurrentImageIndex(prev => 
-                      prev === 0 ? building.images!.length - 1 : prev - 1
-                    )}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-opacity"
-                    title="Imagen anterior"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Botón siguiente */}
-                  <button
-                    onClick={() => setCurrentImageIndex(prev => 
-                      prev === building.images!.length - 1 ? 0 : prev + 1
-                    )}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-opacity"
-                    title="Imagen siguiente"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Contador de imágenes */}
-                  <div className="absolute bottom-2 right-2">
-                    <span className="px-2 py-1 text-xs font-medium text-white bg-black bg-opacity-50 rounded">
-                      {currentImageIndex + 1} / {building.images.length}
-                    </span>
-                  </div>
-                  
-                  {/* Indicadores de puntos */}
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                    {building.images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          index === currentImageIndex 
-                            ? 'bg-white' 
-                            : 'bg-white bg-opacity-50'
-                        }`}
-                        title={`Ver imagen ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6 md:space-y-8">
+      {/* Título del edificio */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{building.name}</h1>
+        {building.address && (
+          <p className="text-sm text-gray-600 mt-1">{building.address}</p>
+        )}
       </div>
 
-      {/* Libro del Edificio Button */}
-      <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">{t('digitalBookTitle', { defaultValue: 'Libro del Edificio' })}</h3>
-              <p className="text-blue-100 mb-4">
-                {user?.role === 'propietario' ? (
-                  digitalBook 
-                    ? t('digitalBookDescOwner', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescOwnerPending', { defaultValue: 'El técnico estará trabajando para crear el libro del edificio. En cuanto esté listo podrás verlo accediendo aquí' })
-                ) : user?.role === 'administrador' ? (
-                  digitalBook 
-                    ? t('digitalBookDescAdmin', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescAdminPending', { defaultValue: 'El técnico asignado creará el libro del edificio. Una vez completado podrás verlo aquí' })
-                ) : (
-                  digitalBook 
-                    ? t('digitalBookDescTech', { defaultValue: 'Accede a toda la documentación técnica, certificados y normativas del edificio' })
-                    : t('digitalBookDescTechCreate', { defaultValue: 'Crea el libro del edificio con información técnica detallada, certificados y normativas' })
-                )}
-              </p>
-              <div className="flex items-center gap-2 text-sm text-blue-100">
-                <span className={`w-2 h-2 rounded-full ${digitalBook ? 'bg-green-400' : 'bg-gray-400'}`}></span>
-                <span>
-                  {digitalBook 
-                    ? `${Math.round((digitalBook.sections.filter(s => s.complete).length/(digitalBook.sections.length||1))*100)}% completado • Actualizado ${new Date(digitalBook.updatedAt).toLocaleDateString('es-ES')}`
-                    : user?.role === 'propietario' 
-                      ? (building.technicianEmail 
-                          ? `Técnico asignado: ${building.technicianEmail}` 
-                          : 'Sin técnico asignado aún')
-                      : user?.role === 'administrador'
-                        ? (building.technicianEmail 
-                            ? `Técnico asignado: ${building.technicianEmail}` 
-                            : 'Sin técnico asignado aún')
-                        : 'Sin libro del edificio • Listo para crear'
-                  }
-                </span>
-              </div>
-            </div>
-            <div className="ml-6">
-              {(() => {
-                // Propietario solo puede VER el libro digital
-                if (user?.role === 'propietario') {
-                  if (digitalBook) {
-                    return (
-                      <button
-                        onClick={handleViewDigitalBook}
-                        className="inline-flex items-center px-4 py-2.5 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm"
-                      >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        {t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' })}
-                      </button>
-                    );
-                  } else {
-                    return (
-                      <button
-                        disabled
-                        className="inline-flex items-center px-4 py-2.5 bg-gray-200 text-gray-500 font-medium rounded-md cursor-not-allowed shadow-sm"
-                        title="El técnico debe crear el libro del edificio"
-                      >
-                        <svg className="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        {t('waitingForCreation', { defaultValue: 'Esperando creación' })}
-                      </button>
-                    );
-                  }
-                }
-
-                // Administrador: solo puede VER el libro digital (como propietario)
-                if (user?.role === 'administrador') {
-                  if (digitalBook) {
-                    return (
-                      <button
-                        onClick={handleViewDigitalBook}
-                        className="inline-flex items-center px-4 py-2.5 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm"
-                      >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        {t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' })}
-                      </button>
-                    );
-                  } else {
-                    return (
-                      <button
-                        disabled
-                        className="inline-flex items-center px-4 py-2.5 bg-gray-200 text-gray-500 font-medium rounded-md cursor-not-allowed shadow-sm"
-                        title="El técnico debe crear el libro del edificio"
-                      >
-                        <svg className="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        {t('waitingForCreation', { defaultValue: 'Esperando creación' })}
-                      </button>
-                    );
-                  }
-                }
-
-                // Técnico y CFO: pueden crear/editar/ver
-                const total = digitalBook?.sections?.length ?? 0;
-                const done = digitalBook?.sections?.filter(s => s.complete).length ?? 0;
-                const hasAny = total > 0;
-                const allDone = hasAny && done === total;
-                const label = !hasAny ? t('createDigitalBook', { defaultValue: 'Crear Libro del Edificio' }) : (allDone ? t('viewDigitalBook', { defaultValue: 'Ver Libro del Edificio' }) : t('continueCreating', { defaultValue: 'Continuar creando' }));
-                const onClick = !hasAny ? handleCreateDigitalBook : handleViewDigitalBook;
-                return (
-                  <button
-                    onClick={onClick}
-                    className="inline-flex items-center px-4 py-2.5 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-50 transition-colors shadow-sm"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    {label}
-                  </button>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      </div>
-
-  {/* ESG Data Status Indicator */}
-      {(user?.role === 'tecnico' || user?.role === 'propietario') && (
-        <div className="mb-6" style={{animation: 'fadeInUp 0.6s ease-out 0.2s both'}}>
-          {isLoadingESG ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {t('calculatingESG', { defaultValue: 'Calculando ESG...' })}
-                    </h4>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">
-                      {t('processing', { defaultValue: 'Procesando' })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {t('calculatingESGDesc', { defaultValue: 'Estamos analizando los datos del edificio para calcular el score ESG. Esto tomará solo un momento.' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : esgData && esgData.status === 'incomplete' && user?.role === 'tecnico' ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {t('incompleteESGData', { defaultValue: 'Datos ESG incompletos' })}
-                    </h4>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {t('pending', { defaultValue: 'Pendiente' })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    {t('missingESGDataDesc', { defaultValue: 'Para calcular el score ESG, faltan algunos datos críticos. Completa la información en el Libro del Edificio para obtener un análisis completo.' })}
-                  </p>
-                  <div className="space-y-3">
-                      <div className="text-sm font-medium text-gray-700">{t('missingData', { defaultValue: 'Datos faltantes' })} ({esgData.missingData.length}):</div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {esgData.missingData.map((item, index) => (
-                        <div 
-                          key={index}
-                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-700"
-                        >
-                          <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="truncate">{t(item, { defaultValue: item })}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : esgData && esgData.status === 'complete' && (
-            <div className="bg-white border border-gray-200 rounded-xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {t('completeESGData', { defaultValue: 'Datos ESG completos' })}
-                    </h4>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      {t('completed', { defaultValue: 'Completado' })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    {t('allESGDataComplete', { defaultValue: '¡Excelente! Todos los datos ESG están completos. El sistema puede calcular el score ESG correctamente.' })}
-                  </p>
-                  {esgData?.data && (
-                    <div className="space-y-3">
-                      <div className="text-sm font-medium text-gray-700">{t('calculatedESGScore', { defaultValue: 'Score ESG calculado:' })}</div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-center justify-center gap-1">
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            fill={getESGLabelColor(esgData.data.label)}
-                            className="w-6 h-6"
-                            style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
-                          >
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                          <span className="text-xs font-medium text-gray-700">{esgData.data.label}</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {t('score', { defaultValue: 'Score:' })} {esgData.data.total}/100
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-  {/* Financial Overview - Solo para Propietarios */}
-      {user?.role === 'propietario' && (
-        <div className="mb-4" style={{animation: 'fadeInUp 0.6s ease-out 0.15s both'}}>
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('building.financialAnalysis', { defaultValue: 'Financial Analysis' })}</h3>
-                <p className="text-gray-600 mb-4">
-                  {t('dashboard.financialAnalysisDescription', { defaultValue: 'Detailed financial analysis of the building.' })}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500 block">{t('building.currentValue', { defaultValue: 'Current Value' })}</span>
-                    <span className="text-xl font-bold text-gray-900">€{(building.price || 0).toLocaleString('es-ES')}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">{t('building.requiredInvestment', { defaultValue: 'Required Investment' })}</span>
-                    <span className="text-xl font-bold text-blue-900">€{(building.rehabilitationCost || 0).toLocaleString('es-ES')}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">{t('building.potentialValue', { defaultValue: 'Potential Value' })}</span>
-                    <span className="text-xl font-bold text-green-900">€{(building.potentialValue || 0).toLocaleString('es-ES')}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="ml-6 text-center">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <span className="text-gray-500 text-sm block">{t('building.estimatedROI', { defaultValue: 'Estimated ROI' })}</span>
-                  <span className="text-3xl font-bold text-green-600">
-                    {building.rehabilitationCost && building.potentialValue && building.price && 
-                     building.rehabilitationCost > 0 && building.potentialValue > 0 && building.price > 0
-                      ? `+${(((building.potentialValue - building.price - building.rehabilitationCost) / (building.price + building.rehabilitationCost)) * 100).toFixed(1)}%`
-                      : '0.0%'
-                    }
-                  </span>
-                  <span className="text-gray-500 text-xs block mt-1">{t('building.returnOnInvestment', { defaultValue: 'Return on investment' })}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Certificados energéticos - listado (mock) */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm flex flex-col" style={{animation: 'fadeInUp 0.6s ease-out 0.55s both', minHeight: '372px'}}>
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 tracking-tight">{t('certificates.energyCertificates', { defaultValue: 'Energy Certificates' })}</h3>
-            <p className="text-sm text-gray-600">{t('certificates.listDescription', { defaultValue: 'List of building energy certificates' })}</p>
-          </div>
-          {user?.role === 'tecnico' && (
+      {/* Menú de pestañas horizontales */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex gap-1 overflow-x-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
             <button
-              onClick={handleOpenUpload}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              title={tab.label}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 rounded-md text-xs md:text-sm transition-all whitespace-nowrap ${currentTab === tab.id
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              {t('newCertificate', { defaultValue: 'Nuevo certificado' })}
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline">{tab.label}</span>
             </button>
-          )}
+          );
+        })}
+      </div>
+
+      {/* Contenido según pestaña activa */}
+      {currentTab === 'todos' && (
+        <div className="space-y-6">
+          {/* SECCIÓN SUPERIOR: Info básica + Galería de imágenes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Izquierda: Información básica */}
+            <div className="space-y-4">
+              {/* Datos básicos */}
+              <div className="bg-white rounded-lg p-5 shadow-sm">
+                <h3 className="text-sm mb-4">{t('buildingInfo', 'Información del edificio')}</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-gray-500 text-xs mb-1">{t('constructionYear', 'Año de construcción')}</p>
+                    <p className="text-gray-900">{building.constructionYear || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs mb-1">{t('floors', 'Plantas')}</p>
+                    <p className="text-gray-900">{building.numFloors || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs mb-1">{t('units', 'Unidades')}</p>
+                    <p className="text-gray-900">{building.numUnits || '—'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Libro del Edificio */}
+              <div className="bg-white rounded-lg p-5 shadow-sm">
+                <h3 className="text-sm mb-3">{t('buildingBook', 'Libro del Edificio')}</h3>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{t('pending', 'Pendientes')}</span>
+                    <span className="text-gray-900">{digitalBook ? (totalDigitalSections - completedDigitalSections) : 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{t('completed', 'Completados')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-900">{digitalBook ? `${completedDigitalSections}/${totalDigitalSections}` : '0/0'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ubicación del edificio */}
+              <div className="bg-white rounded-lg p-5 shadow-sm">
+                <h3 className="text-sm mb-4">{t('buildingLocation', 'Ubicación del edificio')}</h3>
+                {(() => {
+                  const locationInfo = building ? parseAddressInfo(building.address) : { city: null, province: null, postalCode: null };
+
+                  return building.lat && building.lng ? (
+                    <>
+                      <div className="h-48 rounded-lg overflow-hidden border border-gray-200 mb-3">
+                        <MapContainer
+                          center={[building.lat, building.lng]}
+                          zoom={16}
+                          style={{ height: '100%', width: '100%' }}
+                          zoomControl={false}
+                          dragging={false}
+                          touchZoom={false}
+                          doubleClickZoom={false}
+                          scrollWheelZoom={false}
+                          boxZoom={false}
+                          keyboard={false}
+                        >
+                          <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          />
+                          <Marker position={[building.lat, building.lng]}>
+                            <Popup>
+                              <div className="text-center">
+                                <strong>{building.name}</strong>
+                                <br />
+                                {building.address || 'Sin dirección'}
+                              </div>
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('address', 'Dirección')}</span>
+                          <span className="text-gray-900">{building.address || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('municipality', 'Municipio')}</span>
+                          <span className="text-gray-900">{locationInfo.city || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('province', 'Provincia')}</span>
+                          <span className="text-gray-900">{locationInfo.province || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('postalCode', 'Código postal')}</span>
+                          <span className="text-gray-900">{locationInfo.postalCode || '—'}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg h-48 relative overflow-hidden flex items-center justify-center">
+                        <div className="absolute inset-0 opacity-10">
+                          <div className="absolute top-0 left-0 w-full h-full">
+                            {/* Grid pattern */}
+                            <div className="w-full h-full" style={{
+                              backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)',
+                              backgroundSize: '20px 20px'
+                            }}></div>
+                          </div>
+                        </div>
+                        <div className="relative z-10 flex flex-col items-center gap-2 text-center px-4">
+                          <MapPin className="w-12 h-12 text-blue-600" />
+                          <span className="text-sm text-blue-700">
+                            {building.address || 'Sin dirección'}
+                          </span>
+                        </div>
+                        <button className="absolute top-3 right-3 bg-white rounded-md p-2 shadow-sm hover:bg-gray-50">
+                          <MapPin className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('address', 'Dirección')}</span>
+                          <span className="text-gray-900">{building.address || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('municipality', 'Municipio')}</span>
+                          <span className="text-gray-900">{locationInfo.city || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('province', 'Provincia')}</span>
+                          <span className="text-gray-900">{locationInfo.province || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">{t('postalCode', 'Código postal')}</span>
+                          <span className="text-gray-900">{locationInfo.postalCode || '—'}</span>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Derecha: Galería de imágenes + Banner del Libro */}
+            <div className="space-y-4">
+              {/* Galería de imágenes */}
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="relative w-full aspect-[4/3] bg-gray-100">
+                  <img
+                    src={buildingImages[currentImageIndex] || '/image.png'}
+                    alt={`${building.name} - Imagen ${currentImageIndex + 1}`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+
+                  {/* Controles del carrusel */}
+                  {buildingImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+
+                      {/* Indicadores */}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                        {buildingImages.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                              }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Banner Libro del Edificio */}
+              <div className="bg-blue-600 text-white rounded-lg p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-sm mb-2">{t('buildingBook', 'Libro del Edificio')}</h3>
+                    <p className="text-sm text-blue-100 mb-1">
+                      {digitalBook
+                        ? t('buildingBookReady', 'Libro digital disponible')
+                        : t('technicianWillCreate', 'El técnico creará el libro del edificio')}
+                    </p>
+                    {building.technicianEmail && (
+                      <p className="text-xs text-blue-200">
+                        {t('assignedTechnician', 'Técnico asignado')}: {building.technicianEmail}
+                      </p>
+                    )}
+                  </div>
+                  {!digitalBook && (
+                    <button
+                      onClick={handleCreateDigitalBook}
+                      className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
+                    >
+                      + {t('waitingCreation', 'Esperando creación')}
+                    </button>
+                  )}
+                  {digitalBook && (
+                    <button
+                      onClick={handleViewDigitalBook}
+                      className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
+                    >
+                      {t('viewDigitalBook', 'Ver Libro')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Banner Datos Financieros */}
+              <div className="bg-blue-600 text-white rounded-lg p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-sm mb-2">
+                      {t('financialData', 'Datos Financieros')}
+                    </h3>
+                    <p className="text-sm text-blue-100 mb-1">
+                      {hasFinancialData
+                        ? t('financialDataAvailable', 'Datos financieros disponibles')
+                        : t('financialDataNotAvailable', 'No hay datos financieros cargados')}
+                    </p>
+                    {building.cfoEmail && (
+                      <p className="text-xs text-blue-200">
+                        {t('assignedCFO', 'CFO asignado')}: {building.cfoEmail}
+                      </p>
+                    )}
+                    {!building.cfoEmail && (
+                      <p className="text-xs text-blue-200">
+                        {hasFinancialData
+                          ? t('viewFinancialAnalysis', 'Ver análisis financiero y métricas')
+                          : t('loadFinancialData', 'Cargar datos financieros del edificio')}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleFinancialData}
+                    className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
+                  >
+                    {hasFinancialData
+                      ? t('viewAnalysis', 'Ver Análisis')
+                      : t('loadFinancialData', 'Cargar Datos')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="overflow-x-auto flex-1">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-gray-600">
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.certificateNumberShort', { defaultValue: 'Certificate No.' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.rating', { defaultValue: 'Rating' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.energyKwhM2Year', { defaultValue: 'Energy (kWh/m²·year)' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.emissionsKgCo2M2Year', { defaultValue: 'Emissions (kgCO₂/m²·year)' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.scope', { defaultValue: 'Scope' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.issue', { defaultValue: 'Issue' })}</th>
-                <th className="py-2.5 pr-4 font-medium">{t('certificates.expiry', { defaultValue: 'Expiry' })}</th>
-                <th className="py-2.5 pr-4 font-medium w-12"></th>
-              </tr>
-            </thead>
-            <tbody>
-                  {energyCertificates.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+      )}
+
+      {/* Pestaña EFICIENCIA ENERGÉTICA */}
+      {currentTab === 'eficiencia' && (
+        <div className="space-y-6">
+          {/* Datos del certificado energético */}
+          {energyCertificates.length > 0 ? (
+            (() => {
+              // Obtener el certificado más reciente
+              const latestCertificate = energyCertificates.sort((a, b) => 
+                new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+              )[0];
+              
+              // Calcular emisiones totales anuales (si tenemos superficie del edificio)
+              const buildingArea = building?.squareMeters || 0;
+              const totalAnnualEmissions = buildingArea > 0 
+                ? (latestCertificate.emissionsKgCo2PerM2Year * buildingArea / 1000).toFixed(2)
+                : null;
+              const totalAnnualConsumption = buildingArea > 0
+                ? (latestCertificate.primaryEnergyKwhPerM2Year * buildingArea).toFixed(0)
+                : null;
+
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Clase energética */}
+                  <div className="bg-white rounded-lg p-5 shadow-sm">
+                    <h3 className="text-sm mb-4">{t('energyClass2', 'Clase energética')}</h3>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-lg text-3xl font-bold ${getRatingClasses(latestCertificate.rating)}`}>
+                        {latestCertificate.rating}
                       </div>
                       <div>
-                        <p className="text-gray-500 font-medium">{t('certificates.noCertificatesTitle', { defaultValue: 'No certificates' })}</p>
-                        <p className="text-gray-400 text-sm">
-                          {user?.role === 'tecnico' 
-                            ? t('certificates.technicianCanUpload', { defaultValue: 'Technician can upload certificates' })
-                            : t('certificates.technicianCanUpload', { defaultValue: 'Technician can upload certificates' })
-                          }
+                        <p className="text-xs text-gray-500 mb-1">{t('certificateNumber', 'Nº Certificado')}</p>
+                        <p className="text-sm font-medium text-gray-900">{latestCertificate.certificateNumber}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {t('issueDate', 'Fecha emisión')}: {new Date(latestCertificate.issueDate).toLocaleDateString('es-ES')}
                         </p>
                       </div>
                     </div>
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {currentCertificates.map((c) => (
-                    <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50/60 cursor-pointer" onClick={() => setSelectedCertificateForView(c)}>
-                      <td className="py-3.5 pr-4 font-medium text-gray-900">{c.certificateNumber}</td>
-                      <td className="py-3.5 pr-4">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(c.rating)}`}>
-                          {c.rating}
-                        </span>
-                      </td>
-                      <td className="py-3.5 pr-4">{c.primaryEnergyKwhPerM2Year}</td>
-                      <td className="py-3.5 pr-4">{c.emissionsKgCo2PerM2Year}</td>
-                      <td className="py-3.5 pr-4 capitalize">{c.scope === 'building' ? t('building', { defaultValue: 'Building' }) : c.scope === 'dwelling' ? t('dwelling', { defaultValue: 'Dwelling' }) : t('commercialUnit', { defaultValue: 'Commercial unit' })}</td>
-                      <td className="py-3.5 pr-4">{new Date(c.issueDate).toLocaleDateString('es-ES')}</td>
-                      <td className="py-3.5 pr-4">{new Date(c.expiryDate).toLocaleDateString('es-ES')}</td>
-                      <td className="py-3.5 pr-4">
-                        {user?.role === 'tecnico' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteCertificate(c);
-                            }}
-                            className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1 rounded"
-                            title={t('common.deleteCertificate', { defaultValue: 'Delete certificate' })}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                    <div className="pt-4 border-t border-gray-100 space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">{t('primaryEnergyConsumption', 'Consumo de energía primaria')}</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {latestCertificate.primaryEnergyKwhPerM2Year} <span className="text-sm font-normal text-gray-600">kWh/m²·año</span>
+                        </p>
+                        {totalAnnualConsumption && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {t('totalAnnual', 'Total anual')}: {totalAnnualConsumption} kWh
+                          </p>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                  {/* Filas vacías para mantener altura consistente */}
-                  {Array.from({ length: Math.max(0, itemsPerPage - currentCertificates.length) }).map((_, index) => (
-                    <tr key={`empty-${index}`} className="border-t border-gray-100">
-                      <td colSpan={8} className="py-3.5">&nbsp;</td>
-                    </tr>
-                  ))}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Paginación */}
-        {energyCertificates.length > itemsPerPage && (
-          <div className="mt-auto pt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              {t('showing', { defaultValue: 'Showing' })} {startIndex + 1} {t('to', { defaultValue: 'to' })} {Math.min(endIndex, energyCertificates.length)} {t('of', { defaultValue: 'of' })} {energyCertificates.length} {t('certificates.energyCertificates', { defaultValue: 'certificates' })}
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('previous', { defaultValue: 'Previous' })}
-              </button>
-              
-              {/* Números de página */}
-              <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      currentPage === page
-                        ? 'bg-blue-600 text-white'
-                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-              
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1.5 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('next', { defaultValue: 'Next' })}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Maintenance Chart */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.6s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('maintenanceBlock.maintenancePlan', { defaultValue: 'Maintenance Plan' })}</h3>
-          <div className="relative h-48">
-            <Doughnut data={chartData} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.7s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('activities.recentActivity', { defaultValue: 'Recent Activity' })}</h3>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">{t('activities.ceeRenewed', { defaultValue: 'CEE renewed' })}</p>
-                <p className="text-xs text-gray-500">{t('activities.twoDaysAgo', { defaultValue: '2 days ago' })}</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">{t('activities.hvacCompleted', { defaultValue: 'HVAC maintenance completed' })}</p>
-                <p className="text-xs text-gray-500">{t('activities.oneWeekAgo', { defaultValue: 'a week ago' })}</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">{t('activities.elevatorInspectionScheduled', { defaultValue: 'Elevator inspection scheduled' })}</p>
-                <p className="text-xs text-gray-500">{t('activities.inThreeDays', { defaultValue: 'in 3 days' })}</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-red-400 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">{t('activities.pciIncident', { defaultValue: 'PCI incident' })}</p>
-                <p className="text-xs text-gray-500">{t('activities.fiveDaysAgo', { defaultValue: '5 days ago' })}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Location and Valuation Grid */}
-      <div className={`grid grid-cols-1 gap-6 mt-6 ${user?.role === 'propietario' ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
-        {/* Map */}
-        <div className={`${user?.role === 'propietario' ? 'lg:col-span-2' : 'lg:col-span-1'} bg-white rounded-xl border border-gray-200 p-6`} style={{animation: 'fadeInUp 0.6s ease-out 0.75s both'}}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('building.location', { defaultValue: 'Building Location' })}</h3>
-          <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
-            {mapReady ? (
-              <MapContainer
-                center={[40.424167, -3.711944]} // Coordenadas del Hotel RIU PLAZA España, Madrid
-                zoom={15}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={false}
-              >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[40.424167, -3.711944]}>
-                <Popup>
-                  <div className="text-center">
-                    <strong>Hotel RIU PLAZA España</strong><br/>
-                    Calle Gran Vía, 84, 28013 Madrid<br/>
-                    España<br/>
-                    <div className="mt-2 text-sm text-gray-600">
-                      <div>📞 +34 919 193 393</div>
-                      <div>✉️ reservas@riu.com</div>
-                      <div>🌐 www.riu.com</div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">{t('co2Emissions', 'Emisiones de CO₂')}</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {latestCertificate.emissionsKgCo2PerM2Year} <span className="text-sm font-normal text-gray-600">kg CO₂/m²·año</span>
+                        </p>
+                        {totalAnnualEmissions && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {t('totalAnnual', 'Total anual')}: {totalAnnualEmissions} t CO₂
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </Popup>
-              </Marker>
-              </MapContainer>
+
+                  {/* Huella de carbono */}
+                  <div className="bg-white rounded-lg p-5 shadow-sm">
+                    <h3 className="text-sm mb-4">{t('carbonFootprint', 'Huella de carbono')}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">{t('emissionsPerM2', 'Emisiones por m²')}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {latestCertificate.emissionsKgCo2PerM2Year} <span className="text-sm font-normal text-gray-600">kg CO₂/m²·año</span>
+                        </p>
+                      </div>
+                      {totalAnnualEmissions && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">{t('totalAnnualEmissions', 'Emisiones anuales totales')}</p>
+                          <p className="text-xl font-semibold text-gray-900">
+                            {totalAnnualEmissions} <span className="text-sm font-normal text-gray-600">t CO₂/año</span>
+                          </p>
+                        </div>
+                      )}
+                      <div className="pt-4 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 mb-2">{t('scope', 'Ámbito')}</p>
+                        <p className="text-sm text-gray-900 capitalize">
+                          {latestCertificate.scope === 'building' ? t('building', 'Edificio') :
+                           latestCertificate.scope === 'dwelling' ? t('dwelling', 'Vivienda') :
+                           t('commercialUnit', 'Local')}
+                        </p>
+                        {latestCertificate.expiryDate && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            {t('expiryDate', 'Válido hasta')}: {new Date(latestCertificate.expiryDate).toLocaleDateString('es-ES')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Clase energética */}
+              <div className="bg-white rounded-lg p-5 shadow-sm">
+                <h3 className="text-sm mb-4">{t('energyClass2', 'Clase energética')}</h3>
+                <div className="text-sm text-gray-500">{t('buildingNotCertified', 'Edificio no certificado')}</div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-2">{t('whenCertified', 'Cuando esté certificado se mostrará:')}</p>
+                  <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+                    <li>{t('energyCertification2', 'Certificación energética')}</li>
+                    <li>{t('primaryEnergyConsumption', 'Consumo de energía primaria')}</li>
+                    <li>{t('co2Emissions', 'Emisiones de CO₂')}</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Huella de carbono */}
+              <div className="bg-white rounded-lg p-5 shadow-sm">
+                <h3 className="text-sm mb-4">{t('carbonFootprint', 'Huella de carbono')}</h3>
+                <div className="text-sm text-gray-500">{t('buildingNotCertified', 'Edificio no certificado')}</div>
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-2">{t('infoAvailableAfterCert', 'Información disponible tras certificación')}</p>
+                  <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
+                    <li>{t('totalAnnualEmissions', 'Emisiones anuales totales')}</li>
+                    <li>{t('emissionsPerM2', 'Emisiones por m²')}</li>
+                    <li>{t('comparisonSimilar', 'Comparación con edificios similares')}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Card de ESG */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-4">{t('esgCalculation', 'Cálculo ESG')}</h3>
+            
+            {esgLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : esgData?.status === 'complete' && esgData.data ? (
+              <div className="space-y-4">
+                {/* Score ESG con estrella */}
+                <div className="flex items-center justify-center gap-4 py-4">
+                  <div className="flex flex-col items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill={getESGLabelColor(esgData.data.label)}
+                      className="w-16 h-16"
+                      style={{ filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))' }}
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span className="text-lg font-bold text-gray-900 mt-2">{esgData.data.label}</span>
+                    <span className="text-2xl font-bold text-gray-900">{esgData.data.total}/100</span>
+                  </div>
+                </div>
+
+                {/* Desglose por categorías */}
+                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">{t('environmental', 'Ambiental')}</p>
+                    <p className="text-lg font-semibold text-green-600">{esgData.data.environmental.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-400">/100</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">{t('social', 'Social')}</p>
+                    <p className="text-lg font-semibold text-blue-600">{esgData.data.social.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-400">/100</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">{t('governance', 'Gobernanza')}</p>
+                    <p className="text-lg font-semibold text-purple-600">{esgData.data.governance.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-400">/100</p>
+                  </div>
+                </div>
+              </div>
+            ) : esgData?.status === 'incomplete' ? (
+              <div className="space-y-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-yellow-900 mb-2">
+                        {t('esgIncomplete', 'Datos incompletos para calcular ESG')}
+                      </h4>
+                      <p className="text-xs text-yellow-800 mb-3">
+                        {esgData.message || t('esgIncompleteMessage', 'Faltan algunos datos para poder calcular el score ESG.')}
+                      </p>
+                      <div>
+                        <p className="text-xs font-medium text-yellow-900 mb-2">
+                          {t('missingFields', 'Campos que faltan:')}
+                        </p>
+                        <ul className="space-y-1">
+                          {esgData.missingData.map((field, index) => (
+                            <li key={index} className="text-xs text-yellow-800 flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full"></span>
+                              {field}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={loadESGData}
+                  className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {t('recalculateESG', 'Recalcular ESG')}
+                </button>
+              </div>
             ) : (
-              <div className="h-full flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                  <p className="text-sm text-gray-500">Cargando mapa...</p>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">{t('building.municipality', { defaultValue: 'Municipality:' })}</span>
-              <p className="font-medium text-gray-900">Madrid</p>
-            </div>
-            <div>
-              <span className="text-gray-500">{t('building.province', { defaultValue: 'Province:' })}</span>
-              <p className="font-medium text-gray-900">Madrid</p>
-            </div>
-            <div>
-              <span className="text-gray-500">{t('building.coordinates', { defaultValue: 'Coordinates:' })}</span>
-              <p className="font-mono text-xs text-gray-700">40.424167, -3.711944</p>
-            </div>
-            <div>
-              <span className="text-gray-500">{t('building.postalCode', { defaultValue: 'Postal code:' })}</span>
-              <p className="font-medium text-gray-900">28013</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Property Valuation - Solo para Propietarios */}
-        {user?.role === 'propietario' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('building.valuation', { defaultValue: 'Property Valuation' })}</h3>
-            <div className="space-y-6">
-              {/* Valor Total */}
-              <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                <p className="text-sm text-gray-600 mb-1">{t('building.totalEstimatedValue', { defaultValue: 'Total Estimated Value' })}</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {building.price ? `€${building.price.toLocaleString('es-ES')}` : '€4,890,000'}
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-500 mb-4">
+                  {t('esgCalculationDescription', 'El cálculo ESG se realiza automáticamente basándose en los datos del certificado energético y otras métricas del edificio.')}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{t('building.updated', { defaultValue: 'Updated:' })} Sep 2025</p>
-              </div>
-
-            {/* Campos Financieros - Solo para Propietarios */}
-            {user?.role === 'propietario' && (building.rehabilitationCost || building.potentialValue) && (
-              <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-900 mb-3">{t('dashboard.financialAnalysisTitle', { defaultValue: 'Financial analysis' })}</h4>
-                {building.rehabilitationCost && building.rehabilitationCost > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200">
-                    <span className="text-sm text-blue-700">{t('building.rehabilitationCost', { defaultValue: 'Rehabilitation cost:' })}</span>
-                    <span className="font-medium text-blue-900">€{building.rehabilitationCost.toLocaleString('es-ES')}</span>
-                  </div>
-                )}
-                {building.potentialValue && building.potentialValue > 0 && (
-                  <div className="flex justify-between items-center py-2 border-b border-blue-200">
-                    <span className="text-sm text-blue-700">{t('building.potentialValue', { defaultValue: 'Potential value:' })}</span>
-                    <span className="font-medium text-blue-900">€{building.potentialValue.toLocaleString('es-ES')}</span>
-                  </div>
-                )}
-                {building.rehabilitationCost && building.potentialValue && building.rehabilitationCost > 0 && building.potentialValue > 0 && (
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-blue-700">{t('building.estimatedROI', { defaultValue: 'Estimated ROI:' })}</span>
-                    <span className="font-medium text-green-600">
-                      +{(((building.potentialValue - (building.price || 0) - building.rehabilitationCost) / ((building.price || 0) + building.rehabilitationCost)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                )}
+                <button
+                  onClick={loadESGData}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {t('calculateESG', 'Calcular ESG')}
+                </button>
               </div>
             )}
+          </div>
 
-              {/* Desglose */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">{t('building.valuePerM2', { defaultValue: 'Value per m²:' })}</span>
-                  <span className="font-medium text-gray-900">€1,996/m²</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">{t('dashboard.valuePerDwelling', { defaultValue: 'Value per dwelling:' })}</span>
-                  <span className="font-medium text-gray-900">€203,750</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">{t('dashboard.annualVariation', { defaultValue: 'Annual variation:' })}</span>
-                  <span className="font-medium text-green-600">+5.2%</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-gray-600">{t('dashboard.lastAppraisal', { defaultValue: 'Last appraisal:' })}</span>
-                  <span className="font-medium text-gray-900">Jun 2025</span>
-                </div>
-              </div>
-
-              {/* Estado del mercado */}
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                  </svg>
-                  <span className="text-sm font-medium text-blue-900">{t('dashboard.localMarket', { defaultValue: 'Local Market' })}</span>
-                </div>
-                <p className="text-xs text-blue-700">{t('dashboard.upwardTrend', { defaultValue: 'Upward trend in Zierbena residential area' })}</p>
-              </div>
+          {/* Cumplimiento por tipología */}
+          <div className="bg-white rounded-lg p-5 shadow-sm lg:col-span-2">
+            <h3 className="text-sm mb-3">{t('complianceByTypology', 'Cumplimiento por tipología')}</h3>
+            <div className="mb-2">
+              <span className="text-gray-900">85%</span>
             </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: '85%' }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {t('complianceLevelNormative', 'Nivel de cumplimiento normativo')}
+            </p>
           </div>
-        )}
-      </div>
 
-      {/* Alerts Section */}
-      <div className="mt-6">
-        <div className="bg-white rounded-xl border border-gray-200" style={{animation: 'fadeInUp 0.6s ease-out 0.8s both'}}>
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">{t('building.alertsAndExpiries', { defaultValue: 'Alerts and Upcoming Expirations' })}</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                  <div>
-                    <p className="font-medium text-red-900">{t('building.elevatorReviewExpires', { defaultValue: 'Elevator review expires in 15 days' })}</p>
-                    <p className="text-sm text-red-700">{t('building.industryElevator', { defaultValue: 'Industry • Main Elevator' })}</p>
-                  </div>
-                </div>
-                <button className="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">{t('building.schedule', { defaultValue: 'Schedule' })}</button>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <div>
-                    <p className="font-medium text-yellow-900">{t('building.riteMaintenance', { defaultValue: 'Quarterly RITE maintenance' })}</p>
-                    <p className="text-sm text-yellow-700">{t('building.hvacCommonArea', { defaultValue: 'HVAC system • Common area' })}</p>
-                  </div>
-                </div>
-                <button className="px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors">{t('building.viewDetails', { defaultValue: 'View details' })}</button>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2z"/>
-                  </svg>
-                  <div>
-                    <p className="font-medium text-blue-900">{t('building.manualUsageUpdate', { defaultValue: 'Manual usage update' })}</p>
-                    <p className="text-sm text-blue-700">{t('building.documentationElectrical', { defaultValue: 'Documentation • Electrical system' })}</p>
-                  </div>
-                </div>
-                <button className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">{t('building.review', { defaultValue: 'Review' })}</button>
+          {/* Estado de certificación */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 lg:col-span-2">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm mb-1 text-gray-900">{t('energyCertInfo', 'Información sobre certificación energética')}</h3>
+                <p className="text-sm text-gray-600">
+                  {t('energyCertInfoText', 'La certificación energética es obligatoria para edificios existentes en determinadas circunstancias.')}
+                </p>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Animaciones */}
-      <style>
-        {`
-          @keyframes fadeInUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-          }
-        `}
-      </style>
+      {/* Pestaña CERTIFICADOS */}
+      {currentTab === 'certificados' && (
+        <div className="space-y-6">
+          {/* Certificados energéticos */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm">{t('energyCertificates', 'Certificados energéticos')}</h3>
+                <p className="text-xs text-gray-500 mt-1">{t('certificatesList', 'Lista de certificados registrados')}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsUploadModalOpen(true);
+                  checkCertificateExtractorHealth().then(setAiServiceAvailable);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <FileCheck2 className="w-4 h-4" />
+                {t('uploadCertificate', 'Cargar Certificado')}
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-gray-200">
+                  <tr>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('certificateNumber', 'Nº Certificado')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('rating', 'Rating')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('energyConsumption', 'Consumo energético')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('emissions', 'Emisiones')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('scope', 'Ámbito')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('issueDate', 'Fecha emisión')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('expirationDate', 'Fecha vencimiento')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">{t('actions', 'Acciones')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {energyCertificates.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center">
+                        <div className="text-gray-400 text-sm">{t('noCertificates', 'No hay certificados')}</div>
+                        <p className="text-xs text-gray-400 mt-1">{t('canUploadCertificates', 'Puedes subir certificados')}</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    energyCertificates.map((cert) => (
+                      <tr 
+                        key={cert.id} 
+                        className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setSelectedCertificateForView(cert)}
+                      >
+                        <td className="py-3 text-sm text-gray-900">{cert.certificateNumber}</td>
+                        <td className="py-3 text-sm">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(cert.rating)}`}>
+                            {cert.rating}
+                          </span>
+                        </td>
+                        <td className="py-3 text-sm text-gray-900">{cert.primaryEnergyKwhPerM2Year}</td>
+                        <td className="py-3 text-sm text-gray-900">{cert.emissionsKgCo2PerM2Year}</td>
+                        <td className="py-3 text-sm text-gray-900 capitalize">{cert.scope}</td>
+                        <td className="py-3 text-sm text-gray-900">{new Date(cert.issueDate).toLocaleDateString()}</td>
+                        <td className="py-3 text-sm text-gray-900">{new Date(cert.expiryDate).toLocaleDateString()}</td>
+                        <td className="py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setCertificateToDelete(cert);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title={t('deleteCertificate', 'Eliminar certificado')}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Estado de la sección */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-3">{t('sectionStatus', 'Estado de la sección')}</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{t('installations', 'Instalaciones')}</span>
+                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">{t('ok', 'OK')}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{t('certificates', 'Certificados')}</span>
+                <span className="px-2 py-1 rounded-md bg-orange-100 text-orange-700 text-xs">{t('pending', 'Pendiente')}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{t('maintenance', 'Mantenimiento')}</span>
+                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">{t('ok', 'OK')}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">{t('inspections', 'Inspecciones')}</span>
+                <span className="px-2 py-1 rounded-md bg-red-100 text-red-700 text-xs">{t('expiring', 'Por vencer')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pestaña MANTENIMIENTO */}
+      {currentTab === 'mantenimiento' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Plan de mantenimiento */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-4">{t('maintenancePlan', 'Plan de mantenimiento')}</h3>
+            <div className="flex items-center justify-center py-8">
+              <div className="relative w-48 h-48">
+                <svg viewBox="0 0 200 200" className="transform -rotate-90">
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="150.8 351.7" />
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="#3b82f6" strokeWidth="20" strokeDasharray="100.5 401.9" strokeDashoffset="-150.8" />
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f97316" strokeWidth="20" strokeDasharray="75.4 426.5" strokeDashoffset="-251.3" />
+                  <circle cx="100" cy="100" r="80" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="75.4 426.5" strokeDashoffset="-326.7" />
+                </svg>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-gray-600">{t('completedPercentage', 'Completado')} (30%)</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-gray-600">{t('inProgressPercentage', 'En progreso')} (20%)</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <span className="text-gray-600">{t('scheduledPercentage', 'Programado')} (15%)</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <span className="text-gray-600">{t('overduePercentage', 'Vencido')} (15%)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Alertas y próximos vencimientos */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-4">{t('alertsUpcoming', 'Alertas y próximos vencimientos')}</h3>
+            <div className="space-y-3">
+              {/* Alerta urgente */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1">
+                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{t('elevatorReview', 'Revisión ascensor')}</p>
+                      <p className="text-xs text-gray-600 mt-1">{t('mainElevator', 'Ascensor principal')}</p>
+                    </div>
+                  </div>
+                  <button className="px-3 py-1.5 bg-red-600 text-white rounded-md text-xs hover:bg-red-700 whitespace-nowrap">
+                    {t('schedule', 'Programar')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Alerta advertencia */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1">
+                    <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{t('riteMaintenance', 'Mantenimiento RITE')}</p>
+                      <p className="text-xs text-gray-600 mt-1">{t('hvacSystem', 'Sistema HVAC')}</p>
+                    </div>
+                  </div>
+                  <button className="px-3 py-1.5 bg-amber-600 text-white rounded-md text-xs hover:bg-amber-700 whitespace-nowrap">
+                    {t('viewDetails', 'Ver detalles')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Alerta info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1">
+                    <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{t('manualUpdate', 'Actualización manual')}</p>
+                      <p className="text-xs text-gray-600 mt-1">{t('electricalSystem', 'Sistema eléctrico')}</p>
+                    </div>
+                  </div>
+                  <button className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 whitespace-nowrap">
+                    {t('review', 'Revisar')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pestaña ACTIVIDAD */}
+      {currentTab === 'actividad' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Actividad reciente */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-4">{t('recentActivity', 'Actividad reciente')}</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{t('ceeRenewed', 'CEE renovado')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('daysAgo', 'Hace 2 días')}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{t('hvacCompleted', 'Mantenimiento HVAC completado')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('weekAgo', 'Hace 1 semana')}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{t('elevatorInspection', 'Inspección ascensor')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('twoWeeksAgo', 'Hace 2 semanas')}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+                <div className="w-2 h-2 rounded-full bg-gray-400 mt-1.5"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{t('icaDpli', 'ICA/DPLI')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('twoMonthsAgo', 'Hace 2 meses')}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5"></div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{t('documentationUpdate', 'Actualización documentación')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('threeMonthsAgo', 'Hace 3 meses')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Resumen de actividad */}
+          <div className="bg-white rounded-lg p-5 shadow-sm">
+            <h3 className="text-sm mb-4">{t('activitySummary', 'Resumen de actividad')}</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('tasksCompleted', 'Tareas completadas')}</span>
+                <span className="text-lg text-gray-900">24</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('tasksPending', 'Tareas pendientes')}</span>
+                <span className="text-lg text-orange-600">8</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('activeAlerts', 'Alertas activas')}</span>
+                <span className="text-lg text-red-600">3</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('lastUpdate', 'Última actualización')}</span>
+                <span className="text-sm text-gray-900">{t('twoDaysAgo', 'Hace 2 días')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modales */}
 
       {/* Modal de Carga (solo imagen) */}
       {isUploadModalOpen && (
@@ -1569,7 +1571,7 @@ const BuildingDetail: React.FC = () => {
                     <h4 className="text-sm font-medium text-gray-700 mb-2">{t('selectedImage', { defaultValue: 'Imagen seleccionada' })}</h4>
                     <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
                       <span className="truncate mr-2">{selectedFile.name}</span>
-                      <span className="text-gray-500 text-xs">{(selectedFile.size / (1024*1024)).toFixed(1)}MB</span>
+                      <span className="text-gray-500 text-xs">{(selectedFile.size / (1024 * 1024)).toFixed(1)}MB</span>
                     </div>
                   </div>
                 )}
@@ -1588,7 +1590,7 @@ const BuildingDetail: React.FC = () => {
                 </div>
                 {/* Datos extraídos (editables) */}
                 <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">{t('detectedDataEditable', { defaultValue: 'Datos detectados (puedes editar)' })}</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('detectedDataEditable', { defaultValue: 'Datos detectados (puedes editar)' })}</h4>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -1599,7 +1601,7 @@ const BuildingDetail: React.FC = () => {
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         >
                           <option value="">-</option>
-                          {['A','B','C','D','E','F','G'].map(r => <option key={r} value={r}>{r}</option>)}
+                          {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                       </div>
                       <div>
@@ -1726,8 +1728,8 @@ const BuildingDetail: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900">
                 {t('manageImagesOf', { defaultValue: 'Gestionar imágenes de' })} {building.name}
               </h3>
-              <button 
-                onClick={() => setShowImageManager(false)} 
+              <button
+                onClick={() => setShowImageManager(false)}
                 className="p-2 text-gray-500 hover:text-gray-700"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1757,24 +1759,36 @@ const BuildingDetail: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900">
                 {t('energyCertificate', { defaultValue: 'Certificado Energético' })} #{selectedCertificateForView.certificateNumber}
               </h3>
-              <button 
-                onClick={() => setSelectedCertificateForView(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setCertificateToDelete(selectedCertificateForView);
+                    setDeleteModalOpen(true);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t('delete', 'Eliminar')}
+                </button>
+                <button
+                  onClick={() => setSelectedCertificateForView(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
               {/* Imagen del certificado */}
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">{t('originalDocument', { defaultValue: 'Documento original' })}</h4>
                 {(selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl) ? (
-                  <img 
-                    src={selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl} 
-                    alt="Certificado energético" 
-                    className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200" 
+                  <img
+                    src={selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl}
+                    alt="Certificado energético"
+                    className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200"
                   />
                 ) : (
                   <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
@@ -1802,8 +1816,8 @@ const BuildingDetail: React.FC = () => {
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">{t('scope', { defaultValue: 'Ámbito' })}</label>
                       <p className="text-sm text-gray-900 capitalize">
-                        {selectedCertificateForView.scope === 'building' ? 'Edificio' : 
-                         selectedCertificateForView.scope === 'dwelling' ? 'Vivienda' : 'Local'}
+                        {selectedCertificateForView.scope === 'building' ? 'Edificio' :
+                          selectedCertificateForView.scope === 'dwelling' ? 'Vivienda' : 'Local'}
                       </p>
                     </div>
                   </div>
@@ -1896,7 +1910,7 @@ const BuildingDetail: React.FC = () => {
                   <p className="text-sm text-gray-500">{t('actionCannotBeUndone', { defaultValue: 'Esta acción no se puede deshacer' })}</p>
                 </div>
               </div>
-              
+
               <div className="mb-6">
                 <p className="text-gray-700 mb-2">
                   {t('confirmDeleteCertificate', { defaultValue: '¿Estás seguro de que quieres eliminar el certificado energético?' })}
@@ -1915,22 +1929,20 @@ const BuildingDetail: React.FC = () => {
                 <button
                   onClick={cancelDeleteCertificate}
                   disabled={isDeleting}
-                  className={`px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg transition-colors duration-200 ${
-                    isDeleting 
-                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed' 
-                      : 'text-gray-700 bg-white hover:bg-gray-50'
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg transition-colors duration-200 ${isDeleting
+                    ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                    : 'text-gray-700 bg-white hover:bg-gray-50'
+                    }`}
                 >
                   {t('cancel', { defaultValue: 'Cancelar' })}
                 </button>
                 <button
                   onClick={confirmDeleteCertificate}
                   disabled={isDeleting}
-                  className={`px-4 py-2 text-sm font-medium text-white border border-red-600 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
-                    isDeleting 
-                      ? 'bg-red-400 cursor-not-allowed' 
-                      : 'bg-red-600 hover:bg-red-700'
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium text-white border border-red-600 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${isDeleting
+                    ? 'bg-red-400 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-700'
+                    }`}
                 >
                   {isDeleting ? (
                     <>

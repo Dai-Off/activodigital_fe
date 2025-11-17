@@ -2,22 +2,97 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import ProgressBar from '../ui/ProgressBar';
 import { getBookByBuilding, processPDFWithAI, type DigitalBook } from '../../services/digitalbook';
-import { PageLoader } from '../ui/LoadingSystem';
-import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import SkeletonSection from '../ui/SkeletonSection';
 import { useTranslation } from 'react-i18next';
+import { 
+  Building2, 
+  Wrench, 
+  FileCheck, 
+  Settings, 
+  Zap, 
+  Hammer, 
+  Leaf, 
+  Paperclip,
+  CheckCircle2,
+  Circle,
+  ChevronRight,
+  Sparkles
+} from 'lucide-react';
 
-// Datos hardcodeados para demostrar la funcionalidad
-const SECTION_LABELS = (t: any) => ({
-  general_data: { title: t('generalData', 'Datos generales del edificio'), description: t('generalDataDesc', 'Información básica y características principales'), uiId: 'general_data' },
-  construction_features: { title: t('constructionFeatures', 'Características constructivas y técnicas'), description: t('constructionFeaturesDesc', 'Especificaciones técnicas de construcción'), uiId: 'construction_features' },
-  certificates_and_licenses: { title: t('certificatesAndLicenses', 'Certificados y licencias'), description: t('certificatesAndLicensesDesc', 'Documentación legal y certificaciones'), uiId: 'certificates' },
-  maintenance_and_conservation: { title: t('maintenanceAndConservation', 'Mantenimiento y conservación'), description: t('maintenanceAndConservationDesc', 'Historial y planes de mantenimiento'), uiId: 'maintenance' },
-  facilities_and_consumption: { title: t('facilitiesAndConsumption', 'Instalaciones y consumos'), description: t('facilitiesAndConsumptionDesc', 'Sistemas e instalaciones del edificio'), uiId: 'installations' },
-  renovations_and_rehabilitations: { title: t('renovationsAndRehabilitations', 'Reformas y rehabilitaciones'), description: t('renovationsAndRehabilitationsDesc', 'Historial de modificaciones y mejoras'), uiId: 'reforms' },
-  sustainability_and_esg: { title: t('sustainabilityAndESG', 'Sostenibilidad y ESG'), description: t('sustainabilityAndESGDesc', 'Criterios ambientales y sostenibilidad'), uiId: 'sustainability' },
-  annex_documents: { title: t('annexDocuments', 'Documentos anexos'), description: t('annexDocumentsDesc', 'Documentación adicional y anexos'), uiId: 'attachments' },
+// Configuración de secciones con iconos y colores
+const SECTION_CONFIG = (t: any) => ({
+  general_data: { 
+    title: t('generalData', 'Datos generales del edificio'), 
+    description: t('generalDataDesc', 'Información básica y características principales'), 
+    uiId: 'general_data',
+    icon: Building2,
+    color: 'blue',
+    gradient: 'from-blue-500 to-blue-600',
+    bgGradient: 'from-blue-50 to-blue-100/50'
+  },
+  construction_features: { 
+    title: t('constructionFeatures', 'Características constructivas y técnicas'), 
+    description: t('constructionFeaturesDesc', 'Especificaciones técnicas de construcción'), 
+    uiId: 'construction_features',
+    icon: Wrench,
+    color: 'purple',
+    gradient: 'from-purple-500 to-purple-600',
+    bgGradient: 'from-purple-50 to-purple-100/50'
+  },
+  certificates_and_licenses: { 
+    title: t('certificatesAndLicenses', 'Certificados y licencias'), 
+    description: t('certificatesAndLicensesDesc', 'Documentación legal y certificaciones'), 
+    uiId: 'certificates',
+    icon: FileCheck,
+    color: 'green',
+    gradient: 'from-green-500 to-green-600',
+    bgGradient: 'from-green-50 to-green-100/50'
+  },
+  maintenance_and_conservation: { 
+    title: t('maintenanceAndConservation', 'Mantenimiento y conservación'), 
+    description: t('maintenanceAndConservationDesc', 'Historial y planes de mantenimiento'), 
+    uiId: 'maintenance',
+    icon: Settings,
+    color: 'orange',
+    gradient: 'from-orange-500 to-orange-600',
+    bgGradient: 'from-orange-50 to-orange-100/50'
+  },
+  facilities_and_consumption: { 
+    title: t('facilitiesAndConsumption', 'Instalaciones y consumos'), 
+    description: t('facilitiesAndConsumptionDesc', 'Sistemas e instalaciones del edificio'), 
+    uiId: 'installations',
+    icon: Zap,
+    color: 'yellow',
+    gradient: 'from-yellow-500 to-yellow-600',
+    bgGradient: 'from-yellow-50 to-yellow-100/50'
+  },
+  renovations_and_rehabilitations: { 
+    title: t('renovationsAndRehabilitations', 'Reformas y rehabilitaciones'), 
+    description: t('renovationsAndRehabilitationsDesc', 'Historial de modificaciones y mejoras'), 
+    uiId: 'reforms',
+    icon: Hammer,
+    color: 'red',
+    gradient: 'from-red-500 to-red-600',
+    bgGradient: 'from-red-50 to-red-100/50'
+  },
+  sustainability_and_esg: { 
+    title: t('sustainabilityAndESG', 'Sostenibilidad y ESG'), 
+    description: t('sustainabilityAndESGDesc', 'Criterios ambientales y sostenibilidad'), 
+    uiId: 'sustainability',
+    icon: Leaf,
+    color: 'emerald',
+    gradient: 'from-emerald-500 to-emerald-600',
+    bgGradient: 'from-emerald-50 to-emerald-100/50'
+  },
+  annex_documents: { 
+    title: t('annexDocuments', 'Documentos anexos'), 
+    description: t('annexDocumentsDesc', 'Documentación adicional y anexos'), 
+    uiId: 'attachments',
+    icon: Paperclip,
+    color: 'indigo',
+    gradient: 'from-indigo-500 to-indigo-600',
+    bgGradient: 'from-indigo-50 to-indigo-100/50'
+  },
 });
 
 interface DigitalBookHubProps {
@@ -32,7 +107,6 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { buildingId: buildingIdParam } = useParams();
-  const { user } = useAuth();
   const { showToast } = useToast();
 
   // Priorizar: state > URL param > prop
@@ -50,23 +124,44 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
   const [updatingSections, setUpdatingSections] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Solo técnicos pueden editar, administradores, propietarios y CFO solo pueden leer
-  const canEdit = user?.role === 'tecnico';
+  // Todos los roles pueden editar
+  const canEdit = true;
 
   const { t } = useTranslation();
   const sections = useMemo(() => {
-    const labels = SECTION_LABELS(t);
+    const config = SECTION_CONFIG(t);
     if (!book || !book.sections || book.sections.length === 0) {
-      return Object.entries(labels).map(([_type, meta]) => ({
+      return Object.entries(config).map(([_type, meta]) => ({
         key: meta.uiId,
         title: meta.title,
         description: meta.description,
-        isCompleted: false
+        isCompleted: false,
+        icon: meta.icon,
+        color: meta.color,
+        gradient: meta.gradient,
+        bgGradient: meta.bgGradient
       }));
     }
     return book.sections.map((s) => {
-      const meta = labels[s.type] || { title: s.type, description: '', uiId: s.type };
-      return { key: meta.uiId, title: meta.title, description: meta.description, isCompleted: Boolean(s.complete) };
+      const meta = config[s.type] || { 
+        title: s.type, 
+        description: '', 
+        uiId: s.type,
+        icon: FileCheck,
+        color: 'gray',
+        gradient: 'from-gray-500 to-gray-600',
+        bgGradient: 'from-gray-50 to-gray-100/50'
+      };
+      return { 
+        key: meta.uiId, 
+        title: meta.title, 
+        description: meta.description, 
+        isCompleted: Boolean(s.complete),
+        icon: meta.icon,
+        color: meta.color,
+        gradient: meta.gradient,
+        bgGradient: meta.bgGradient
+      };
     });
   }, [book, t]);
 
@@ -301,268 +396,346 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     return 'text-blue-600';
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <div className="pt-2 pb-8 max-w-full">
-        <div className="px-4 sm:px-6 lg:px-8">
-        {loading && (<PageLoader message="Cargando libro del edificio..." />)}
-        {/* Header */}
-        <div className="mb-8">
-          {/* Breadcrumb */}
-          <nav className="mb-4">
-            <ol className="flex items-center space-x-2 text-sm text-gray-500">
-              <li>
-                <button onClick={() => navigate('/activos')} className="hover:text-blue-600">
-                  Activos
-                </button>
-              </li>
-              <li>
-                <svg className="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </li>
-              <li className="text-gray-900 font-medium">Libro del Edificio - {buildingNameFinal}</li>
-            </ol>
-          </nav>
+  if (loading) {
+    return (
+      <div className="space-y-6 md:space-y-8">
+        {/* Skeleton Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Libro del Edificio</h1>
-              <p className="text-sm sm:text-base text-gray-600">{buildingNameFinal}</p>
-            </div>
-
-            <div className="text-right">
-              <div className={`text-sm font-medium ${getStatusColor()}`}>{getStatusMessage()}</div>
-              {isNewBuilding && (
-                <div className="mt-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Edificio recién creado
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* Skeleton Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
           </div>
         </div>
 
-        {/* Estructura desktop: progreso (2/3) + importar (1/3) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Panel Progreso */}
-          <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Progreso del Libro del Edificio</h2>
-                <p className="text-sm text-gray-600 mt-1">Completar todas las secciones para finalizar el libro</p>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-700">{completedSections} de {totalSections}</div>
-                <div className="text-xs text-gray-500">{Math.round((completedSections / totalSections) * 100)}% completado</div>
-              </div>
-            </div>
-            <ProgressBar current={completedSections} total={totalSections} size="lg" />
+        {/* Skeleton Sections */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <div className="h-6 w-64 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
           </div>
-
-          {/* Panel Importar PDF - Solo para técnicos */}
-          {canEdit && (
-            <div className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-shadow ${
-              backgroundProcessing ? 'border-orange-200 bg-orange-50' : 'border-gray-200 hover:shadow-md'
-            }`}>
-              <div className="p-6 h-full flex flex-col">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-lg border ${
-                    backgroundProcessing ? 'bg-orange-50 border-orange-100' : 'bg-blue-50 border-blue-100'
-                  }`}>
-                    {backgroundProcessing ? (
-                      <svg className="w-6 h-6 text-orange-600 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
-                        <circle cx="12" cy="12" r="3"/>
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <path d="M14 2v6h6"/>
-                      </svg>
-                    )}
-                  </div>
+          <div className="divide-y divide-gray-200">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {backgroundProcessing ? 'Procesando en background...' : 'Importar contenido desde PDF'}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {backgroundProcessing 
-                        ? 'El procesamiento de IA continúa en segundo plano' 
-                        : 'Sube un PDF y mapea las páginas a cada sección del libro.'
-                      }
-                    </p>
+                    <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
                   </div>
-                </div>
-                <div className="mt-auto">
-                  <button
-                    onClick={handlePDFImport}
-                    disabled={isProcessing}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14"/>
-                      <path d="M5 12h14"/>
-                    </svg>
-                    {isProcessing ? 'Procesando...' : 'Cargar PDF'}
-                  </button>
+                  <div className="h-6 w-24 bg-gray-200 rounded-full animate-pulse" />
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">Libro del Edificio</h1>
+          <p className="text-sm text-gray-600">{buildingNameFinal}</p>
+        </div>
+
+        <div className="text-right">
+          <div className={`text-sm font-medium ${getStatusColor()}`}>{getStatusMessage()}</div>
+          {isNewBuilding && (
+            <div className="mt-1">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Edificio recién creado
+              </span>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Input de archivo oculto */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
+      {/* Estructura desktop: progreso (2/3) + importar (1/3) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Panel Progreso */}
+        <div className="md:col-span-2 bg-white rounded-lg border border-gray-200 p-5">
+          <div className="flex items-start justify-between mb-5">
+            <div className="flex-1">
+              <h2 className="text-base font-medium text-gray-900 mb-1">Progreso del Libro del Edificio</h2>
+              <p className="text-xs text-gray-500">Completar todas las secciones para finalizar el libro</p>
+            </div>
+            <div className="text-right ml-4">
+              <div className="text-sm font-medium text-gray-900">{completedSections} de {totalSections}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{Math.round((completedSections / totalSections) * 100)}% completado</div>
+            </div>
+          </div>
+          <ProgressBar current={completedSections} total={totalSections} size="lg" />
+        </div>
 
-        {/* Área de progreso */}
-        {isProcessing && processingFile && (
-          <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-medium text-gray-900">{processingFile.name}</h3>
-                  <span className="text-sm text-gray-500">{formatFileSize(processingFile.size)}</span>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span>{formatTime(timeElapsed)}</span>
-                  <span>{Math.round(progress)}% completado</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Barra de progreso */}
-            <div className="mb-3">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>{currentStep || 'Iniciando procesamiento...'}</span>
-                <span>Tiempo estimado: 30-90 segundos</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            {/* Pasos */}
-            <div className="flex gap-2 text-xs">
-              {['Subida', 'Extracción', 'IA', 'Validación', 'Creación'].map((step, index) => (
-                <div key={step} className={`px-2 py-1 rounded ${
-                  (progress / 20) > index 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-gray-100 text-gray-500'
+        {/* Panel Importar PDF - Solo para técnicos */}
+        {canEdit && (
+          <div className={`bg-white rounded-lg border overflow-hidden transition-all ${
+            backgroundProcessing ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200 hover:border-gray-300'
+          }`}>
+            <div className="p-5 h-full flex flex-col">
+              <div className="flex items-start gap-3 mb-4">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-md flex-shrink-0 ${
+                  backgroundProcessing ? 'bg-orange-50' : 'bg-gray-50'
                 }`}>
-                  {step}
+                  {backgroundProcessing ? (
+                    <svg className="w-5 h-5 text-orange-600 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <path d="M14 2v6h6"/>
+                    </svg>
+                  )}
                 </div>
-              ))}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">
+                    {backgroundProcessing ? 'Procesando en background...' : 'Importar contenido desde PDF'}
+                  </h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    {backgroundProcessing 
+                      ? 'El procesamiento de IA continúa en segundo plano' 
+                      : 'Sube un PDF y mapea las páginas a cada sección del libro.'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="mt-auto pt-3">
+                <button
+                  onClick={handlePDFImport}
+                  disabled={isProcessing}
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                  </svg>
+                  {isProcessing ? 'Procesando...' : 'Cargar PDF'}
+                </button>
+              </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Checklist de secciones */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Secciones del Libro del Edificio</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {canEdit 
-                ? 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.'
-                : 'Revisa el contenido de cada sección completada por el técnico asignado.'
-              }
-            </p>
+      {/* Input de archivo oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
+
+      {/* Área de progreso */}
+      {isProcessing && processingFile && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-medium text-gray-900">{processingFile.name}</h3>
+                <span className="text-sm text-gray-500">{formatFileSize(processingFile.size)}</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <span>{formatTime(timeElapsed)}</span>
+                <span>{Math.round(progress)}% completado</span>
+              </div>
+            </div>
           </div>
+          
+          {/* Barra de progreso */}
+          <div className="mb-3">
+            <div className="flex justify-between text-xs text-gray-600 mb-1">
+              <span>{currentStep || 'Iniciando procesamiento...'}</span>
+              <span>Tiempo estimado: 30-90 segundos</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          {/* Pasos */}
+          <div className="flex gap-2 text-xs">
+            {['Subida', 'Extracción', 'IA', 'Validación', 'Creación'].map((step, index) => (
+              <div key={step} className={`px-2 py-1 rounded ${
+                (progress / 20) > index 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-500'
+              }`}>
+                {step}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-          <div className="divide-y divide-gray-200">
+      {/* Checklist de secciones */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="p-5 border-b border-gray-200">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="p-1.5 bg-gray-50 rounded-md">
+              <Sparkles className="w-4 h-4 text-gray-600" />
+            </div>
+            <h2 className="text-base font-medium text-gray-900">Secciones del Libro del Edificio</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8">
+            {canEdit 
+              ? 'Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente.'
+              : 'Revisa el contenido de cada sección completada por el técnico asignado.'
+            }
+          </p>
+        </div>
+
+        <div className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {updatingSections ? (
               // Mostrar skeleton mientras se actualizan las secciones
-              Object.entries(SECTION_LABELS).map(([_, meta]) => (
-                <div key={meta.uiId} className="p-6">
-                  <SkeletonSection
-                    title={meta.title}
-                    description={meta.description}
-                    isCompleted={false}
-                  />
+              Object.entries(SECTION_CONFIG(t)).map(([_, meta]) => (
+                <div key={meta.uiId} className="p-6 bg-gray-50 rounded-lg animate-pulse">
+                  <div className="h-6 w-3/4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 w-full bg-gray-200 rounded"></div>
                 </div>
               ))
             ) : (
-              // Mostrar secciones normales
-              sections.map((section, index) => (
-                <div 
-                  key={section.key} 
-                  className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => handleSectionClick(section.key)}
-                >
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold mr-3 ${
-                        section.isCompleted ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {section.isCompleted ? (
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
+              // Mostrar secciones normales con diseño acorde a la web
+              sections.map((section, index) => {
+                const IconComponent = section.icon || FileCheck;
+                return (
+                  <div 
+                    key={section.key} 
+                    className={`
+                      group bg-white rounded-lg border transition-all duration-200 cursor-pointer
+                      ${section.isCompleted 
+                        ? 'border-blue-200 hover:border-blue-300' 
+                        : 'border-gray-200 hover:border-gray-300'
+                      }
+                    `}
+                    onClick={() => handleSectionClick(section.key)}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        {/* Icono con fondo de color suave */}
+                        <div className={`
+                          flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center
+                          ${section.isCompleted 
+                            ? 'bg-blue-50' 
+                            : 'bg-gray-50'
+                          }
+                        `}>
+                          <IconComponent className={`
+                            w-5 h-5
+                            ${section.isCompleted 
+                              ? 'text-blue-600' 
+                              : 'text-gray-600'
+                            }
+                          `} strokeWidth={2} />
+                        </div>
 
-                    <div className="flex-1">
-                      <h3 className={`text-base font-medium text-gray-900`}>{section.title}</h3>
-                      <p className="mt-1 text-sm text-gray-600">{section.description}</p>
-                    </div>
+                        {/* Contenido */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <h3 className="text-sm font-medium text-gray-900 group-hover:text-gray-950 transition-colors">
+                              {section.title}
+                            </h3>
+                            {section.isCompleted ? (
+                              <div className="flex-shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                  <CheckCircle2 className="w-3 h-3 text-white" strokeWidth={2.5} />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <span className="text-xs font-medium text-gray-500">{index + 1}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <p className="text-xs text-gray-500 leading-relaxed">
+                            {section.description}
+                          </p>
 
-                    <div className="ml-4 flex items-center gap-3">
-                      {section.isCompleted ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completado</span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">No completado</span>
-                      )}
+                          {/* Badge de estado */}
+                          <div className="flex items-center gap-1.5 mt-2">
+                            {section.isCompleted ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Completado
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-600">
+                                <Circle className="w-3 h-3" />
+                                Pendiente
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                      <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
+                        {/* Flecha */}
+                        <div className="flex-shrink-0">
+                          <div className={`
+                            w-7 h-7 rounded-md flex items-center justify-center
+                            transition-all duration-200
+                            ${section.isCompleted 
+                              ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-100' 
+                              : 'bg-gray-50 text-gray-400 group-hover:bg-gray-100 group-hover:text-gray-600'
+                            }
+                            group-hover:translate-x-0.5
+                          `}>
+                            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-start">
-          <div className="text-sm text-gray-600">
-            <p>💡 Puedes guardar tu progreso en cualquier momento y continuar más tarde.</p>
-          </div>
-
-          <div className="flex gap-3">
-            {completedSections === totalSections && (
-              <button
-                onClick={() => alert('¡Libro del Edificio completado! Funcionalidad de exportación próximamente.')}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Exportar Libro Completado
-              </button>
-            )}
-          </div>
+      {/* Footer */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
+        <div className="text-sm text-gray-600">
+          <p>💡 Puedes guardar tu progreso en cualquier momento y continuar más tarde.</p>
         </div>
+
+        <div className="flex gap-3">
+          {completedSections === totalSections && (
+            <button
+              onClick={() => alert('¡Libro del Edificio completado! Funcionalidad de exportación próximamente.')}
+              className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              Exportar Libro Completado
+            </button>
+          )}
         </div>
       </div>
     </div>

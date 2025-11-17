@@ -106,8 +106,11 @@ export default function Login() {
           }
         }
         
-        // Redirigir según rol
-        if (userRole === 'cfo') {
+        // Redirigir según rol o parámetro redirect
+        const redirectParam = searchParams.get('redirect');
+        if (redirectParam) {
+          navigate(decodeURIComponent(redirectParam));
+        } else if (userRole === 'cfo') {
           navigate('/cfo-dashboard');
         } else {
           navigate('/activos');

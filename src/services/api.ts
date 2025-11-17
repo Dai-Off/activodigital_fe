@@ -192,6 +192,29 @@ export async function apiFetch(
   if (!response.ok) {
     const msgFromBody =
       (isJson && payload && (payload.message || payload.error)) || response.statusText || 'Request failed';
+    
+    // Si es un error 401 (Unauthorized), limpiar token y redirigir al login
+    if (response.status === 401) {
+      // Limpiar tokens
+      localStorage.removeItem('access_token');
+      sessionStorage.removeItem('access_token');
+      
+      // Redirigir al login solo si no estamos ya en la página de login
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register') &&
+          !window.location.pathname.includes('/auth/')) {
+        // Guardar la ruta actual para redirigir después del login
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        // Lanzar error después de redirigir (el redirect ya se ejecutó)
+        throw new HttpError(
+          'Sesión expirada. Redirigiendo al login...',
+          response.status,
+          payload
+        );
+      }
+    }
+    
     // Lanza HttpError preservando status y body (útil para manejar 401 arriba)
     throw new HttpError(
       typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody),

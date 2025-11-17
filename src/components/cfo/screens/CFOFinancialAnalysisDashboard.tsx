@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { TrendingUp, AlertCircle, Loader2, Euro, Settings, Wrench, FileText, Plus } from 'lucide-react';
+import { TrendingUp, AlertCircle, Euro, Settings, Wrench, FileText, Plus } from 'lucide-react';
 
 // Servicios
 import { BuildingsApiService } from '../../../services/buildingsApi';
@@ -95,11 +95,57 @@ export default function CFOFinancialAnalysisDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 overflow-x-hidden flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="font-medium" style={{ color: '#64748B' }}>Analizando activo...</p>
-          <p className="text-sm mt-2" style={{ color: '#94A3B8' }}>Esto puede tomar unos segundos</p>
+      <div className="min-h-screen bg-gray-50 py-6 overflow-x-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          {/* Header Skeleton */}
+          <div className="mb-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gray-200 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8">
+            <div className="space-y-6">
+              {/* Score General Skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+                  <div className="h-16 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                </div>
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+                  <div className="h-16 w-24 bg-gray-200 rounded animate-pulse mb-2" />
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+
+              {/* Categories Skeleton */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gray-50 rounded-lg p-4">
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-3" />
+                    <div className="h-12 w-12 bg-gray-200 rounded-full animate-pulse mx-auto mb-2" />
+                    <div className="h-2 w-full bg-gray-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Recommendation Skeleton */}
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-4" />
+                <div className="h-4 w-full bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

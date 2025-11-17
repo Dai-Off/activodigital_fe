@@ -49,41 +49,16 @@ export const useAuth = (): AuthContextType => {
 };
 
 // Función para calcular permisos basados en el rol
-const calculatePermissions = (role: UserRole): UserPermissions => {
-  switch (role) {
-    case 'propietario':
-      return {
-        canCreateBuildings: false,
-        canAssignTechnicians: false,
-        canManageDigitalBooks: false,
-        canViewOwnBuildings: false,
-        canViewAssignedBuildings: true,
-      };
-    case 'tecnico':
-      return {
-        canCreateBuildings: false,
-        canAssignTechnicians: false,
-        canManageDigitalBooks: true,
-        canViewOwnBuildings: false,
-        canViewAssignedBuildings: true,
-      };
-    case 'administrador':
-      return {
-        canCreateBuildings: true,
-        canAssignTechnicians: true,
-        canManageDigitalBooks: true,
-        canViewOwnBuildings: true,
-        canViewAssignedBuildings: true,
-      };
-    default:
-      return {
-        canCreateBuildings: false,
-        canAssignTechnicians: false,
-        canManageDigitalBooks: false,
-        canViewOwnBuildings: false,
-        canViewAssignedBuildings: false,
-      };
-  }
+// Todos los roles tienen todos los permisos por ahora
+const calculatePermissions = (_role: UserRole): UserPermissions => {
+  // Todos los roles tienen todos los permisos
+  return {
+    canCreateBuildings: true,
+    canAssignTechnicians: true,
+    canManageDigitalBooks: true,
+    canViewOwnBuildings: true,
+    canViewAssignedBuildings: true,
+  };
 };
 
 // Función para transformar respuesta del backend a AuthUser
@@ -196,9 +171,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await loadUser();
   };
 
-  // Función para verificar permisos
-  const hasPermission = (permission: keyof UserPermissions): boolean => {
-    return user?.permissions[permission] || false;
+  // Función para verificar permisos - Todos los roles tienen todos los permisos
+  const hasPermission = (_permission: keyof UserPermissions): boolean => {
+    return true; // Todos los roles tienen todos los permisos
   };
 
   // Función para verificar rol

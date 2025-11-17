@@ -337,7 +337,7 @@ function _BuildingStatusIndicator({
 export default function CFOAssetsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, hasPermission } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -580,10 +580,9 @@ export default function CFOAssetsList() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="pt-2 pb-8 max-w-full">
-        {/* Botones de acciÃ³n basados en permisos */}
+        {/* Botones de acción - Todos los roles pueden crear edificios */}
         <div className="flex justify-end gap-3 mb-6">
-            {user?.role === 'administrador' && hasPermission('canCreateBuildings') && (
-              <Link
+            <Link
                 to="/edificios/crear"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
@@ -599,7 +598,6 @@ export default function CFOAssetsList() {
                 </svg>
                 {t('createBuilding', { defaultValue: 'Crear Edificio' })}
               </Link>
-            )}
         </div>
 
         {/* Hack para evitar warning TS de componente no usado */}
@@ -925,12 +923,10 @@ export default function CFOAssetsList() {
               <p className="text-gray-600 mb-4">
                 {user?.role === 'propietario' ? t('createFirstAsset', { defaultValue: 'Comienza creando tu primer activo para gestionar tu cartera.' }) : t('contactAdmin', { defaultValue: 'Contacta con tu administrador para que te asigne activos.' })}
               </p>
-              {user?.role === 'administrador' && hasPermission('canCreateBuildings') && (
-                <Link to="/edificios/crear" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  {t('createFirstAssetBtn', { defaultValue: 'Crear primer activo' })}
-                </Link>
-              )}
+              <Link to="/edificios/crear" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                {t('createFirstAssetBtn', { defaultValue: 'Crear primer activo' })}
+              </Link>
             </div>
           )}
         </div>

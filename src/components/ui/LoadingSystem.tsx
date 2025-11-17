@@ -266,6 +266,22 @@ export const SkeletonDashboardSummary: React.FC = () => (
 
 
 // Skeleton para botones
+// Skeleton para lista de edificios en el sidebar
+export const SkeletonSidebarBuildings: React.FC = () => (
+  <div className="space-y-1.5 px-3">
+    {Array.from({ length: 6 }).map((_, index) => (
+      <div key={index} className="mb-1">
+        {/* Skeleton del botón del edificio - debe coincidir con el diseño real */}
+        <div className="w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm bg-gray-50 animate-pulse">
+          <div className="w-3.5 h-3.5 bg-gray-300 rounded flex-shrink-0" style={{ animationDelay: `${index * 80}ms` }} />
+          <div className="w-4 h-4 bg-gray-300 rounded flex-shrink-0" style={{ animationDelay: `${index * 80 + 20}ms` }} />
+          <div className="flex-1 h-4 bg-gray-300 rounded" style={{ animationDelay: `${index * 80 + 40}ms` }} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 export const SkeletonButton: React.FC<{ 
   size?: 'sm' | 'md' | 'lg';
   className?: string;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Link, useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import LanguageSwitcher from './LanguageSwitcher';
@@ -272,7 +272,6 @@ function parseLooselyForRespuesta(rawText: string): OrquestadorResponse | null {
 ============================= */
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const { t } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -319,8 +318,6 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isChatOpen]);
-
-  const isActive = (path: string) => location.pathname === path;
 
   /* ========== Limpiar texto para hacerlo profesional ========== */
   const cleanProfessionalText = (text: string): string => {
@@ -787,83 +784,7 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 />
                 </div>
 
-              <nav className="hidden md:flex space-x-1">
-                {/* Public links - siempre visibles */}
-                <Link
-                  to="/documentos"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/documentos')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  {t('nav.documentation', 'Documentación')}
-                  {isActive('/documentos') && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-
-                {/* Enlaces privados solo si hay usuario */}
-                {user && (
-                  <>
-                <Link
-                      to="/activos"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive('/activos')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                      {t('nav.assets', 'Activos')}
-                      {isActive('/activos') && (
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-
-                <Link
-                  to="/mantenimiento"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/mantenimiento')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                      {t('nav.maintenance', 'Mantenimiento')}
-                  {isActive('/mantenimiento') && (
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-
-                <Link
-                  to="/cumplimiento"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/cumplimiento')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                      {t('nav.compliance', 'Cumplimiento')}
-                  {isActive('/cumplimiento') && (
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-
-                <Link
-                  to="/unidades"
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive('/unidades')
-                      ? 'text-blue-600 bg-blue-50 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                      {t('nav.units', 'Unidades')}
-                  {isActive('/unidades') && (
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
-                </Link>
-                  </>
-                )}
-              </nav>
+              <nav className="hidden md:flex space-x-1" />
             </div>
 
             <div className="flex items-center space-x-2">
