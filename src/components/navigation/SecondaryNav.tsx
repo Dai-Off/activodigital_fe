@@ -1,25 +1,16 @@
-import {
-  Building2,
-  ChevronRight,
-  Circle,
-  LucideActivity,
-  LucideChartColumn,
-  LucideHouse,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
-import { useNavigation } from "../../contexts/NavigationContext";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
-import {
-  BuildingsApiService,
-  type Building,
-} from "../../services/buildingsApi";
-import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
+import { LucideActivity, LucideChartColumn, LucideHouse } from "lucide-react";
+import { useState } from "react";
+//import { useNavigation } from "../../contexts/NavigationContext";
+//import { useLanguage } from "../../contexts/LanguageContext";
+//import { useNavigate } from "react-router-dom";
+// import {
+//   BuildingsApiService,
+//   type Building,
+// } from "../../services/buildingsApi";
+// import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
 
 export function SecondaryNav() {
-  const { t } = useLanguage();
+  //const { t } = useLanguage();
   const [activeItem, setActiveItem] = useState("main");
   const menuItems = [
     { id: "main", label: "Panel Principal", Icon: LucideHouse },
@@ -57,7 +48,7 @@ export function SecondaryNav() {
                   {/* El color del ícono también cambia */}
                   <item.Icon
                     className={`w-4 h-4 ${
-                      isActive ? "text-white" : "text-gray-700"
+                      isActive ? "text-white" : "text-gray-00"
                     }`}
                   />
                   <span className="flex-1 text-left leading-relaxed">

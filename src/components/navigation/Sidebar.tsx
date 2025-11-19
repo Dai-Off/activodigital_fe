@@ -1,4 +1,4 @@
-import { Building2, Home, House } from "lucide-react";
+import { Building2, House } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";

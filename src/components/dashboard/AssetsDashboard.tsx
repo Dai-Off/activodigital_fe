@@ -5,8 +5,8 @@ import {
 } from "../../services/buildingsApi";
 import { useState, useEffect, Fragment } from "react";
 import { PanelPrincipal } from "./Inicio/PanelPrincipal";
-import { Estadisticas } from "./Inicio/Estadisticas";
-import { ActividadReciente } from "./Inicio/ActividadReciente";
+//import { Estadisticas } from "./Inicio/Estadisticas";
+//import { ActividadReciente } from "./Inicio/ActividadReciente";
 
 export function AssetsDashboard() {
   const { t } = useLanguage();
@@ -124,7 +124,7 @@ export function AssetsDashboard() {
 
   return (
     <Fragment>
-      <ActividadReciente stats={stats}></ActividadReciente>
+      <PanelPrincipal stats={stats}></PanelPrincipal>
     </Fragment>
   );
 }

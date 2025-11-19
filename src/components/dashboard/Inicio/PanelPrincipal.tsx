@@ -10,7 +10,6 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { Fragment } from "react/jsx-runtime";
 import { useLanguage } from "~/contexts/LanguageContext";
 
 export function PanelPrincipal({ stats }: { stats: any }) {
