@@ -1,24 +1,12 @@
-import {
-  Building2,
-  CheckCircle2,
-  Clock,
-  TrendingUp,
-  Calendar,
-  Users,
-  Home,
-  Activity,
-  BarChart3,
-  LucideAArrowUp,
-  LucideArrowUpRight,
-  CircleCheckBig,
-  TriangleAlert,
-} from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import {
   BuildingsApiService,
   type DashboardStats,
 } from "../../services/buildingsApi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
+import { PanelPrincipal } from "./Inicio/PanelPrincipal";
+import { Estadisticas } from "./Inicio/Estadisticas";
+import { ActividadReciente } from "./Inicio/ActividadReciente";
 
 export function AssetsDashboard() {
   const { t } = useLanguage();
@@ -135,81 +123,8 @@ export function AssetsDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Layout Principal */}
-      {/* 4 KPIs superiores */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-0.5">
-                {t("Total Buildings", "Total Edificios")}
-              </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
-              <div className="flex items-center gap-0.5 text-xs text-green-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+2 este mes</span>
-              </div>
-            </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Building2 className="w-5 h-5 text-blue-600"></Building2>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-0.5">
-                {t("Compliance", "Cumplimiento")}
-              </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}%</p>
-              <div className="flex items-center gap-0.5 text-xs text-green-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+5% vs. anterior</span>
-              </div>
-            </div>
-            <div className="p-2 bg-green-50 rounded-lg">
-              <CircleCheckBig className="w-5 h-5 text-green-600"></CircleCheckBig>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-0.5">
-                {t("Pending Alerts", "Alertas Pendientes")}
-              </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
-              <div className="flex items-center gap-0.5 text-xs text-red-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+2 este mes</span>
-              </div>
-            </div>
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <TriangleAlert className="w-5 h-5 text-orange-600"></TriangleAlert>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-gray-500 mb-0.5">
-                {t("Total Buildings", "Total Edificios")}
-              </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
-              <div className="flex items-center gap-0.5 text-xs text-green-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+2 este mes</span>
-              </div>
-            </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Building2 className="w-5 h-5 text-blue-600"></Building2>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bloque KPIs inferiores */}
-    </div>
+    <Fragment>
+      <ActividadReciente stats={stats}></ActividadReciente>
+    </Fragment>
   );
 }
