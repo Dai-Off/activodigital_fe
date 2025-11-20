@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 export function Sidebar() {
   const navigate = useNavigate();
 
-  let activeModule = "edificios";
+  let activeModule = "inicio";
   let setActiveModule: ((module: string) => void) | null = null;
   let setActiveSection: ((section: string) => void) | null = null;
   let setActiveTab: ((tab: string) => void) | null = null;
@@ -57,7 +57,7 @@ export function Sidebar() {
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
-        navigate("/activos");
+        navigate("/Dashboard");
         break;
       case "edificios":
         if (setActiveSection) setActiveSection("dashboard");
@@ -73,7 +73,7 @@ export function Sidebar() {
 
   const handleLogoClick = () => {
     if (setSelectedBuildingId) setSelectedBuildingId(null);
-    if (setActiveModule) setActiveModule("edificios");
+    if (setActiveModule) setActiveModule("inicio");
     if (setActiveSection) setActiveSection("dashboard");
     if (setActiveTab) setActiveTab("dashboard");
     if (setViewMode) setViewMode("list");

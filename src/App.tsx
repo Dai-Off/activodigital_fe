@@ -1,38 +1,47 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
-import { AuthProvider } from './contexts/AuthContext'
-import { ToastProvider } from './contexts/ToastContext'
-import { NotificationProvider } from './contexts/NotificationContext'
-import ToastContainer from './components/ui/Toast'
-import NewLayout from './components/NewLayout'
-import Mantenimiento from './components/Mantenimiento'
-import Cumplimiento from './components/Cumplimiento'
-import BuildingUnits from './components/BuildingUnits'
-import BuildingDocuments from './components/BuildingDocuments'
-import { LibroDigital } from './components/LibroDigital'
-import Login from './components/Login'
-import Register from './components/Register'
-import RegisterWithInvitation from './components/RegisterWithInvitation'
-import AcceptAssignment from './components/AcceptAssignment'
-import InvitationHandler from './components/InvitationHandler'
-import Landing from './components/Landing'
-import CFOAssetsList from './components/CFOAssetsList'
-import BuildingDetail from './components/BuildingDetail'
-import CFOIntakeForm from './components/cfo/CFOIntakeForm'
-import CFOFinancialAnalysisDashboard from './components/cfo/screens/CFOFinancialAnalysisDashboard'
-import CFOFinancialAnalysisSimulation from './components/cfo/screens/CFOFinancialAnalysisSimulation'
-import ErrorBoundary from './components/ErrorBoundary'
-import ProtectedRoute from './components/ProtectedRoute'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+import { useEffect } from "react";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import ToastContainer from "./components/ui/Toast";
+import NewLayout from "./components/NewLayout";
+import Mantenimiento from "./components/Mantenimiento";
+import Cumplimiento from "./components/Cumplimiento";
+import BuildingUnits from "./components/BuildingUnits";
+import BuildingDocuments from "./components/BuildingDocuments";
+import { LibroDigital } from "./components/LibroDigital";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import RegisterWithInvitation from "./components/RegisterWithInvitation";
+import AcceptAssignment from "./components/AcceptAssignment";
+import InvitationHandler from "./components/InvitationHandler";
+import Landing from "./components/Landing";
+import CFOAssetsList from "./components/CFOAssetsList";
+import BuildingDetail from "./components/BuildingDetail";
+import CFOIntakeForm from "./components/cfo/CFOIntakeForm";
+import CFOFinancialAnalysisDashboard from "./components/cfo/screens/CFOFinancialAnalysisDashboard";
+import CFOFinancialAnalysisSimulation from "./components/cfo/screens/CFOFinancialAnalysisSimulation";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Nuevos componentes para edificios y libro del edificio
-import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
-import DigitalBookHub from './components/digitalbook/DigitalBookHub'
-import SectionsList from './components/digitalbook/SectionsList'
-import SectionEditor from './components/digitalbook/SectionEditor'
-import TermsAndConditions from './components/TermsAndConditions'
+import CreateBuildingWizard from "./components/buildings/CreateBuildingWizard";
+import DigitalBookHub from "./components/digitalbook/DigitalBookHub";
+import SectionsList from "./components/digitalbook/SectionsList";
+import SectionEditor from "./components/digitalbook/SectionEditor";
+import TermsAndConditions from "./components/TermsAndConditions";
 
 // Página de lista de secciones (opcional)
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
+import { AssetsDashboard } from "./components/dashboard/AssetsDashboard";
+import { PanelPrincipal } from "./components/dashboard/Inicio/PanelPrincipal";
+import { Estadisticas } from "./components/dashboard/Inicio/Estadisticas";
+import { ActividadReciente } from "./components/dashboard/Inicio/ActividadReciente";
 const SectionsListPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -43,24 +52,50 @@ const SectionsListPage = () => {
           <nav className="mb-4">
             <ol className="flex items-centered space-x-2 text-sm text-gray-500">
               <li>
-                <button onClick={() => navigate('/activos')} className="hover:text-blue-600">{t('assets', 'Activos')}</button>
-              </li>
-              <li>
-                <svg className="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </li>
-              <li>
-                <button onClick={() => navigate('/libro-digital/hub/building-1')} className="hover:text-blue-600">
-                  {t('digitalBook', 'Libro del Edificio')}
+                <button
+                  onClick={() => navigate("/activos")}
+                  className="hover:text-blue-600"
+                >
+                  {t("assets", "Activos")}
                 </button>
               </li>
               <li>
-                <svg className="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-4 h-4 mx-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </li>
-              <li className="text-gray-900 font-medium">{t('sections', 'Secciones')}</li>
+              <li>
+                <button
+                  onClick={() => navigate("/libro-digital/hub/building-1")}
+                  className="hover:text-blue-600"
+                >
+                  {t("digitalBook", "Libro del Edificio")}
+                </button>
+              </li>
+              <li>
+                <svg
+                  className="w-4 h-4 mx-1"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </li>
+              <li className="text-gray-900 font-medium">
+                {t("sections", "Secciones")}
+              </li>
             </ol>
           </nav>
         </div>
@@ -74,7 +109,7 @@ function App() {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    document.documentElement.lang = (i18n.language || 'es').split('-')[0];
+    document.documentElement.lang = (i18n.language || "es").split("-")[0];
   }, [i18n.language]);
 
   return (
@@ -85,18 +120,41 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/auth/register" element={<RegisterWithInvitation />} />
-              <Route path="/auth/invitation/:token" element={<InvitationHandler />} />
+              <Route
+                path="/auth/register"
+                element={<RegisterWithInvitation />}
+              />
+              <Route
+                path="/auth/invitation/:token"
+                element={<InvitationHandler />}
+              />
               <Route path="/auth/auto-accept" element={<AcceptAssignment />} />
 
               {/* Rutas públicas sin autenticación */}
               <Route path="/terminos" element={<TermsAndConditions />} />
-              
+
               {/* Landing page sin Layout (tiene su propio header y footer) */}
               <Route path="/" element={<Landing />} />
 
               {/* Rutas con nuevo diseño (NewLayout) */}
               <Route element={<NewLayout />}>
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <ErrorBoundary>
+                        <AssetsDashboard />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<PanelPrincipal />}></Route>
+                  <Route path="estadisticas" element={<Estadisticas />}></Route>
+                  <Route
+                    path="actividad"
+                    element={<ActividadReciente />}
+                  ></Route>
+                </Route>
                 <Route
                   path="/activos"
                   element={

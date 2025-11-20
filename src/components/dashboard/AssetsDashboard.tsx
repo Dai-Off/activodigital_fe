@@ -4,9 +4,7 @@ import {
   type DashboardStats,
 } from "../../services/buildingsApi";
 import { useState, useEffect, Fragment } from "react";
-import { PanelPrincipal } from "./Inicio/PanelPrincipal";
-//import { Estadisticas } from "./Inicio/Estadisticas";
-//import { ActividadReciente } from "./Inicio/ActividadReciente";
+import { Outlet } from "react-router-dom";
 
 export function AssetsDashboard() {
   const { t } = useLanguage();
@@ -124,7 +122,7 @@ export function AssetsDashboard() {
 
   return (
     <Fragment>
-      <PanelPrincipal stats={stats}></PanelPrincipal>
+      <Outlet></Outlet>
     </Fragment>
   );
 }

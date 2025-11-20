@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface NavigationState {
   module: string;
@@ -17,8 +17,8 @@ interface NavigationContextType {
   setSelectedBuildingId: (id: string | null) => void;
   selectedUnitId: string | null;
   setSelectedUnitId: (id: string | null) => void;
-  viewMode: 'list' | 'detail';
-  setViewMode: (mode: 'list' | 'detail') => void;
+  viewMode: "list" | "detail";
+  setViewMode: (mode: "list" | "detail") => void;
   navigationHistory: NavigationState[];
   canGoBack: boolean;
   canGoForward: boolean;
@@ -26,18 +26,22 @@ interface NavigationContextType {
   goForward: () => void;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextType | undefined>(
+  undefined
+);
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [activeModule, setActiveModule] = useState('edificios');
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [activeSection, setActiveSection] = useState('dashboard');
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [activeModule, setActiveModule] = useState("inicio");
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(
+    null
+  );
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
-  const [navigationHistory, setNavigationHistory] = useState<NavigationState[]>([
-    { module: 'edificios', tab: 'dashboard', section: 'dashboard' }
-  ]);
+  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
+  const [navigationHistory, setNavigationHistory] = useState<NavigationState[]>(
+    [{ module: "inicio", tab: "dashboard", section: "dashboard" }]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleSetActiveModule = (module: string) => {
@@ -117,8 +121,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 export function useNavigation() {
   const context = useContext(NavigationContext);
   if (!context) {
-    throw new Error('useNavigation must be used within NavigationProvider');
+    throw new Error("useNavigation must be used within NavigationProvider");
   }
   return context;
 }
-

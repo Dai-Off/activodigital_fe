@@ -12,8 +12,11 @@ import {
 } from "lucide-react";
 import { useLanguage } from "~/contexts/LanguageContext";
 
-export function PanelPrincipal({ stats }: { stats: any }) {
+export function PanelPrincipal() {
   const { t } = useLanguage();
+  const stats = {
+    totalAssets: 5,
+  };
   return (
     <div className="space-y-6">
       {/* Layout Principal */}

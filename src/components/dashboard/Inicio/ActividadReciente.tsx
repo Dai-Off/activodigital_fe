@@ -12,7 +12,8 @@ import {
   LucideZap,
 } from "lucide-react";
 
-export function ActividadReciente({ stats }: { stats: any }) {
+export function ActividadReciente() {
+  const stats = {};
   console.log(stats);
   return (
     <div className="h-full flex flex-col gap-3">
