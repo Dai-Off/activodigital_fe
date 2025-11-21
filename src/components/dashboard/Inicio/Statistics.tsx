@@ -9,7 +9,7 @@ import {
   LucideTrendingUp,
 } from "lucide-react";
 
-export function Estadisticas() {
+export function Statistics() {
   return (
     <div className="h-full flex flex-col gap-3">
       <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 flex items-center gap-2 flex-shrink-0">

@@ -12,9 +12,71 @@ import {
   LucideZap,
 } from "lucide-react";
 
-export function ActividadReciente() {
-  const stats = {};
-  console.log(stats);
+export function RecentActivity() {
+  interface activityInterface {
+    type: number;
+    title: string;
+    nameUser: string;
+    date: string;
+    nameBuilding: string;
+  }
+  function Activity({
+    type,
+    title,
+    nameUser,
+    nameBuilding,
+    date,
+  }: activityInterface) {
+    let TypeActivity: any = {
+      1: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      2: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      3: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      4: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      5: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      6: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      7: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      8: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+      9: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-blue-100">
+          <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
+        </div>
+      ),
+    };
+    console.log(type);
+  }
+
   return (
     <div className="h-full flex flex-col gap-3">
       <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 flex items-center gap-2 flex-shrink-0">

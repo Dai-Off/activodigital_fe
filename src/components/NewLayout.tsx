@@ -17,7 +17,7 @@ function NewLayoutContent() {
   const params = useParams<{ id?: string }>();
 
   // Intentar obtener navegación, con valores por defecto si falla
-  let activeModule = "edificios";
+  let activeModule = "inicio";
   let activeSection = "dashboard";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;

@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { AssetsDashboard } from "~/components/dashboard/AssetsDashboard";
-import { ActividadReciente } from "~/components/dashboard/Inicio/ActividadReciente";
-import { Estadisticas } from "~/components/dashboard/Inicio/Estadisticas";
-import { PanelPrincipal } from "~/components/dashboard/Inicio/PanelPrincipal";
+import { ActividadReciente } from "~/components/dashboard/Inicio/RecentActivity";
+import { Estadisticas } from "~/components/dashboard/Inicio/Statistics";
+import { PanelPrincipal } from "~/components/dashboard/Inicio/MainPanel";
 import ErrorBoundary from "~/components/ErrorBoundary";
 import ProtectedRoute from "~/components/ProtectedRoute";
 

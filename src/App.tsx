@@ -39,9 +39,9 @@ import TermsAndConditions from "./components/TermsAndConditions";
 // Página de lista de secciones (opcional)
 import { useTranslation } from "react-i18next";
 import { AssetsDashboard } from "./components/dashboard/AssetsDashboard";
-import { PanelPrincipal } from "./components/dashboard/Inicio/PanelPrincipal";
-import { Estadisticas } from "./components/dashboard/Inicio/Estadisticas";
-import { ActividadReciente } from "./components/dashboard/Inicio/ActividadReciente";
+import { MainPanel } from "./components/dashboard/Inicio/MainPanel";
+import { Statistics } from "./components/dashboard/Inicio/Statistics";
+import { RecentActivity } from "./components/dashboard/Inicio/RecentActivity";
 const SectionsListPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -148,12 +148,9 @@ function App() {
                     </ProtectedRoute>
                   }
                 >
-                  <Route index element={<PanelPrincipal />}></Route>
-                  <Route path="estadisticas" element={<Estadisticas />}></Route>
-                  <Route
-                    path="actividad"
-                    element={<ActividadReciente />}
-                  ></Route>
+                  <Route index element={<MainPanel />}></Route>
+                  <Route path="estadisticas" element={<Statistics />}></Route>
+                  <Route path="actividad" element={<RecentActivity />}></Route>
                 </Route>
                 <Route
                   path="/activos"
