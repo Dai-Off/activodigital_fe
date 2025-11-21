@@ -100,6 +100,17 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       mapRef.current.flyTo([location.lat, location.lng], 16, { animate: true });
     }
   }, [location]);
+  
+  // Efecto adicional para actualizar location cuando cambia initialData
+  useEffect(() => {
+    if (initialData.latitude != null && initialData.longitude != null && 
+        initialData.latitude !== 0 && initialData.longitude !== 0) {
+      const newLocation = { lat: initialData.latitude, lng: initialData.longitude };
+      if (!location || location.lat !== newLocation.lat || location.lng !== newLocation.lng) {
+        setLocation(newLocation);
+      }
+    }
+  }, [initialData.latitude, initialData.longitude]);
 
   // --- Geocode (search button) ---
   const handleGeocode = async () => {
