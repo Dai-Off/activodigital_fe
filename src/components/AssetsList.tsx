@@ -6,6 +6,7 @@ import { BuildingCarousel } from '../components/BuildingCarousel';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import CreateBuildingMethodSelection from './buildings/CreateBuildingMethodSelection';
 
 import {
   BuildingsApiService,
@@ -27,7 +28,7 @@ import {
   type PersistedEnergyCertificate,
 } from '../services/energyCertificates';
 
-import { getLatestRating } from '../utils/energyCalculations';
+import { getLatestRating, getCEEColor } from '../utils/energyCalculations';
 import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
 import {
   calculateESGScore,
@@ -72,27 +73,6 @@ function getCityAndDistrict(address: string): string {
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
 }
 
-// Función helper para obtener el color de la clase energética
-function getCEEColor(rating: string): string {
-  switch (rating) {
-    case 'A':
-      return 'bg-green-600';
-    case 'B':
-      return 'bg-green-500';
-    case 'C':
-      return 'bg-yellow-400';
-    case 'D':
-      return 'bg-yellow-300';
-    case 'E':
-      return 'bg-orange-500';
-    case 'F':
-      return 'bg-red-500';
-    case 'G':
-      return 'bg-red-600';
-    default:
-      return 'bg-gray-400';
-  }
-}
 
 function PaginationBar({
   page,
@@ -235,135 +215,12 @@ function PaginationBar({
   );
 }
 
-/* ------------------------- Componentes de Indicadores ------------------------- */
-
-// Componente para el indicador CEE (Certificado de Eficiencia Energética)
-/*
-function _CEERatingIndicator({
-  building,
-  certificates,
-}: {
-  building: Building;
-  certificates: PersistedEnergyCertificate[];
-}) {
-  const buildingCerts = certificates.filter((cert) => cert.buildingId === building.id);
-
-  if (buildingCerts.length === 0) {
-    return <span className="text-sm text-gray-400">-</span>;
-  }
-
-  const rating = getLatestRating(buildingCerts);
-
-  const color = getCEEColor(rating);
-
-  return (
-    <div className={`w-6 h-6 rounded-full ${color} flex items-center justify-center`}>
-      <span className="text-xs font-medium text-white">{rating}</span>
-    </div>
-  );
-}
-*/
-
-// Componente para el indicador ESG
-/*
-function _ESGScoreIndicator({
-  building,
-  esgData,
-}: {
-  building: Building;
-  esgData: Map<string, ESGResponse>;
-}) {
-  const esg = esgData.get(building.id);
-
-  if (!esg) return <span className="text-sm text-gray-400">-</span>;
-  if (esg.status === 'incomplete') return <span className="text-sm text-gray-400">-</span>;
-  if (esg.status === 'complete' && !esg.data) return <span className="text-sm text-gray-400">-</span>;
-
-  const label = esg.data!.label;
-  const color = getESGLabelColor(label);
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-1">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill={color}
-        className="w-6 h-6"
-        style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
-        aria-hidden="true"
-      >
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-      </svg>
-      <span className="text-xs font-medium text-gray-700">{label}</span>
-    </div>
-  );
-}
-*/
-
-// Componente para el indicador de metros cuadrados
-/*
-function _SquareMetersIndicator({ building }: { building: Building }) {
-  if (building.squareMeters && building.squareMeters > 0) {
-    const formattedArea = building.squareMeters.toLocaleString('es-ES', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-    return <span className="text-sm font-medium text-gray-900">{formattedArea}</span>;
-  }
-  return <span className="text-sm text-gray-400">-</span>;
-}
-*/
-
-// Componente para mostrar el estado del edificio (incluye “Completado” si el libro está completo)
-/*
-function _BuildingStatusIndicator({
-  building,
-  digitalBooks,
-}: {
-  building: Building;
-  digitalBooks: Map<string, DigitalBook>;
-}) {
-  const totalSections = 8;
-  const book = digitalBooks.get(building.id);
-  const completedSections = book?.progress || 0;
-
-  const { t } = useTranslation();
-
-  if (completedSections === totalSections) {
-    return (
-      <span className="text-sm font-medium text-green-600">
-        {t('completed', { defaultValue: 'Completado' })} {completedSections}/{totalSections}
-      </span>
-    );
-  }
-
-  const statusLabel = (() => {
-    switch (building.status) {
-      case 'draft':
-        return t('pending', { defaultValue: 'Pendiente' });
-      case 'ready_book':
-        return t('ready', { defaultValue: 'Listo' });
-      case 'with_book':
-        return t('inProgress', { defaultValue: 'En curso' });
-      default:
-        // fallback a etiqueta calculada por el servicio
-        const lbl = getBuildingStatusLabel(building.status);
-        return t(lbl, { defaultValue: lbl });
-    }
-  })();
-
-  return (
-    <span className="text-sm text-gray-900">
-      {statusLabel} {completedSections}/{totalSections}
-    </span>
-  );
-}
-
 /* --------------------------------- Página --------------------------------- */
 export default function AssetsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -618,8 +475,8 @@ export default function AssetsList() {
       <div className="pt-2 pb-8 max-w-full">
         {/* Botones de acción - Todos los roles pueden crear edificios */}
         <div className="flex justify-end gap-3 mb-6">
-            <Link
-                to="/edificios/crear"
+            <button
+                onClick={() => setIsCreateModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <svg
@@ -633,16 +490,18 @@ export default function AssetsList() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 {t('createBuilding', { defaultValue: 'Crear Edificio' })}
-              </Link>
+              </button>
         </div>
 
-        {/* Hack para evitar warning TS de componente no usado */}
-        {false && buildings[0] && (
-          <span className="hidden">
-            {/** Mantener referencia a tipos **/}
-            {JSON.stringify({ id: buildings[0].id })}
-          </span>
-        )}
+        {/* Modal de selección de método */}
+        <CreateBuildingMethodSelection
+          isOpen={isCreateModalOpen}
+          onSelectMethod={(method) => {
+            setIsCreateModalOpen(false);
+            navigate('/edificios/crear', { state: { method } });
+          }}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
 
         <div className="mb-8" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
           {error && (
