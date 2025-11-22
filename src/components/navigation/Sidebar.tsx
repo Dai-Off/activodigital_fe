@@ -34,6 +34,8 @@ export function Sidebar() {
     t = (key: string, defaultValue?: string) => defaultValue || key;
   }
 
+  /* Listado en donde se crean los iconos para navegar en el Sidebar principal */
+
   const menuItems = [
     {
       id: "inicio",
@@ -57,7 +59,7 @@ export function Sidebar() {
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
-        navigate("/Dashboard");
+        navigate("/dashboard");
         break;
       case "edificios":
         if (setActiveSection) setActiveSection("dashboard");
@@ -77,7 +79,7 @@ export function Sidebar() {
     if (setActiveSection) setActiveSection("dashboard");
     if (setActiveTab) setActiveTab("dashboard");
     if (setViewMode) setViewMode("list");
-    navigate("/activos");
+    navigate("/dashboard");
   };
 
   return (

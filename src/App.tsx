@@ -42,6 +42,7 @@ import { AssetsDashboard } from "./components/dashboard/AssetsDashboard";
 import { MainPanel } from "./components/dashboard/Inicio/MainPanel";
 import { Statistics } from "./components/dashboard/Inicio/Statistics";
 import { RecentActivity } from "./components/dashboard/Inicio/RecentActivity";
+
 const SectionsListPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -157,11 +158,13 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ErrorBoundary>
-                        <div />
+                        <AssetsDashboard />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
-                />
+                >
+                  <Route index element={<Statistics />}></Route>
+                </Route>
                 <Route
                   path="/cfo-dashboard"
                   element={

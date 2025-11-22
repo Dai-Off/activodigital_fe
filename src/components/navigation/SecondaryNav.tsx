@@ -1,23 +1,16 @@
-//import { LucideActivity, LucideChartColumn, LucideHouse } from "lucide-react";
-//import { useState } from "react";
-//import { useNavigation } from "../../contexts/NavigationContext";
-//import { useLanguage } from "../../contexts/LanguageContext";
-//import { useNavigate } from "react-router-dom";
-// import {
-//   BuildingsApiService,
-//   type Building,
-// } from "../../services/buildingsApi";
-// import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
-
 import { useLocation } from "react-router-dom";
 import { DashboardComponent } from "./DashboardComponent";
 
 export function SecondaryNav() {
-  //const { t } = useLanguage();
   const location = useLocation();
   const currentPath = location.pathname;
+
   const segments = currentPath.substring(1).split("/");
   const pathName = segments[0].toLowerCase();
+
+  /* Objeto en donde se colocará el componente que quieres que se cargue en el 
+      Sidebar secundario según la ruta ejem: nombreRuta: <TuComponente/>
+  */
   const components: any = {
     dashboard: <DashboardComponent />,
   };
