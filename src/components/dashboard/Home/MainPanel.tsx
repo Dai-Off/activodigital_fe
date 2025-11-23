@@ -294,28 +294,32 @@ export function MainPanel() {
                   <Zap className="w-4 h-4 opacity-80"></Zap>
                   <span className="text-xs">Eficiencia Energética</span>
                 </div>
-                <span className="text-sm">A</span>
+                <span className="text-sm">
+                  {stats.averageEnergyClass ? stats.averageEnergyClass : "-"}
+                </span>
               </div>
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
                   <Users className="w-4 h-4 opacity-80"></Users>
                   <span className="text-xs">Ocupación Media</span>
                 </div>
-                <span className="text-sm">95%</span>
+                <span className="text-sm">-</span>
               </div>
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
                   <FileText className="w-4 h-4 opacity-80"></FileText>
                   <span className="text-xs">Docs. Pendientes</span>
                 </div>
-                <span className="text-sm">3</span>
+                <span className="text-sm">
+                  {stats.pendingBooks ? stats.pendingBooks : "-"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 opacity-80"></Calendar>
                   <span className="text-xs">Próximos eventos</span>
                 </div>
-                <span className="text-sm">12</span>
+                <span className="text-sm">-</span>
               </div>
             </div>
           </div>

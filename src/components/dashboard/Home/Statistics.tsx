@@ -8,8 +8,40 @@ import {
   LucideTriangleAlert,
   LucideTrendingUp,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { DashboardLoading } from "~/components/ui/dashboardLoading";
+import { useLanguage } from "~/contexts/LanguageContext";
+import {
+  BuildingsApiService,
+  type DashboardStats,
+} from "~/services/buildingsApi";
 
 export function Statistics() {
+  const { t } = useLanguage();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    BuildingsApiService.getDashboardStats()
+      .then(setStats)
+      .catch(() => setStats(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <DashboardLoading />;
+  }
+
+  if (!stats) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12 text-gray-500">
+          {t("errorLoadingStats", "Error al cargar estadísticas")}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col gap-3">
       <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100 flex items-center gap-2 flex-shrink-0">
@@ -25,26 +57,26 @@ export function Statistics() {
         <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white">
           <Building2 className="w-5 h-5 mb-1.5 opacity-80"></Building2>
           <p className="text-xs opacity-90 mb-0.5">Total Edificios</p>
-          <p className="text-2xl mb-0.5">12</p>
-          <p className="text-xs opacity-75">+2 este mes</p>
+          <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
+          <p className="text-xs opacity-75"></p>
         </div>
         <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg text-white">
           <LucideCircleCheckBig className="w-5 h-5 mb-1.5 opacity-80"></LucideCircleCheckBig>
           <p className="text-xs opacity-90 mb-0.5">Cumplimiento</p>
-          <p className="text-2xl mb-0.5">82%</p>
+          <p className="text-2xl mb-0.5">0%</p>
           <p className="text-xs opacity-75">Promedio general</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg text-white">
           <LucideFileText className="w-5 h-5 mb-1.5 opacity-80"></LucideFileText>
           <p className="text-xs opacity-90 mb-0.5">Libros Completados</p>
-          <p className="text-2xl mb-0.5">7</p>
-          <p className="text-xs opacity-75">de 12 edificios</p>
+          <p className="text-2xl mb-0.5">{stats.completedBooks}</p>
+          <p className="text-xs opacity-75">de {stats.totalAssets} edificios</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white">
           <LucideTriangleAlert className="w-5 h-5 mb-1.5 opacity-80"></LucideTriangleAlert>
           <p className="text-xs opacity-90 mb-0.5">Alertas Activas</p>
-          <p className="text-2xl mb-0.5">8</p>
-          <p className="text-xs opacity-75">3 urgentes</p>
+          <p className="text-2xl mb-0.5">0</p>
+          <p className="text-xs opacity-75"></p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
@@ -150,7 +182,9 @@ export function Statistics() {
             <Zap className="w-4 h-4 text-yellow-600"></Zap>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl">A</span>
+            <span className="text-2xl">
+              {stats.averageEnergyClass ? stats.averageEnergyClass : "-"}
+            </span>
             <span className="text-xs text-gray-500">Promedio de clase</span>
           </div>
         </div>
@@ -160,7 +194,7 @@ export function Statistics() {
             <Clock className="w-4 h-4 text-blue-600"></Clock>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl">15</span>
+            <span className="text-2xl">0</span>
             <span className="text-xs text-gray-500">Programados este mes</span>
           </div>
         </div>
@@ -170,8 +204,8 @@ export function Statistics() {
             <LucideTrendingUp className="w-4 h-4 text-green-600"></LucideTrendingUp>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl">8.2%</span>
-            <span className="text-xs text-green-600">+0.5% vs. anterior</span>
+            <span className="text-2xl">-</span>
+            <span className="text-xs text-green-600"></span>
           </div>
         </div>
       </div>
