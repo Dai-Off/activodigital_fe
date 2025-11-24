@@ -29,11 +29,12 @@ import TermsAndConditions from "../components/TermsAndConditions";
 import { AssetsDashboard } from "../components/dashboard/AssetsDashboard";
 
 // Componentes Dashboard
-import { MainPanel } from "../components/dashboard/MainPanel";
-import { Statistics } from "../components/dashboard/Statistics";
-import { RecentActivity } from "../components/dashboard/RecentActivity";
+import { MainPanel } from "../components/dashboard/Main/MainPanel";
+import { Statistics } from "../components/dashboard/Main/Statistics";
+import { RecentActivity } from "../components/dashboard/Main/RecentActivity";
 import SectionsList from "~/components/digitalbook/SectionsList";
 import { useTranslation } from "react-i18next";
+import { AssetsMain } from "~/components/dashboard/Assets/AssetsMain";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -148,13 +149,11 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <AssetsDashboard />
+                <AssetsMain />
               </ErrorBoundary>
             </ProtectedRoute>
           }
-        >
-          <Route index element={<Statistics />}></Route>
-        </Route>
+        ></Route>
 
         <Route
           path="/cfo-dashboard"

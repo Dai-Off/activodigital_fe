@@ -39,9 +39,9 @@ import TermsAndConditions from "./components/TermsAndConditions";
 // Página de lista de secciones (opcional)
 import { useTranslation } from "react-i18next";
 import { AssetsDashboard } from "./components/dashboard/AssetsDashboard";
-import { MainPanel } from "./components/dashboard/MainPanel";
-import { Statistics } from "./components/dashboard/Statistics";
-import { RecentActivity } from "./components/dashboard/RecentActivity";
+import { MainPanel } from "./components/dashboard/Main/MainPanel";
+import { Statistics } from "./components/dashboard/Main/Statistics";
+import { RecentActivity } from "./components/dashboard/Main/RecentActivity";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
