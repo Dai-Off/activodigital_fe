@@ -14,15 +14,35 @@ export function SecondaryNav() {
       Sidebar secundario según la ruta ejem: nombreRuta: <TuComponente/>
   */
   const components: any = {
-    dashboard: <SidebarDashboard />,
-    users: <SidebarUsers />,
-    assets: <SidebarAssets />,
-    buildings: <SidebarAssets />,
+    dashboard: <DashboardComponent />,
+    activos: <AssetsComponent />,
+    edificio: <AssetsComponent />, // Mostrar lista de activos también en rutas de edificio
   };
 
+  // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent
+  const isBuildingRoute =
+    currentPath.startsWith("/edificio/") ||
+    currentPath.startsWith("/libro-digital") ||
+    currentPath.startsWith("/cfo-intake");
+
+  const componentToShow = isBuildingRoute ? (
+    <AssetsComponent />
+  ) : (
+    components[pathName]
+  );
+
+  // AssetsComponent tiene su propio contenedor, así que no necesitamos el contenedor del SecondaryNav
+  const isAssetsComponent = isBuildingRoute || pathName === "activos";
+
+  if (isAssetsComponent) {
+    // AssetsComponent se renderiza con su propio contenedor
+    return componentToShow || null;
+  }
+
+  // Para otros componentes (como DashboardComponent), usar el contenedor del SecondaryNav
   return (
     <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <nav className="py-4">{components[pathName]}</nav>
+      <nav className="py-4">{componentToShow}</nav>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardLoading } from "~/components/ui/dashboardLoading";
+import { MainPanelLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
@@ -33,7 +33,7 @@ export function MainPanel() {
   }, []);
 
   if (loading) {
-    return <DashboardLoading />;
+    return <MainPanelLoading />;
   }
 
   if (!stats) {

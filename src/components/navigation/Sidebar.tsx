@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 
 export function Sidebar() {
   const navigate = useNavigate();
+  
+  // Debug: verificar que la sidebar se renderiza
+  console.log('Sidebar renderizado');
 
   let activeModule = "inicio";
   let setActiveModule: ((module: string) => void) | null = null;
@@ -93,7 +96,22 @@ export function Sidebar() {
   };
 
   return (
-    <div className="hidden md:flex fixed left-0 top-0 h-screen w-16 bg-[#1e3a8a] flex-col items-center py-6 gap-6 z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div 
+      className="flex fixed left-0 top-0 h-screen w-16 bg-[#1e3a8a] flex-col items-center py-6 gap-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+      style={{ 
+        display: 'flex',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 10000,
+        visibility: 'visible',
+        opacity: 1,
+        width: '64px',
+        height: '100vh',
+        pointerEvents: 'auto'
+      }}
+      data-sidebar="true"
+    >
       {/* Logo */}
       <button
         onClick={handleLogoClick}
