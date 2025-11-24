@@ -29,9 +29,9 @@ import TermsAndConditions from "../components/TermsAndConditions";
 import { AssetsDashboard } from "../components/dashboard/AssetsDashboard";
 
 // Componentes Dashboard
-import { MainPanel } from "../components/dashboard/Home/MainPanel";
-import { Statistics } from "../components/dashboard/Home/Statistics";
-import { RecentActivity } from "../components/dashboard/Home/RecentActivity";
+import { MainPanel } from "../components/dashboard/MainPanel";
+import { Statistics } from "../components/dashboard/Statistics";
+import { RecentActivity } from "../components/dashboard/RecentActivity";
 import SectionsList from "~/components/digitalbook/SectionsList";
 import { useTranslation } from "react-i18next";
 
