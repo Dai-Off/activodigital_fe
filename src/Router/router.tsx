@@ -266,7 +266,7 @@ export const AppRouter = () => {
         }
       />
       <Route
-        path="/buildingss/create"
+        path="/buildings/create"
         element={
           <ProtectedRoute>
             <CreateBuildingWizard />
