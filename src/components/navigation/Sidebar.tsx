@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 
 export function Sidebar() {
   const navigate = useNavigate();
-  
+
   // Debug: verificar que la sidebar se renderiza
-  console.log('Sidebar renderizado');
+  console.log("Sidebar renderizado");
 
   let activeModule = "inicio";
   let setActiveModule: ((module: string) => void) | null = null;
@@ -60,7 +60,7 @@ export function Sidebar() {
   const handleModuleChange = (moduleId: string) => {
     if (setActiveModule) setActiveModule(moduleId);
     if (setSelectedBuildingId) setSelectedBuildingId(null);
-
+    console.log(moduleId, "hola");
     // Establecer sección y tab predeterminados según el módulo
     switch (moduleId) {
       case "inicio":
@@ -96,19 +96,19 @@ export function Sidebar() {
   };
 
   return (
-    <div 
-      className="flex fixed left-0 top-0 h-screen w-16 bg-[#1e3a8a] flex-col items-center py-6 gap-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
-      style={{ 
-        display: 'flex',
-        position: 'fixed',
+    <div
+      className="flex fixed left-0 top-0 h-screen w-16 bg-[#1e3a8a] flex-col items-center py-6 gap-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      style={{
+        display: "flex",
+        position: "fixed",
         left: 0,
         top: 0,
         zIndex: 10000,
-        visibility: 'visible',
+        visibility: "visible",
         opacity: 1,
-        width: '64px',
-        height: '100vh',
-        pointerEvents: 'auto'
+        width: "64px",
+        height: "100vh",
+        pointerEvents: "auto",
       }}
       data-sidebar="true"
     >
