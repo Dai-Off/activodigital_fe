@@ -2,7 +2,7 @@ import { LucideActivity, LucideChartColumn, LucideHouse } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export function DashboardComponent() {
+export function SidebarDashboard() {
   const [activeItem, setActiveItem] = useState("main");
   const navigate = useNavigate();
   const menuItems = [
@@ -16,13 +16,13 @@ export function DashboardComponent() {
       id: "stats",
       label: "Estadísticas",
       Icon: LucideChartColumn,
-      route: "/dashboard/estadisticas",
+      route: "/dashboard/statistics",
     },
     {
       id: "activity",
       label: "Actividad Reciente",
       Icon: LucideActivity,
-      route: "/dashboard/actividad",
+      route: "/dashboard/activity",
     },
   ];
 

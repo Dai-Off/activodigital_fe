@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
-import { DashboardComponent } from "./DashboardComponent";
+import { SidebarDashboard } from "./SidebarDashboard";
+import SidebarUsers from "./SidebarUsers";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -12,7 +13,8 @@ export function SecondaryNav() {
       Sidebar secundario según la ruta ejem: nombreRuta: <TuComponente/>
   */
   const components: any = {
-    dashboard: <DashboardComponent />,
+    dashboard: <SidebarDashboard />,
+    users: <SidebarUsers />,
   };
 
   return (

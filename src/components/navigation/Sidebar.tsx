@@ -1,4 +1,4 @@
-import { Building2, House } from "lucide-react";
+import { Building2, House, Users } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +47,11 @@ export function Sidebar() {
       icon: Building2,
       label: t ? t("buildings", "Edificios") : "Edificios",
     },
+    {
+      id: "usuarios",
+      icon: Users,
+      label: t ? t("users", "Usuarios") : "Usuarios",
+    },
   ];
 
   const handleModuleChange = (moduleId: string) => {
@@ -61,11 +66,17 @@ export function Sidebar() {
         if (setViewMode) setViewMode("list");
         navigate("/dashboard");
         break;
+      case "usuarios":
+        if (setActiveSection) setActiveSection("dashboard");
+        if (setActiveTab) setActiveTab("dashboard");
+        if (setViewMode) setViewMode("list");
+        navigate("/users");
+        break;
       case "edificios":
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
-        navigate("/activos");
+        navigate("/assets");
         break;
       default:
         if (setActiveSection) setActiveSection("dashboard");
@@ -74,7 +85,6 @@ export function Sidebar() {
   };
 
   const handleLogoClick = () => {
-    if (setSelectedBuildingId) setSelectedBuildingId(null);
     if (setActiveModule) setActiveModule("inicio");
     if (setActiveSection) setActiveSection("dashboard");
     if (setActiveTab) setActiveTab("dashboard");

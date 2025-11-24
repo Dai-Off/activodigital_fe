@@ -140,8 +140,20 @@ export const AppRouter = () => {
           }
         >
           <Route index element={<MainPanel />}></Route>
-          <Route path="/statistics" element={<Statistics />}></Route>
-          <Route path="/activity" element={<RecentActivity />}></Route>
+          <Route path="statistics" element={<Statistics />}></Route>
+          <Route path="activity" element={<RecentActivity />}></Route>
+        </Route>
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AssetsDashboard />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        >
+          {/*<Route index element={<TuComponenteUsers/>}></Route>*/}
         </Route>
         <Route
           path="/assets"
@@ -152,9 +164,7 @@ export const AppRouter = () => {
               </ErrorBoundary>
             </ProtectedRoute>
           }
-        >
-          <Route index element={<Statistics />}></Route>
-        </Route>
+        ></Route>
 
         <Route
           path="/cfo-dashboard"
