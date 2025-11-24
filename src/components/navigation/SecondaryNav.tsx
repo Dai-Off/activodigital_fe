@@ -17,6 +17,7 @@ export function SecondaryNav() {
     dashboard: <SidebarDashboard />,
     users: <SidebarUsers />,
     assets: <SidebarAssets />,
+    buildings: <SidebarAssets />,
   };
 
   return (
