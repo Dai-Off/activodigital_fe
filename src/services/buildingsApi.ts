@@ -1,4 +1,4 @@
-import { apiFetch } from './api';
+import { apiFetch } from "./api";
 
 // Interfaces para edificios (backend API)
 export interface Building {
@@ -7,13 +7,13 @@ export interface Building {
   address: string;
   cadastralReference?: string;
   constructionYear?: number;
-  typology: 'residential' | 'mixed' | 'commercial';
+  typology: "residential" | "mixed" | "commercial";
   numFloors?: number;
   numUnits?: number;
   lat?: number;
   lng?: number;
   images: BuildingImage[];
-  status: 'draft' | 'ready_book' | 'with_book';
+  status: "draft" | "ready_book" | "with_book";
   price?: number;
   technicianEmail?: string;
   cfoEmail?: string;
@@ -21,8 +21,8 @@ export interface Building {
   ownerId: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
-  potentialValue?: number;     // Valor potencial (por defecto 0)
-  squareMeters?: number;       // Superficie en metros cuadrados
+  potentialValue?: number; // Valor potencial (por defecto 0)
+  squareMeters?: number; // Superficie en metros cuadrados
   createdAt: string;
   updatedAt: string;
 }
@@ -41,7 +41,7 @@ export interface CreateBuildingPayload {
   address: string;
   cadastralReference?: string;
   constructionYear?: number;
-  typology: 'residential' | 'mixed' | 'commercial';
+  typology: "residential" | "mixed" | "commercial";
   numFloors?: number;
   numUnits?: number;
   lat?: number;
@@ -53,8 +53,8 @@ export interface CreateBuildingPayload {
   propietarioEmail?: string;
   // Campos financieros
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
-  potentialValue?: number;     // Valor potencial (por defecto 0)
-  squareMeters?: number;       // Superficie en metros cuadrados
+  potentialValue?: number; // Valor potencial (por defecto 0)
+  squareMeters?: number; // Superficie en metros cuadrados
 }
 
 export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> {}
@@ -103,28 +103,28 @@ export interface DashboardStats {
   totalAssets: number;
   totalRehabilitationCost: number;
   totalPotentialValue: number;
-  
+
   // Métricas ambientales y energéticas
   totalSurfaceArea: number;
   totalEmissions: number;
   averageEnergyClass: string | null;
   averageEnergyRating: number | null;
-  
+
   // Métricas de completitud
   completedBooks: number;
   pendingBooks: number;
   draftBooks: number;
   completionPercentage: number;
-  
+
   // Financiación verde
   greenFinancingEligiblePercentage: number;
   greenFinancingEligibleCount: number;
-  
+
   // Promedios
   averageUnitsPerBuilding: number;
   averageBuildingAge: number;
   averageFloorsPerBuilding: number;
-  
+
   // Tipología
   mostCommonTypology: string | null;
   typologyDistribution: {
@@ -132,7 +132,7 @@ export interface DashboardStats {
     mixed: number;
     commercial: number;
   };
-  
+
   // ESG
   averageESGScore: number | null;
 }
@@ -145,49 +145,59 @@ export interface ApiResponse<T> {
 
 // Servicios de edificios conectados al backend
 export class BuildingsApiService {
-  
   // Obtener todos los edificios del usuario (filtrado por rol en backend)
   static async getAllBuildings(): Promise<Building[]> {
-    const response = await apiFetch('/edificios', { method: 'GET' });
+    const response = await apiFetch("/edificios", { method: "GET" });
     // La API puede devolver directamente el array o wrapped en { data: [...] }
     return Array.isArray(response) ? response : response.data || [];
   }
 
   // Obtener un edificio específico
   static async getBuildingById(id: string): Promise<Building> {
-    const response = await apiFetch(`/edificios/${id}`, { method: 'GET' });
+    const response = await apiFetch(`/edificios/${id}`, { method: "GET" });
     return response.data || response;
   }
 
   // Crear un nuevo edificio (solo PROPIETARIOS)
-  static async createBuilding(payload: CreateBuildingPayload): Promise<Building> {
-    const response = await apiFetch('/edificios', {
-      method: 'POST',
+  static async createBuilding(
+    payload: CreateBuildingPayload
+  ): Promise<Building> {
+    const response = await apiFetch("/edificios", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
     return response.data || response;
   }
 
   // Subir imágenes para un edificio
-  static async uploadBuildingImages(buildingId: string, images: BuildingImage[]): Promise<BuildingImage[]> {
+  static async uploadBuildingImages(
+    buildingId: string,
+    images: BuildingImage[]
+  ): Promise<BuildingImage[]> {
     const response = await apiFetch(`/edificios/${buildingId}/images`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ images }),
     });
     return response.data || response;
   }
 
   // Eliminar una imagen de un edificio
-  static async deleteBuildingImage(buildingId: string, imageId: string): Promise<void> {
+  static async deleteBuildingImage(
+    buildingId: string,
+    imageId: string
+  ): Promise<void> {
     await apiFetch(`/edificios/${buildingId}/images/${imageId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
   // Actualizar un edificio existente
-  static async updateBuilding(id: string, payload: UpdateBuildingPayload): Promise<Building> {
+  static async updateBuilding(
+    id: string,
+    payload: UpdateBuildingPayload
+  ): Promise<Building> {
     const response = await apiFetch(`/edificios/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(payload),
     });
     return response.data || response;
@@ -195,28 +205,32 @@ export class BuildingsApiService {
 
   // Obtener lista de técnicos disponibles (solo PROPIETARIOS)
   static async getTechnicians(): Promise<Technician[]> {
-    const response = await apiFetch('/users/technicians', { method: 'GET' });
+    const response = await apiFetch("/users/technicians", { method: "GET" });
     return Array.isArray(response) ? response : response.data || [];
   }
 
   // Asignar técnico a un edificio (solo PROPIETARIOS)
-  static async assignTechnician(payload: TechnicianAssignmentPayload): Promise<void> {
-    await apiFetch('/users/assign-technician', {
-      method: 'POST',
+  static async assignTechnician(
+    payload: TechnicianAssignmentPayload
+  ): Promise<void> {
+    await apiFetch("/users/assign-technician", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
   // Obtener estadísticas del dashboard
   static async getDashboardStats(): Promise<DashboardStats> {
-    const response = await apiFetch('/dashboard/stats', { method: 'GET' });
+    const response = await apiFetch("/dashboard/stats", { method: "GET" });
     return response.data || response;
   }
 
   // Validar asignaciones de técnico y CFO antes de crear edificio
-  static async validateUserAssignments(payload: ValidateAssignmentsRequest): Promise<ValidateAssignmentsResponse> {
-    const response = await apiFetch('/edificios/validate-assignments', {
-      method: 'POST',
+  static async validateUserAssignments(
+    payload: ValidateAssignmentsRequest
+  ): Promise<ValidateAssignmentsResponse> {
+    const response = await apiFetch("/edificios/validate-assignments", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
     return response.data || response;
@@ -226,10 +240,10 @@ export class BuildingsApiService {
 // Funciones de utilidad
 export const formatBuildingValue = (price?: number): string => {
   const value = price || 0;
-  
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
+
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -238,10 +252,10 @@ export const formatBuildingValue = (price?: number): string => {
 // Formatear coste de rehabilitación
 export const formatRehabilitationCost = (cost?: number): string => {
   const value = cost || 0;
-  
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
+
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -250,50 +264,52 @@ export const formatRehabilitationCost = (cost?: number): string => {
 // Formatear valor potencial
 export const formatPotentialValue = (value?: number): string => {
   const val = value || 0;
-  
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
+
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(val);
 };
 
-export const getBuildingStatusLabel = (status: Building['status']): string => {
+export const getBuildingStatusLabel = (status: Building["status"]): string => {
   switch (status) {
-    case 'draft':
-      return 'Pendiente';
-    case 'ready_book':
-      return 'Listo para libro';
-    case 'with_book':
-      return 'Con libro del edificio';
+    case "draft":
+      return "Pendiente";
+    case "ready_book":
+      return "Listo para libro";
+    case "with_book":
+      return "Con libro del edificio";
     default:
       return status;
   }
 };
 
-export const getBuildingTypologyLabel = (typology: Building['typology']): string => {
+export const getBuildingTypologyLabel = (
+  typology: Building["typology"]
+): string => {
   switch (typology) {
-    case 'residential':
-      return 'Residencial';
-    case 'mixed':
-      return 'Mixto';
-    case 'commercial':
-      return 'Comercial';
+    case "residential":
+      return "Residencial";
+    case "mixed":
+      return "Mixto";
+    case "commercial":
+      return "Comercial";
     default:
       return typology;
   }
 };
 
-export const getBuildingStatusColor = (status: Building['status']): string => {
+export const getBuildingStatusColor = (status: Building["status"]): string => {
   switch (status) {
-    case 'draft':
-      return 'text-orange-600 bg-orange-100';
-    case 'ready_book':
-      return 'text-blue-600 bg-blue-100';
-    case 'with_book':
-      return 'text-green-600 bg-green-100';
+    case "draft":
+      return "text-orange-600 bg-orange-100";
+    case "ready_book":
+      return "text-blue-600 bg-blue-100";
+    case "with_book":
+      return "text-green-600 bg-green-100";
     default:
-      return 'text-gray-600 bg-gray-100';
+      return "text-gray-600 bg-gray-100";
   }
 };

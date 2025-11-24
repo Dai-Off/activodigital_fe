@@ -81,6 +81,7 @@ src/
 El proyecto está configurado con GitHub Actions para deploy automático:
 
 1. **Configurar secreto en GitHub:**
+
    - Ve a Settings → Secrets and variables → Actions
    - Agrega `FLY_API_TOKEN` con el token de Fly.io
 
@@ -140,11 +141,11 @@ El sistema usa JWT tokens manejados por el backend:
 - `/login` - Formulario de login
 - `/register` - Formulario de registro
 - `/dashboard` - Dashboard principal (requiere autenticación)
-- `/documentos` - Gestión de documentos
-- `/mantenimiento` - Gestión de mantenimiento
-- `/cumplimiento` - Gestión de cumplimiento
-- `/unidades` - Gestión de unidades
-- `/libro-digital` - Libro del edificio
+- `/documents` - Gestión de documentos
+- `/maintenance` - Gestión de mantenimiento
+- `/compliance` - Gestión de cumplimiento
+- `/units` - Gestión de unidades
+- `/digital-book` - Libro del edificio
 
 ## Configuración de Desarrollo
 
