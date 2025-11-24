@@ -70,7 +70,7 @@ export function RecentActivity() {
 
     Caso 3: completar mantenimiento | Icono: CircleCheckBig | color: purple
 
-    Caso 4: generar informes financieros | Icono: ChartColumn | color: orange
+    Caso 4: generar informes | Icono: ChartColumn | color: orange
 
     Caso 5: programar eventos | Icono: Calendar | color: yellow
 
