@@ -1,6 +1,5 @@
 import { useLocation } from "react-router-dom";
 import { SidebarDashboard } from "./SidebarDashboard";
-import SidebarUsers from "./SidebarUsers";
 import { SidebarAssets } from "./SidebarAssets";
 
 export function SecondaryNav() {
@@ -14,19 +13,19 @@ export function SecondaryNav() {
       Sidebar secundario según la ruta ejem: nombreRuta: <TuComponente/>
   */
   const components: any = {
-    dashboard: <DashboardComponent />,
-    activos: <AssetsComponent />,
-    edificio: <AssetsComponent />, // Mostrar lista de activos también en rutas de edificio
+    dashboard: <SidebarDashboard />,
+    assets: <SidebarAssets />,
+    edificio: <SidebarAssets />, // Mostrar lista de activos también en rutas de edificio
   };
 
   // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent
   const isBuildingRoute =
-    currentPath.startsWith("/edificio/") ||
-    currentPath.startsWith("/libro-digital") ||
+    currentPath.startsWith("/building/") ||
+    currentPath.startsWith("/digital-book") ||
     currentPath.startsWith("/cfo-intake");
 
   const componentToShow = isBuildingRoute ? (
-    <AssetsComponent />
+    <SidebarAssets />
   ) : (
     components[pathName]
   );

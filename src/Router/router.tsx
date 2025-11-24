@@ -102,7 +102,7 @@ const SectionsListPage = () => {
 export const AppRouter = () => {
   /* Reglas para las rutas */
 
-  /* La ruta debe estar en inglés y en minusculas ejem: /login, /buildings y así */
+  /* La ruta debe estar en inglés y en minusculas ejem: /login, /building y así */
 
   /* Si la ruta require un espacio utilizar un guión (-) ejem: /digital-book */
 
@@ -194,7 +194,7 @@ export const AppRouter = () => {
           }
         />
         <Route
-          path="/buildings/:id/units"
+          path="/building/:id/units"
           element={
             <ProtectedRoute>
               <BuildingUnits />
@@ -202,7 +202,7 @@ export const AppRouter = () => {
           }
         />
         <Route
-          path="/buildings/:id/documents"
+          path="/building/:id/documents"
           element={
             <ProtectedRoute>
               <BuildingDocuments />
@@ -242,7 +242,7 @@ export const AppRouter = () => {
           }
         />
         <Route
-          path="/buildings/:id"
+          path="/building/:id"
           element={
             <ProtectedRoute>
               <BuildingDetail />
@@ -277,7 +277,7 @@ export const AppRouter = () => {
         }
       />
       <Route
-        path="/buildings/create"
+        path="/building/create"
         element={
           <ProtectedRoute>
             <CreateBuildingWizard />
