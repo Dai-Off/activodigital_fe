@@ -212,7 +212,7 @@ export function AppHeader() {
     if (setActiveTab) setActiveTab("todos");
     setSearchTerm("");
     setShowSearchResults(false);
-    navigate(`/edificio/${buildingId}`);
+    navigate(`/building/${buildingId}`);
   };
 
   const handleBackToList = () => {

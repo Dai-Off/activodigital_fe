@@ -39,46 +39,52 @@ function NewLayoutContent() {
 
   // Detectar si estamos en una ruta de detalle de edificio
   const isBuildingDetail =
-    location.pathname.startsWith("/edificio/") && params.id;
+    location.pathname.startsWith("/building/") && params.id;
 
   // Sincronizar selectedBuildingId y activeModule con la URL
   React.useEffect(() => {
     // Si estamos en una ruta de edificio o relacionada, establecer el módulo activo
-    const isBuildingRelatedPath = 
-      location.pathname.startsWith("/edificio/") || 
-      location.pathname.startsWith("/libro-digital") ||
+    const isBuildingRelatedPath =
+      location.pathname.startsWith("/building/") ||
+      location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-intake") ||
       location.pathname === "/activos";
-    
+
     if (isBuildingRelatedPath && setActiveModule) {
       if (activeModule !== "edificios") {
         setActiveModule("edificios");
       }
     }
-    
+
     if (setSelectedBuildingId) {
       // Extraer buildingId de diferentes tipos de rutas
       let buildingIdFromPath: string | null = null;
-      
+
       if (isBuildingDetail && params.id) {
         buildingIdFromPath = params.id;
-      } else if (location.pathname.startsWith("/libro-digital/hub/")) {
-        // Ruta: /libro-digital/hub/:buildingId
-        const match = location.pathname.match(/\/libro-digital\/hub\/([^/]+)/);
+      } else if (location.pathname.startsWith("/digital-book/hub/")) {
+        // Ruta: /digital-book/hub/:buildingId
+        const match = location.pathname.match(/\/digital-book\/hub\/([^/]+)/);
         buildingIdFromPath = match ? match[1] : null;
-      } else if (location.pathname.startsWith("/libro-digital/section/")) {
-        // Ruta: /libro-digital/section/:buildingId/:sectionId
-        const match = location.pathname.match(/\/libro-digital\/section\/([^/]+)/);
+      } else if (location.pathname.startsWith("/digital-book/section/")) {
+        // Ruta: /digital-book/section/:buildingId/:sectionId
+        const match = location.pathname.match(
+          /\/digital-book\/section\/([^/]+)/
+        );
         buildingIdFromPath = match ? match[1] : null;
       } else if (location.pathname.startsWith("/cfo-intake/")) {
         // Ruta: /cfo-intake/:buildingId
         const match = location.pathname.match(/\/cfo-intake\/([^/]+)/);
         buildingIdFromPath = match ? match[1] : null;
       }
-      
+
       if (buildingIdFromPath && selectedBuildingId !== buildingIdFromPath) {
         setSelectedBuildingId(buildingIdFromPath);
-      } else if (!buildingIdFromPath && selectedBuildingId && !isBuildingRelatedPath) {
+      } else if (
+        !buildingIdFromPath &&
+        selectedBuildingId &&
+        !isBuildingRelatedPath
+      ) {
         // Si salimos de todas las rutas relacionadas con edificios, limpiar el ID seleccionado
         setSelectedBuildingId(null);
       }
@@ -97,19 +103,19 @@ function NewLayoutContent() {
   const renderContent = () => {
     // Si estamos en una ruta específica que necesita su propio componente, usar Outlet
     if (
-      location.pathname.startsWith("/libro-digital") ||
+      location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-") ||
-      location.pathname.startsWith("/edificios/crear") ||
+      location.pathname.startsWith("/buildings/crear") ||
       location.pathname.startsWith("/mantenimiento") ||
       location.pathname.startsWith("/cumplimiento") ||
-      (location.pathname.startsWith("/edificio/") &&
+      (location.pathname.startsWith("/building/") &&
         (location.pathname.includes("/unidades") ||
           location.pathname.includes("/documentacion")))
     ) {
       return <Outlet />;
     }
 
-    // Si estamos en /edificio/:id (vista detalle), mostrar BuildingDetail
+    // Si estamos en /building/:id (vista detalle), mostrar BuildingDetail
     if (isBuildingDetail) {
       return <Outlet />;
     }
@@ -135,25 +141,33 @@ function NewLayoutContent() {
   const modulesWithSecondaryNav = ["edificios", "inicio", "usuarios"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
   // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
-  // Incluir rutas relacionadas con edificios: libro-digital, cfo-intake, etc.
-  const isBuildingRelatedRoute = 
-    location.pathname.startsWith("/edificio/") || 
-    location.pathname.startsWith("/libro-digital") ||
+  // Incluir rutas relacionadas con edificios: digital-book, cfo-intake, etc.
+  const isBuildingRelatedRoute =
+    location.pathname.startsWith("/building/") ||
+    location.pathname.startsWith("/digital-book") ||
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname === "/activos";
-  
-  const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule) || 
-    isBuildingRelatedRoute;
+
+  const showSecondaryNav =
+    modulesWithSecondaryNav.includes(activeModule) || isBuildingRelatedRoute;
 
   // La sidebar SIEMPRE debe renderizarse, sin condiciones
-  console.log('NewLayout renderizando, ruta:', location.pathname, 'showSecondaryNav:', showSecondaryNav);
-  
+  console.log(
+    "NewLayout renderizando, ruta:",
+    location.pathname,
+    "showSecondaryNav:",
+    showSecondaryNav
+  );
+
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50" style={{ overflowX: 'visible', position: 'relative' }}>
+      <div
+        className="min-h-screen bg-gray-50"
+        style={{ overflowX: "visible", position: "relative" }}
+      >
         {/* Sidebar SIEMPRE visible - FUERA del contenedor para evitar overflow */}
         <Sidebar />
-        
+
         {/* SecondaryNav condicional */}
         {showSecondaryNav && (
           <ErrorBoundary>

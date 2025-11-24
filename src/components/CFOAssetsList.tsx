@@ -1,47 +1,43 @@
-﻿import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
-import { MapPin } from 'lucide-react';
-import { BuildingCarousel } from '../components/BuildingCarousel';
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+﻿import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { MapPin } from "lucide-react";
+import { BuildingCarousel } from "../components/BuildingCarousel";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 import {
   BuildingsApiService,
   formatBuildingValue,
-} from '../services/buildingsApi';
-import type { Building, DashboardStats } from '../services/buildingsApi';
+} from "../services/buildingsApi";
+import type { Building, DashboardStats } from "../services/buildingsApi";
 
 import {
   SkeletonBuildingList,
   SkeletonDashboardSummary,
   useLoadingState,
-} from './ui/LoadingSystem';
-
+} from "./ui/LoadingSystem";
 
 import {
   EnergyCertificatesService,
   type PersistedEnergyCertificate,
-} from '../services/energyCertificates';
+} from "../services/energyCertificates";
 
-import { getLatestRating } from '../utils/energyCalculations';
-import { getBookByBuilding, type DigitalBook } from '../services/digitalbook';
-import {
-  getESGScore,
-  type ESGResponse,
-} from '../services/esg';
+import { getLatestRating } from "../utils/energyCalculations";
+import { getBookByBuilding, type DigitalBook } from "../services/digitalbook";
+import { getESGScore, type ESGResponse } from "../services/esg";
 
-import AssetsSearchBar, { type SearchFilters } from './ui/AssetsSearchBar';
-import { Card } from './ui/card';
+import AssetsSearchBar, { type SearchFilters } from "./ui/AssetsSearchBar";
+import { Card } from "./ui/card";
 
 /* -------------------------- Utils de presentaciÃ³n -------------------------- */
 function getCityAndDistrict(address: string): string {
-  if (!address) return '';
+  if (!address) return "";
 
-  const parts = address.split(',').map((part) => part.trim());
+  const parts = address.split(",").map((part) => part.trim());
 
   const comunidadIndex = parts.findIndex((part) =>
-    part.includes('Comunidad de Madrid'),
+    part.includes("Comunidad de Madrid")
   );
   if (comunidadIndex > 1) {
     const city = parts[comunidadIndex - 1];
@@ -66,7 +62,6 @@ function getCityAndDistrict(address: string): string {
 
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
 }
-
 
 function PaginationBar({
   page,
@@ -93,27 +88,28 @@ function PaginationBar({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3">
       <div className="text-xs text-gray-600">
-        {t('showing', { defaultValue: 'Mostrando' })}{' '}
-        <span className="font-medium">{start}</span>â€“<span className="font-medium">{end}</span>{' '}
-        {t('of', { defaultValue: 'de' })}{' '}
+        {t("showing", { defaultValue: "Mostrando" })}{" "}
+        <span className="font-medium">{start}</span>â€“
+        <span className="font-medium">{end}</span>{" "}
+        {t("of", { defaultValue: "de" })}{" "}
         <span className="font-medium">{total}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <label className="sr-only" htmlFor="page-size">
-          {t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
+          {t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
         </label>
         <select
           id="page-size"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-          aria-label={t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
-          title={t('pageSize', { defaultValue: 'TamaÃ±o de pÃ¡gina' })}
+          aria-label={t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
+          title={t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
         >
           {pageSizeOptions.map((opt) => (
             <option key={opt} value={opt}>
-              {opt} {t('perPage', { defaultValue: '/pÃ¡gina' })}
+              {opt} {t("perPage", { defaultValue: "/pÃ¡gina" })}
             </option>
           ))}
         </select>
@@ -123,8 +119,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(1)}
             disabled={page === 1}
-            title={t('firstPage', { defaultValue: 'Primera pÃ¡gina' })}
-            aria-label={t('firstPage', { defaultValue: 'Primera pÃ¡gina' })}
+            title={t("firstPage", { defaultValue: "Primera pÃ¡gina" })}
+            aria-label={t("firstPage", { defaultValue: "Primera pÃ¡gina" })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -143,8 +139,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page - 1)}
             disabled={page === 1}
-            title={t('previous', { defaultValue: 'Anterior' })}
-            aria-label={t('previous', { defaultValue: 'Anterior' })}
+            title={t("previous", { defaultValue: "Anterior" })}
+            aria-label={t("previous", { defaultValue: "Anterior" })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -160,7 +156,7 @@ function PaginationBar({
           </button>
 
           <span className="px-2 text-xs text-gray-600">
-            {t('page', { defaultValue: 'PÃ¡gina' })}{' '}
+            {t("page", { defaultValue: "PÃ¡gina" })}{" "}
             <span className="font-medium">{page}</span> / {totalPages}
           </span>
 
@@ -168,8 +164,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page + 1)}
             disabled={page === totalPages}
-            title={t('next', { defaultValue: 'Siguiente' })}
-            aria-label={t('next', { defaultValue: 'Siguiente' })}
+            title={t("next", { defaultValue: "Siguiente" })}
+            aria-label={t("next", { defaultValue: "Siguiente" })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -187,8 +183,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(totalPages)}
             disabled={page === totalPages}
-            title={t('lastPage', { defaultValue: 'Ãšltima pÃ¡gina' })}
-            aria-label={t('lastPage', { defaultValue: 'Ãšltima pÃ¡gina' })}
+            title={t("lastPage", { defaultValue: "Ãšltima pÃ¡gina" })}
+            aria-label={t("lastPage", { defaultValue: "Ãšltima pÃ¡gina" })}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -340,7 +336,9 @@ export default function CFOAssetsList() {
   const { user, isLoading: authLoading } = useAuth();
 
   const [buildings, setBuildings] = useState<Building[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
+    null
+  );
 
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
   const {
@@ -350,9 +348,15 @@ export default function CFOAssetsList() {
   } = useLoadingState(true);
 
   // Estados para certificados energÃ©ticos, libros digitales y ESG
-  const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
-  const [digitalBooks, setDigitalBooks] = useState<Map<string, DigitalBook>>(new Map());
-  const [esgScores, setEsgScores] = useState<Map<string, ESGResponse>>(new Map());
+  const [energyCertificates, setEnergyCertificates] = useState<
+    PersistedEnergyCertificate[]
+  >([]);
+  const [digitalBooks, setDigitalBooks] = useState<Map<string, DigitalBook>>(
+    new Map()
+  );
+  const [esgScores, setEsgScores] = useState<Map<string, ESGResponse>>(
+    new Map()
+  );
 
   // Paginado (cliente)
   const [page, setPage] = useState(1); // 1-based
@@ -360,9 +364,9 @@ export default function CFOAssetsList() {
 
   // Filtros de bÃºsqueda y ordenamiento
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    searchTerm: '',
-    sortField: 'name',
-    sortOrder: 'asc',
+    searchTerm: "",
+    sortField: "name",
+    sortOrder: "asc",
     statusFilter: [],
     energyClassFilter: [],
   });
@@ -392,10 +396,12 @@ export default function CFOAssetsList() {
         const certsAndBooksPromises = buildingsData.map(async (building) => {
           try {
             const [certsResponse, book, esgScore] = await Promise.all([
-              EnergyCertificatesService.getByBuilding(building.id).catch(() => ({
-                sessions: [],
-                certificates: [],
-              })),
+              EnergyCertificatesService.getByBuilding(building.id).catch(
+                () => ({
+                  sessions: [],
+                  certificates: [],
+                })
+              ),
               getBookByBuilding(building.id),
               getESGScore(building.id).catch(() => null),
             ]);
@@ -440,7 +446,9 @@ export default function CFOAssetsList() {
       } catch (err) {
         if (mounted) {
           // Algunos hooks personalizados aceptan mensaje en stopLoading; si el tuyo no, reemplaza por setError si aplica.
-          stopLoading(err instanceof Error ? err.message : 'Error cargando datos');
+          stopLoading(
+            err instanceof Error ? err.message : "Error cargando datos"
+          );
           stopStatsLoading();
         }
       }
@@ -451,14 +459,24 @@ export default function CFOAssetsList() {
     return () => {
       mounted = false;
     };
-  }, [user, authLoading, startLoading, stopLoading, startStatsLoading, stopStatsLoading]);
+  }, [
+    user,
+    authLoading,
+    startLoading,
+    stopLoading,
+    startStatsLoading,
+    stopStatsLoading,
+  ]);
 
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
-  let result = [...buildings];
+    let result = [...buildings];
 
-  // Ordenar por fecha de creaciÃ³n descendente (mÃ¡s recientes primero)
-  result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Ordenar por fecha de creaciÃ³n descendente (mÃ¡s recientes primero)
+    result.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     // Filtro de bÃºsqueda por texto
     if (searchFilters.searchTerm) {
@@ -467,7 +485,7 @@ export default function CFOAssetsList() {
         (building) =>
           building.name.toLowerCase().includes(term) ||
           building.address.toLowerCase().includes(term) ||
-          building.cadastralReference?.toLowerCase().includes(term),
+          building.cadastralReference?.toLowerCase().includes(term)
       );
     }
 
@@ -477,7 +495,10 @@ export default function CFOAssetsList() {
         const book = digitalBooks.get(building.id);
         const completedSections = book?.progress || 0;
 
-        if (completedSections === 8 && searchFilters.statusFilter.includes('completed')) {
+        if (
+          completedSections === 8 &&
+          searchFilters.statusFilter.includes("completed")
+        ) {
           return true;
         }
 
@@ -488,7 +509,9 @@ export default function CFOAssetsList() {
     // Filtro por clase energÃ©tica
     if (searchFilters.energyClassFilter.length > 0) {
       result = result.filter((building) => {
-        const certs = energyCertificates.filter((cert) => cert.buildingId === building.id);
+        const certs = energyCertificates.filter(
+          (cert) => cert.buildingId === building.id
+        );
         if (certs.length === 0) return false;
         const rating = getLatestRating(certs);
         return searchFilters.energyClassFilter.includes(rating);
@@ -500,13 +523,13 @@ export default function CFOAssetsList() {
       let comparison = 0;
 
       switch (searchFilters.sortField) {
-        case 'name':
+        case "name":
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'value':
+        case "value":
           comparison = (a.price || 0) - (b.price || 0);
           break;
-        case 'status': {
+        case "status": {
           const bookA = digitalBooks.get(a.id);
           const bookB = digitalBooks.get(b.id);
           const progressA = bookA?.progress || 0;
@@ -514,30 +537,38 @@ export default function CFOAssetsList() {
           comparison = progressA - progressB;
           break;
         }
-        case 'energyClass': {
-          const certsA = energyCertificates.filter((cert) => cert.buildingId === a.id);
-          const certsB = energyCertificates.filter((cert) => cert.buildingId === b.id);
-          const ratingA = certsA.length > 0 ? getLatestRating(certsA) : 'Z';
-          const ratingB = certsB.length > 0 ? getLatestRating(certsB) : 'Z';
+        case "energyClass": {
+          const certsA = energyCertificates.filter(
+            (cert) => cert.buildingId === a.id
+          );
+          const certsB = energyCertificates.filter(
+            (cert) => cert.buildingId === b.id
+          );
+          const ratingA = certsA.length > 0 ? getLatestRating(certsA) : "Z";
+          const ratingB = certsB.length > 0 ? getLatestRating(certsB) : "Z";
           comparison = ratingA.localeCompare(ratingB);
           break;
         }
-        case 'esgScore': {
+        case "esgScore": {
           const esgA = esgScores.get(a.id);
           const esgB = esgScores.get(b.id);
           const labelA =
-            esgA?.status === 'complete' && esgA.data?.label ? esgA.data.label : 'Z';
+            esgA?.status === "complete" && esgA.data?.label
+              ? esgA.data.label
+              : "Z";
           const labelB =
-            esgB?.status === 'complete' && esgB.data?.label ? esgB.data.label : 'Z';
+            esgB?.status === "complete" && esgB.data?.label
+              ? esgB.data.label
+              : "Z";
           comparison = labelA.localeCompare(labelB);
           break;
         }
-        case 'squareMeters':
+        case "squareMeters":
           comparison = (a.squareMeters || 0) - (b.squareMeters || 0);
           break;
       }
 
-      return searchFilters.sortOrder === 'asc' ? comparison : -comparison;
+      return searchFilters.sortOrder === "asc" ? comparison : -comparison;
     });
 
     return result;
@@ -561,7 +592,7 @@ export default function CFOAssetsList() {
     const normalizedEmail = user.email.toLowerCase();
 
     return buildings.filter(
-      (building) => building.cfoEmail?.toLowerCase() === normalizedEmail,
+      (building) => building.cfoEmail?.toLowerCase() === normalizedEmail
     ).length;
   }, [buildings, user?.email]);
 
@@ -582,22 +613,26 @@ export default function CFOAssetsList() {
       <div className="pt-2 pb-8 max-w-full">
         {/* Botones de acción - Todos los roles pueden crear edificios */}
         <div className="flex justify-end gap-3 mb-6">
-            <Link
-                to="/edificios/crear"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                {t('createBuilding', { defaultValue: 'Crear Edificio' })}
-              </Link>
+          <Link
+            to="/building/create"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          >
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            {t("createBuilding", { defaultValue: "Crear Edificio" })}
+          </Link>
         </div>
 
         {/* Hack para evitar warning TS de componente no usado */}
@@ -608,7 +643,10 @@ export default function CFOAssetsList() {
           </span>
         )}
 
-        <div className="mb-8" style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}>
+        <div
+          className="mb-8"
+          style={{ animation: "fadeInUp 0.6s ease-out 0.1s both" }}
+        >
           {error && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
               <div className="flex items-center">
@@ -627,9 +665,9 @@ export default function CFOAssetsList() {
                   />
                 </svg>
                 <p className="text-sm text-yellow-800">
-                  {t('userDataLoadWarning', {
+                  {t("userDataLoadWarning", {
                     defaultValue:
-                      'No se pudieron cargar los datos del usuario, pero puedes continuar navegando.',
+                      "No se pudieron cargar los datos del usuario, pero puedes continuar navegando.",
                   })}
                 </p>
               </div>
@@ -637,10 +675,14 @@ export default function CFOAssetsList() {
           )}
 
           {/* Dashboard Summary Card */}
-          {user && !authLoading && !loading && !statsLoading && dashboardStats ? (
+          {user &&
+          !authLoading &&
+          !loading &&
+          !statsLoading &&
+          dashboardStats ? (
             <div
               className="bg-white border border-gray-200 rounded-xl p-6 mb-6"
-              style={{ animation: 'fadeInUp 0.6s ease-out 0.1s both' }}
+              style={{ animation: "fadeInUp 0.6s ease-out 0.1s both" }}
             >
               {/* User Profile Header */}
               <div className="flex items-center justify-between mb-4">
@@ -660,13 +702,15 @@ export default function CFOAssetsList() {
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">
-                      {t('welcome', { defaultValue: 'Bienvenido' })}
+                      {t("welcome", { defaultValue: "Bienvenido" })}
                     </div>
-                    <div className="text-sm font-semibold text-gray-900">{user.fullName}</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {user.fullName}
+                    </div>
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t('roles.cfo', { defaultValue: 'cfo' })}
+                  {t("roles.cfo", { defaultValue: "cfo" })}
                 </span>
               </div>
 
@@ -679,12 +723,17 @@ export default function CFOAssetsList() {
                     <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
                       <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mb-1">
                         {formatBuildingValue(
-                          dashboardStats.totalValue || 
-                          buildings.reduce((sum, b) => sum + (b.price || 0), 0)
+                          dashboardStats.totalValue ||
+                            buildings.reduce(
+                              (sum, b) => sum + (b.price || 0),
+                              0
+                            )
                         )}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500">
-                        {t('cfo.indicator.portfolioValue', { defaultValue: 'Valor total cartera' })}
+                        {t("cfo.indicator.portfolioValue", {
+                          defaultValue: "Valor total cartera",
+                        })}
                       </div>
                     </div>
                     {/* 2. ROI promedio */}
@@ -693,7 +742,9 @@ export default function CFOAssetsList() {
                         -
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500">
-                        {t('cfo.indicator.avgROI', { defaultValue: 'ROI promedio' })}
+                        {t("cfo.indicator.avgROI", {
+                          defaultValue: "ROI promedio",
+                        })}
                       </div>
                     </div>
                     {/* 3. Coste rehabilitación */}
@@ -702,7 +753,9 @@ export default function CFOAssetsList() {
                         -
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500">
-                        {t('cfo.indicator.rehabCost', { defaultValue: 'Coste rehabilitación' })}
+                        {t("cfo.indicator.rehabCost", {
+                          defaultValue: "Coste rehabilitación",
+                        })}
                       </div>
                     </div>
                     {/* 4. TIR promedio */}
@@ -711,7 +764,9 @@ export default function CFOAssetsList() {
                         -
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500">
-                        {t('cfo.indicator.avgIRR', { defaultValue: 'TIR promedio' })}
+                        {t("cfo.indicator.avgIRR", {
+                          defaultValue: "TIR promedio",
+                        })}
                       </div>
                     </div>
                   </div>
@@ -723,32 +778,51 @@ export default function CFOAssetsList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t('cfo.indicator.greenRating', { defaultValue: '% rating verde (A-B-C)' })}
+                        {t("cfo.indicator.greenRating", {
+                          defaultValue: "% rating verde (A-B-C)",
+                        })}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
                         {/* Calcular % de activos con rating A, B o C */}
                         {(() => {
-                          const ratingCount = buildings.filter(b => {
-                            const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
-                            const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
-                            return rating && ['A', 'B', 'C'].includes(rating);
+                          const ratingCount = buildings.filter((b) => {
+                            const bCerts = energyCertificates.filter(
+                              (c) => c.buildingId === b.id
+                            );
+                            const rating =
+                              bCerts.length > 0
+                                ? getLatestRating(bCerts)
+                                : null;
+                            return rating && ["A", "B", "C"].includes(rating);
                           }).length;
-                          const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                          const percentage =
+                            buildings.length > 0
+                              ? Math.round(
+                                  (ratingCount / buildings.length) * 100
+                                )
+                              : 0;
                           return `${percentage}%`;
                         })()}
                       </div>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t('cfo.indicator.avgPayback', { defaultValue: 'Payback promedio' })}
+                        {t("cfo.indicator.avgPayback", {
+                          defaultValue: "Payback promedio",
+                        })}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
-                        - <span className="text-sm font-normal text-gray-500">{t('years', { defaultValue: 'años' })}</span>
+                        -{" "}
+                        <span className="text-sm font-normal text-gray-500">
+                          {t("years", { defaultValue: "años" })}
+                        </span>
                       </div>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t('cfo.indicator.assignedAssets', { defaultValue: 'Activos asignados' })}
+                        {t("cfo.indicator.assignedAssets", {
+                          defaultValue: "Activos asignados",
+                        })}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
                         {totalAssignedAssets}
@@ -759,8 +833,14 @@ export default function CFOAssetsList() {
 
                 {/* Right Section - Progress Chart */}
                 <div className="flex flex-col items-center justify-center w-full lg:w-auto mt-6 lg:mt-0">
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-3" aria-hidden="true">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <div
+                    className="relative w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mb-3"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      className="w-full h-full transform -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
                       <path
                         className="text-gray-200"
                         stroke="currentColor"
@@ -776,12 +856,22 @@ export default function CFOAssetsList() {
                         strokeWidth="3"
                         fill="transparent"
                         strokeDasharray={`${(() => {
-                          const ratingCount = buildings.filter(b => {
-                            const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
-                            const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
-                            return rating && ['A', 'B', 'C'].includes(rating);
+                          const ratingCount = buildings.filter((b) => {
+                            const bCerts = energyCertificates.filter(
+                              (c) => c.buildingId === b.id
+                            );
+                            const rating =
+                              bCerts.length > 0
+                                ? getLatestRating(bCerts)
+                                : null;
+                            return rating && ["A", "B", "C"].includes(rating);
                           }).length;
-                          const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                          const percentage =
+                            buildings.length > 0
+                              ? Math.round(
+                                  (ratingCount / buildings.length) * 100
+                                )
+                              : 0;
                           return percentage;
                         })()}, 100`}
                         d="M18 2.0845
@@ -793,12 +883,22 @@ export default function CFOAssetsList() {
                       <div className="text-center">
                         <div className="text-base sm:text-lg lg:text-xl font-bold text-green-500">
                           {(() => {
-                            const ratingCount = buildings.filter(b => {
-                              const bCerts = energyCertificates.filter(c => c.buildingId === b.id);
-                              const rating = bCerts.length > 0 ? getLatestRating(bCerts) : null;
-                              return rating && ['A', 'B', 'C'].includes(rating);
+                            const ratingCount = buildings.filter((b) => {
+                              const bCerts = energyCertificates.filter(
+                                (c) => c.buildingId === b.id
+                              );
+                              const rating =
+                                bCerts.length > 0
+                                  ? getLatestRating(bCerts)
+                                  : null;
+                              return rating && ["A", "B", "C"].includes(rating);
                             }).length;
-                            const percentage = buildings.length > 0 ? Math.round((ratingCount / buildings.length) * 100) : 0;
+                            const percentage =
+                              buildings.length > 0
+                                ? Math.round(
+                                    (ratingCount / buildings.length) * 100
+                                  )
+                                : 0;
                             return `${percentage}%`;
                           })()}
                         </div>
@@ -808,7 +908,9 @@ export default function CFOAssetsList() {
 
                   <div className="text-center max-w-[140px] sm:max-w-[160px]">
                     <div className="text-xs sm:text-sm text-gray-500 leading-tight">
-                      {t('cfo.indicator.greenRatingShort', { defaultValue: '% rating verde' })}
+                      {t("cfo.indicator.greenRatingShort", {
+                        defaultValue: "% rating verde",
+                      })}
                     </div>
                   </div>
                 </div>
@@ -827,18 +929,24 @@ export default function CFOAssetsList() {
         />
 
         {/* Assets List - Card Layout */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-full" style={{ animation: 'fadeInUp 0.6s ease-out 0.2s both' }}>
+        <div
+          className="bg-white rounded-xl border border-gray-200 p-6 max-w-full"
+          style={{ animation: "fadeInUp 0.6s ease-out 0.2s both" }}
+        >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {t('assetsList', { defaultValue: 'Listado de Activos' })}
+            {t("assetsList", { defaultValue: "Listado de Activos" })}
           </h3>
           {loading ? (
             <SkeletonBuildingList />
           ) : paginated.length > 0 ? (
             <div className="flex flex-col gap-6">
               {paginated.map((building, index) => {
-                const ceeCerts = energyCertificates.filter((cert) => cert.buildingId === building.id);
-                const ceeRating = ceeCerts.length > 0 ? getLatestRating(ceeCerts) : '-';
-                
+                const ceeCerts = energyCertificates.filter(
+                  (cert) => cert.buildingId === building.id
+                );
+                const ceeRating =
+                  ceeCerts.length > 0 ? getLatestRating(ceeCerts) : "-";
+
                 return (
                   <motion.div
                     key={building.id}
@@ -852,40 +960,68 @@ export default function CFOAssetsList() {
                       onClick={() => navigate(`/cfo-intake/${building.id}`)}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') navigate(`/cfo-intake/${building.id}`); }}
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === "Enter")
+                          navigate(`/cfo-intake/${building.id}`);
+                      }}
                     >
                       {/* Image Carousel */}
                       <div className="w-full h-48 sm:w-64 sm:h-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800">
-                        <BuildingCarousel images={building.images?.map(img => img.url) ?? []} name={building.name} />
+                        <BuildingCarousel
+                          images={building.images?.map((img) => img.url) ?? []}
+                          name={building.name}
+                        />
                       </div>
-                      
+
                       {/* Content */}
                       <div className="flex-1 pt-8 px-4 pb-4 sm:p-6 flex flex-col justify-between min-h-0">
                         {/* Header */}
                         <div className="mb-4">
-                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-1">{building.name}</h3>
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-1">
+                            {building.name}
+                          </h3>
                           <div className="flex items-center gap-2 text-gray-600">
                             <MapPin className="w-4 h-4 flex-shrink-0" />
-                            <span className="text-sm line-clamp-1">{getCityAndDistrict(building.address)}</span>
+                            <span className="text-sm line-clamp-1">
+                              {getCityAndDistrict(building.address)}
+                            </span>
                           </div>
                         </div>
-                        
+
                         {/* Info Grid - CFO Specific Fields */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
                           {/* Valor actual */}
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.currentValue', { defaultValue: 'Valor actual (€)' })}</p>
-                            <p className="text-sm sm:text-lg font-medium text-gray-900 truncate">{formatBuildingValue(building.price)}</p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              {t("cfo.card.currentValue", {
+                                defaultValue: "Valor actual (€)",
+                              })}
+                            </p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900 truncate">
+                              {formatBuildingValue(building.price)}
+                            </p>
                           </div>
                           {/* Coste rehabilitación */}
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.rehabCost', { defaultValue: 'Coste rehab. (€)' })}</p>
-                            <p className="text-sm sm:text-lg font-medium text-gray-900">-</p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              {t("cfo.card.rehabCost", {
+                                defaultValue: "Coste rehab. (€)",
+                              })}
+                            </p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900">
+                              -
+                            </p>
                           </div>
                           {/* ROI estimado */}
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 mb-1">{t('cfo.card.estimatedROI', { defaultValue: 'ROI estimado (%)' })}</p>
-                            <p className="text-sm sm:text-lg font-medium text-gray-900">-</p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              {t("cfo.card.estimatedROI", {
+                                defaultValue: "ROI estimado (%)",
+                              })}
+                            </p>
+                            <p className="text-sm sm:text-lg font-medium text-gray-900">
+                              -
+                            </p>
                           </div>
                         </div>
 
@@ -893,21 +1029,37 @@ export default function CFOAssetsList() {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-4">
                           {/* Rating energético */}
                           <div className="flex items-center gap-2">
-                            <p className="text-xs text-gray-500">{t('cfo.card.energyRating', { defaultValue: 'Rating energético' })}:</p>
+                            <p className="text-xs text-gray-500">
+                              {t("cfo.card.energyRating", {
+                                defaultValue: "Rating energético",
+                              })}
+                              :
+                            </p>
                             <div className="w-8 h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-sm font-medium">
                               {ceeRating}
                             </div>
                           </div>
                           {/* Estado financiero */}
                           <div className="flex items-center gap-2">
-                            <p className="text-xs text-gray-500">{t('cfo.card.financialStatus', { defaultValue: 'Estado financiero' })}:</p>
+                            <p className="text-xs text-gray-500">
+                              {t("cfo.card.financialStatus", {
+                                defaultValue: "Estado financiero",
+                              })}
+                              :
+                            </p>
                             <div className="flex items-center gap-1.5">
-                              <span className="w-3 h-3 rounded-full bg-orange-500" title="Indefinido" />
-                              <span className="text-sm font-medium text-gray-900">{t('cfo.card.undefined', { defaultValue: 'Indefinido' })}</span>
+                              <span
+                                className="w-3 h-3 rounded-full bg-orange-500"
+                                title="Indefinido"
+                              />
+                              <span className="text-sm font-medium text-gray-900">
+                                {t("cfo.card.undefined", {
+                                  defaultValue: "Indefinido",
+                                })}
+                              </span>
                             </div>
                           </div>
                         </div>
-
                       </div>
                     </Card>
                   </motion.div>
@@ -916,16 +1068,59 @@ export default function CFOAssetsList() {
             </div>
           ) : (
             <div className="px-6 py-12 text-center">
-              <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" /></svg>
+              <svg
+                className="w-12 h-12 mx-auto text-gray-400 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6"
+                />
+              </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === 'propietario' ? t('noAssetsYet', { defaultValue: 'No tienes activos aÃºn' }) : t('noAssignedAssets', { defaultValue: 'No tienes activos asignados' })}
+                {user?.role === "propietario"
+                  ? t("noAssetsYet", { defaultValue: "No tienes activos aÃºn" })
+                  : t("noAssignedAssets", {
+                      defaultValue: "No tienes activos asignados",
+                    })}
               </h3>
               <p className="text-gray-600 mb-4">
-                {user?.role === 'propietario' ? t('createFirstAsset', { defaultValue: 'Comienza creando tu primer activo para gestionar tu cartera.' }) : t('contactAdmin', { defaultValue: 'Contacta con tu administrador para que te asigne activos.' })}
+                {user?.role === "propietario"
+                  ? t("createFirstAsset", {
+                      defaultValue:
+                        "Comienza creando tu primer activo para gestionar tu cartera.",
+                    })
+                  : t("contactAdmin", {
+                      defaultValue:
+                        "Contacta con tu administrador para que te asigne activos.",
+                    })}
               </p>
-              <Link to="/edificios/crear" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                {t('createFirstAssetBtn', { defaultValue: 'Crear primer activo' })}
+              <Link
+                to="/building/create"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                {t("createFirstAssetBtn", {
+                  defaultValue: "Crear primer activo",
+                })}
               </Link>
             </div>
           )}
