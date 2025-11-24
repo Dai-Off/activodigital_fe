@@ -21,27 +21,6 @@ export async function getUserProfile() {
 }
 
 export async function getRoles() {
-  return apiFetch("/users/roles", { method: "GET" });
-}
-
-export async function getAllUsers() {
-  return apiFetch("/users/all-users", { method: "GET" });
-}
-
-export async function editUser(id: string, data: any) {
-  return apiFetch(`/users/edit/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteUser(id: string) {
-  return apiFetch(`/users/create${id}`, {
-    method: "DELETE",
-  });
-}
-
-export async function getRoles() {
   return apiFetch('/users/roles', { method: 'GET' });
 }
 

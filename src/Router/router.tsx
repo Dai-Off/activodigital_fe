@@ -35,6 +35,7 @@ import { RecentActivity } from "../components/dashboard/Main/RecentActivity";
 import SectionsList from "~/components/digitalbook/SectionsList";
 import { useTranslation } from "react-i18next";
 import { AssetsMain } from "~/components/dashboard/Assets/AssetsMain";
+import Users from "~/components/Users";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <AssetsDashboard />
+                <Users />
               </ErrorBoundary>
             </ProtectedRoute>
           }

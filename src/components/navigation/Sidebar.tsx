@@ -51,7 +51,7 @@ export function Sidebar() {
       label: t ? t("buildings", "Edificios") : "Edificios",
     },
     {
-      id: "usuarios",
+      id: "users",
       icon: Users,
       label: t ? t("users", "Usuarios") : "Usuarios",
     },
@@ -68,7 +68,7 @@ export function Sidebar() {
         if (setViewMode) setViewMode("list");
         navigate("/dashboard");
         break;
-      case "usuarios":
+      case "users":
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
@@ -79,11 +79,6 @@ export function Sidebar() {
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
         navigate("/assets");
-        break;
-      case 'usuarios':
-        if (setActiveSection) setActiveSection('usuarios');
-        if (setActiveTab) setActiveTab('usuarios');
-        navigate('/usuarios');
         break;
       default:
         if (setActiveSection) setActiveSection("dashboard");
