@@ -42,6 +42,7 @@ import { AssetsDashboard } from "./components/dashboard/AssetsDashboard";
 import { MainPanel } from "./components/dashboard/Main/MainPanel";
 import { Statistics } from "./components/dashboard/Main/Statistics";
 import { RecentActivity } from "./components/dashboard/Main/RecentActivity";
+import { AssetsMain } from "./components/dashboard/Assets/AssetsMain";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -158,7 +159,7 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <ErrorBoundary>
-                        <AssetsDashboard />
+                        <AssetsMain />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }

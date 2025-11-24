@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { DashboardComponent } from "./DashboardComponent";
+import { AssetsComponent } from "./AssetsComponent";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -13,6 +14,7 @@ export function SecondaryNav() {
   */
   const components: any = {
     dashboard: <DashboardComponent />,
+    activos: <AssetsComponent />,
   };
 
   return (
