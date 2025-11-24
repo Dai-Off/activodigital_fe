@@ -28,7 +28,7 @@ export async function editUser(id: string, data: any) {
 }
 
 export async function deleteUser(id: string) {
-  return apiFetch(`/users/create${id}`, {
+  return apiFetch(`/users/delete${id}`, {
     method: 'DELETE',
   });
 }
