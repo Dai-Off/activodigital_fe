@@ -16,7 +16,7 @@ export function SecondaryNav() {
   const components: any = {
     dashboard: <SidebarDashboard />,
     users: <SidebarUsers />,
-    activos: <SidebarAssets />,
+    assets: <SidebarAssets />,
   };
 
   return (
