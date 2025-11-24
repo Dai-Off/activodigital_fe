@@ -60,7 +60,6 @@ export function Sidebar() {
   const handleModuleChange = (moduleId: string) => {
     if (setActiveModule) setActiveModule(moduleId);
     if (setSelectedBuildingId) setSelectedBuildingId(null);
-    console.log(moduleId, "hola");
     // Establecer sección y tab predeterminados según el módulo
     switch (moduleId) {
       case "inicio":
