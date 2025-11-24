@@ -1,10 +1,9 @@
 import { LucideActivity, LucideChartColumn, LucideHouse } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function SidebarDashboard() {
-  const [activeItem, setActiveItem] = useState("main");
   const navigate = useNavigate();
+  const { pathname } = useLocation(); //
   const menuItems = [
     {
       id: "main",
@@ -26,14 +25,10 @@ export function SidebarDashboard() {
     },
   ];
 
-  const handleClick = (itemId: string) => {
-    setActiveItem(itemId);
-  };
-
   return (
     <div className="space-y-1.5 px-3">
       {menuItems.map((item) => {
-        const isActive = activeItem === item.id;
+        const isActive = pathname === item.route;
 
         const buttonClasses = `
               w-full px-3 py-3 rounded-md flex items-center gap-3 text-sm transition-colors
@@ -51,7 +46,6 @@ export function SidebarDashboard() {
               // El evento onClick actualiza el estado
               onClick={() => {
                 navigate(item.route);
-                handleClick(item.id);
               }}
             >
               {/* El color del ícono también cambia */}
