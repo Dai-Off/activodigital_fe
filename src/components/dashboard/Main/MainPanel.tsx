@@ -18,14 +18,21 @@ import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
-
+import { notificationService } from "~/services/notifications";
 export function MainPanel() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [alerts, setAlerts] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigate();
 
   useEffect(() => {
+    notificationService
+      .getNotifications()
+      .then(setAlerts)
+      .catch(() => {
+        setAlerts(null);
+      });
     BuildingsApiService.getDashboardStats()
       .then(setStats)
       .catch(() => setStats(null))
@@ -46,6 +53,8 @@ export function MainPanel() {
     );
   }
 
+  const { data: alerta } = alerts;
+  console.log(alerta);
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
     percentageBooks = stats.pendingBooks / stats.completedBooks;

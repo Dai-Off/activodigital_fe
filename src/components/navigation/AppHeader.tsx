@@ -223,6 +223,62 @@ export function AppHeader() {
     navigate("/dashboard");
   };
 
+  // Componente local para renderizar las notificaciones
+  function Notification({
+    type,
+    title,
+    buildingName,
+    date,
+    expiration,
+  }: {
+    type: string;
+    title: string;
+    buildingName: string;
+    date: string;
+    expiration?: string;
+  }) {
+    const ColorType: any = {
+      manteinance: "bg-purple-600",
+      building: "bg-blue-600",
+      financial: "bg-orange-600",
+      documents: "bg-green-600",
+      expiration: "bg-yellow-600",
+    };
+
+    if (type === "expiration") {
+      return (
+        <div className="p-3 hover:bg-gray-50 cursor-pointer">
+          <div className="flex gap-3">
+            <div
+              className={`w-2 h-2 ${ColorType[type]} rounded-full mt-1.5 flex-shrink-0`}
+            ></div>
+            <div className="flex-1">
+              <p className="text-sm text-gray-900">{title}</p>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {buildingName} - Vence en {expiration} días
+              </p>
+              <p className="text-xs text-gray-400 mt-1">Hace {date}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="p-3 hover:bg-gray-50 cursor-pointer">
+        <div className="flex gap-3">
+          <div
+            className={`w-2 h-2 ${ColorType[type]} rounded-full mt-1.5 flex-shrink-0`}
+          ></div>
+          <div className="flex-1">
+            <p className="text-sm text-gray-900">{title}</p>
+            <p className="text-xs text-gray-600 mt-0.5">{buildingName}</p>
+            <p className="text-xs text-gray-400 mt-1">Hace {date}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <header className="bg-white border-b border-gray-200 fixed top-0 md:left-16 left-0 right-0 z-20">
       <div className="px-3 md:px-6 py-3 md:py-1.5">
@@ -329,9 +385,17 @@ export function AppHeader() {
                       </h3>
                     </div>
                   </div>
-                  <div className="p-6 text-center text-sm text-gray-500">
-                    {translate("noNotifications", "No hay notificaciones")}
-                  </div>
+                  {/* <div className="p-6 text-center text-sm text-gray-500">
+                    No hay notificaciones
+                  </div> */}
+                  {/* Contenedor de las notificaciones */}
+                  <Notification
+                    buildingName="Plaza Shopping"
+                    date="3 horas"
+                    title="Certificado vence en 3 días"
+                    type="manteinance"
+                    expiration="15"
+                  />
                 </div>
               )}
             </div>

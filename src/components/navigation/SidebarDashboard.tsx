@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 export function SidebarDashboard() {
   const navigate = useNavigate();
-  const { pathname } = useLocation(); //
+  const { pathname } = useLocation();
   const menuItems = [
     {
       id: "main",
