@@ -198,6 +198,25 @@ export function SecondaryNav() {
                       <Circle className="w-1.5 h-1.5 fill-current" />
                       <span className="leading-relaxed">{t('generalView', 'Vista General')}</span>
                     </button>
+
+                    {/* Análisis general */}
+                    <button
+                      onClick={() => {
+                        setSelectedBuildingId(building.id);
+                        setActiveSection('analisis');
+                        setActiveTab('analisis');
+                        setViewMode('detail');
+                        navigate(`/edificio/${building.id}/analisis-general`);
+                      }}
+                      className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                        selectedBuildingId === building.id && activeSection === 'analisis'
+                          ? 'text-blue-600 bg-blue-50 font-medium'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Circle className="w-1.5 h-1.5 fill-current" />
+                      <span className="leading-relaxed">{t('generalAnalysis', 'Análisis general')}</span>
+                    </button>
                   </div>
                 )}
               </div>

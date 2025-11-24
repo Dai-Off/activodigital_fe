@@ -58,7 +58,7 @@ function NewLayoutContent() {
         location.pathname.startsWith('/edificios/crear') ||
         location.pathname.startsWith('/mantenimiento') ||
         location.pathname.startsWith('/cumplimiento') ||
-        location.pathname.startsWith('/edificio/') && (location.pathname.includes('/unidades') || location.pathname.includes('/documentacion'))) {
+        location.pathname.startsWith('/edificio/') && (location.pathname.includes('/unidades') || location.pathname.includes('/documentacion') || location.pathname.includes('/analisis-general'))) {
       return <Outlet />;
     }
 

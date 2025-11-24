@@ -110,6 +110,15 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     onClose();
   };
 
+  const handleAnalysisClick = (buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+    setActiveSection('analisis');
+    setActiveTab('analisis');
+    setViewMode('detail');
+    navigate(`/edificio/${buildingId}/analisis-general`);
+    onClose();
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent side="left" className="w-[85vw] max-w-sm p-0 overflow-y-auto">
@@ -241,6 +250,19 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                         >
                           <Circle className="w-1.5 h-1.5 fill-current" />
                           <span className="leading-relaxed">{t('generalView', 'Vista General')}</span>
+                        </button>
+
+                        {/* Análisis general */}
+                        <button
+                          onClick={() => handleAnalysisClick(building.id)}
+                          className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                            selectedBuildingId === building.id && activeSection === 'analisis'
+                              ? 'text-blue-600 bg-blue-50 font-medium'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Circle className="w-1.5 h-1.5 fill-current" />
+                          <span className="leading-relaxed">{t('generalAnalysis', 'Análisis general')}</span>
                         </button>
                       </div>
                     )}

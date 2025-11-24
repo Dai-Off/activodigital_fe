@@ -18,6 +18,7 @@ import InvitationHandler from './components/InvitationHandler'
 import Landing from './components/Landing'
 import CFOAssetsList from './components/CFOAssetsList'
 import BuildingDetail from './components/BuildingDetail'
+import BuildingAnalysisGeneral from './components/BuildingAnalysisGeneral'
 import CFOIntakeForm from './components/cfo/CFOIntakeForm'
 import CFOFinancialAnalysisDashboard from './components/cfo/screens/CFOFinancialAnalysisDashboard'
 import CFOFinancialAnalysisSimulation from './components/cfo/screens/CFOFinancialAnalysisSimulation'
@@ -186,6 +187,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <BuildingDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/edificio/:id/analisis-general"
+                  element={
+                    <ProtectedRoute>
+                      <BuildingAnalysisGeneral />
                     </ProtectedRoute>
                   }
                 />
