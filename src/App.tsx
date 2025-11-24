@@ -162,9 +162,7 @@ function App() {
                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
-                >
-                  <Route index element={<Statistics />}></Route>
-                </Route>
+                ></Route>
                 <Route
                   path="/cfo-dashboard"
                   element={
