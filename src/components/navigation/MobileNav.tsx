@@ -118,7 +118,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     setActiveSection("dashboard");
     setActiveTab("dashboard");
     setViewMode("list");
-    navigate("/activos");
+    navigate("/assets");
     onClose();
   };
 

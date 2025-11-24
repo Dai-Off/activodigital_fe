@@ -148,7 +148,7 @@ export default function BuildingUnits() {
                 "Vuelve al detalle del edificio e inténtalo de nuevo.",
             })}
           </p>
-          <Button onClick={() => navigate("/activos")} variant="outline">
+          <Button onClick={() => navigate("/assets")} variant="outline">
             {t("building.unitsBackToAssets", {
               defaultValue: "Volver a activos",
             })}

@@ -47,7 +47,7 @@ const SectionsListPage = () => {
             <ol className="flex items-centered space-x-2 text-sm text-gray-500">
               <li>
                 <button
-                  onClick={() => navigate("/activos")}
+                  onClick={() => navigate("/assets")}
                   className="hover:text-blue-600"
                 >
                   {t("assets", "Activos")}

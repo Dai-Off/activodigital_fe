@@ -261,7 +261,7 @@ const BuildingDetail: React.FC = () => {
           "Error al cargar edificio",
           "No se pudo cargar la información del edificio"
         );
-        navigate("/activos");
+        navigate("/assets");
         stopLoading();
       }
     };
@@ -740,7 +740,7 @@ const BuildingDetail: React.FC = () => {
             })}
           </p>
           <button
-            onClick={() => navigate("/activos")}
+            onClick={() => navigate("/assets")}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             {t("assetsList", { defaultValue: "Back to Assets" })}

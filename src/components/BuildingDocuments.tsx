@@ -214,7 +214,7 @@ export default function BuildingDocuments() {
             })}
           </p>
           <div className="mt-4 flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/activos")}>
+            <Button variant="outline" onClick={() => navigate("/assets")}>
               {t("building.documentsBackToAssets", {
                 defaultValue: "Volver a activos",
               })}

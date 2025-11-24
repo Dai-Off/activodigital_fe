@@ -89,7 +89,7 @@ export function AssetsMain() {
         isOpen={isCreateModalOpen}
         onSelectMethod={(method) => {
           setIsCreateModalOpen(false);
-          navigate("/building/crear", { state: { method } });
+          navigate("/building/create", { state: { method } });
         }}
         onClose={() => setIsCreateModalOpen(false)}
       />

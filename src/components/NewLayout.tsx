@@ -48,7 +48,7 @@ function NewLayoutContent() {
       location.pathname.startsWith("/building/") ||
       location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-intake") ||
-      location.pathname === "/activos";
+      location.pathname === "/assets";
 
     if (isBuildingRelatedPath && setActiveModule) {
       if (activeModule !== "edificios") {
@@ -120,9 +120,9 @@ function NewLayoutContent() {
       return <Outlet />;
     }
 
-    // Si estamos en /activos o ruta raíz de activos
+    // Si estamos en /assets o ruta raíz de activos
     if (
-      location.pathname === "/activos" ||
+      location.pathname === "/assets" ||
       location.pathname === "/cfo-dashboard"
     ) {
       // Si estamos en modo dashboard, mostrar AssetsDashboard
@@ -146,7 +146,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/building/") ||
     location.pathname.startsWith("/digital-book") ||
     location.pathname.startsWith("/cfo-intake") ||
-    location.pathname === "/activos";
+    location.pathname === "/assets";
 
   const showSecondaryNav =
     modulesWithSecondaryNav.includes(activeModule) || isBuildingRelatedRoute;
