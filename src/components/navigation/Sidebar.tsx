@@ -1,4 +1,4 @@
-import { Building2 } from "lucide-react";
+import { Building2, Users as UsersIcon } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -25,7 +25,7 @@ export function Sidebar() {
     console.error('Error en Sidebar useNavigation:', error);
   }
   
-  let t: ((key: string, defaultValue?: string) => string) | null = null;
+  let t: ((key: string, deFaultValue?: string) => string) | null = null;
   try {
     const langContext = useLanguage();
     t = langContext.t;
@@ -35,7 +35,8 @@ export function Sidebar() {
   }
 
   const menuItems = [
-    { id: 'edificios', icon: Building2, label: t ? t('buildings', 'Edificios') : 'Edificios' }
+    { id: 'edificios', icon: Building2, label: t ? t('buildings', 'Edificios') : 'Edificios' },
+    { id: 'usuarios', icon: UsersIcon, label: t ? t('users', 'Usuarios') : 'Usuarios' }
   ];
 
   const handleModuleChange = (moduleId: string) => {
@@ -49,6 +50,11 @@ export function Sidebar() {
         if (setActiveTab) setActiveTab('dashboard');
         if (setViewMode) setViewMode('list');
         navigate('/activos');
+        break;
+      case 'usuarios':
+        if (setActiveSection) setActiveSection('usuarios');
+        if (setActiveTab) setActiveTab('usuarios');
+        navigate('/usuarios');
         break;
       default:
         if (setActiveSection) setActiveSection('dashboard');

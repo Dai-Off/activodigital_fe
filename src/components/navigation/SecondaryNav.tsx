@@ -5,15 +5,18 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { BuildingsApiService, type Building } from "../../services/buildingsApi";
 import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
+import { getRoles, type Role } from "~/services/users";
+import SidebarUsers from "./SidebarUsers";
 
 export function SecondaryNav() {
-  const { activeSection, setActiveSection, setActiveTab, setViewMode, selectedBuildingId, setSelectedBuildingId } = useNavigation();
+  const { activeModule, activeSection, setActiveSection, setActiveTab, setViewMode, selectedBuildingId, setSelectedBuildingId } = useNavigation();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [filters, setFilters] = useState({
     buildingType: '',
     energyClass: '',
@@ -23,13 +26,18 @@ export function SecondaryNav() {
   // Cargar edificios
   useEffect(() => {
     setLoading(true);
-    BuildingsApiService.getAllBuildings()
-      .then((data) => {
-        setBuildings(data);
+    Promise.all([
+      BuildingsApiService.getAllBuildings(),
+      getRoles()
+    ])
+      .then(([res1, res2]) => {
+        setBuildings(res1);
+        setRoles(res2)
         setLoading(false);
       })
       .catch(() => {
         setBuildings([]);
+        setRoles([])
         setLoading(false);
       });
   }, []);
@@ -76,8 +84,8 @@ export function SecondaryNav() {
   };
 
   const toggleBuildingExpansion = (buildingId: string) => {
-    setExpandedBuildings(prev => 
-      prev.includes(buildingId) 
+    setExpandedBuildings(prev =>
+      prev.includes(buildingId)
         ? prev.filter(id => id !== buildingId)
         : [...prev, buildingId]
     );
@@ -90,11 +98,10 @@ export function SecondaryNav() {
         <div className="px-3 mb-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${
-              hasActiveFilters || showFilters
-                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-            }`}
+            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${hasActiveFilters || showFilters
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+              : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span className="flex-1 text-left">{t('filters2', 'Filtros')}</span>
@@ -116,7 +123,7 @@ export function SecondaryNav() {
                   onChange={(e) => setFilters({ ...filters, buildingType: e.target.value })}
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">{t('all', 'Todos')}</option>
+                  <option value="">{t('todos', 'Todos')}</option>
                   <option value="residential">{t('residential', 'Residencial')}</option>
                   <option value="commercial">{t('commercial', 'Comercial')}</option>
                   <option value="mixed">{t('office', 'Mixto')}</option>
@@ -152,57 +159,58 @@ export function SecondaryNav() {
           )}
         </div>
 
-        <div className="space-y-1.5 px-3">
-          {/* Edificios */}
+        <div className=" flex flex-col gap-2 px-3">
+          {/* Contenido condicional: edificios o usuarios */}
           {loading ? (
             <SkeletonSidebarBuildings />
+          ) : activeModule === 'usuarios' ? (<>
+            <SidebarUsers setLoading={setLoading} loading={loading} roles={roles} />
+          </>
           ) : (
             filteredBuildings.map((building) => {
-            const isExpanded = expandedBuildings.includes(building.id);
-            const isSelected = selectedBuildingId === building.id;
+              const isExpanded = expandedBuildings.includes(building.id);
+              const isSelected = selectedBuildingId === building.id;
 
-            return (
-              <div key={building.id} className="mb-1">
-                {/* Edificio principal */}
-                <button
-                  onClick={() => toggleBuildingExpansion(building.id)}
-                  className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${
-                    isSelected && activeSection === 'todos'
+              return (
+                <div key={building.id} className="mb-1">
+                  {/* Edificio principal */}
+                  <button
+                    onClick={() => toggleBuildingExpansion(building.id)}
+                    className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${isSelected && activeSection === 'todos'
                       ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                  <Building2 className="w-4 h-4" />
-                  <span className="flex-1 text-left truncate leading-relaxed">{building.name}</span>
-                </button>
+                      }`}
+                  >
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    <Building2 className="w-4 h-4" />
+                    <span className="flex-1 text-left truncate leading-relaxed">{building.name}</span>
+                  </button>
 
-                {/* Opciones del edificio */}
-                {isExpanded && (
-                  <div className="ml-4 mt-3 space-y-1.5 pl-3 border-l-2 border-gray-200">
-                    {/* Vista General */}
-                    <button
-                      onClick={() => {
-                        setSelectedBuildingId(building.id);
-                        setActiveSection('todos');
-                        setActiveTab('todos');
-                        setViewMode('detail');
-                        navigate(`/edificio/${building.id}`);
-                      }}
-                      className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                        selectedBuildingId === building.id && activeSection === 'todos'
+                  {/* Opciones del edificio */}
+                  {isExpanded && (
+                    <div className="ml-4 mt-3 space-y-1.5 pl-3 border-l-2 border-gray-200">
+                      {/* Vista General */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection('todos');
+                          setActiveTab('todos');
+                          setViewMode('detail');
+                          navigate(`/edificio/${building.id}`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${selectedBuildingId === building.id && activeSection === 'todos'
                           ? 'text-blue-600 bg-blue-50 font-medium'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Circle className="w-1.5 h-1.5 fill-current" />
-                      <span className="leading-relaxed">{t('generalView', 'Vista General')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          }))}
+                          }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">{t('generalView', 'Vista General')}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            }))}
         </div>
       </nav>
     </div>

@@ -55,6 +55,7 @@ function NewLayoutContent() {
     // Si estamos en una ruta específica que necesita su propio componente, usar Outlet
     if (location.pathname.startsWith('/libro-digital') || 
         location.pathname.startsWith('/cfo-') || 
+        location.pathname.startsWith('/usuarios') || 
         location.pathname.startsWith('/edificios/crear') ||
         location.pathname.startsWith('/mantenimiento') ||
         location.pathname.startsWith('/cumplimiento') ||
@@ -82,8 +83,8 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ['edificios'];
-  // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
+  const modulesWithSecondaryNav = ['edificios', 'usuarios'];
+  // Mostrar SecondaryNav siempre en los módulos de la lista
   const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule);
 
   try {

@@ -23,6 +23,7 @@ import CFOFinancialAnalysisDashboard from './components/cfo/screens/CFOFinancial
 import CFOFinancialAnalysisSimulation from './components/cfo/screens/CFOFinancialAnalysisSimulation'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import Users from './components/Users'
 
 // Nuevos componentes para edificios y libro del edificio
 import CreateBuildingWizard from './components/buildings/CreateBuildingWizard'
@@ -130,6 +131,16 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Cumplimiento />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/usuarios"
+                  element={
+                    <ProtectedRoute>
+                       <ErrorBoundary>
+                          <Users />
+                       </ErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
