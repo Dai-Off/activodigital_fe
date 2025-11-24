@@ -1,23 +1,43 @@
-import { Search, ChevronLeft, ChevronRight, User, Sparkles, Globe, Bell, ChevronRight as ChevronRightIcon, Settings, LogOut, UserCircle, ChevronDown, Menu } from "lucide-react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Sparkles,
+  Globe,
+  Bell,
+  ChevronRight as ChevronRightIcon,
+  Settings,
+  LogOut,
+  UserCircle,
+  ChevronDown,
+  Menu,
+} from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { BuildingsApiService, type Building } from "../../services/buildingsApi";
+import {
+  BuildingsApiService,
+  type Building,
+} from "../../services/buildingsApi";
 import { toast } from "sonner";
 import { MobileNav } from "./MobileNav";
 import { AIAssistant } from "../AIAssistant";
 
 export function AppHeader() {
-  let goBack = () => {}, goForward = () => {}, canGoBack = false, canGoForward = false;
-  let viewMode: 'list' | 'detail' = 'list';
+  let goBack = () => {},
+    goForward = () => {},
+    canGoBack = false,
+    canGoForward = false;
+  let viewMode: "list" | "detail" = "list";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
-  let setViewMode: ((mode: 'list' | 'detail') => void) | null = null;
+  let setViewMode: ((mode: "list" | "detail") => void) | null = null;
   let setActiveSection: ((section: string) => void) | null = null;
   let setActiveTab: ((tab: string) => void) | null = null;
-  
+
   try {
     const navigation = useNavigation();
     goBack = navigation.goBack;
@@ -31,36 +51,37 @@ export function AppHeader() {
     setActiveSection = navigation.setActiveSection;
     setActiveTab = navigation.setActiveTab;
   } catch (error) {
-    console.error('Error en AppHeader useNavigation:', error);
+    console.error("Error en AppHeader useNavigation:", error);
   }
-  
-  let language = 'ES';
-  let setLanguage: ((lang: 'ES' | 'EN' | 'FR' | 'DE' | 'PT') => void) | null = null;
+
+  let language = "ES";
+  let setLanguage: ((lang: "ES" | "EN" | "FR" | "DE" | "PT") => void) | null =
+    null;
   let t: ((key: string, defaultValue?: string) => string) | null = null;
-  
+
   try {
     const langContext = useLanguage();
     language = langContext.language;
     setLanguage = langContext.setLanguage;
     t = langContext.t;
   } catch (error) {
-    console.error('Error en AppHeader useLanguage:', error);
+    console.error("Error en AppHeader useLanguage:", error);
     t = (key: string, defaultValue?: string) => defaultValue || key;
   }
-  
+
   let user = null;
   let logout: (() => void) | null = null;
-  
+
   try {
     const auth = useAuth();
     user = auth.user;
     logout = auth.logout;
   } catch (error) {
-    console.error('Error en AppHeader useAuth:', error);
+    console.error("Error en AppHeader useAuth:", error);
   }
-  
+
   const navigate = useNavigate();
-  
+
   // Helper para traducciones que siempre retorna un string
   const translate = (key: string, defaultValue?: string): string => {
     if (t) {
@@ -68,7 +89,7 @@ export function AppHeader() {
     }
     return defaultValue || key;
   };
-  
+
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -77,8 +98,10 @@ export function AppHeader() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [searchResults, setSearchResults] = useState<Building[]>([]);
-  const [selectedBuildingName, setSelectedBuildingName] = useState<string | null>(null);
-  
+  const [selectedBuildingName, setSelectedBuildingName] = useState<
+    string | null
+  >(null);
+
   const translatorRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -88,12 +111,19 @@ export function AppHeader() {
   useEffect(() => {
     if (searchTerm.trim()) {
       BuildingsApiService.getAllBuildings()
-        .then(buildings => {
-          const filtered = buildings.filter(building => 
-            building.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            building.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            building.id.toLowerCase().includes(searchTerm.toLowerCase())
-          ).slice(0, 5);
+        .then((buildings) => {
+          const filtered = buildings
+            .filter(
+              (building) =>
+                building.name
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                building.address
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                building.id.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .slice(0, 5);
           setSearchResults(filtered);
         })
         .catch(() => setSearchResults([]));
@@ -104,9 +134,9 @@ export function AppHeader() {
 
   // Cargar nombre del edificio cuando cambia selectedBuildingId
   useEffect(() => {
-    if (selectedBuildingId && viewMode === 'detail') {
+    if (selectedBuildingId && viewMode === "detail") {
       BuildingsApiService.getBuildingById(selectedBuildingId)
-        .then(building => {
+        .then((building) => {
           setSelectedBuildingName(building.name);
         })
         .catch(() => {
@@ -121,11 +151,13 @@ export function AppHeader() {
     try {
       if (logout) {
         await logout();
-        navigate('/login');
-        toast.success(translate('sessionClosed', 'Sesión cerrada correctamente'));
+        navigate("/login");
+        toast.success(
+          translate("sessionClosed", "Sesión cerrada correctamente")
+        );
       }
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      console.error("Error al cerrar sesión:", error);
     }
     setShowUserMenu(false);
   };
@@ -133,34 +165,51 @@ export function AppHeader() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (translatorRef.current && !translatorRef.current.contains(event.target as Node)) {
+      if (
+        translatorRef.current &&
+        !translatorRef.current.contains(event.target as Node)
+      ) {
         setShowTranslator(false);
       }
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
         setShowNotifications(false);
       }
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowSearchResults(false);
       }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
         setShowUserMenu(false);
       }
     };
 
-    if (showTranslator || showNotifications || showSearchResults || showUserMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
+    if (
+      showTranslator ||
+      showNotifications ||
+      showSearchResults ||
+      showUserMenu
+    ) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showTranslator, showNotifications, showSearchResults, showUserMenu]);
 
   const handleSearchResultClick = (buildingId: string) => {
     if (setSelectedBuildingId) setSelectedBuildingId(buildingId);
-    if (setViewMode) setViewMode('detail');
-    if (setActiveSection) setActiveSection('todos');
-    if (setActiveTab) setActiveTab('todos');
+    if (setViewMode) setViewMode("detail");
+    if (setActiveSection) setActiveSection("todos");
+    if (setActiveTab) setActiveTab("todos");
     setSearchTerm("");
     setShowSearchResults(false);
     navigate(`/edificio/${buildingId}`);
@@ -168,10 +217,10 @@ export function AppHeader() {
 
   const handleBackToList = () => {
     if (setSelectedBuildingId) setSelectedBuildingId(null);
-    if (setViewMode) setViewMode('list');
-    if (setActiveSection) setActiveSection('dashboard');
-    if (setActiveTab) setActiveTab('dashboard');
-    navigate('/activos');
+    if (setViewMode) setViewMode("list");
+    if (setActiveSection) setActiveSection("dashboard");
+    if (setActiveTab) setActiveTab("dashboard");
+    navigate("/dashboard");
   };
 
   return (
@@ -188,19 +237,19 @@ export function AppHeader() {
               <Menu className="w-5 h-5 text-gray-700" />
             </button>
 
-            <button 
+            <button
               onClick={handleBackToList}
               className="text-xl md:text-2xl hover:text-blue-600 transition-colors cursor-pointer flex-shrink-0 font-bold"
             >
               ARKIA
             </button>
-            
+
             {/* Global Search */}
             <div className="relative flex-1 md:flex-initial" ref={searchRef}>
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder={translate('search', 'Buscar edificios...')}
+                placeholder={translate("search", "Buscar edificios...")}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -209,29 +258,35 @@ export function AppHeader() {
                 onFocus={() => setShowSearchResults(true)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full md:w-80 focus:outline-none focus:border-blue-500"
               />
-              
+
               {/* Search Results Dropdown */}
-              {showSearchResults && searchTerm.trim() && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
-                  <div className="py-2">
-                    <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                      {translate('buildingsFound', 'Edificios encontrados')} ({searchResults.length})
+              {showSearchResults &&
+                searchTerm.trim() &&
+                searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="py-2">
+                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                        {translate("buildingsFound", "Edificios encontrados")} (
+                        {searchResults.length})
+                      </div>
+                      {searchResults.map((building) => (
+                        <button
+                          key={building.id}
+                          onClick={() => handleSearchResultClick(building.id)}
+                          className="w-full text-left px-3 py-2.5 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors"
+                        >
+                          <div className="text-sm text-gray-900">
+                            {building.name}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {building.address ||
+                              translate("noAddress", "Sin dirección")}
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    {searchResults.map((building) => (
-                      <button
-                        key={building.id}
-                        onClick={() => handleSearchResultClick(building.id)}
-                        className="w-full text-left px-3 py-2.5 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors"
-                      >
-                        <div className="text-sm text-gray-900">{building.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {building.address || translate('noAddress', 'Sin dirección')}
-                        </div>
-                      </button>
-                    ))}
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
 
@@ -241,10 +296,12 @@ export function AppHeader() {
             <button
               onClick={() => setShowAIAssistant(!showAIAssistant)}
               className="flex items-center justify-center gap-2 px-2 md:px-4 py-2 h-9 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
-              title={translate('aiAssistant', 'Asistente IA')}
+              title={translate("aiAssistant", "Asistente IA")}
             >
               <Sparkles className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm hidden md:inline whitespace-nowrap">{translate('aiAssistant', 'Asistente IA')}</span>
+              <span className="text-sm hidden md:inline whitespace-nowrap">
+                {translate("aiAssistant", "Asistente IA")}
+              </span>
             </button>
 
             {/* Notifications Button */}
@@ -254,7 +311,7 @@ export function AppHeader() {
                   setShowNotifications(!showNotifications);
                 }}
                 className="relative flex items-center justify-center px-2 md:px-3 py-2 h-9 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
-                title={translate('notifications', 'Notificaciones')}
+                title={translate("notifications", "Notificaciones")}
               >
                 <Bell className="w-4 h-4 flex-shrink-0" />
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -267,11 +324,13 @@ export function AppHeader() {
                 <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-80 z-50 max-h-96 overflow-y-auto">
                   <div className="p-3 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm text-gray-900">{translate('notifications', 'Notificaciones')}</h3>
+                      <h3 className="text-sm text-gray-900">
+                        {translate("notifications", "Notificaciones")}
+                      </h3>
                     </div>
                   </div>
                   <div className="p-6 text-center text-sm text-gray-500">
-                    {translate('noNotifications', 'No hay notificaciones')}
+                    {translate("noNotifications", "No hay notificaciones")}
                   </div>
                 </div>
               )}
@@ -282,7 +341,7 @@ export function AppHeader() {
               <button
                 onClick={() => setShowTranslator(!showTranslator)}
                 className="flex items-center justify-center gap-2 px-4 py-2 h-9 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
-                title={translate('selectLanguage', 'Seleccionar idioma')}
+                title={translate("selectLanguage", "Seleccionar idioma")}
               >
                 <Globe className="w-4 h-4 flex-shrink-0" />
                 <span className="text-sm whitespace-nowrap">{language}</span>
@@ -293,11 +352,11 @@ export function AppHeader() {
                 <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-48 z-50">
                   <div className="p-2">
                     <p className="text-xs text-gray-500 px-3 py-2">
-                      {translate('selectLanguage', 'Seleccionar idioma')}
+                      {translate("selectLanguage", "Seleccionar idioma")}
                     </p>
                     {[
-                      { code: 'ES' as const, name: 'Español', flag: '🇪🇸' },
-                      { code: 'EN' as const, name: 'English', flag: '🇬🇧' },
+                      { code: "ES" as const, name: "Español", flag: "🇪🇸" },
+                      { code: "EN" as const, name: "English", flag: "🇬🇧" },
                     ].map((lang) => (
                       <button
                         key={lang.code}
@@ -305,10 +364,17 @@ export function AppHeader() {
                           // Cambiar idioma (el contexto maneja i18n y localStorage)
                           if (setLanguage) setLanguage(lang.code);
                           setShowTranslator(false);
-                          toast.success(`${translate('languageChangedTo', 'Idioma cambiado a')} ${lang.name}`);
+                          toast.success(
+                            `${translate(
+                              "languageChangedTo",
+                              "Idioma cambiado a"
+                            )} ${lang.name}`
+                          );
                         }}
                         className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm ${
-                          language === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                          language === lang.code
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700"
                         }`}
                       >
                         <span className="text-lg">{lang.flag}</span>
@@ -331,7 +397,9 @@ export function AppHeader() {
                   className="flex items-center justify-center gap-2 px-2 md:px-3 py-2 h-9 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all"
                 >
                   <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                  <span className="text-gray-700 hidden lg:inline whitespace-nowrap truncate max-w-[150px]">{user.email || translate('userArkia', 'Usuario ARKIA')}</span>
+                  <span className="text-gray-700 hidden lg:inline whitespace-nowrap truncate max-w-[150px]">
+                    {user.email || translate("userArkia", "Usuario ARKIA")}
+                  </span>
                   <ChevronDown className="w-3 h-3 text-gray-400 hidden md:inline flex-shrink-0" />
                 </button>
 
@@ -341,34 +409,39 @@ export function AppHeader() {
                     <div className="p-3 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                          {user.email?.[0]?.toUpperCase() || 'U'}
+                          {user.email?.[0]?.toUpperCase() || "U"}
                         </div>
                         <div className="min-w-0 flex-1 overflow-hidden">
-                          <p className="text-sm truncate">{user.email || translate('userArkia', 'Usuario ARKIA')}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.role || 'Usuario'}</p>
+                          <p className="text-sm truncate">
+                            {user.email ||
+                              translate("userArkia", "Usuario ARKIA")}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user.role || "Usuario"}
+                          </p>
                         </div>
                       </div>
                     </div>
                     <div className="p-2">
                       <button
                         onClick={() => {
-                          toast.info(translate('profile', 'Mi perfil'));
+                          toast.info(translate("profile", "Mi perfil"));
                           setShowUserMenu(false);
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
                       >
                         <UserCircle className="w-4 h-4" />
-                        <span>{translate('profile', 'Mi perfil')}</span>
+                        <span>{translate("profile", "Mi perfil")}</span>
                       </button>
                       <button
                         onClick={() => {
-                          toast.info(translate('settings', 'Configuración'));
+                          toast.info(translate("settings", "Configuración"));
                           setShowUserMenu(false);
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
                       >
                         <Settings className="w-4 h-4" />
-                        <span>{translate('settings', 'Configuración')}</span>
+                        <span>{translate("settings", "Configuración")}</span>
                       </button>
                     </div>
                     <div className="p-2 border-t border-gray-200">
@@ -377,7 +450,7 @@ export function AppHeader() {
                         className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-red-50 text-sm text-red-600"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>{translate('logout', 'Cerrar sesión')}</span>
+                        <span>{translate("logout", "Cerrar sesión")}</span>
                       </button>
                     </div>
                   </div>
@@ -387,27 +460,27 @@ export function AppHeader() {
 
             {/* Navigation Arrows */}
             <div className="hidden md:flex items-center gap-2">
-              <button 
+              <button
                 onClick={goBack}
                 disabled={!canGoBack}
                 className={`p-1.5 rounded ${
-                  canGoBack 
-                    ? 'hover:bg-gray-100' 
-                    : 'opacity-30 cursor-not-allowed'
+                  canGoBack
+                    ? "hover:bg-gray-100"
+                    : "opacity-30 cursor-not-allowed"
                 }`}
-                title={translate('back', 'Volver')}
+                title={translate("back", "Volver")}
               >
                 <ChevronLeft className="w-4 h-4 text-gray-600" />
               </button>
-              <button 
+              <button
                 onClick={goForward}
                 disabled={!canGoForward}
                 className={`p-1.5 rounded ${
-                  canGoForward 
-                    ? 'hover:bg-gray-100' 
-                    : 'opacity-30 cursor-not-allowed'
+                  canGoForward
+                    ? "hover:bg-gray-100"
+                    : "opacity-30 cursor-not-allowed"
                 }`}
-                title={translate('forward', 'Avanzar')}
+                title={translate("forward", "Avanzar")}
               >
                 <ChevronRight className="w-4 h-4 text-gray-600" />
               </button>
@@ -419,21 +492,21 @@ export function AppHeader() {
       {/* Dynamic Breadcrumb */}
       <div className="px-3 md:px-6 py-2.5 md:py-1.5 bg-gray-50 border-t border-gray-200 overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2 text-xs md:text-sm whitespace-nowrap min-w-max">
-          <button 
+          <button
             onClick={handleBackToList}
             className="text-gray-600 hover:text-blue-600 transition-colors"
           >
             ARKIA
           </button>
           <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-          <button 
+          <button
             onClick={handleBackToList}
             className="text-gray-600 hover:text-blue-600 transition-colors"
           >
-            {translate('assetsList', 'Listado de activos')}
+            {translate("assetsList", "Listado de activos")}
           </button>
-          
-          {viewMode === 'detail' && selectedBuildingId && (
+
+          {viewMode === "detail" && selectedBuildingId && (
             <>
               <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
               <span className="text-gray-900">
@@ -445,17 +518,16 @@ export function AppHeader() {
       </div>
 
       {/* Mobile Navigation */}
-      <MobileNav 
+      <MobileNav
         isOpen={showMobileNav}
         onClose={() => setShowMobileNav(false)}
       />
 
       {/* AI Assistant Panel */}
-      <AIAssistant 
+      <AIAssistant
         isOpen={showAIAssistant}
         onClose={() => setShowAIAssistant(false)}
       />
     </header>
   );
 }
-

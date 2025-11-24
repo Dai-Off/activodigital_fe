@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
-import { DashboardComponent } from "./DashboardComponent";
-import { AssetsComponent } from "./AssetsComponent";
+import { SidebarDashboard } from "./SidebarDashboard";
+import SidebarUsers from "./SidebarUsers";
+import { SidebarAssets } from "./SidebarAssets";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -13,8 +14,9 @@ export function SecondaryNav() {
       Sidebar secundario según la ruta ejem: nombreRuta: <TuComponente/>
   */
   const components: any = {
-    dashboard: <DashboardComponent />,
-    activos: <AssetsComponent />,
+    dashboard: <SidebarDashboard />,
+    users: <SidebarUsers />,
+    activos: <SidebarAssets />,
   };
 
   return (

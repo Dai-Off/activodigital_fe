@@ -15,7 +15,7 @@ import {
 } from "../../services/buildingsApi";
 import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
 
-export function AssetsComponent() {
+export function SidebarAssets() {
   const {
     activeSection,
     setActiveSection,

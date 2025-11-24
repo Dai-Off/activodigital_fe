@@ -99,7 +99,7 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ["edificios", "inicio"];
+  const modulesWithSecondaryNav = ["edificios", "inicio", "usuarios"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
   const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule);
 
