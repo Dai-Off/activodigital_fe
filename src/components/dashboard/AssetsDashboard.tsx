@@ -13,12 +13,14 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { BuildingsApiService, type DashboardStats } from "../../services/buildingsApi";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import CreateBuildingMethodSelection from "../buildings/CreateBuildingMethodSelection";
 
 export function AssetsDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
@@ -134,10 +136,6 @@ export function AssetsDashboard() {
     );
   }
 
-  const handleCreateBuilding = () => {
-    navigate('/edificios/crear');
-  };
-
   return (
     <div className="space-y-6">
       {/* Título y Botón Registrar */}
@@ -147,13 +145,23 @@ export function AssetsDashboard() {
           <p className="text-sm text-gray-500">{t('executiveSummary', 'Resumen ejecutivo del portfolio de activos')}</p>
         </div>
         <button
-          onClick={handleCreateBuilding}
+          onClick={() => setIsCreateModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Building2 className="w-4 h-4" />
           <span>{t('createBuilding', 'Crear edificio')}</span>
         </button>
       </div>
+
+      {/* Modal de selección de método */}
+      <CreateBuildingMethodSelection
+        isOpen={isCreateModalOpen}
+        onSelectMethod={(method) => {
+          setIsCreateModalOpen(false);
+          navigate('/edificios/crear', { state: { method } });
+        }}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
 
       {/* Layout Principal - Dos columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

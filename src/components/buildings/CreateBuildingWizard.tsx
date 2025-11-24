@@ -1,12 +1,14 @@
 // src/components/buildings/CreateBuildingWizard.tsx
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import Wizard from '../ui/Wizard';
 import CreateBuildingStep1 from './CreateBuildingStep1';
 import CreateBuildingStep2 from './CreateBuildingStep2';
 import CreateBuildingStep3 from './CreateBuildingStep3';
+import CreateBuildingMethodSelection, { type BuildingCreationMethod } from './CreateBuildingMethodSelection';
+import CreateBuildingFromCatastro from './CreateBuildingFromCatastro';
 
 import { useToast } from '../../contexts/ToastContext';
 import { useLoadingState } from '../ui/LoadingSystem';
@@ -64,9 +66,13 @@ interface CompleteBuildingData {
 const CreateBuildingWizard: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError, showInfo } = useToast();
   const { loading: isSubmitting, startLoading, stopLoading } = useLoadingState();
 
+  // Obtener el método desde el state de navegación, si existe
+  const methodFromState = (location.state as { method?: BuildingCreationMethod })?.method;
+  const [selectedMethod, setSelectedMethod] = useState<BuildingCreationMethod | null>(methodFromState || null);
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
@@ -86,6 +92,39 @@ const CreateBuildingWizard: React.FC = () => {
       description: t('buildingWizard.summaryDesc', 'Revisar información antes de continuar')
     }
   ];
+
+  // -------------------- Handlers: Method Selection --------------------
+  const handleMethodSelection = (method: BuildingCreationMethod) => {
+    setSelectedMethod(method);
+    setCurrentStep(0); // Ir al paso 0 (Step1 o Catastro)
+  };
+
+  const handleMethodSelectionClose = () => {
+    navigate('/activos');
+  };
+
+  // -------------------- Handlers: Catastro --------------------
+  const handleCatastroDataLoaded = (data: BuildingStep1Data, coordinates?: { lat: number; lng: number }) => {
+    setStep1Data(data);
+    
+    // Inicializar step2Data con la dirección y coordenadas si están disponibles
+    const step2DataUpdate: BuildingStep2Data = {
+      address: data.address || '',
+      latitude: coordinates?.lat ?? 0,
+      longitude: coordinates?.lng ?? 0,
+      photos: [],
+      mainPhotoIndex: 0
+    };
+    
+    setStep2Data(step2DataUpdate);
+    
+    setCurrentStep(1); // Ir al paso 1 (Step2)
+  };
+
+  const handleCatastroCancel = () => {
+    setSelectedMethod(null);
+    setCurrentStep(-1); // Volver a selección de método
+  };
 
   // -------------------- Handlers: Step 1 --------------------
   const handleStep1Next = (data: BuildingStep1Data) => {
@@ -328,8 +367,16 @@ const CreateBuildingWizard: React.FC = () => {
 
   // -------------------- Render current step --------------------
   const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 0:
+    // Paso 0: Step1 (manual) o Catastro
+    if (currentStep === 0) {
+      if (selectedMethod === 'catastro') {
+        return (
+          <CreateBuildingFromCatastro
+            onDataLoaded={handleCatastroDataLoaded}
+            onCancel={handleCatastroCancel}
+          />
+        );
+      } else {
         return (
           <CreateBuildingStep1
             onNext={handleStep1Next}
@@ -337,35 +384,38 @@ const CreateBuildingWizard: React.FC = () => {
             initialData={step1Data || ({} as Partial<BuildingStep1Data>)}
           />
         );
-
-      case 1:
-        return (
-          <CreateBuildingStep2
-            onNext={handleStep2Next}
-            onPrevious={handleStep2Previous}
-            onSaveDraft={handleStep2SaveDraft}
-            initialData={step2Data || ({} as Partial<BuildingStep2Data>)}
-            buildingName={step1Data?.name || t('buildings.newBuilding', 'Nuevo Edificio')}
-          />
-        );
-
-      case 2: {
-        const completeData = getCompleteData();
-        if (!completeData) return null;
-        return (
-          <CreateBuildingStep3
-            buildingData={completeData}
-            onEditData={handleEditData}
-            onEditLocation={handleEditLocation}
-            onSaveFinal={handleSaveFinal}
-            isSaving={isSubmitting}
-          />
-        );
       }
-
-      default:
-        return null;
     }
+
+    // Paso 1: Step2 (Ubicación y Fotos)
+    if (currentStep === 1) {
+      return (
+        <CreateBuildingStep2
+          onNext={handleStep2Next}
+          onPrevious={handleStep2Previous}
+          onSaveDraft={handleStep2SaveDraft}
+          initialData={step2Data || ({} as Partial<BuildingStep2Data>)}
+          buildingName={step1Data?.name || t('buildings.newBuilding', 'Nuevo Edificio')}
+        />
+      );
+    }
+
+    // Paso 2: Step3 (Resumen)
+    if (currentStep === 2) {
+      const completeData = getCompleteData();
+      if (!completeData) return null;
+      return (
+        <CreateBuildingStep3
+          buildingData={completeData}
+          onEditData={handleEditData}
+          onEditLocation={handleEditLocation}
+          onSaveFinal={handleSaveFinal}
+          isSaving={isSubmitting}
+        />
+      );
+    }
+
+    return null;
   };
 
   // -------------------- JSX --------------------
@@ -402,14 +452,25 @@ const CreateBuildingWizard: React.FC = () => {
           </nav>
         </div>
 
-        {/* Wizard */}
-        <Wizard
-          steps={wizardSteps}
-          currentStep={currentStep}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-        >
-          <div className="relative">{renderCurrentStep()}</div>
-        </Wizard>
+        {/* Modal de selección de método - solo si no viene método desde state */}
+        {!methodFromState && (
+          <CreateBuildingMethodSelection
+            isOpen={selectedMethod === null}
+            onSelectMethod={handleMethodSelection}
+            onClose={handleMethodSelectionClose}
+          />
+        )}
+
+        {/* Wizard - Solo mostrar si ya se seleccionó un método */}
+        {selectedMethod !== null && (
+          <Wizard
+            steps={wizardSteps}
+            currentStep={currentStep}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          >
+            <div className="relative">{renderCurrentStep()}</div>
+          </Wizard>
+        )}
 
         {/* Footer Help */}
         <div className="mt-8 text-center text-sm text-gray-500">

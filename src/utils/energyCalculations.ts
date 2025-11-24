@@ -66,3 +66,27 @@ export const getRatingStars = (rating: string): number => {
 
   return ratingStars[rating as keyof typeof ratingStars] || 1;
 };
+
+/**
+ * Obtiene el color de fondo de Tailwind según la clase energética (CEE)
+ */
+export function getCEEColor(rating: string): string {
+  switch (rating) {
+    case 'A':
+      return 'bg-green-600';
+    case 'B':
+      return 'bg-green-500';
+    case 'C':
+      return 'bg-yellow-400';
+    case 'D':
+      return 'bg-yellow-300';
+    case 'E':
+      return 'bg-orange-500';
+    case 'F':
+      return 'bg-red-500';
+    case 'G':
+      return 'bg-red-600';
+    default:
+      return 'bg-gray-400';
+  }
+}
