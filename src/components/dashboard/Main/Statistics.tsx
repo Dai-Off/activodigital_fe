@@ -9,7 +9,7 @@ import {
   LucideTrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { DashboardLoading } from "~/components/ui/dashboardLoading";
+import { StatisticsLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
@@ -29,7 +29,7 @@ export function Statistics() {
   }, []);
 
   if (loading) {
-    return <DashboardLoading />;
+    return <StatisticsLoading />;
   }
 
   if (!stats) {

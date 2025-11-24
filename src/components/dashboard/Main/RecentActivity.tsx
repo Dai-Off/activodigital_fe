@@ -13,7 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { DashboardLoading } from "~/components/ui/dashboardLoading";
+import { RecentActivityLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
@@ -40,7 +40,7 @@ export function RecentActivity() {
   }, []);
 
   if (loading) {
-    return <DashboardLoading />;
+    return <RecentActivityLoading />;
   }
 
   if (!stats) {

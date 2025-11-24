@@ -21,6 +21,7 @@ function NewLayoutContent() {
   let activeSection = "dashboard";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
+  let setActiveModule: ((module: string) => void) | null = null;
 
   try {
     const navigation = useNavigation();
@@ -29,6 +30,7 @@ function NewLayoutContent() {
       activeSection = navigation.activeSection;
       selectedBuildingId = navigation.selectedBuildingId;
       setSelectedBuildingId = navigation.setSelectedBuildingId;
+      setActiveModule = navigation.setActiveModule;
     }
   } catch (error) {
     console.error("Error en useNavigation:", error);
@@ -39,17 +41,46 @@ function NewLayoutContent() {
   const isBuildingDetail =
     location.pathname.startsWith("/edificio/") && params.id;
 
-  // Sincronizar selectedBuildingId con la URL
+  // Sincronizar selectedBuildingId y activeModule con la URL
   React.useEffect(() => {
+    // Si estamos en una ruta de edificio o relacionada, establecer el módulo activo
+    const isBuildingRelatedPath = 
+      location.pathname.startsWith("/edificio/") || 
+      location.pathname.startsWith("/libro-digital") ||
+      location.pathname.startsWith("/cfo-intake") ||
+      location.pathname === "/activos";
+    
+    if (isBuildingRelatedPath && setActiveModule) {
+      if (activeModule !== "edificios") {
+        setActiveModule("edificios");
+      }
+    }
+    
     if (setSelectedBuildingId) {
-      if (isBuildingDetail && params.id && selectedBuildingId !== params.id) {
-        setSelectedBuildingId(params.id);
-      } else if (!isBuildingDetail && selectedBuildingId) {
-        // Si salimos de la vista de detalle, limpiar el ID seleccionado
-        // pero solo si no estamos navegando a otra ruta de edificio
-        if (!location.pathname.startsWith("/edificio/")) {
-          setSelectedBuildingId(null);
-        }
+      // Extraer buildingId de diferentes tipos de rutas
+      let buildingIdFromPath: string | null = null;
+      
+      if (isBuildingDetail && params.id) {
+        buildingIdFromPath = params.id;
+      } else if (location.pathname.startsWith("/libro-digital/hub/")) {
+        // Ruta: /libro-digital/hub/:buildingId
+        const match = location.pathname.match(/\/libro-digital\/hub\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/libro-digital/section/")) {
+        // Ruta: /libro-digital/section/:buildingId/:sectionId
+        const match = location.pathname.match(/\/libro-digital\/section\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/cfo-intake/")) {
+        // Ruta: /cfo-intake/:buildingId
+        const match = location.pathname.match(/\/cfo-intake\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
+      }
+      
+      if (buildingIdFromPath && selectedBuildingId !== buildingIdFromPath) {
+        setSelectedBuildingId(buildingIdFromPath);
+      } else if (!buildingIdFromPath && selectedBuildingId && !isBuildingRelatedPath) {
+        // Si salimos de todas las rutas relacionadas con edificios, limpiar el ID seleccionado
+        setSelectedBuildingId(null);
       }
     }
   }, [
@@ -57,6 +88,8 @@ function NewLayoutContent() {
     params.id,
     selectedBuildingId,
     setSelectedBuildingId,
+    setActiveModule,
+    activeModule,
     location.pathname,
   ]);
 
@@ -101,66 +134,59 @@ function NewLayoutContent() {
   // Módulos que requieren menú secundario
   const modulesWithSecondaryNav = ["edificios", "inicio"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
-  const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule);
+  // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
+  // Incluir rutas relacionadas con edificios: libro-digital, cfo-intake, etc.
+  const isBuildingRelatedRoute = 
+    location.pathname.startsWith("/edificio/") || 
+    location.pathname.startsWith("/libro-digital") ||
+    location.pathname.startsWith("/cfo-intake") ||
+    location.pathname === "/activos";
+  
+  const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule) || 
+    isBuildingRelatedRoute;
 
-  try {
-    return (
-      <ErrorBoundary>
-        <div className="min-h-screen bg-gray-50">
+  // La sidebar SIEMPRE debe renderizarse, sin condiciones
+  console.log('NewLayout renderizando, ruta:', location.pathname, 'showSecondaryNav:', showSecondaryNav);
+  
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50" style={{ overflowX: 'visible', position: 'relative' }}>
+        {/* Sidebar SIEMPRE visible - FUERA del contenedor para evitar overflow */}
+        <Sidebar />
+        
+        {/* SecondaryNav condicional */}
+        {showSecondaryNav && (
           <ErrorBoundary>
-            <Sidebar />
+            <SecondaryNav />
           </ErrorBoundary>
-          {showSecondaryNav && (
-            <ErrorBoundary>
-              <SecondaryNav />
-            </ErrorBoundary>
-          )}
+        )}
 
-          <div
-            className={`
+        {/* Contenido principal con margen para la sidebar */}
+        <div
+          className={`
             ${showSecondaryNav ? "lg:ml-80" : "lg:ml-16 md:ml-16"} 
             ml-0
+            relative
           `}
-          >
-            <ErrorBoundary>
-              <AppHeader />
-            </ErrorBoundary>
+        >
+          <ErrorBoundary>
+            <AppHeader />
+          </ErrorBoundary>
 
-            <main
-              className={`
+          <main
+            className={`
               px-3 md:px-6 lg:px-8 
               py-3 md:py-4 
               max-w-[1400px] 
               pt-[140px] md:pt-[104px]
             `}
-            >
-              <ErrorBoundary>{renderContent()}</ErrorBoundary>
-            </main>
-          </div>
-        </div>
-      </ErrorBoundary>
-    );
-  } catch (error) {
-    console.error("Error crítico en NewLayoutContent:", error);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
-          <h2 className="text-lg font-semibold mb-2">
-            Error al cargar la aplicación
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Por favor, recarga la página o contacta con soporte.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Recargar página
-          </button>
+            <ErrorBoundary>{renderContent()}</ErrorBoundary>
+          </main>
         </div>
       </div>
-    );
-  }
+    </ErrorBoundary>
+  );
 }
 
 export default function NewLayout() {
