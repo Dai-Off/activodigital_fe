@@ -227,7 +227,7 @@ export function SidebarAssets() {
                           setActiveSection("todos");
                           setActiveTab("todos");
                           setViewMode("detail");
-                          navigate(`/buildings/${building.id}`);
+                          navigate(`/building/${building.id}`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
                           selectedBuildingId === building.id &&

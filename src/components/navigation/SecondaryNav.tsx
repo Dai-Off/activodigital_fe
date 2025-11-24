@@ -31,7 +31,7 @@ export function SecondaryNav() {
   );
 
   // AssetsComponent tiene su propio contenedor, así que no necesitamos el contenedor del SecondaryNav
-  const isAssetsComponent = isBuildingRoute || pathName === "activos";
+  const isAssetsComponent = isBuildingRoute || pathName === "assets";
 
   if (isAssetsComponent) {
     // AssetsComponent se renderiza con su propio contenedor
