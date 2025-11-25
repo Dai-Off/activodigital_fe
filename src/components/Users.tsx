@@ -4,6 +4,7 @@ import { createUser, deleteUser, editUser, getAllUsers, getRoles, type Role } fr
 import { t } from "i18next";
 import { useLocation } from "react-router-dom";
 import VenUsuario, { type VenUsuarioRefMethods, type UserFormData } from "./windows/VenUsuario";
+import { SkeletonUsers } from './ui/LoadingSystem';
 import { Button } from "./ui/button";
 import { useToast } from "~/contexts/ToastContext";
 
@@ -203,7 +204,7 @@ export default function App() {
       <VenUsuario ref={modalRef} onSave={handleSave} onDelete={handleDelete} roles={roles || []} />
       <div className="min-h-screen bg-gray-100 p-4 sm:p-6 font-sans rounded-2xl">
         {loading ? (
-          <div className="text-center p-10 text-xl text-gray-500">Cargando usuarios...</div>
+          <SkeletonUsers />
         ) : (
           <div className="max-w-7xl mx-auto ">
             {/* HEADER */}

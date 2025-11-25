@@ -93,6 +93,9 @@ export const SkeletonText: React.FC<{
   </div>
 );
 
+// LightSkeleton: variant with a lighter palette (used across skeletons)
+// Duplicate LightSkeleton removed (already declared above).
+
 // Skeleton para tarjetas con shimmer
 export const SkeletonCard: React.FC<{ className?: string; shimmer?: boolean }> = ({ 
   className = '', 
@@ -340,3 +343,113 @@ export const useLoadingState = (initialLoading = false) => {
     reset
   };
 };
+
+export const LightSkeleton: React.FC<{ 
+  className?: string; 
+  children?: React.ReactNode;
+  animate?: boolean;
+  shimmer?: boolean;
+}> = ({ 
+  className = '', 
+  children, 
+  animate = true,
+  shimmer = false
+}) => (
+  <div 
+    className={` 
+      skeleton-element
+      ${shimmer ? 'skeleton-shimmer' : 'rounded-md'}
+      ${animate && !shimmer ? 'animate-pulse' : ''} 
+      ${className}
+    `}
+    style={{
+      backgroundColor: !shimmer ? '#fafafa' : undefined,
+      animationDuration: animate ? '2.5s' : undefined,
+      animationTimingFunction: animate ? 'cubic-bezier(0.4, 0, 0.6, 1)' : undefined,
+      animationIterationCount: animate ? 'infinite' : undefined
+    }}
+  >
+    {children}
+  </div>
+);
+
+// skeleton para lista de usuarios
+export const SkeletonUsers: React.FC = () => (
+  <div className="space-y-4">
+    {/* Header skeleton */}
+    <div className="bg-gray-50 rounded-xl shadow-sm p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-gray-300 animate-pulse" />
+          <div className="flex flex-col">
+            <div className="h-5 w-48 mb-2 rounded bg-gray-300 animate-pulse" />
+            <div className="h-3 w-32 rounded bg-gray-300 animate-pulse" />
+          </div>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <div className="h-10 w-36 rounded-xl bg-gray-300 animate-pulse" />
+        </div>
+      </div>
+    </div>
+
+    {/* Search + filters skeleton */}
+    <div className="bg-gray-50 p-4 rounded-xl shadow-md border border-gray-100">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex-1 min-w-0 flex items-center border border-gray-300 rounded-xl px-4 py-2 shadow-sm">
+          <div className="w-5 h-5 mr-2 rounded bg-gray-300 animate-pulse" />
+          <div className="h-4 w-full rounded bg-gray-300 animate-pulse" />
+        </div>
+
+          <div className="flex gap-2 items-center w-full md:w-auto justify-between sm:justify-start flex-wrap">
+          <div className="h-10 w-28 rounded-xl bg-gray-300 animate-pulse" />
+          <div className="h-10 w-20 rounded-xl bg-gray-300 animate-pulse" />
+          <div className="h-10 w-16 rounded-xl bg-gray-300 animate-pulse" />
+        </div>
+      </div>
+    </div>
+
+    {/* Table skeleton */}
+    <div className="bg-gray-50 rounded-xl shadow-md border border-gray-100 overflow-x-auto">
+      <table className="min-w-full text-sm">
+      <thead>
+        <tr className="bg-gray-50 border-b text-left text-gray-600 uppercase tracking-wider">
+          <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
+          <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
+          <th className="p-4 font-semibold"><div className="h-4 w-32 rounded bg-gray-300 animate-pulse" /></th>
+          <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
+          <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
+          <th className="p-4 font-semibold text-center"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <tr key={index} className="border-b border-gray-100">
+              <td className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-300 animate-pulse" />
+              <div className="flex-1">
+                <div className="h-4 w-32 mb-2 rounded bg-gray-300 animate-pulse" />
+                <div className="h-3 w-20 rounded bg-gray-300 animate-pulse" />
+              </div>
+            </td>
+            <td className="p-4">
+              <div className="h-4 w-20 rounded bg-gray-300 animate-pulse" />
+            </td>
+            <td className="p-4">
+              <div className="h-4 w-48 rounded bg-gray-300 animate-pulse" />
+            </td>
+            <td className="p-4">
+              <div className="h-4 w-24 rounded bg-gray-300 animate-pulse" />
+            </td>
+            <td className="p-4">
+              <div className="h-4 w-28 rounded bg-gray-300 animate-pulse" />
+            </td>
+            <td className="p-4 text-center">
+              <div className="h-8 w-16 rounded-lg bg-gray-300 animate-pulse" />
+            </td>
+          </tr>
+        ))}
+      </tbody>  
+      </table>
+    </div>
+  </div>
+);
