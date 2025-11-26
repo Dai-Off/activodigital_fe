@@ -29,6 +29,9 @@ export interface Notification {
   expiration: string | null;
   priority: number;
   readAt?: string;
+  message?: string;
+  createdAt: string;
+  status?: NotificationStatus;
 }
 
 export interface CreateNotificationRequest {
