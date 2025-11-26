@@ -51,7 +51,7 @@ export function Sidebar() {
       label: t ? t("buildings", "Edificios") : "Edificios",
     },
     {
-      id: "usuarios",
+      id: "users",
       icon: Users,
       label: t ? t("users", "Usuarios") : "Usuarios",
     },
@@ -60,7 +60,6 @@ export function Sidebar() {
   const handleModuleChange = (moduleId: string) => {
     if (setActiveModule) setActiveModule(moduleId);
     if (setSelectedBuildingId) setSelectedBuildingId(null);
-
     // Establecer sección y tab predeterminados según el módulo
     switch (moduleId) {
       case "inicio":
@@ -69,7 +68,7 @@ export function Sidebar() {
         if (setViewMode) setViewMode("list");
         navigate("/dashboard");
         break;
-      case "usuarios":
+      case "users":
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");

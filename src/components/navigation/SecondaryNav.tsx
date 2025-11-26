@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { SidebarDashboard } from "./SidebarDashboard";
 import { SidebarAssets } from "./SidebarAssets";
+import SidebarUsers from "./SidebarUsers";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -16,6 +17,7 @@ export function SecondaryNav() {
     dashboard: <SidebarDashboard />,
     assets: <SidebarAssets />,
     edificio: <SidebarAssets />, // Mostrar lista de activos también en rutas de edificio
+    users: <SidebarUsers />
   };
 
   // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent
