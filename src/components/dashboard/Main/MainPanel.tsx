@@ -24,10 +24,16 @@ export function MainPanel() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigate();
-  const { fetchUserNotifications, notifications } = useNotifications();
+  const {
+    fetchUserNotifications,
+    refreshUnreadCount,
+    notifications,
+    unreadCount,
+  } = useNotifications();
 
   useEffect(() => {
     fetchUserNotifications();
+    refreshUnreadCount();
     BuildingsApiService.getDashboardStats()
       .then(setStats)
       .catch(() => setStats(null))
@@ -51,7 +57,7 @@ export function MainPanel() {
   // const handleLoadPersonalNotifications = () => {
   //   fetchUserNotifications();
   // };
-
+  console.log({ unreadCount, notifications });
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
     percentageBooks = stats.pendingBooks / stats.completedBooks;
