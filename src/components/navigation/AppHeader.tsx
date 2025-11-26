@@ -245,24 +245,6 @@ export function AppHeader() {
       expiration: "bg-yellow-600",
     };
 
-    if (type === "expiration") {
-      return (
-        <div className="p-3 hover:bg-gray-50 cursor-pointer">
-          <div className="flex gap-3">
-            <div
-              className={`w-2 h-2 ${ColorType[type]} rounded-full mt-1.5 flex-shrink-0`}
-            ></div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-900">{title}</p>
-              <p className="text-xs text-gray-600 mt-0.5">
-                {buildingName} - Vence en {expiration} días
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Hace {date}</p>
-            </div>
-          </div>
-        </div>
-      );
-    }
     return (
       <div className="p-3 hover:bg-gray-50 cursor-pointer">
         <div className="flex gap-3">
@@ -271,7 +253,10 @@ export function AppHeader() {
           ></div>
           <div className="flex-1">
             <p className="text-sm text-gray-900">{title}</p>
-            <p className="text-xs text-gray-600 mt-0.5">{buildingName}</p>
+            <p className="text-xs text-gray-600 mt-0.5">
+              {buildingName}{" "}
+              {type === "expiration" ? `- Vence en ${expiration}` : ""}
+            </p>
             <p className="text-xs text-gray-400 mt-1">Hace {date}</p>
           </div>
         </div>

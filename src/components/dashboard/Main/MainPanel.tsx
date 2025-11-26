@@ -14,25 +14,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainPanelLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
+import { useNotifications } from "~/contexts/NotificationContext";
 import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
-import { notificationService } from "~/services/notifications";
 export function MainPanel() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [alerts, setAlerts] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigate();
+  const { fetchUserNotifications, notifications } = useNotifications();
 
   useEffect(() => {
-    notificationService
-      .getNotifications()
-      .then(setAlerts)
-      .catch(() => {
-        setAlerts(null);
-      });
+    fetchUserNotifications();
     BuildingsApiService.getDashboardStats()
       .then(setStats)
       .catch(() => setStats(null))
@@ -53,8 +48,10 @@ export function MainPanel() {
     );
   }
 
-  const { data: alerta } = alerts;
-  console.log(alerta);
+  // const handleLoadPersonalNotifications = () => {
+  //   fetchUserNotifications();
+  // };
+
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
     percentageBooks = stats.pendingBooks / stats.completedBooks;

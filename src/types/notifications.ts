@@ -1,48 +1,50 @@
-// src/types/notifications.ts
+/**
+ * src/types/notifications.ts
+ */
+
 export const NotificationType = {
-  AI_PROCESSING_START: 'ai_processing_start',
-  AI_PROCESSING_PROGRESS: 'ai_processing_progress', 
-  AI_PROCESSING_COMPLETE: 'ai_processing_complete',
-  AI_PROCESSING_ERROR: 'ai_processing_error',
-  BOOK_CREATED: 'book_created',
-  BOOK_UPDATED: 'book_updated',
-  GENERAL: 'general'
+  MAINTENANCE: "maintenance",
+  FINANCIAL: "financial",
+  EXPIRATION: "expiration",
+  RENEWAL: "renewal",
 } as const;
 
-export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
 
+// Reintroducimos el estado de notificación para que el servicio compile
 export const NotificationStatus = {
-  UNREAD: 'unread',
-  READ: 'read'
+  UNREAD: "unread",
+  READ: "read",
 } as const;
 
-export type NotificationStatus = typeof NotificationStatus[keyof typeof NotificationStatus];
+export type NotificationStatus =
+  (typeof NotificationStatus)[keyof typeof NotificationStatus];
 
 export interface Notification {
   id: string;
-  userId: string;
+  buildingId: string;
   type: NotificationType;
   title: string;
-  message: string;
-  status: NotificationStatus;
-  metadata?: Record<string, any>;
-  createdAt: string;
+  expiration: string | null;
+  priority: number;
   readAt?: string;
 }
 
+export interface CreateNotificationRequest {
+  building_id: string;
+  type: NotificationType;
+  title: string;
+  expiration: string | null;
+  priority: number;
+}
+
 export interface NotificationFilters {
+  // Añadimos el nuevo campo de filtro
+  buildingIds?: string[];
+  // Añadimos el filtro de estado (necesario para el frontend)
   status?: NotificationStatus;
   type?: NotificationType;
   limit?: number;
   offset?: number;
-}
-
-export interface NotificationResponse {
-  data: Notification[];
-  count: number;
-  filters: NotificationFilters;
-}
-
-export interface UnreadCountResponse {
-  unreadCount: number;
 }

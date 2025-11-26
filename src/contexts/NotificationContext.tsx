@@ -1,222 +1,210 @@
 // src/contexts/NotificationContext.tsx
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { notificationService } from '../services/notifications';
-import type { Notification, NotificationFilters, NotificationStatus } from '../types/notifications';
+import { createContext, useContext, useState, useCallback } from "react";
+import type { ReactNode } from "react";
+import { notificationApiService } from "../services/notifications";
+import type { Notification, NotificationFilters } from "../types/notifications";
 
-// Interfaz del contexto
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   isLoading: boolean;
   error: string | null;
-  
-  // Acciones
+  activeBuildingIds: string[];
+
   fetchNotifications: (filters?: NotificationFilters) => Promise<void>;
+  fetchUserNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  markAllAsRead: (userId: string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
-  
-  // Polling discreto (solo para notificaciones importantes)
-  startDiscretePolling: () => void;
-  stopDiscretePolling: () => void;
+  setNotificationBuildingFilters: (ids: string[]) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
-// Hook para usar el contexto
 export const useNotifications = (): NotificationContextType => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 };
 
-// Props del provider
-interface NotificationProviderProps {
-  children: ReactNode;
-  pollingInterval?: number; // en milisegundos, default 10 segundos (más reactivo)
-}
-
-// Provider del contexto
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ 
-  children, 
-  pollingInterval = 10000 // 10 segundos por defecto (más reactivo)
-}) => {
+export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pollingIntervalId, setPollingIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [activeBuildingIds, setActiveBuildingIds] = useState<string[]>([]);
 
-  // Obtener notificaciones
-  const fetchNotifications = useCallback(async (filters: NotificationFilters = {}) => {
+  const setNotificationBuildingFilters = useCallback((ids: string[]) => {
+    setActiveBuildingIds(ids);
+  }, []);
+
+  // Actualiza el conteo de no leídas
+  const refreshUnreadCount = useCallback(async () => {
+    // Nota: Esta lógica asume conteo por edificio. Si estamos en modo "Usuario",
+    // quizás deberíamos filtrar localmente o llamar al endpoint de usuario.
+    if (activeBuildingIds.length === 0) {
+      setUnreadCount(0);
+      return;
+    }
+    const buildingId = activeBuildingIds[0];
     try {
+      const unread = await notificationApiService.getUnreadNotifications(
+        buildingId
+      );
+      setUnreadCount(unread.length);
+    } catch (err) {
+      console.error("Error updating unread count:", err);
+    }
+  }, [activeBuildingIds]);
+
+  // 1. Obtiene notificaciones de Edificio (Historial)
+  const fetchNotifications = useCallback(
+    async (explicitFilters: NotificationFilters = {}) => {
+      if (activeBuildingIds.length === 0) {
+        setNotifications([]);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
-      
-      const response = await notificationService.getNotifications(filters);
-      setNotifications(response.data);
+
+      try {
+        const notificationPromises = activeBuildingIds.map((buildingId) =>
+          notificationApiService.getBuildingHistory(
+            buildingId,
+            explicitFilters.limit,
+            explicitFilters.offset
+          )
+        );
+
+        const responses = await Promise.all(notificationPromises);
+        const allNotifications = responses.flatMap((response) => response.data);
+
+        setNotifications(allNotifications);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error cargando historial"
+        );
+        setNotifications([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [activeBuildingIds]
+  );
+
+  // 2. Obtiene notificaciones de Usuario (Personal)
+  const fetchUserNotifications = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const userNotifications =
+        await notificationApiService.getUserNotifications();
+      setNotifications(userNotifications);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al obtener notificaciones';
-      setError(errorMessage);
-      console.error('Error fetching notifications:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error cargando notificaciones de usuario"
+      );
+      setNotifications([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Obtener conteo de no leídas
-  const refreshUnreadCount = useCallback(async () => {
-    try {
-      const count = await notificationService.getUnreadCount();
-      setUnreadCount(count);
-    } catch (err) {
-      console.error('Error fetching unread count:', err);
-    }
-  }, []);
-
-  // Marcar como leída
-  const markAsRead = useCallback(async (notificationId: string) => {
-    try {
-      const success = await notificationService.markAsRead(notificationId);
-      if (success) {
-        // Actualizar estado local
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === notificationId 
-              ? { ...notification, status: 'read' as NotificationStatus, readAt: new Date().toISOString() }
-              : notification
+  // Marca una sola como leída
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      try {
+        await notificationApiService.markAsRead(notificationId);
+        // Optimista
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notificationId
+              ? { ...n, readAt: new Date().toISOString() }
+              : n
           )
         );
-        
-        // Actualizar conteo
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        refreshUnreadCount();
+      } catch (err) {
+        console.error("Error marking as read:", err);
+        fetchNotifications(); // Revertir
       }
-    } catch (err) {
-      console.error('Error marking notification as read:', err);
-    }
-  }, []);
+    },
+    [refreshUnreadCount, fetchNotifications]
+  );
 
-  // Marcar todas como leídas
-  const markAllAsRead = useCallback(async () => {
-    try {
-      const count = await notificationService.markAllAsRead();
-      if (count > 0) {
-        // Actualizar estado local
-        setNotifications(prev => 
-          prev.map(notification => ({
-            ...notification,
-            status: 'read' as NotificationStatus,
-            readAt: notification.readAt || new Date().toISOString()
-          }))
-        );
-        
-        // Actualizar conteo
-        setUnreadCount(0);
+  // Marca TODAS las visibles como leídas
+  const markAllAsRead = useCallback(
+    async (userId: string) => {
+      if (!userId) {
+        console.error("markAllAsRead requires a userId.");
+        return;
       }
-    } catch (err) {
-      console.error('Error marking all notifications as read:', err);
-    }
-  }, []);
+
+      const now = new Date().toISOString();
+      setNotifications((prev) =>
+        prev.map((n) => (n.readAt ? n : { ...n, readAt: now }))
+      );
+      setUnreadCount(0);
+
+      try {
+        // 2. Llamada al servicio masivo del backend.
+        await notificationApiService.markAllUserAsRead(userId);
+      } catch (err) {
+        console.error("Error al marcar todas como leídas en el servidor:", err);
+        refreshUnreadCount();
+      }
+    },
+    [refreshUnreadCount]
+  );
 
   // Eliminar notificación
-  const deleteNotification = useCallback(async (notificationId: string) => {
-    try {
-      const success = await notificationService.deleteNotification(notificationId);
-      if (success) {
-        // Actualizar estado local
-        const notification = notifications.find(n => n.id === notificationId);
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-        
-        // Actualizar conteo si era no leída
-        if (notification?.status === 'unread') {
-          setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-      }
-    } catch (err) {
-      console.error('Error deleting notification:', err);
-    }
-  }, [notifications]);
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      const targetNotification = notifications.find(
+        (n) => n.id === notificationId
+      );
+      const buildingId = targetNotification?.buildingId || activeBuildingIds[0];
 
-  // Iniciar polling discreto (solo para notificaciones importantes)
-  const startDiscretePolling = useCallback(() => {
-    if (pollingIntervalId) return; // Ya está corriendo
-    
-    const intervalId = setInterval(() => {
-      // Solo verificar conteo de no leídas, no cargar todas las notificaciones
-      refreshUnreadCount();
-    }, pollingInterval);
-    
-    setPollingIntervalId(intervalId);
-  }, [pollingInterval, pollingIntervalId, refreshUnreadCount]);
+      if (!buildingId) return;
 
-  // Detener polling discreto
-  const stopDiscretePolling = useCallback(() => {
-    if (pollingIntervalId) {
-      clearInterval(pollingIntervalId);
-      setPollingIntervalId(null);
-    }
-  }, [pollingIntervalId]);
-
-  // Cargar datos iniciales y iniciar polling
-  useEffect(() => {
-    const checkTokenAndLoad = () => {
-      // Verificar si hay token antes de hacer peticiones
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-      
-      if (token) {
-        fetchNotifications({ limit: 20 });
+      try {
+        await notificationApiService.deleteNotification(
+          notificationId,
+          buildingId
+        );
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
         refreshUnreadCount();
-        
-        // Iniciar polling automáticamente solo si hay token
-        startDiscretePolling();
-      } else {
-        // Si no hay token, detener polling y limpiar datos
-        stopDiscretePolling();
-        setNotifications([]);
-        setUnreadCount(0);
+      } catch (err) {
+        console.error("Error deleting notification:", err);
+        fetchNotifications();
       }
-    };
-
-    // Verificar inmediatamente
-    checkTokenAndLoad();
-
-    // Escuchar cambios en localStorage para detectar login/logout
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'access_token') {
-        checkTokenAndLoad();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [fetchNotifications, refreshUnreadCount, startDiscretePolling, stopDiscretePolling]);
-
-  // Limpiar polling al desmontar
-  useEffect(() => {
-    return () => {
-      stopDiscretePolling();
-    };
-  }, [stopDiscretePolling]);
+    },
+    [notifications, activeBuildingIds, refreshUnreadCount, fetchNotifications]
+  );
 
   const value: NotificationContextType = {
     notifications,
     unreadCount,
     isLoading,
     error,
+    activeBuildingIds,
+    setNotificationBuildingFilters,
     fetchNotifications,
+    fetchUserNotifications,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     refreshUnreadCount,
-    startDiscretePolling,
-    stopDiscretePolling,
   };
 
   return (
@@ -225,5 +213,3 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     </NotificationContext.Provider>
   );
 };
-
-export default NotificationContext;

@@ -1,97 +1,167 @@
 // src/services/notifications.ts
-import { apiFetch } from './api';
-import type { 
-  NotificationFilters, 
-  NotificationResponse, 
-  UnreadCountResponse 
-} from '../types/notifications';
+import { apiFetch } from "./api";
+import type { NotificationFilters, Notification } from "../types/notifications";
 
-export class NotificationService {
-  /**
-   * Obtiene las notificaciones del usuario con filtros opcionales
-   */
-  async getNotifications(filters: NotificationFilters = {}): Promise<NotificationResponse> {
+export interface NotificationListResponse {
+  data: Notification[];
+  count: number;
+  total: number;
+  filters: NotificationFilters;
+}
+
+export interface CreateNotificationPayload {
+  building_id: string;
+  type: string;
+  title: string;
+  priority: number;
+  [key: string]: any;
+}
+
+export class NotificationApiService {
+  /** 1. GET /notifications/unread: Obtiene notificaciones no leídas de un edificio. */
+  async getUnreadNotifications(
+    buildingId: string,
+    limit: number = 10
+  ): Promise<Notification[]> {
     const queryParams = new URLSearchParams();
-    
-    if (filters.status) queryParams.append('status', filters.status);
-    if (filters.type) queryParams.append('type', filters.type);
-    if (filters.limit) queryParams.append('limit', filters.limit.toString());
-    if (filters.offset) queryParams.append('offset', filters.offset.toString());
+    queryParams.append("buildingId", buildingId);
+    queryParams.append("limit", limit.toString());
 
-    const queryString = queryParams.toString();
-    const path = queryString ? `/notifications?${queryString}` : '/notifications';
+    const response = await apiFetch(
+      `/notifications/unread?${queryParams.toString()}`,
+      {
+        method: "GET",
+      }
+    );
 
-    return await apiFetch(path);
+    // Devuelve el array de notificaciones.
+    return Array.isArray(response) ? response : response.data || [];
   }
 
-  /**
-   * Obtiene el conteo de notificaciones no leídas
-   */
-  async getUnreadCount(): Promise<number> {
-    const response: UnreadCountResponse = await apiFetch('/notifications/unread-count');
-    return response.unreadCount;
+  /** 2. GET /notifications/building: Obtiene el historial completo de notificaciones de un edificio. */
+  async getBuildingHistory(
+    buildingId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<NotificationListResponse> {
+    const queryParams = new URLSearchParams();
+    queryParams.append("buildingId", buildingId);
+    queryParams.append("limit", limit.toString());
+    queryParams.append("offset", offset.toString());
+
+    return await apiFetch(`/notifications/building?${queryParams.toString()}`, {
+      method: "GET",
+    });
   }
 
-  /**
-   * Marca una notificación como leída
-   */
+  /** 3. POST /notifications: Crea una nueva notificación. */
+  async createNotification(
+    payload: CreateNotificationPayload
+  ): Promise<boolean> {
+    try {
+      const response = await apiFetch(`/notifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      return !!response;
+    } catch (error) {
+      console.error("Error al crear notificación:", error);
+      return false;
+    }
+  }
+
+  /** 4. PUT /notifications/:id/read: Marca una notificación específica como leída. */
   async markAsRead(notificationId: string): Promise<boolean> {
     try {
       const response = await apiFetch(`/notifications/${notificationId}/read`, {
-        method: 'PUT'
+        method: "PUT",
       });
-      return response.success;
+      return response.success || true;
     } catch (error) {
-      console.error('Error al marcar notificación como leída:', error);
+      console.error("Error al marcar notificación como leída:", error);
       return false;
     }
   }
 
-  /**
-   * Marca todas las notificaciones como leídas
-   */
-  async markAllAsRead(): Promise<number> {
+  /**  */
+  async markAllUserAsRead(userId: string): Promise<boolean> {
     try {
-      const response = await apiFetch('/notifications/mark-all-read', {
-        method: 'PUT'
-      });
-      return response.count;
-    } catch (error) {
-      console.error('Error al marcar todas las notificaciones como leídas:', error);
-      return 0;
-    }
-  }
+      const queryParams = new URLSearchParams();
+      queryParams.append("userId", userId);
 
-  /**
-   * Elimina una notificación
-   */
-  async deleteNotification(notificationId: string): Promise<boolean> {
-    try {
-      const response = await apiFetch(`/notifications/${notificationId}`, {
-        method: 'DELETE'
-      });
-      return response.success;
+      const response = await apiFetch(
+        `/notifications/markAll?${queryParams.toString()}`,
+        {
+          method: "PUT",
+        }
+      );
+      return response.success || true;
     } catch (error) {
-      console.error('Error al eliminar notificación:', error);
+      console.error(
+        "Error al marcar todas las notificaciones como leídas:",
+        error
+      );
       return false;
     }
   }
 
-  /**
-   * Elimina notificaciones antiguas
-   */
-  async deleteOldNotifications(daysOld: number = 30): Promise<number> {
+  /** 5. DELETE /notifications/:id: Elimina una notificación específica (requiere buildingId para permisos). */
+  async deleteNotification(
+    notificationId: string,
+    buildingId: string
+  ): Promise<boolean> {
     try {
-      const response = await apiFetch(`/notifications/cleanup?days=${daysOld}`, {
-        method: 'DELETE'
-      });
-      return response.count;
+      const queryParams = new URLSearchParams();
+      queryParams.append("buildingId", buildingId);
+
+      const response = await apiFetch(
+        `/notifications/${notificationId}?${queryParams.toString()}`,
+        {
+          method: "DELETE",
+        }
+      );
+      return response.success || true;
     } catch (error) {
-      console.error('Error al eliminar notificaciones antiguas:', error);
-      return 0;
+      console.error("Error al eliminar notificación:", error);
+      return false;
     }
+  }
+
+  /** 6. DELETE /notifications/cleanup: Realiza una limpieza masiva de notificaciones antiguas. */
+  async cleanupNotifications(
+    buildingId: string,
+    days: number = 30
+  ): Promise<boolean> {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append("buildingId", buildingId);
+      queryParams.append("days", days.toString());
+
+      const response = await apiFetch(
+        `/notifications/cleanup?${queryParams.toString()}`,
+        {
+          method: "DELETE",
+        }
+      );
+      return response.success || true;
+    } catch (error) {
+      console.error("Error en limpieza de notificaciones:", error);
+      return false;
+    }
+  }
+
+  /** 7. GET /notifications: Obtiene notificaciones filtradas por usuario. */
+  async getUserNotifications(): Promise<Notification[]> {
+    const response = await apiFetch(`/notifications`, {
+      method: "GET",
+    });
+
+    // Devuelve el array de notificaciones del usuario.
+    return Array.isArray(response) ? response : response.data || [];
   }
 }
 
-// Instancia singleton del servicio
-export const notificationService = new NotificationService();
+export const notificationApiService = new NotificationApiService();
