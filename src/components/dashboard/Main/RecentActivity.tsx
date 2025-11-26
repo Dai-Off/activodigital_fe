@@ -1,4 +1,5 @@
 import {
+  ArrowUpRight,
   Building2,
   Calendar,
   ChartColumn,
@@ -19,6 +20,8 @@ import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
+import { getTrazability, type trazabilityList } from "~/services/trazability";
+import { formatofechaCorta } from "~/utils/fechas";
 
 export function RecentActivity() {
   interface activityInterface {
@@ -28,9 +31,32 @@ export function RecentActivity() {
     date: string;
     nameBuilding: string;
   }
+
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [history, setHistory] = useState<trazabilityList[]>([]);
   const [loading, setLoading] = useState(true);
+
+  function getActivityNumber(activity: string) {
+    const ActionsValues = {
+    'ACTUALIZAR O MODIFICAR DOCUMENTOS' : 1,
+    'SUBIR DOCUMENTOS' : 2,
+    'COMPLETAR MANTENIMIENTO' : 3,
+    'GENERAR INFORMES' : 4,
+    'PROGRAMAR EVENTOS' : 5,
+    ALERTAS : 6,
+    'ACTUALIZAR LIBRE DEL EDIFICIO' : 7,
+    'APROBAR PRESUPUESTO' : 8,
+    'ACTUALIZAR DATOS FINANCIEROS' : 9,
+    'COMPLETAR INSPECCION ELECTRICA' : 10,
+    CREAR : 11,
+    ELIMINAR : 0,
+    APROBAR : 0,
+    RECHAZAR : 0,
+    }
+
+    return ActionsValues[activity as keyof typeof ActionsValues] || 0;      
+  }
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
@@ -38,6 +64,19 @@ export function RecentActivity() {
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    getTrazability()
+      .then((data) => {
+        setHistory(data)
+      })
+      .catch((err) => console.log(err))
+  }, []);
+
+  useEffect(() => {
+    console.log(history);
+  }
+  , [history]);
 
   if (loading) {
     return <RecentActivityLoading />;
@@ -83,6 +122,8 @@ export function RecentActivity() {
     Caso 9: actualizar datos financieros | Icono: TrendingUp | color: blue
 
     Caso 10: completar inspección eléctrica | Icono: Zap | color: purple
+
+    Caso 11: Crear | Icono: ArrowUpRight | color: green
     
     */
 
@@ -137,7 +178,13 @@ export function RecentActivity() {
           <Zap className="w-4 h-4 text-purple-600"></Zap>
         </div>
       ),
+      11: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-green-100">
+          <ArrowUpRight className="w-4 h-4 text-green-600"></ArrowUpRight>
+        </div>
+      ),
     };
+
     return (
       <div className="flex items-start gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
         {type ? TypeActivity[type] : TypeActivity[1]}
@@ -172,12 +219,22 @@ export function RecentActivity() {
           <span className="text-xs text-gray-500">1 actividades</span>
         </div>
         <div className="flex-1 overflow-auto p-3 space-y-2">
-          <Activity
-            date="5 min"
-            nameBuilding="Plaza Shopping"
-            nameUser="Pedro Centeno"
-            title="Actualizar datos del edificio"
-          />
+          {history && history.length > 0 ? (
+            history?.map((act, idx) => (
+                <Activity
+                    key={idx}
+                    type={getActivityNumber(act.action || '')}
+                    date={formatofechaCorta(act.createdAt)}
+                    nameBuilding={act.building?.name || 'Edificio Desconocido'}
+                    nameUser={act?.user?.fullName || 'Usuario Desconocido'}
+                    title={act.description || 'Actividad sin descripción'}
+                />
+            ))
+          ) : (
+            <div className="text-center text-gray-500 py-12">
+              No hay actividades recientes
+            </div>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-4 gap-3 flex-shrink-0">
