@@ -31,8 +31,7 @@ export function getTimeRemaining(dateString: string): string {
     const dayText = days === 1 ? "día" : "días";
 
     if (hours > 0) {
-      const hourText = hours === 1 ? "hora" : "horas";
-      return `Vence en ${days} ${dayText} y ${hours} ${hourText}.`;
+      return `Vence en ${days} ${dayText}.`;
     }
     return `Vence en ${days} ${dayText}.`;
   } else if (hours > 0) {

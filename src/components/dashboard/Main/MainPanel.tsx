@@ -117,7 +117,7 @@ export function MainPanel() {
     value: number;
   }) {
     const values: any = {
-      1: {
+      3: {
         name: "URGENTE",
         icon: <TriangleAlert className="w-4 h-4 text-red-600"></TriangleAlert>,
         color: "bg-red-600",
@@ -127,13 +127,14 @@ export function MainPanel() {
         icon: <Clock className="w-4 h-4 text-orange-600"></Clock>,
         color: "bg-orange-600",
       },
-      3: {
+      1: {
         name: "PENDIENTE",
         icon: <FileText className="w-4 h-4 text-yellow-600"></FileText>,
         color: "bg-yellow-600",
       },
     };
     date = getTimeRemaining(date);
+    console.log(value);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
@@ -318,7 +319,7 @@ export function MainPanel() {
             </div>
             <div className="p-3 space-y-2">
               {notifications.map((not) => {
-                if (not.priority > 2) {
+                if (not.priority > 0) {
                   return (
                     <PendingAlerts
                       key={not.id}
