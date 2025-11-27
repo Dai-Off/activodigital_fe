@@ -1,6 +1,5 @@
 import { apiFetch } from "./api";
 
-
 export interface TrazabilityFilters {
   buildingId?: string;
   userAuthId?: string;
@@ -37,7 +36,7 @@ export interface trazabilityList {
 
 export async function getTrazability(data?: any) {
   return apiFetch('/trazability/list', {
-    method: 'POST',
+    method: 'GET',
     body: JSON.stringify(data),
   });
 }

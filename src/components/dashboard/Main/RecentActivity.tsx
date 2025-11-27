@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { data } from "react-router-dom";
 import { RecentActivityLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
@@ -22,6 +23,7 @@ import {
 } from "~/services/buildingsApi";
 import { getTrazability, type trazabilityList } from "~/services/trazability";
 import { formatofechaCorta } from "~/utils/fechas";
+import { capitalize } from "~/utils/funciones.utils";
 
 export function RecentActivity() {
   interface activityInterface {
@@ -32,30 +34,47 @@ export function RecentActivity() {
     nameBuilding: string;
   }
 
+  interface TrazabilityCounts {
+    [action: string]: number;
+  }
+
+  interface listDetailsTrazability {
+    activeUsers: number;
+    completed: number;
+    alerts: number;
+    updates: number;
+  }
+
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [history, setHistory] = useState<trazabilityList[]>([]);
+  const [totales, setTotales] = useState<listDetailsTrazability>({
+    activeUsers: 0,
+    completed: 0,
+    alerts: 0,
+    updates: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   function getActivityNumber(activity: string) {
     const ActionsValues = {
-    'ACTUALIZAR O MODIFICAR DOCUMENTOS' : 1,
-    'SUBIR DOCUMENTOS' : 2,
-    'COMPLETAR MANTENIMIENTO' : 3,
-    'GENERAR INFORMES' : 4,
-    'PROGRAMAR EVENTOS' : 5,
-    ALERTAS : 6,
-    'ACTUALIZAR LIBRE DEL EDIFICIO' : 7,
-    'APROBAR PRESUPUESTO' : 8,
-    'ACTUALIZAR DATOS FINANCIEROS' : 9,
-    'COMPLETAR INSPECCION ELECTRICA' : 10,
-    CREAR : 11,
-    ELIMINAR : 0,
-    APROBAR : 0,
-    RECHAZAR : 0,
+      'ACTUALIZAR O MODIFICAR DOCUMENTOS': 1,
+      'SUBIR DOCUMENTOS': 2,
+      'COMPLETAR MANTENIMIENTO': 3,
+      'GENERAR INFORMES': 4,
+      'PROGRAMAR EVENTOS': 5,
+      ALERTAS: 6,
+      'ACTUALIZAR LIBRE DEL EDIFICIO': 7,
+      'APROBAR PRESUPUESTO': 8,
+      'ACTUALIZAR DATOS FINANCIEROS': 9,
+      'COMPLETAR INSPECCION ELECTRICA': 10,
+      CREAR: 11,
+      ELIMINAR: 0,
+      APROBAR: 0,
+      RECHAZAR: 0,
     }
 
-    return ActionsValues[activity as keyof typeof ActionsValues] || 0;      
+    return ActionsValues[activity as keyof typeof ActionsValues] || 0;
   }
 
   useEffect(() => {
@@ -67,16 +86,19 @@ export function RecentActivity() {
 
   useEffect(() => {
     getTrazability()
-      .then((data) => {
-        setHistory(data)
+      .then((res) => {
+        const { activeUsers, completed, alerts, updates, data } = res;
+        setHistory(data);
+
+        setTotales({
+          activeUsers: activeUsers,
+          completed: completed,
+          alerts: alerts,
+          updates: updates,
+        });
       })
       .catch((err) => console.log(err))
   }, []);
-
-  useEffect(() => {
-    console.log(history);
-  }
-  , [history]);
 
   if (loading) {
     return <RecentActivityLoading />;
@@ -190,7 +212,7 @@ export function RecentActivity() {
         {type ? TypeActivity[type] : TypeActivity[1]}
         <div className="flex-1 min-w-0">
           <p className="text-xs mb-0.5">
-            <span className="text-gray-900">{nameUser}</span>
+            <span className="text-gray-900">{capitalize(nameUser)}</span>
             <span className="text-gray-600"> {title}</span>
           </p>
           <p className="text-xs text-gray-500">{nameBuilding}</p>
@@ -216,19 +238,19 @@ export function RecentActivity() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0">
         <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
           <span className="text-sm">Últimas 24 horas</span>
-          <span className="text-xs text-gray-500">1 actividades</span>
+          <span className="text-xs text-gray-500">{history?.length} {history.length > 1 ? 'actividades': "actividad"}</span>
         </div>
         <div className="flex-1 overflow-auto p-3 space-y-2">
           {history && history.length > 0 ? (
             history?.map((act, idx) => (
-                <Activity
-                    key={idx}
-                    type={getActivityNumber(act.action || '')}
-                    date={formatofechaCorta(act.createdAt)}
-                    nameBuilding={act.building?.name || 'Edificio Desconocido'}
-                    nameUser={act?.user?.fullName || 'Usuario Desconocido'}
-                    title={act.description || 'Actividad sin descripción'}
-                />
+              <Activity
+                key={idx}
+                type={getActivityNumber(act.action || '')}
+                date={formatofechaCorta(act.createdAt)}
+                nameBuilding={act.building?.name || 'Edificio Desconocido'}
+                nameUser={act?.user?.fullName || 'Usuario Desconocido'}
+                title={act.description || 'Actividad sin descripción'}
+              />
             ))
           ) : (
             <div className="text-center text-gray-500 py-12">
@@ -242,18 +264,18 @@ export function RecentActivity() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Actualizaciones</p>
-              <p className="text-xl">0</p>
+              <p className="text-xl">{totales?.updates}</p>
             </div>
             <div className="p-2 bg-blue-50 rounded">
               <LucideFileText className="w-4 h-4 text-blue-600"></LucideFileText>
             </div>
-          </div>
+          </div>  
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Completadas</p>
-              <p className="text-xl">0</p>
+              <p className="text-xl">{totales?.completed}</p>
             </div>
             <div className="p-2 bg-green-50 rounded">
               <LucideCircleCheckBig className="w-4 h-4 text-green-600"></LucideCircleCheckBig>
@@ -264,7 +286,7 @@ export function RecentActivity() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Alertas</p>
-              <p className="text-xl">0</p>
+              <p className="text-xl">{totales?.alerts}</p>
             </div>
             <div className="p-2 bg-orange-50 rounded">
               <LucideTriangleAlert className="w-4 h-4 text-orange-600"></LucideTriangleAlert>
@@ -275,7 +297,7 @@ export function RecentActivity() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Usuarios Activos</p>
-              <p className="text-xl">0</p>
+              <p className="text-xl">{totales?.activeUsers}</p>
             </div>
             <div className="p-2 bg-purple-50 rounded">
               <LucideUsers className="w-4 h-4 text-purple-600"></LucideUsers>
