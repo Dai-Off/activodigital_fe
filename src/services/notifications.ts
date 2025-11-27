@@ -1,4 +1,3 @@
-// src/services/notifications.ts
 import { apiFetch } from "./api";
 import type { NotificationFilters, Notification } from "../types/notifications";
 
@@ -20,12 +19,12 @@ export interface CreateNotificationPayload {
 export class NotificationApiService {
   /** 1. GET /notifications/unread: Obtiene notificaciones no leídas de un edificio. */
   async getUnreadNotifications(
-    buildingId: string,
+    userId: string,
     limit: number = 10
   ): Promise<Notification[]> {
     const queryParams = new URLSearchParams();
-    queryParams.append("buildingId", buildingId);
     queryParams.append("limit", limit.toString());
+    queryParams.append("userId", userId);
 
     const response = await apiFetch(
       `/notifications/unread?${queryParams.toString()}`,
@@ -33,7 +32,6 @@ export class NotificationApiService {
         method: "GET",
       }
     );
-
     // Devuelve el array de notificaciones.
     return Array.isArray(response) ? response : response.data || [];
   }
@@ -154,11 +152,16 @@ export class NotificationApiService {
   }
 
   /** 7. GET /notifications: Obtiene notificaciones filtradas por usuario. */
-  async getUserNotifications(): Promise<Notification[]> {
-    const response = await apiFetch(`/notifications`, {
-      method: "GET",
-    });
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    const queryParams = new URLSearchParams();
+    queryParams.append("userId", userId);
 
+    const response = await apiFetch(
+      `/notifications?${queryParams.toString()}`,
+      {
+        method: "GET",
+      }
+    );
     // Devuelve el array de notificaciones del usuario.
     return Array.isArray(response) ? response : response.data || [];
   }

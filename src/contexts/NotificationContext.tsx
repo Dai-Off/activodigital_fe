@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import { notificationApiService } from "../services/notifications";
 import type { Notification, NotificationFilters } from "../types/notifications";
+import { useAuth } from "./AuthContext";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -10,6 +11,7 @@ interface NotificationContextType {
   isLoading: boolean;
   error: string | null;
   activeBuildingIds: string[];
+  unreadNotifications: Notification[];
 
   fetchNotifications: (filters?: NotificationFilters) => Promise<void>;
   fetchUserNotifications: () => Promise<void>;
@@ -18,6 +20,7 @@ interface NotificationContextType {
   deleteNotification: (notificationId: string) => Promise<void>;
   refreshUnreadCount: () => Promise<void>;
   setNotificationBuildingFilters: (ids: string[]) => void;
+  UnreadNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -36,10 +39,12 @@ export const useNotifications = (): NotificationContextType => {
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadNotifications, setUnreadNot] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeBuildingIds, setActiveBuildingIds] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const setNotificationBuildingFilters = useCallback((ids: string[]) => {
     setActiveBuildingIds(ids);
@@ -47,24 +52,31 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // Actualiza el conteo de no leídas
   const refreshUnreadCount = useCallback(async () => {
-    // Nota: Esta lógica asume conteo por edificio. Si estamos en modo "Usuario",
-    // quizás deberíamos filtrar localmente o llamar al endpoint de usuario.
-    if (activeBuildingIds.length === 0) {
-      setUnreadCount(0);
-      return;
-    }
-    const buildingId = activeBuildingIds[0];
+    if (!user?.userId) return;
     try {
       const unread = await notificationApiService.getUnreadNotifications(
-        buildingId
+        user.userId
       );
       setUnreadCount(unread.length);
     } catch (err) {
       console.error("Error updating unread count:", err);
     }
-  }, [activeBuildingIds]);
+  }, [user?.userId]);
 
-  // 1. Obtiene notificaciones de Edificio (Historial)
+  // Obtiene todas las notificaciones no leídas
+  const UnreadNotifications = useCallback(async () => {
+    if (!user?.userId) return;
+    try {
+      const unread = await notificationApiService.getUnreadNotifications(
+        user.userId
+      );
+      setUnreadNot(unread);
+    } catch (err) {
+      console.error("Error updating unread count:", err);
+    }
+  }, [user?.userId]);
+
+  // Obtiene notificaciones de Edificio (Historial)
   const fetchNotifications = useCallback(
     async (explicitFilters: NotificationFilters = {}) => {
       if (activeBuildingIds.length === 0) {
@@ -100,13 +112,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     [activeBuildingIds]
   );
 
-  // 2. Obtiene notificaciones de Usuario (Personal)
+  // Obtiene notificaciones de Usuario (Personal)
   const fetchUserNotifications = useCallback(async () => {
+    if (!user?.userId) return;
     setIsLoading(true);
     setError(null);
     try {
       const userNotifications =
-        await notificationApiService.getUserNotifications();
+        await notificationApiService.getUserNotifications(user.id);
       setNotifications(userNotifications);
     } catch (err) {
       setError(
@@ -118,7 +131,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.userId]);
 
   // Marca una sola como leída
   const markAsRead = useCallback(
@@ -193,6 +206,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const value: NotificationContextType = {
+    unreadNotifications,
     notifications,
     unreadCount,
     isLoading,
@@ -205,6 +219,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     markAllAsRead,
     deleteNotification,
     refreshUnreadCount,
+    UnreadNotifications,
   };
 
   return (

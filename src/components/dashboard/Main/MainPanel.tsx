@@ -27,18 +27,20 @@ export function MainPanel() {
   const {
     fetchUserNotifications,
     refreshUnreadCount,
-    notifications,
+    UnreadNotifications,
+    unreadNotifications,
     unreadCount,
   } = useNotifications();
 
   useEffect(() => {
-    fetchUserNotifications();
-    refreshUnreadCount();
     BuildingsApiService.getDashboardStats()
       .then(setStats)
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
-  }, []);
+    fetchUserNotifications();
+    refreshUnreadCount();
+    UnreadNotifications();
+  }, [refreshUnreadCount, UnreadNotifications, fetchUserNotifications]);
 
   if (loading) {
     return <MainPanelLoading />;
@@ -57,7 +59,9 @@ export function MainPanel() {
   // const handleLoadPersonalNotifications = () => {
   //   fetchUserNotifications();
   // };
-  console.log({ unreadCount, notifications });
+
+  console.log({ unreadCount, unreadNotifications });
+  let urgentCount = unreadNotifications.filter((not) => not.priority > 2);
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
     percentageBooks = stats.pendingBooks / stats.completedBooks;
@@ -79,14 +83,17 @@ export function MainPanel() {
       1: {
         name: "URGENTE",
         icon: <TriangleAlert className="w-4 h-4 text-red-600"></TriangleAlert>,
+        color: "bg-red-600",
       },
       2: {
         name: "PRÓXIMO",
         icon: <Clock className="w-4 h-4 text-orange-600"></Clock>,
+        color: "bg-orange-600",
       },
       3: {
         name: "PENDIENTE",
         icon: <FileText className="w-4 h-4 text-yellow-600"></FileText>,
+        color: "bg-yellow-600",
       },
     };
 
@@ -103,7 +110,9 @@ export function MainPanel() {
                 {nameBuilding} - {date}
               </p>
             </div>
-            <span className="text-xs px-2 py-0.5 bg-red-600 text-white rounded flex-shrink-0">
+            <span
+              className={`text-xs px-2 py-0.5 ${values[value].color} text-white rounded flex-shrink-0`}
+            >
               {values[value].name}
             </span>
           </div>
@@ -229,10 +238,10 @@ export function MainPanel() {
               <p className="text-xs text-gray-500 mb-0.5">
                 {t("Pending Alerts", "Alertas Pendientes")}
               </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
+              <p className="text-2xl mb-0.5">{unreadCount}</p>
               <div className="flex items-center gap-0.5 text-xs text-red-600">
                 <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>3 urgentes</span>
+                <span>{urgentCount.length} urgentes</span>
               </div>
             </div>
             <div className="p-2 bg-orange-50 rounded-lg">
@@ -271,12 +280,18 @@ export function MainPanel() {
               </button>
             </div>
             <div className="p-3 space-y-2">
-              <PendingAlerts
-                date="Requiere acción"
-                nameBuilding="Plaza Shopping"
-                text="Inspección vence en 2 días"
-                value={1}
-              />
+              {unreadNotifications.map((not) => {
+                if (not.priority > 2) {
+                  return (
+                    <PendingAlerts
+                      date={not.expiration as string}
+                      nameBuilding="Plaza Shopping"
+                      text={not.title}
+                      value={not.priority}
+                    />
+                  );
+                }
+              })}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col">
