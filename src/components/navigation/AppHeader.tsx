@@ -25,6 +25,10 @@ import {
 import { toast } from "sonner";
 import { MobileNav } from "./MobileNav";
 import { AIAssistant } from "../AIAssistant";
+import { useNotifications } from "~/contexts/NotificationContext";
+import { formatofechaCorta } from "~/utils/fechas";
+import { timeAgo } from "~/utils/timeAgo";
+import { getTimeRemaining } from "~/utils/getTimeRemaining";
 
 export function AppHeader() {
   let goBack = () => {},
@@ -205,6 +209,56 @@ export function AppHeader() {
     };
   }, [showTranslator, showNotifications, showSearchResults, showUserMenu]);
 
+  // Mostrar notificaciones
+  const {
+    refreshUnreadCount,
+    UnreadNotifications,
+    unreadCount,
+    unreadNotifications,
+  } = useNotifications();
+  const [buildingNames, setBuildingNames] = useState<Record<string, string>>(
+    {}
+  );
+
+  useEffect(() => {
+    refreshUnreadCount();
+    UnreadNotifications();
+  }, [refreshUnreadCount, UnreadNotifications]);
+
+  useEffect(() => {
+    const fetchBuildingNames = async () => {
+      if (unreadNotifications.length === 0) return;
+
+      const uniqueIds = [
+        ...new Set(unreadNotifications.map((n) => n.buildingId)),
+      ];
+
+      const idsToFetch = uniqueIds.filter((id) => !buildingNames[id]);
+
+      if (idsToFetch.length === 0) return;
+
+      try {
+        const promises = idsToFetch.map((id) =>
+          BuildingsApiService.getBuildingById(id).catch(() => null)
+        );
+
+        const buildings = await Promise.all(promises);
+
+        const newNames: Record<string, string> = {};
+        buildings.forEach((b) => {
+          if (b) newNames[b.id] = b.name;
+        });
+
+        // Combinar con los anteriores
+        setBuildingNames((prev) => ({ ...prev, ...newNames }));
+      } catch (error) {
+        console.error("Error cargando nombres de edificios", error);
+      }
+    };
+
+    fetchBuildingNames();
+  }, [unreadNotifications]);
+
   const handleSearchResultClick = (buildingId: string) => {
     if (setSelectedBuildingId) setSelectedBuildingId(buildingId);
     if (setViewMode) setViewMode("detail");
@@ -214,7 +268,6 @@ export function AppHeader() {
     setShowSearchResults(false);
     navigate(`/building/${buildingId}`);
   };
-
   const handleBackToList = () => {
     if (setSelectedBuildingId) setSelectedBuildingId(null);
     if (setViewMode) setViewMode("list");
@@ -233,18 +286,23 @@ export function AppHeader() {
   }: {
     type: string;
     title: string;
-    buildingName: string;
+    buildingName: string | undefined;
     date: string;
     expiration?: string;
   }) {
+    date = formatofechaCorta(date.toString());
+    date = timeAgo(date);
+    if (expiration) {
+      expiration = getTimeRemaining(expiration);
+    }
     const ColorType: any = {
       manteinance: "bg-purple-600",
       building: "bg-blue-600",
       financial: "bg-orange-600",
       documents: "bg-green-600",
       expiration: "bg-yellow-600",
+      renewal: "bg-green-600",
     };
-
     return (
       <div className="p-3 hover:bg-gray-50 cursor-pointer">
         <div className="flex gap-3">
@@ -254,10 +312,9 @@ export function AppHeader() {
           <div className="flex-1">
             <p className="text-sm text-gray-900">{title}</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              {buildingName}{" "}
-              {type === "expiration" ? `- Vence en ${expiration}` : ""}
+              {buildingName} {expiration ? `- ${expiration}` : ""}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Hace {date}</p>
+            <p className="text-xs text-gray-400 mt-1">{date}</p>
           </div>
         </div>
       </div>
@@ -356,7 +413,7 @@ export function AppHeader() {
               >
                 <Bell className="w-4 h-4 flex-shrink-0" />
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  0
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               </button>
 
@@ -374,13 +431,30 @@ export function AppHeader() {
                     No hay notificaciones
                   </div> */}
                   {/* Contenedor de las notificaciones */}
-                  <Notification
-                    buildingName="Plaza Shopping"
-                    date="3 horas"
-                    title="Certificado vence en 3 días"
-                    type="manteinance"
-                    expiration="15"
-                  />
+                  {unreadNotifications.map((not) => {
+                    console.log(not.expiration);
+                    if (not.expiration) {
+                      return (
+                        <Notification
+                          key={not.id}
+                          buildingName={buildingNames[not.buildingId]}
+                          date={not.created_at}
+                          title={not.title}
+                          type={not.type}
+                          expiration={not.expiration}
+                        />
+                      );
+                    }
+                    return (
+                      <Notification
+                        key={not.id}
+                        buildingName={buildingNames[not.buildingId]}
+                        date={not.created_at}
+                        title={not.title}
+                        type={not.type}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>

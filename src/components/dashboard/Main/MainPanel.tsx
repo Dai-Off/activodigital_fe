@@ -19,6 +19,8 @@ import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
+import { getTimeRemaining } from "~/utils/getTimeRemaining";
+
 export function MainPanel() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -29,8 +31,12 @@ export function MainPanel() {
     refreshUnreadCount,
     UnreadNotifications,
     unreadNotifications,
+    notifications,
     unreadCount,
   } = useNotifications();
+  const [buildingNames, setBuildingNames] = useState<Record<string, string>>(
+    {}
+  );
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
@@ -38,9 +44,45 @@ export function MainPanel() {
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
     fetchUserNotifications();
-    refreshUnreadCount();
     UnreadNotifications();
-  }, [refreshUnreadCount, UnreadNotifications, fetchUserNotifications]);
+    refreshUnreadCount();
+  }, [fetchUserNotifications, UnreadNotifications, refreshUnreadCount]);
+
+  useEffect(() => {
+    const fetchBuildingNames = async () => {
+      if (!unreadNotifications || unreadNotifications.length === 0) return;
+
+      const uniqueIds = [
+        ...new Set(unreadNotifications.map((n) => n.buildingId)),
+      ];
+
+      const idsToFetch = uniqueIds.filter((id) => !buildingNames[id]);
+
+      if (idsToFetch.length === 0) return;
+
+      try {
+        const promises = idsToFetch.map((id) =>
+          BuildingsApiService.getBuildingById(id).catch(() => null)
+        );
+
+        const buildings = await Promise.all(promises);
+
+        const newNames: Record<string, string> = {};
+        buildings.forEach((b) => {
+          if (b) newNames[b.id] = b.name;
+        });
+
+        setBuildingNames((prev) => ({ ...prev, ...newNames }));
+      } catch (error) {
+        console.error(
+          "Error cargando nombres de edificios en MainPanel",
+          error
+        );
+      }
+    };
+
+    fetchBuildingNames();
+  }, [unreadNotifications]);
 
   if (loading) {
     return <MainPanelLoading />;
@@ -56,11 +98,6 @@ export function MainPanel() {
     );
   }
 
-  // const handleLoadPersonalNotifications = () => {
-  //   fetchUserNotifications();
-  // };
-
-  console.log({ unreadCount, unreadNotifications });
   let urgentCount = unreadNotifications.filter((not) => not.priority > 2);
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
@@ -96,7 +133,7 @@ export function MainPanel() {
         color: "bg-yellow-600",
       },
     };
-
+    date = getTimeRemaining(date);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
@@ -280,12 +317,13 @@ export function MainPanel() {
               </button>
             </div>
             <div className="p-3 space-y-2">
-              {unreadNotifications.map((not) => {
+              {notifications.map((not) => {
                 if (not.priority > 2) {
                   return (
                     <PendingAlerts
+                      key={not.id}
                       date={not.expiration as string}
-                      nameBuilding="Plaza Shopping"
+                      nameBuilding={buildingNames[not.buildingId]}
                       text={not.title}
                       value={not.priority}
                     />

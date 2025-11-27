@@ -33,7 +33,7 @@ export class NotificationApiService {
       }
     );
     // Devuelve el array de notificaciones.
-    return Array.isArray(response) ? response : response.data || [];
+    return response.data || response;
   }
 
   /** 2. GET /notifications/building: Obtiene el historial completo de notificaciones de un edificio. */
@@ -163,7 +163,7 @@ export class NotificationApiService {
       }
     );
     // Devuelve el array de notificaciones del usuario.
-    return Array.isArray(response) ? response : response.data || [];
+    return response.data || response;
   }
 }
 

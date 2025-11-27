@@ -30,7 +30,7 @@ export interface Notification {
   priority: number;
   readAt?: string;
   message?: string;
-  createdAt: string;
+  created_at: string;
   status?: NotificationStatus;
 }
 

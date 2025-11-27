@@ -1,16 +1,18 @@
 // src/components/ui/NotificationBell.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNotifications } from "../../contexts/NotificationContext";
 import NotificationPanel from "./NotificationPanel";
 
 const NotificationBell: React.FC = () => {
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refreshUnreadCount } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    refreshUnreadCount();
+  }, [refreshUnreadCount]);
   const togglePanel = () => {
     setIsOpen(!isOpen);
   };
-
   return (
     <div className="relative">
       {/* Bell Icon - Estilo consistente con otros botones */}
@@ -33,7 +35,7 @@ const NotificationBell: React.FC = () => {
         {/* Badge de conteo - Más sutil */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-4.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1 shadow-sm">
-            {/* {unreadCount > 99 ? '99+' : unreadCount} */}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
