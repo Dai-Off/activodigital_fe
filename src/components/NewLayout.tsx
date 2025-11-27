@@ -22,6 +22,7 @@ function NewLayoutContent() {
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
   let setActiveModule: ((module: string) => void) | null = null;
+  let setActiveSection: ((section: string) => void) | null = null;
 
   try {
     const navigation = useNavigation();
@@ -31,6 +32,7 @@ function NewLayoutContent() {
       selectedBuildingId = navigation.selectedBuildingId;
       setSelectedBuildingId = navigation.setSelectedBuildingId;
       setActiveModule = navigation.setActiveModule;
+      setActiveSection = navigation.setActiveSection;
     }
   } catch (error) {
     console.error("Error en useNavigation:", error);
@@ -76,6 +78,10 @@ function NewLayoutContent() {
         // Ruta: /cfo-intake/:buildingId
         const match = location.pathname.match(/\/cfo-intake\/([^/]+)/);
         buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/building/") && location.pathname.includes("/analysis-general")) {
+        // Ruta: /building/:id/analysis-general
+        const match = location.pathname.match(/\/building\/([^/]+)\/analysis-general/);
+        buildingIdFromPath = match ? match[1] : null;
       }
 
       if (buildingIdFromPath && selectedBuildingId !== buildingIdFromPath) {
@@ -89,13 +95,29 @@ function NewLayoutContent() {
         setSelectedBuildingId(null);
       }
     }
+
+    // Detectar y actualizar activeSection según la ruta
+    if (setActiveSection) {
+      if (location.pathname.includes("/analysis-general")) {
+        if (activeSection !== "analisis") {
+          setActiveSection("analisis");
+        }
+      } else if (location.pathname.startsWith("/building/") && !location.pathname.includes("/analysis-general") && !location.pathname.includes("/units") && !location.pathname.includes("/documents")) {
+        // Ruta de detalle de edificio (vista general)
+        if (activeSection !== "todos") {
+          setActiveSection("todos");
+        }
+      }
+    }
   }, [
     isBuildingDetail,
     params.id,
     selectedBuildingId,
     setSelectedBuildingId,
     setActiveModule,
+    setActiveSection,
     activeModule,
+    activeSection,
     location.pathname,
   ]);
 
@@ -111,7 +133,8 @@ function NewLayoutContent() {
       location.pathname.startsWith("/cumplimiento") ||
       (location.pathname.startsWith("/building/") &&
         (location.pathname.includes("/unidades") ||
-          location.pathname.includes("/documentacion")))
+          location.pathname.includes("/documentacion") ||
+          location.pathname.includes("/analysis-general")))
     ) {
       return <Outlet />;
     }
