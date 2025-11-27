@@ -1,35 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useToast } from '../contexts/ToastContext';
-import { BuildingsApiService } from '../services/buildingsApi';
-import type { Building, BuildingImage } from '../services/buildingsApi';
-import ImageManager from './ui/ImageManager';
-import { extractCertificateData, mapAIResponseToReviewData, checkCertificateExtractorHealth } from '../services/certificateExtractor';
-import { EnergyCertificatesService, type PersistedEnergyCertificate } from '../services/energyCertificates';
-import { uploadCertificateImage } from '../services/certificateUpload';
-import { useLoadingState } from './ui/LoadingSystem';
-import FileUpload from './ui/FileUpload';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "../contexts/ToastContext";
+import { BuildingsApiService } from "../services/buildingsApi";
+import type { Building, BuildingImage } from "../services/buildingsApi";
+import ImageManager from "./ui/ImageManager";
 import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { getBookByBuilding, getOrCreateBookForBuilding, type DigitalBook } from '../services/digitalbook';
-import { FileCheck2, Building as BuildingIcon, Zap, Wrench, Activity, ChevronLeft, ChevronRight, MapPin, AlertTriangle, Clock, Info, Trash2 } from 'lucide-react';
-import { calculateESGScore, getESGScore, getESGLabelColor, type ESGResponse } from '../services/esg';
-import { FinancialSnapshotsService } from '../services/financialSnapshots';
+  extractCertificateData,
+  mapAIResponseToReviewData,
+  checkCertificateExtractorHealth,
+} from "../services/certificateExtractor";
+import {
+  EnergyCertificatesService,
+  type PersistedEnergyCertificate,
+} from "../services/energyCertificates";
+import { uploadCertificateImage } from "../services/certificateUpload";
+import { useLoadingState } from "./ui/LoadingSystem";
+import FileUpload from "./ui/FileUpload";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import {
+  getBookByBuilding,
+  getOrCreateBookForBuilding,
+  type DigitalBook,
+} from "../services/digitalbook";
+import {
+  FileCheck2,
+  Building as BuildingIcon,
+  Zap,
+  Wrench,
+  Activity,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  AlertTriangle,
+  Clock,
+  Info,
+  Trash2,
+} from "lucide-react";
+import {
+  calculateESGScore,
+  getESGScore,
+  getESGLabelColor,
+  type ESGResponse,
+} from "../services/esg";
+import { FinancialSnapshotsService } from "../services/financialSnapshots";
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -45,22 +72,30 @@ const BuildingDetail: React.FC = () => {
   const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
   const [showImageManager, setShowImageManager] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [uploadStep, setUploadStep] = useState<'select' | 'review'>('select');
+  const [uploadStep, setUploadStep] = useState<"select" | "review">("select");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileUrl, setSelectedFileUrl] = useState<string | null>(null);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
-  const [aiServiceAvailable, setAiServiceAvailable] = useState<boolean | null>(null);
+  const [aiServiceAvailable, setAiServiceAvailable] = useState<boolean | null>(
+    null
+  );
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
+  const [energyCertificates, setEnergyCertificates] = useState<
+    PersistedEnergyCertificate[]
+  >([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [selectedCertificateForView, setSelectedCertificateForView] = useState<PersistedEnergyCertificate | null>(null);
+  const [selectedCertificateForView, setSelectedCertificateForView] =
+    useState<PersistedEnergyCertificate | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [certificateToDelete, setCertificateToDelete] = useState<PersistedEnergyCertificate | null>(null);
+  const [certificateToDelete, setCertificateToDelete] =
+    useState<PersistedEnergyCertificate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState('todos');
+  const [activeTab, setActiveTab] = useState("todos");
   const [esgData, setEsgData] = useState<ESGResponse | null>(null);
   const [esgLoading, setEsgLoading] = useState(false);
-  const [hasFinancialData, setHasFinancialData] = useState<boolean | null>(null);
+  const [hasFinancialData, setHasFinancialData] = useState<boolean | null>(
+    null
+  );
 
   // Función para confirmar eliminación
   const confirmDeleteCertificate = async () => {
@@ -69,7 +104,7 @@ const BuildingDetail: React.FC = () => {
     setIsDeleting(true);
     try {
       await EnergyCertificatesService.deleteCertificate(certificateToDelete.id);
-      showSuccess('Certificado eliminado correctamente');
+      showSuccess("Certificado eliminado correctamente");
       // Recargar la lista de certificados
       await loadEnergyCertificates();
       // Recalcular ESG después de eliminar certificado
@@ -79,7 +114,7 @@ const BuildingDetail: React.FC = () => {
       setCertificateToDelete(null);
       setSelectedCertificateForView(null);
     } catch (error) {
-      showError('Error al eliminar el certificado');
+      showError("Error al eliminar el certificado");
     } finally {
       setIsDeleting(false);
     }
@@ -95,32 +130,40 @@ const BuildingDetail: React.FC = () => {
   // Función helper para obtener clases CSS del rating energético según escala oficial española
   const getRatingClasses = (rating: string) => {
     switch (rating) {
-      case 'A': return 'bg-green-600 text-white border-green-600'; // Verde vibrante (más eficiente)
-      case 'B': return 'bg-green-500 text-white border-green-500'; // Verde medio
-      case 'C': return 'bg-yellow-400 text-white border-yellow-400'; // Amarillo verdoso/chartreuse
-      case 'D': return 'bg-yellow-300 text-white border-yellow-300'; // Amarillo claro
-      case 'E': return 'bg-orange-500 text-white border-orange-500'; // Naranja
-      case 'F': return 'bg-red-500 text-white border-red-500'; // Rojo anaranjado oscuro
-      case 'G': return 'bg-red-600 text-white border-red-600'; // Rojo prominente (menos eficiente)
-      default: return 'border-gray-200 text-gray-800 bg-gray-50';
+      case "A":
+        return "bg-green-600 text-white border-green-600"; // Verde vibrante (más eficiente)
+      case "B":
+        return "bg-green-500 text-white border-green-500"; // Verde medio
+      case "C":
+        return "bg-yellow-400 text-white border-yellow-400"; // Amarillo verdoso/chartreuse
+      case "D":
+        return "bg-yellow-300 text-white border-yellow-300"; // Amarillo claro
+      case "E":
+        return "bg-orange-500 text-white border-orange-500"; // Naranja
+      case "F":
+        return "bg-red-500 text-white border-red-500"; // Rojo anaranjado oscuro
+      case "G":
+        return "bg-red-600 text-white border-red-600"; // Rojo prominente (menos eficiente)
+      default:
+        return "border-gray-200 text-gray-800 bg-gray-50";
     }
   };
 
   const [reviewData, setReviewData] = useState({
-    rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
-    primaryEnergyKwhPerM2Year: '' as string | number,
-    emissionsKgCo2PerM2Year: '' as string | number,
-    certificateNumber: '',
-    scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
-    issuerName: '',
-    issueDate: '',
-    expiryDate: '',
-    propertyReference: '',
-    notes: '',
+    rating: "" as "" | "A" | "B" | "C" | "D" | "E" | "F" | "G",
+    primaryEnergyKwhPerM2Year: "" as string | number,
+    emissionsKgCo2PerM2Year: "" as string | number,
+    certificateNumber: "",
+    scope: "building" as "building" | "dwelling" | "commercial_unit",
+    issuerName: "",
+    issueDate: "",
+    expiryDate: "",
+    propertyReference: "",
+    notes: "",
     // Campos de imagen
-    imageUrl: '',
-    imageFilename: '',
-    imageUploadedAt: '',
+    imageUrl: "",
+    imageFilename: "",
+    imageUploadedAt: "",
   });
 
   // Función para cargar certificados energéticos reales del backend
@@ -128,7 +171,9 @@ const BuildingDetail: React.FC = () => {
     if (!building?.id) return;
 
     try {
-      const certificatesData = await EnergyCertificatesService.getByBuilding(building.id);
+      const certificatesData = await EnergyCertificatesService.getByBuilding(
+        building.id
+      );
       setEnergyCertificates(certificatesData.certificates || []);
     } catch (error) {
       // Mantener estado vacío en caso de error - no mostrar error al usuario en esta carga inicial
@@ -146,7 +191,7 @@ const BuildingDetail: React.FC = () => {
       const esgResponse = await calculateESGScore(buildingId);
       setEsgData(esgResponse);
     } catch (error) {
-      console.error('Error cargando ESG:', error);
+      console.error("Error cargando ESG:", error);
       // Si falla, intentar obtener el score guardado
       try {
         const savedESG = await getESGScore(buildingId);
@@ -176,15 +221,20 @@ const BuildingDetail: React.FC = () => {
         }
 
         // Cargar certificados energéticos del edificio - ahora buildingData.id está disponible
-        const certificatesData = await EnergyCertificatesService.getByBuilding(buildingData.id);
+        const certificatesData = await EnergyCertificatesService.getByBuilding(
+          buildingData.id
+        );
         setEnergyCertificates(certificatesData.certificates || []);
-        
+
         // Cargar datos financieros
         try {
-          const snapshots = await FinancialSnapshotsService.getFinancialSnapshots(buildingData.id);
+          const snapshots =
+            await FinancialSnapshotsService.getFinancialSnapshots(
+              buildingData.id
+            );
           setHasFinancialData(snapshots && snapshots.length > 0);
         } catch (error) {
-          console.error('Error cargando datos financieros:', error);
+          console.error("Error cargando datos financieros:", error);
           setHasFinancialData(false);
         }
 
@@ -194,7 +244,7 @@ const BuildingDetail: React.FC = () => {
           const esgResponse = await calculateESGScore(buildingData.id);
           setEsgData(esgResponse);
         } catch (error) {
-          console.error('Error cargando ESG:', error);
+          console.error("Error cargando ESG:", error);
           try {
             const savedESG = await getESGScore(buildingData.id);
             setEsgData(savedESG);
@@ -206,10 +256,12 @@ const BuildingDetail: React.FC = () => {
         }
 
         stopLoading();
-
       } catch (error) {
-        showError('Error al cargar edificio', 'No se pudo cargar la información del edificio');
-        navigate('/activos');
+        showError(
+          "Error al cargar edificio",
+          "No se pudo cargar la información del edificio"
+        );
+        navigate("/assets");
         stopLoading();
       }
     };
@@ -231,13 +283,11 @@ const BuildingDetail: React.FC = () => {
     checkAIService();
   }, []);
 
-
-
   // Bloquear scroll de fondo cuando la modal está abierta
   useEffect(() => {
     if (isUploadModalOpen) {
       const previousOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = previousOverflow;
       };
@@ -256,29 +306,29 @@ const BuildingDetail: React.FC = () => {
       setDigitalBook(createdBook);
 
       // Navegar al hub
-      navigate(`/libro-digital/hub/${building.id}`, {
+      navigate(`/digital-book/hub/${building.id}`, {
         state: {
           buildingId: building.id,
           buildingName: building.name,
-          isNewBook: true
-        }
+          isNewBook: true,
+        },
       });
 
       stopLoading();
     } catch (error) {
-      showError('Error al crear el libro del edificio');
+      showError("Error al crear el libro del edificio");
       stopLoading();
     }
   };
 
   const handleViewDigitalBook = () => {
     if (!building?.id) return;
-    navigate(`/libro-digital/hub/${building.id}`, {
+    navigate(`/digital-book/hub/${building.id}`, {
       state: {
         buildingId: building.id,
         buildingName: building.name,
-        isNewBook: false
-      }
+        isNewBook: false,
+      },
     });
   };
 
@@ -295,30 +345,31 @@ const BuildingDetail: React.FC = () => {
     }
   };
 
-
   const handleCloseUpload = () => {
     setIsUploadModalOpen(false);
-    setUploadStep('select');
+    setUploadStep("select");
     setSelectedFile(null);
     if (selectedFileUrl) {
-      try { URL.revokeObjectURL(selectedFileUrl); } catch { }
+      try {
+        URL.revokeObjectURL(selectedFileUrl);
+      } catch {}
     }
     setSelectedFileUrl(null);
     setCurrentSessionId(null);
     setReviewData({
-      rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
-      primaryEnergyKwhPerM2Year: '' as string | number,
-      emissionsKgCo2PerM2Year: '' as string | number,
-      certificateNumber: '',
-      scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
-      issuerName: '',
-      issueDate: '',
-      expiryDate: '',
-      propertyReference: '',
-      notes: '',
-      imageUrl: '',
-      imageFilename: '',
-      imageUploadedAt: '',
+      rating: "" as "" | "A" | "B" | "C" | "D" | "E" | "F" | "G",
+      primaryEnergyKwhPerM2Year: "" as string | number,
+      emissionsKgCo2PerM2Year: "" as string | number,
+      certificateNumber: "",
+      scope: "building" as "building" | "dwelling" | "commercial_unit",
+      issuerName: "",
+      issueDate: "",
+      expiryDate: "",
+      propertyReference: "",
+      notes: "",
+      imageUrl: "",
+      imageFilename: "",
+      imageUploadedAt: "",
     });
   };
 
@@ -340,18 +391,28 @@ const BuildingDetail: React.FC = () => {
 
       // Verificar si el servicio de IA está disponible
       if (aiServiceAvailable === false) {
-        showError('Servicio de IA no disponible', 'El servicio de extracción de certificados no está disponible en este momento.');
+        showError(
+          "Servicio de IA no disponible",
+          "El servicio de extracción de certificados no está disponible en este momento."
+        );
         return;
       }
 
       // 1. Subir imagen del certificado a Supabase Storage
-      const uploadResult = await uploadCertificateImage(selectedFile, building.id);
+      const uploadResult = await uploadCertificateImage(
+        selectedFile,
+        building.id
+      );
       if (!uploadResult.success || !uploadResult.image) {
-        throw new Error(uploadResult.error || 'Error subiendo imagen del certificado');
+        throw new Error(
+          uploadResult.error || "Error subiendo imagen del certificado"
+        );
       }
 
       // 2. Crear sesión simple en el backend con información de la imagen
-      const session = await EnergyCertificatesService.createSimpleSession(building.id);
+      const session = await EnergyCertificatesService.createSimpleSession(
+        building.id
+      );
       setCurrentSessionId(session.id);
 
       // 3. Extraer datos con IA
@@ -360,66 +421,131 @@ const BuildingDetail: React.FC = () => {
 
       // 4. Actualizar sesión con datos extraídos por IA e información de la imagen
       const extractedData = {
-        rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: 'AI OCR' },
-        primaryEnergyKwhPerM2Year: { value: aiResponse.energy_consumption_kwh_m2y, confidence: 0.95, source: 'AI OCR' },
-        emissionsKgCo2PerM2Year: { value: aiResponse.co2_emissions_kg_m2y, confidence: 0.95, source: 'AI OCR' },
-        certificateNumber: { value: aiResponse.registry_code, confidence: 0.95, source: 'AI OCR' },
-        scope: { value: 'building' as any, confidence: 0.95, source: 'AI OCR' },
-        issuerName: { value: aiResponse.normative, confidence: 0.95, source: 'AI OCR' },
-        issueDate: { value: aiResponse.registry_date, confidence: 0.95, source: 'AI OCR' },
-        expiryDate: { value: aiResponse.valid_until, confidence: 0.95, source: 'AI OCR' },
-        propertyReference: { value: aiResponse.cadastral_reference, confidence: 0.95, source: 'AI OCR' },
-        notes: { value: mappedData.notes ?? null, confidence: 0.95, source: 'AI OCR' },
+        rating: {
+          value: aiResponse.rating_letter as any,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        primaryEnergyKwhPerM2Year: {
+          value: aiResponse.energy_consumption_kwh_m2y,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        emissionsKgCo2PerM2Year: {
+          value: aiResponse.co2_emissions_kg_m2y,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        certificateNumber: {
+          value: aiResponse.registry_code,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        scope: { value: "building" as any, confidence: 0.95, source: "AI OCR" },
+        issuerName: {
+          value: aiResponse.normative,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        issueDate: {
+          value: aiResponse.registry_date,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        expiryDate: {
+          value: aiResponse.valid_until,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        propertyReference: {
+          value: aiResponse.cadastral_reference,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
+        notes: {
+          value: mappedData.notes ?? null,
+          confidence: 0.95,
+          source: "AI OCR",
+        },
         // Información de la imagen almacenada
-        imageUrl: { value: uploadResult.image.url, confidence: 1.0, source: 'Supabase Storage' },
-        imageFilename: { value: uploadResult.image.filename, confidence: 1.0, source: 'Supabase Storage' },
+        imageUrl: {
+          value: uploadResult.image.url,
+          confidence: 1.0,
+          source: "Supabase Storage",
+        },
+        imageFilename: {
+          value: uploadResult.image.filename,
+          confidence: 1.0,
+          source: "Supabase Storage",
+        },
       };
 
-      await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
+      await EnergyCertificatesService.updateWithAIData(
+        session.id,
+        extractedData
+      );
 
       // 5. Actualizar datos de revisión para el usuario
       setReviewData({
-        rating: (mappedData.rating as any) ?? '',
-        primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? '',
-        emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? '',
-        certificateNumber: mappedData.certificateNumber ?? '',
-        scope: mappedData.scope ?? 'building',
-        issuerName: mappedData.issuerName ?? '',
-        issueDate: mappedData.issueDate ?? '',
-        expiryDate: mappedData.expiryDate ?? '',
-        propertyReference: mappedData.propertyReference ?? '',
-        notes: mappedData.notes ?? '',
+        rating: (mappedData.rating as any) ?? "",
+        primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? "",
+        emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? "",
+        certificateNumber: mappedData.certificateNumber ?? "",
+        scope: mappedData.scope ?? "building",
+        issuerName: mappedData.issuerName ?? "",
+        issueDate: mappedData.issueDate ?? "",
+        expiryDate: mappedData.expiryDate ?? "",
+        propertyReference: mappedData.propertyReference ?? "",
+        notes: mappedData.notes ?? "",
         // Incluir información de la imagen
         imageUrl: uploadResult.image.url,
         imageFilename: uploadResult.image.filename,
         imageUploadedAt: uploadResult.image.uploadedAt.toISOString(),
       });
-      setUploadStep('review');
+      setUploadStep("review");
 
-      showSuccess('Datos extraídos', 'La imagen del certificado se ha guardado y los datos han sido extraídos automáticamente. Revisa y ajusta si es necesario.');
-
+      showSuccess(
+        "Datos extraídos",
+        "La imagen del certificado se ha guardado y los datos han sido extraídos automáticamente. Revisa y ajusta si es necesario."
+      );
     } catch (error) {
-      showError('Error al procesar certificado', error instanceof Error ? error.message : 'Error desconocido al procesar el certificado');
+      showError(
+        "Error al procesar certificado",
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al procesar el certificado"
+      );
     } finally {
       setIsProcessingAI(false);
     }
   };
 
   const handleBackToUpload = () => {
-    setUploadStep('select');
+    setUploadStep("select");
   };
 
   const handleConfirmAndSave = async () => {
     if (!currentSessionId) {
-      showError('Error de sesión', 'No se encontró la sesión de certificado. Por favor, vuelve a subir el archivo.');
+      showError(
+        "Error de sesión",
+        "No se encontró la sesión de certificado. Por favor, vuelve a subir el archivo."
+      );
       return;
     }
 
     try {
       // Validar campos requeridos antes de enviar
-      if (!reviewData.rating || !reviewData.certificateNumber || !reviewData.issuerName ||
-        !reviewData.issueDate || !reviewData.expiryDate) {
-        showError('Campos requeridos', 'Por favor completa todos los campos obligatorios antes de guardar.');
+      if (
+        !reviewData.rating ||
+        !reviewData.certificateNumber ||
+        !reviewData.issuerName ||
+        !reviewData.issueDate ||
+        !reviewData.expiryDate
+      ) {
+        showError(
+          "Campos requeridos",
+          "Por favor completa todos los campos obligatorios antes de guardar."
+        );
         return;
       }
 
@@ -427,12 +553,12 @@ const BuildingDetail: React.FC = () => {
       const finalData = {
         rating: (reviewData.rating || undefined) as any,
         primaryEnergyKwhPerM2Year:
-          typeof reviewData.primaryEnergyKwhPerM2Year === 'string'
-            ? parseFloat(reviewData.primaryEnergyKwhPerM2Year || '0')
+          typeof reviewData.primaryEnergyKwhPerM2Year === "string"
+            ? parseFloat(reviewData.primaryEnergyKwhPerM2Year || "0")
             : reviewData.primaryEnergyKwhPerM2Year,
         emissionsKgCo2PerM2Year:
-          typeof reviewData.emissionsKgCo2PerM2Year === 'string'
-            ? parseFloat(reviewData.emissionsKgCo2PerM2Year || '0')
+          typeof reviewData.emissionsKgCo2PerM2Year === "string"
+            ? parseFloat(reviewData.emissionsKgCo2PerM2Year || "0")
             : reviewData.emissionsKgCo2PerM2Year,
         certificateNumber: reviewData.certificateNumber || undefined,
         scope: reviewData.scope as any,
@@ -448,12 +574,16 @@ const BuildingDetail: React.FC = () => {
       };
 
       // Confirmar certificado en el backend
-      const confirmedCertificate = await EnergyCertificatesService.confirmCertificate(
-        currentSessionId,
-        finalData
-      );
+      const confirmedCertificate =
+        await EnergyCertificatesService.confirmCertificate(
+          currentSessionId,
+          finalData
+        );
 
-      showSuccess('Certificado guardado', `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`);
+      showSuccess(
+        "Certificado guardado",
+        `Certificado ${confirmedCertificate.certificateNumber} guardado correctamente.`
+      );
 
       // Recargar la lista de certificados para mostrar el nuevo
       await loadEnergyCertificates();
@@ -464,25 +594,29 @@ const BuildingDetail: React.FC = () => {
       // Limpiar estado y cerrar modal
       setCurrentSessionId(null);
       setReviewData({
-        rating: '' as '' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G',
-        primaryEnergyKwhPerM2Year: '' as string | number,
-        emissionsKgCo2PerM2Year: '' as string | number,
-        certificateNumber: '',
-        scope: 'building' as 'building' | 'dwelling' | 'commercial_unit',
-        issuerName: '',
-        issueDate: '',
-        expiryDate: '',
-        propertyReference: '',
-        notes: '',
+        rating: "" as "" | "A" | "B" | "C" | "D" | "E" | "F" | "G",
+        primaryEnergyKwhPerM2Year: "" as string | number,
+        emissionsKgCo2PerM2Year: "" as string | number,
+        certificateNumber: "",
+        scope: "building" as "building" | "dwelling" | "commercial_unit",
+        issuerName: "",
+        issueDate: "",
+        expiryDate: "",
+        propertyReference: "",
+        notes: "",
         // Limpiar campos de imagen
-        imageUrl: '',
-        imageFilename: '',
-        imageUploadedAt: '',
+        imageUrl: "",
+        imageFilename: "",
+        imageUploadedAt: "",
       });
       handleCloseUpload();
-
     } catch (error) {
-      showError('Error al guardar', error instanceof Error ? error.message : 'Error desconocido al guardar el certificado');
+      showError(
+        "Error al guardar",
+        error instanceof Error
+          ? error.message
+          : "Error desconocido al guardar el certificado"
+      );
     }
   };
 
@@ -491,7 +625,7 @@ const BuildingDetail: React.FC = () => {
     if (building) {
       setBuilding({
         ...building,
-        images: updatedImages
+        images: updatedImages,
       });
     }
   };
@@ -502,7 +636,10 @@ const BuildingDetail: React.FC = () => {
         {/* Skeleton para las pestañas */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex gap-1 overflow-x-auto">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-10 flex-1 rounded-md bg-gray-100 animate-pulse" />
+            <div
+              key={i}
+              className="h-10 flex-1 rounded-md bg-gray-100 animate-pulse"
+            />
           ))}
         </div>
 
@@ -591,34 +728,58 @@ const BuildingDetail: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center bg-white rounded-lg shadow-sm p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('digitalbook.fields.buildingNotFound', { defaultValue: 'Building not found' })}</h2>
-          <p className="text-gray-600 mb-4">{t('digitalbook.fields.buildingNotFoundOrNoPermissions', { defaultValue: 'Building not found or you do not have permission to view it.' })}</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {t("digitalbook.fields.buildingNotFound", {
+              defaultValue: "Building not found",
+            })}
+          </h2>
+          <p className="text-gray-600 mb-4">
+            {t("digitalbook.fields.buildingNotFoundOrNoPermissions", {
+              defaultValue:
+                "Building not found or you do not have permission to view it.",
+            })}
+          </p>
           <button
-            onClick={() => navigate('/activos')}
+            onClick={() => navigate("/assets")}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            {t('assetsList', { defaultValue: 'Back to Assets' })}
+            {t("assetsList", { defaultValue: "Back to Assets" })}
           </button>
         </div>
       </div>
     );
   }
 
-
-
   // Si el activeTab es 'dashboard', cambiar a 'todos' por defecto
-  const currentTab = activeTab === 'dashboard' ? 'todos' : activeTab;
+  const currentTab = activeTab === "dashboard" ? "todos" : activeTab;
 
   const tabs = [
-    { id: 'todos', label: t('generalView', 'Vista General'), icon: BuildingIcon },
-    { id: 'eficiencia', label: t('energyEfficiency', 'Eficiencia Energética'), icon: Zap },
-    { id: 'certificados', label: t('certificates', 'Certificados'), icon: FileCheck2 },
-    { id: 'mantenimiento', label: t('maintenance', 'Mantenimiento'), icon: Wrench },
-    { id: 'actividad', label: t('activity', 'Actividad'), icon: Activity },
+    {
+      id: "todos",
+      label: t("generalView", "Vista General"),
+      icon: BuildingIcon,
+    },
+    {
+      id: "eficiencia",
+      label: t("energyEfficiency", "Eficiencia Energética"),
+      icon: Zap,
+    },
+    {
+      id: "certificados",
+      label: t("certificates", "Certificados"),
+      icon: FileCheck2,
+    },
+    {
+      id: "mantenimiento",
+      label: t("maintenance", "Mantenimiento"),
+      icon: Wrench,
+    },
+    { id: "actividad", label: t("activity", "Actividad"), icon: Activity },
   ];
 
   const totalDigitalSections = digitalBook?.sections?.length ?? 0;
-  const completedDigitalSections = digitalBook?.sections?.filter((section) => section.complete).length ?? 0;
+  const completedDigitalSections =
+    digitalBook?.sections?.filter((section) => section.complete).length ?? 0;
 
   // Función para extraer información de ubicación de la dirección
   const parseAddressInfo = (address: string) => {
@@ -628,45 +789,55 @@ const BuildingDetail: React.FC = () => {
     const addressLower = address.toLowerCase();
 
     // Detectar Madrid (más común)
-    if (addressLower.includes('castellana') || addressLower.includes('gran vía') || addressLower.includes('madrid')) {
+    if (
+      addressLower.includes("castellana") ||
+      addressLower.includes("gran vía") ||
+      addressLower.includes("madrid")
+    ) {
       // Extraer código postal si está en la dirección
       const postalMatch = address.match(/\b(28\d{3})\b/);
       const postalCode = postalMatch ? postalMatch[1] : null;
 
       return {
-        city: 'Madrid',
-        province: 'Madrid',
-        postalCode: postalCode || (addressLower.includes('castellana') ? '28046' : '28013')
+        city: "Madrid",
+        province: "Madrid",
+        postalCode:
+          postalCode ||
+          (addressLower.includes("castellana") ? "28046" : "28013"),
       };
     }
 
     // Detectar Barcelona
-    if (addressLower.includes('barcelona') || addressLower.includes('passeig') || addressLower.includes('rambla')) {
+    if (
+      addressLower.includes("barcelona") ||
+      addressLower.includes("passeig") ||
+      addressLower.includes("rambla")
+    ) {
       const postalMatch = address.match(/\b(08\d{3})\b/);
       return {
-        city: 'Barcelona',
-        province: 'Barcelona',
-        postalCode: postalMatch ? postalMatch[1] : '08001'
+        city: "Barcelona",
+        province: "Barcelona",
+        postalCode: postalMatch ? postalMatch[1] : "08001",
       };
     }
 
     // Detectar Valencia
-    if (addressLower.includes('valencia')) {
+    if (addressLower.includes("valencia")) {
       const postalMatch = address.match(/\b(46\d{3})\b/);
       return {
-        city: 'Valencia',
-        province: 'Valencia',
-        postalCode: postalMatch ? postalMatch[1] : '46001'
+        city: "Valencia",
+        province: "Valencia",
+        postalCode: postalMatch ? postalMatch[1] : "46001",
       };
     }
 
     // Detectar Sevilla
-    if (addressLower.includes('sevilla') || addressLower.includes('seville')) {
+    if (addressLower.includes("sevilla") || addressLower.includes("seville")) {
       const postalMatch = address.match(/\b(41\d{3})\b/);
       return {
-        city: 'Sevilla',
-        province: 'Sevilla',
-        postalCode: postalMatch ? postalMatch[1] : '41001'
+        city: "Sevilla",
+        province: "Sevilla",
+        postalCode: postalMatch ? postalMatch[1] : "41001",
       };
     }
 
@@ -676,30 +847,35 @@ const BuildingDetail: React.FC = () => {
     return {
       city: null,
       province: null,
-      postalCode: postalMatch ? postalMatch[1] : null
+      postalCode: postalMatch ? postalMatch[1] : null,
     };
   };
 
   // Preparar imágenes del edificio
-  const buildingImages = building.images && building.images.length > 0
-    ? building.images.map(img => img.url)
-    : building.images?.[0]?.url
+  const buildingImages =
+    building.images && building.images.length > 0
+      ? building.images.map((img) => img.url)
+      : building.images?.[0]?.url
       ? [building.images[0].url]
-      : ['/image.png'];
+      : ["/image.png"];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + buildingImages.length) % buildingImages.length);
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + buildingImages.length) % buildingImages.length
+    );
   };
 
   return (
     <div className="space-y-6 md:space-y-8">
       {/* Título del edificio */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{building.name}</h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+          {building.name}
+        </h1>
         {building.address && (
           <p className="text-sm text-gray-600 mt-1">{building.address}</p>
         )}
@@ -714,10 +890,11 @@ const BuildingDetail: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               title={tab.label}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 rounded-md text-xs md:text-sm transition-all whitespace-nowrap ${currentTab === tab.id
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
-                }`}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 rounded-md text-xs md:text-sm transition-all whitespace-nowrap ${
+                currentTab === tab.id
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
               <span className="hidden md:inline">{tab.label}</span>
@@ -727,7 +904,7 @@ const BuildingDetail: React.FC = () => {
       </div>
 
       {/* Contenido según pestaña activa */}
-      {currentTab === 'todos' && (
+      {currentTab === "todos" && (
         <div className="space-y-6">
           {/* SECCIÓN SUPERIOR: Info básica + Galería de imágenes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -735,35 +912,59 @@ const BuildingDetail: React.FC = () => {
             <div className="space-y-4">
               {/* Datos básicos */}
               <div className="bg-white rounded-lg p-5 shadow-sm">
-                <h3 className="text-sm mb-4">{t('buildingInfo', 'Información del edificio')}</h3>
+                <h3 className="text-sm mb-4">
+                  {t("buildingInfo", "Información del edificio")}
+                </h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">{t('constructionYear', 'Año de construcción')}</p>
-                    <p className="text-gray-900">{building.constructionYear || '—'}</p>
+                    <p className="text-gray-500 text-xs mb-1">
+                      {t("constructionYear", "Año de construcción")}
+                    </p>
+                    <p className="text-gray-900">
+                      {building.constructionYear || "—"}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">{t('floors', 'Plantas')}</p>
-                    <p className="text-gray-900">{building.numFloors || '—'}</p>
+                    <p className="text-gray-500 text-xs mb-1">
+                      {t("floors", "Plantas")}
+                    </p>
+                    <p className="text-gray-900">{building.numFloors || "—"}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 text-xs mb-1">{t('units', 'Unidades')}</p>
-                    <p className="text-gray-900">{building.numUnits || '—'}</p>
+                    <p className="text-gray-500 text-xs mb-1">
+                      {t("units", "Unidades")}
+                    </p>
+                    <p className="text-gray-900">{building.numUnits || "—"}</p>
                   </div>
                 </div>
               </div>
 
               {/* Libro del Edificio */}
               <div className="bg-white rounded-lg p-5 shadow-sm">
-                <h3 className="text-sm mb-3">{t('buildingBook', 'Libro del Edificio')}</h3>
+                <h3 className="text-sm mb-3">
+                  {t("buildingBook", "Libro del Edificio")}
+                </h3>
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">{t('pending', 'Pendientes')}</span>
-                    <span className="text-gray-900">{digitalBook ? (totalDigitalSections - completedDigitalSections) : 0}</span>
+                    <span className="text-gray-600">
+                      {t("pending", "Pendientes")}
+                    </span>
+                    <span className="text-gray-900">
+                      {digitalBook
+                        ? totalDigitalSections - completedDigitalSections
+                        : 0}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">{t('completed', 'Completados')}</span>
+                    <span className="text-gray-600">
+                      {t("completed", "Completados")}
+                    </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-900">{digitalBook ? `${completedDigitalSections}/${totalDigitalSections}` : '0/0'}</span>
+                      <span className="text-gray-900">
+                        {digitalBook
+                          ? `${completedDigitalSections}/${totalDigitalSections}`
+                          : "0/0"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -771,9 +972,13 @@ const BuildingDetail: React.FC = () => {
 
               {/* Ubicación del edificio */}
               <div className="bg-white rounded-lg p-5 shadow-sm">
-                <h3 className="text-sm mb-4">{t('buildingLocation', 'Ubicación del edificio')}</h3>
+                <h3 className="text-sm mb-4">
+                  {t("buildingLocation", "Ubicación del edificio")}
+                </h3>
                 {(() => {
-                  const locationInfo = building ? parseAddressInfo(building.address) : { city: null, province: null, postalCode: null };
+                  const locationInfo = building
+                    ? parseAddressInfo(building.address)
+                    : { city: null, province: null, postalCode: null };
 
                   return building.lat && building.lng ? (
                     <>
@@ -781,7 +986,7 @@ const BuildingDetail: React.FC = () => {
                         <MapContainer
                           center={[building.lat, building.lng]}
                           zoom={16}
-                          style={{ height: '100%', width: '100%' }}
+                          style={{ height: "100%", width: "100%" }}
                           zoomControl={false}
                           dragging={false}
                           touchZoom={false}
@@ -799,7 +1004,7 @@ const BuildingDetail: React.FC = () => {
                               <div className="text-center">
                                 <strong>{building.name}</strong>
                                 <br />
-                                {building.address || 'Sin dirección'}
+                                {building.address || "Sin dirección"}
                               </div>
                             </Popup>
                           </Marker>
@@ -807,20 +1012,36 @@ const BuildingDetail: React.FC = () => {
                       </div>
                       <div className="mt-3 space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('address', 'Dirección')}</span>
-                          <span className="text-gray-900">{building.address || 'N/A'}</span>
+                          <span className="text-gray-500">
+                            {t("address", "Dirección")}
+                          </span>
+                          <span className="text-gray-900">
+                            {building.address || "N/A"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('municipality', 'Municipio')}</span>
-                          <span className="text-gray-900">{locationInfo.city || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("municipality", "Municipio")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.city || "—"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('province', 'Provincia')}</span>
-                          <span className="text-gray-900">{locationInfo.province || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("province", "Provincia")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.province || "—"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('postalCode', 'Código postal')}</span>
-                          <span className="text-gray-900">{locationInfo.postalCode || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("postalCode", "Código postal")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.postalCode || "—"}
+                          </span>
                         </div>
                       </div>
                     </>
@@ -830,16 +1051,20 @@ const BuildingDetail: React.FC = () => {
                         <div className="absolute inset-0 opacity-10">
                           <div className="absolute top-0 left-0 w-full h-full">
                             {/* Grid pattern */}
-                            <div className="w-full h-full" style={{
-                              backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)',
-                              backgroundSize: '20px 20px'
-                            }}></div>
+                            <div
+                              className="w-full h-full"
+                              style={{
+                                backgroundImage:
+                                  "linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)",
+                                backgroundSize: "20px 20px",
+                              }}
+                            ></div>
                           </div>
                         </div>
                         <div className="relative z-10 flex flex-col items-center gap-2 text-center px-4">
                           <MapPin className="w-12 h-12 text-blue-600" />
                           <span className="text-sm text-blue-700">
-                            {building.address || 'Sin dirección'}
+                            {building.address || "Sin dirección"}
                           </span>
                         </div>
                         <button className="absolute top-3 right-3 bg-white rounded-md p-2 shadow-sm hover:bg-gray-50">
@@ -848,20 +1073,36 @@ const BuildingDetail: React.FC = () => {
                       </div>
                       <div className="mt-3 space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('address', 'Dirección')}</span>
-                          <span className="text-gray-900">{building.address || 'N/A'}</span>
+                          <span className="text-gray-500">
+                            {t("address", "Dirección")}
+                          </span>
+                          <span className="text-gray-900">
+                            {building.address || "N/A"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('municipality', 'Municipio')}</span>
-                          <span className="text-gray-900">{locationInfo.city || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("municipality", "Municipio")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.city || "—"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('province', 'Provincia')}</span>
-                          <span className="text-gray-900">{locationInfo.province || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("province", "Provincia")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.province || "—"}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{t('postalCode', 'Código postal')}</span>
-                          <span className="text-gray-900">{locationInfo.postalCode || '—'}</span>
+                          <span className="text-gray-500">
+                            {t("postalCode", "Código postal")}
+                          </span>
+                          <span className="text-gray-900">
+                            {locationInfo.postalCode || "—"}
+                          </span>
                         </div>
                       </div>
                     </>
@@ -876,7 +1117,7 @@ const BuildingDetail: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="relative w-full aspect-[4/3] bg-gray-100">
                   <img
-                    src={buildingImages[currentImageIndex] || '/image.png'}
+                    src={buildingImages[currentImageIndex] || "/image.png"}
                     alt={`${building.name} - Imagen ${currentImageIndex + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -903,8 +1144,11 @@ const BuildingDetail: React.FC = () => {
                           <button
                             key={index}
                             onClick={() => setCurrentImageIndex(index)}
-                            className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                              }`}
+                            className={`w-2 h-2 rounded-full transition-colors ${
+                              index === currentImageIndex
+                                ? "bg-white"
+                                : "bg-white/50"
+                            }`}
                           />
                         ))}
                       </div>
@@ -917,15 +1161,21 @@ const BuildingDetail: React.FC = () => {
               <div className="bg-blue-600 text-white rounded-lg p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-sm mb-2">{t('buildingBook', 'Libro del Edificio')}</h3>
+                    <h3 className="text-sm mb-2">
+                      {t("buildingBook", "Libro del Edificio")}
+                    </h3>
                     <p className="text-sm text-blue-100 mb-1">
                       {digitalBook
-                        ? t('buildingBookReady', 'Libro digital disponible')
-                        : t('technicianWillCreate', 'El técnico creará el libro del edificio')}
+                        ? t("buildingBookReady", "Libro digital disponible")
+                        : t(
+                            "technicianWillCreate",
+                            "El técnico creará el libro del edificio"
+                          )}
                     </p>
                     {building.technicianEmail && (
                       <p className="text-xs text-blue-200">
-                        {t('assignedTechnician', 'Técnico asignado')}: {building.technicianEmail}
+                        {t("assignedTechnician", "Técnico asignado")}:{" "}
+                        {building.technicianEmail}
                       </p>
                     )}
                   </div>
@@ -934,7 +1184,7 @@ const BuildingDetail: React.FC = () => {
                       onClick={handleCreateDigitalBook}
                       className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
                     >
-                      + {t('waitingCreation', 'Esperando creación')}
+                      + {t("waitingCreation", "Esperando creación")}
                     </button>
                   )}
                   {digitalBook && (
@@ -942,7 +1192,7 @@ const BuildingDetail: React.FC = () => {
                       onClick={handleViewDigitalBook}
                       className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
                     >
-                      {t('viewDigitalBook', 'Ver Libro')}
+                      {t("viewDigitalBook", "Ver Libro")}
                     </button>
                   )}
                 </div>
@@ -953,23 +1203,35 @@ const BuildingDetail: React.FC = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-sm mb-2">
-                      {t('financialData', 'Datos Financieros')}
+                      {t("financialData", "Datos Financieros")}
                     </h3>
                     <p className="text-sm text-blue-100 mb-1">
                       {hasFinancialData
-                        ? t('financialDataAvailable', 'Datos financieros disponibles')
-                        : t('financialDataNotAvailable', 'No hay datos financieros cargados')}
+                        ? t(
+                            "financialDataAvailable",
+                            "Datos financieros disponibles"
+                          )
+                        : t(
+                            "financialDataNotAvailable",
+                            "No hay datos financieros cargados"
+                          )}
                     </p>
                     {building.cfoEmail && (
                       <p className="text-xs text-blue-200">
-                        {t('assignedCFO', 'CFO asignado')}: {building.cfoEmail}
+                        {t("assignedCFO", "CFO asignado")}: {building.cfoEmail}
                       </p>
                     )}
                     {!building.cfoEmail && (
                       <p className="text-xs text-blue-200">
                         {hasFinancialData
-                          ? t('viewFinancialAnalysis', 'Ver análisis financiero y métricas')
-                          : t('loadFinancialData', 'Cargar datos financieros del edificio')}
+                          ? t(
+                              "viewFinancialAnalysis",
+                              "Ver análisis financiero y métricas"
+                            )
+                          : t(
+                              "loadFinancialData",
+                              "Cargar datos financieros del edificio"
+                            )}
                       </p>
                     )}
                   </div>
@@ -978,8 +1240,8 @@ const BuildingDetail: React.FC = () => {
                     className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap"
                   >
                     {hasFinancialData
-                      ? t('viewAnalysis', 'Ver Análisis')
-                      : t('loadFinancialData', 'Cargar Datos')}
+                      ? t("viewAnalysis", "Ver Análisis")
+                      : t("loadFinancialData", "Cargar Datos")}
                   </button>
                 </div>
               </div>
@@ -989,62 +1251,100 @@ const BuildingDetail: React.FC = () => {
       )}
 
       {/* Pestaña EFICIENCIA ENERGÉTICA */}
-      {currentTab === 'eficiencia' && (
+      {currentTab === "eficiencia" && (
         <div className="space-y-6">
           {/* Datos del certificado energético */}
           {energyCertificates.length > 0 ? (
             (() => {
               // Obtener el certificado más reciente
-              const latestCertificate = energyCertificates.sort((a, b) => 
-                new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+              const latestCertificate = energyCertificates.sort(
+                (a, b) =>
+                  new Date(b.issueDate).getTime() -
+                  new Date(a.issueDate).getTime()
               )[0];
-              
+
               // Calcular emisiones totales anuales (si tenemos superficie del edificio)
               const buildingArea = building?.squareMeters || 0;
-              const totalAnnualEmissions = buildingArea > 0 
-                ? (latestCertificate.emissionsKgCo2PerM2Year * buildingArea / 1000).toFixed(2)
-                : null;
-              const totalAnnualConsumption = buildingArea > 0
-                ? (latestCertificate.primaryEnergyKwhPerM2Year * buildingArea).toFixed(0)
-                : null;
+              const totalAnnualEmissions =
+                buildingArea > 0
+                  ? (
+                      (latestCertificate.emissionsKgCo2PerM2Year *
+                        buildingArea) /
+                      1000
+                    ).toFixed(2)
+                  : null;
+              const totalAnnualConsumption =
+                buildingArea > 0
+                  ? (
+                      latestCertificate.primaryEnergyKwhPerM2Year * buildingArea
+                    ).toFixed(0)
+                  : null;
 
               return (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Clase energética */}
                   <div className="bg-white rounded-lg p-5 shadow-sm">
-                    <h3 className="text-sm mb-4">{t('energyClass2', 'Clase energética')}</h3>
+                    <h3 className="text-sm mb-4">
+                      {t("energyClass2", "Clase energética")}
+                    </h3>
                     <div className="flex items-center gap-4 mb-4">
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-lg text-3xl font-bold ${getRatingClasses(latestCertificate.rating)}`}>
+                      <div
+                        className={`inline-flex items-center justify-center w-16 h-16 rounded-lg text-3xl font-bold ${getRatingClasses(
+                          latestCertificate.rating
+                        )}`}
+                      >
                         {latestCertificate.rating}
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('certificateNumber', 'Nº Certificado')}</p>
-                        <p className="text-sm font-medium text-gray-900">{latestCertificate.certificateNumber}</p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          {t("certificateNumber", "Nº Certificado")}
+                        </p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {latestCertificate.certificateNumber}
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {t('issueDate', 'Fecha emisión')}: {new Date(latestCertificate.issueDate).toLocaleDateString('es-ES')}
+                          {t("issueDate", "Fecha emisión")}:{" "}
+                          {new Date(
+                            latestCertificate.issueDate
+                          ).toLocaleDateString("es-ES")}
                         </p>
                       </div>
                     </div>
                     <div className="pt-4 border-t border-gray-100 space-y-3">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('primaryEnergyConsumption', 'Consumo de energía primaria')}</p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          {t(
+                            "primaryEnergyConsumption",
+                            "Consumo de energía primaria"
+                          )}
+                        </p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {latestCertificate.primaryEnergyKwhPerM2Year} <span className="text-sm font-normal text-gray-600">kWh/m²·año</span>
+                          {latestCertificate.primaryEnergyKwhPerM2Year}{" "}
+                          <span className="text-sm font-normal text-gray-600">
+                            kWh/m²·año
+                          </span>
                         </p>
                         {totalAnnualConsumption && (
                           <p className="text-xs text-gray-500 mt-1">
-                            {t('totalAnnual', 'Total anual')}: {totalAnnualConsumption} kWh
+                            {t("totalAnnual", "Total anual")}:{" "}
+                            {totalAnnualConsumption} kWh
                           </p>
                         )}
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('co2Emissions', 'Emisiones de CO₂')}</p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          {t("co2Emissions", "Emisiones de CO₂")}
+                        </p>
                         <p className="text-lg font-semibold text-gray-900">
-                          {latestCertificate.emissionsKgCo2PerM2Year} <span className="text-sm font-normal text-gray-600">kg CO₂/m²·año</span>
+                          {latestCertificate.emissionsKgCo2PerM2Year}{" "}
+                          <span className="text-sm font-normal text-gray-600">
+                            kg CO₂/m²·año
+                          </span>
                         </p>
                         {totalAnnualEmissions && (
                           <p className="text-xs text-gray-500 mt-1">
-                            {t('totalAnnual', 'Total anual')}: {totalAnnualEmissions} t CO₂
+                            {t("totalAnnual", "Total anual")}:{" "}
+                            {totalAnnualEmissions} t CO₂
                           </p>
                         )}
                       </div>
@@ -1053,32 +1353,54 @@ const BuildingDetail: React.FC = () => {
 
                   {/* Huella de carbono */}
                   <div className="bg-white rounded-lg p-5 shadow-sm">
-                    <h3 className="text-sm mb-4">{t('carbonFootprint', 'Huella de carbono')}</h3>
+                    <h3 className="text-sm mb-4">
+                      {t("carbonFootprint", "Huella de carbono")}
+                    </h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('emissionsPerM2', 'Emisiones por m²')}</p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          {t("emissionsPerM2", "Emisiones por m²")}
+                        </p>
                         <p className="text-2xl font-bold text-gray-900">
-                          {latestCertificate.emissionsKgCo2PerM2Year} <span className="text-sm font-normal text-gray-600">kg CO₂/m²·año</span>
+                          {latestCertificate.emissionsKgCo2PerM2Year}{" "}
+                          <span className="text-sm font-normal text-gray-600">
+                            kg CO₂/m²·año
+                          </span>
                         </p>
                       </div>
                       {totalAnnualEmissions && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">{t('totalAnnualEmissions', 'Emisiones anuales totales')}</p>
+                          <p className="text-xs text-gray-500 mb-1">
+                            {t(
+                              "totalAnnualEmissions",
+                              "Emisiones anuales totales"
+                            )}
+                          </p>
                           <p className="text-xl font-semibold text-gray-900">
-                            {totalAnnualEmissions} <span className="text-sm font-normal text-gray-600">t CO₂/año</span>
+                            {totalAnnualEmissions}{" "}
+                            <span className="text-sm font-normal text-gray-600">
+                              t CO₂/año
+                            </span>
                           </p>
                         </div>
                       )}
                       <div className="pt-4 border-t border-gray-100">
-                        <p className="text-xs text-gray-500 mb-2">{t('scope', 'Ámbito')}</p>
+                        <p className="text-xs text-gray-500 mb-2">
+                          {t("scope", "Ámbito")}
+                        </p>
                         <p className="text-sm text-gray-900 capitalize">
-                          {latestCertificate.scope === 'building' ? t('building', 'Edificio') :
-                           latestCertificate.scope === 'dwelling' ? t('dwelling', 'Vivienda') :
-                           t('commercialUnit', 'Local')}
+                          {latestCertificate.scope === "building"
+                            ? t("building", "Edificio")
+                            : latestCertificate.scope === "dwelling"
+                            ? t("dwelling", "Vivienda")
+                            : t("commercialUnit", "Local")}
                         </p>
                         {latestCertificate.expiryDate && (
                           <p className="text-xs text-gray-500 mt-2">
-                            {t('expiryDate', 'Válido hasta')}: {new Date(latestCertificate.expiryDate).toLocaleDateString('es-ES')}
+                            {t("expiryDate", "Válido hasta")}:{" "}
+                            {new Date(
+                              latestCertificate.expiryDate
+                            ).toLocaleDateString("es-ES")}
                           </p>
                         )}
                       </div>
@@ -1091,28 +1413,57 @@ const BuildingDetail: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Clase energética */}
               <div className="bg-white rounded-lg p-5 shadow-sm">
-                <h3 className="text-sm mb-4">{t('energyClass2', 'Clase energética')}</h3>
-                <div className="text-sm text-gray-500">{t('buildingNotCertified', 'Edificio no certificado')}</div>
+                <h3 className="text-sm mb-4">
+                  {t("energyClass2", "Clase energética")}
+                </h3>
+                <div className="text-sm text-gray-500">
+                  {t("buildingNotCertified", "Edificio no certificado")}
+                </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-2">{t('whenCertified', 'Cuando esté certificado se mostrará:')}</p>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {t("whenCertified", "Cuando esté certificado se mostrará:")}
+                  </p>
                   <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
-                    <li>{t('energyCertification2', 'Certificación energética')}</li>
-                    <li>{t('primaryEnergyConsumption', 'Consumo de energía primaria')}</li>
-                    <li>{t('co2Emissions', 'Emisiones de CO₂')}</li>
+                    <li>
+                      {t("energyCertification2", "Certificación energética")}
+                    </li>
+                    <li>
+                      {t(
+                        "primaryEnergyConsumption",
+                        "Consumo de energía primaria"
+                      )}
+                    </li>
+                    <li>{t("co2Emissions", "Emisiones de CO₂")}</li>
                   </ul>
                 </div>
               </div>
 
               {/* Huella de carbono */}
               <div className="bg-white rounded-lg p-5 shadow-sm">
-                <h3 className="text-sm mb-4">{t('carbonFootprint', 'Huella de carbono')}</h3>
-                <div className="text-sm text-gray-500">{t('buildingNotCertified', 'Edificio no certificado')}</div>
+                <h3 className="text-sm mb-4">
+                  {t("carbonFootprint", "Huella de carbono")}
+                </h3>
+                <div className="text-sm text-gray-500">
+                  {t("buildingNotCertified", "Edificio no certificado")}
+                </div>
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-2">{t('infoAvailableAfterCert', 'Información disponible tras certificación')}</p>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {t(
+                      "infoAvailableAfterCert",
+                      "Información disponible tras certificación"
+                    )}
+                  </p>
                   <ul className="text-xs text-gray-500 space-y-1 list-disc list-inside">
-                    <li>{t('totalAnnualEmissions', 'Emisiones anuales totales')}</li>
-                    <li>{t('emissionsPerM2', 'Emisiones por m²')}</li>
-                    <li>{t('comparisonSimilar', 'Comparación con edificios similares')}</li>
+                    <li>
+                      {t("totalAnnualEmissions", "Emisiones anuales totales")}
+                    </li>
+                    <li>{t("emissionsPerM2", "Emisiones por m²")}</li>
+                    <li>
+                      {t(
+                        "comparisonSimilar",
+                        "Comparación con edificios similares"
+                      )}
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -1121,13 +1472,15 @@ const BuildingDetail: React.FC = () => {
 
           {/* Card de ESG */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-4">{t('esgCalculation', 'Cálculo ESG')}</h3>
-            
+            <h3 className="text-sm mb-4">
+              {t("esgCalculation", "Cálculo ESG")}
+            </h3>
+
             {esgLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
-            ) : esgData?.status === 'complete' && esgData.data ? (
+            ) : esgData?.status === "complete" && esgData.data ? (
               <div className="space-y-4">
                 {/* Score ESG con estrella */}
                 <div className="flex items-center justify-center gap-4 py-4">
@@ -1137,53 +1490,81 @@ const BuildingDetail: React.FC = () => {
                       viewBox="0 0 24 24"
                       fill={getESGLabelColor(esgData.data.label)}
                       className="w-16 h-16"
-                      style={{ filter: 'drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))' }}
+                      style={{
+                        filter: "drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.15))",
+                      }}
                     >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
-                    <span className="text-lg font-bold text-gray-900 mt-2">{esgData.data.label}</span>
-                    <span className="text-2xl font-bold text-gray-900">{esgData.data.total}/100</span>
+                    <span className="text-lg font-bold text-gray-900 mt-2">
+                      {esgData.data.label}
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      {esgData.data.total}/100
+                    </span>
                   </div>
                 </div>
 
                 {/* Desglose por categorías */}
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                   <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">{t('environmental', 'Ambiental')}</p>
-                    <p className="text-lg font-semibold text-green-600">{esgData.data.environmental.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-500 mb-1">
+                      {t("environmental", "Ambiental")}
+                    </p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {esgData.data.environmental.normalized.toFixed(0)}
+                    </p>
                     <p className="text-xs text-gray-400">/100</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">{t('social', 'Social')}</p>
-                    <p className="text-lg font-semibold text-blue-600">{esgData.data.social.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-500 mb-1">
+                      {t("social", "Social")}
+                    </p>
+                    <p className="text-lg font-semibold text-blue-600">
+                      {esgData.data.social.normalized.toFixed(0)}
+                    </p>
                     <p className="text-xs text-gray-400">/100</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">{t('governance', 'Gobernanza')}</p>
-                    <p className="text-lg font-semibold text-purple-600">{esgData.data.governance.normalized.toFixed(0)}</p>
+                    <p className="text-xs text-gray-500 mb-1">
+                      {t("governance", "Gobernanza")}
+                    </p>
+                    <p className="text-lg font-semibold text-purple-600">
+                      {esgData.data.governance.normalized.toFixed(0)}
+                    </p>
                     <p className="text-xs text-gray-400">/100</p>
                   </div>
                 </div>
               </div>
-            ) : esgData?.status === 'incomplete' ? (
+            ) : esgData?.status === "incomplete" ? (
               <div className="space-y-4">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-yellow-900 mb-2">
-                        {t('esgIncomplete', 'Datos incompletos para calcular ESG')}
+                        {t(
+                          "esgIncomplete",
+                          "Datos incompletos para calcular ESG"
+                        )}
                       </h4>
                       <p className="text-xs text-yellow-800 mb-3">
-                        {esgData.message || t('esgIncompleteMessage', 'Faltan algunos datos para poder calcular el score ESG.')}
+                        {esgData.message ||
+                          t(
+                            "esgIncompleteMessage",
+                            "Faltan algunos datos para poder calcular el score ESG."
+                          )}
                       </p>
                       <div>
                         <p className="text-xs font-medium text-yellow-900 mb-2">
-                          {t('missingFields', 'Campos que faltan:')}
+                          {t("missingFields", "Campos que faltan:")}
                         </p>
                         <ul className="space-y-1">
                           {esgData.missingData.map((field, index) => (
-                            <li key={index} className="text-xs text-yellow-800 flex items-center gap-2">
+                            <li
+                              key={index}
+                              className="text-xs text-yellow-800 flex items-center gap-2"
+                            >
                               <span className="w-1.5 h-1.5 bg-yellow-600 rounded-full"></span>
                               {field}
                             </li>
@@ -1197,19 +1578,22 @@ const BuildingDetail: React.FC = () => {
                   onClick={loadESGData}
                   className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  {t('recalculateESG', 'Recalcular ESG')}
+                  {t("recalculateESG", "Recalcular ESG")}
                 </button>
               </div>
             ) : (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-500 mb-4">
-                  {t('esgCalculationDescription', 'El cálculo ESG se realiza automáticamente basándose en los datos del certificado energético y otras métricas del edificio.')}
+                  {t(
+                    "esgCalculationDescription",
+                    "El cálculo ESG se realiza automáticamente basándose en los datos del certificado energético y otras métricas del edificio."
+                  )}
                 </p>
                 <button
                   onClick={loadESGData}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  {t('calculateESG', 'Calcular ESG')}
+                  {t("calculateESG", "Calcular ESG")}
                 </button>
               </div>
             )}
@@ -1217,18 +1601,20 @@ const BuildingDetail: React.FC = () => {
 
           {/* Cumplimiento por tipología */}
           <div className="bg-white rounded-lg p-5 shadow-sm lg:col-span-2">
-            <h3 className="text-sm mb-3">{t('complianceByTypology', 'Cumplimiento por tipología')}</h3>
+            <h3 className="text-sm mb-3">
+              {t("complianceByTypology", "Cumplimiento por tipología")}
+            </h3>
             <div className="mb-2">
               <span className="text-gray-900">85%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div
                 className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: '85%' }}
+                style={{ width: "85%" }}
               ></div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              {t('complianceLevelNormative', 'Nivel de cumplimiento normativo')}
+              {t("complianceLevelNormative", "Nivel de cumplimiento normativo")}
             </p>
           </div>
 
@@ -1237,9 +1623,17 @@ const BuildingDetail: React.FC = () => {
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm mb-1 text-gray-900">{t('energyCertInfo', 'Información sobre certificación energética')}</h3>
+                <h3 className="text-sm mb-1 text-gray-900">
+                  {t(
+                    "energyCertInfo",
+                    "Información sobre certificación energética"
+                  )}
+                </h3>
                 <p className="text-sm text-gray-600">
-                  {t('energyCertInfoText', 'La certificación energética es obligatoria para edificios existentes en determinadas circunstancias.')}
+                  {t(
+                    "energyCertInfoText",
+                    "La certificación energética es obligatoria para edificios existentes en determinadas circunstancias."
+                  )}
                 </p>
               </div>
             </div>
@@ -1248,14 +1642,18 @@ const BuildingDetail: React.FC = () => {
       )}
 
       {/* Pestaña CERTIFICADOS */}
-      {currentTab === 'certificados' && (
+      {currentTab === "certificados" && (
         <div className="space-y-6">
           {/* Certificados energéticos */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm">{t('energyCertificates', 'Certificados energéticos')}</h3>
-                <p className="text-xs text-gray-500 mt-1">{t('certificatesList', 'Lista de certificados registrados')}</p>
+                <h3 className="text-sm">
+                  {t("energyCertificates", "Certificados energéticos")}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("certificatesList", "Lista de certificados registrados")}
+                </p>
               </div>
               <button
                 onClick={() => {
@@ -1265,7 +1663,7 @@ const BuildingDetail: React.FC = () => {
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
                 <FileCheck2 className="w-4 h-4" />
-                {t('uploadCertificate', 'Cargar Certificado')}
+                {t("uploadCertificate", "Cargar Certificado")}
               </button>
             </div>
 
@@ -1273,50 +1671,95 @@ const BuildingDetail: React.FC = () => {
               <table className="w-full">
                 <thead className="border-b border-gray-200">
                   <tr>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('certificateNumber', 'Nº Certificado')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('rating', 'Rating')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('energyConsumption', 'Consumo energético')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('emissions', 'Emisiones')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('scope', 'Ámbito')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('issueDate', 'Fecha emisión')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('expirationDate', 'Fecha vencimiento')}</th>
-                    <th className="text-left text-xs text-gray-600 pb-3">{t('actions', 'Acciones')}</th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("certificateNumber", "Nº Certificado")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("rating", "Rating")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("energyConsumption", "Consumo energético")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("emissions", "Emisiones")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("scope", "Ámbito")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("issueDate", "Fecha emisión")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("expirationDate", "Fecha vencimiento")}
+                    </th>
+                    <th className="text-left text-xs text-gray-600 pb-3">
+                      {t("actions", "Acciones")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {energyCertificates.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-8 text-center">
-                        <div className="text-gray-400 text-sm">{t('noCertificates', 'No hay certificados')}</div>
-                        <p className="text-xs text-gray-400 mt-1">{t('canUploadCertificates', 'Puedes subir certificados')}</p>
+                        <div className="text-gray-400 text-sm">
+                          {t("noCertificates", "No hay certificados")}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {t(
+                            "canUploadCertificates",
+                            "Puedes subir certificados"
+                          )}
+                        </p>
                       </td>
                     </tr>
                   ) : (
                     energyCertificates.map((cert) => (
-                      <tr 
-                        key={cert.id} 
+                      <tr
+                        key={cert.id}
                         className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                         onClick={() => setSelectedCertificateForView(cert)}
                       >
-                        <td className="py-3 text-sm text-gray-900">{cert.certificateNumber}</td>
+                        <td className="py-3 text-sm text-gray-900">
+                          {cert.certificateNumber}
+                        </td>
                         <td className="py-3 text-sm">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(cert.rating)}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(
+                              cert.rating
+                            )}`}
+                          >
                             {cert.rating}
                           </span>
                         </td>
-                        <td className="py-3 text-sm text-gray-900">{cert.primaryEnergyKwhPerM2Year}</td>
-                        <td className="py-3 text-sm text-gray-900">{cert.emissionsKgCo2PerM2Year}</td>
-                        <td className="py-3 text-sm text-gray-900 capitalize">{cert.scope}</td>
-                        <td className="py-3 text-sm text-gray-900">{new Date(cert.issueDate).toLocaleDateString()}</td>
-                        <td className="py-3 text-sm text-gray-900">{new Date(cert.expiryDate).toLocaleDateString()}</td>
-                        <td className="py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3 text-sm text-gray-900">
+                          {cert.primaryEnergyKwhPerM2Year}
+                        </td>
+                        <td className="py-3 text-sm text-gray-900">
+                          {cert.emissionsKgCo2PerM2Year}
+                        </td>
+                        <td className="py-3 text-sm text-gray-900 capitalize">
+                          {cert.scope}
+                        </td>
+                        <td className="py-3 text-sm text-gray-900">
+                          {new Date(cert.issueDate).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 text-sm text-gray-900">
+                          {new Date(cert.expiryDate).toLocaleDateString()}
+                        </td>
+                        <td
+                          className="py-3 text-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             onClick={() => {
                               setCertificateToDelete(cert);
                               setDeleteModalOpen(true);
                             }}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title={t('deleteCertificate', 'Eliminar certificado')}
+                            title={t(
+                              "deleteCertificate",
+                              "Eliminar certificado"
+                            )}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1331,23 +1774,41 @@ const BuildingDetail: React.FC = () => {
 
           {/* Estado de la sección */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-3">{t('sectionStatus', 'Estado de la sección')}</h3>
+            <h3 className="text-sm mb-3">
+              {t("sectionStatus", "Estado de la sección")}
+            </h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">{t('installations', 'Instalaciones')}</span>
-                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">{t('ok', 'OK')}</span>
+                <span className="text-gray-600">
+                  {t("installations", "Instalaciones")}
+                </span>
+                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">
+                  {t("ok", "OK")}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">{t('certificates', 'Certificados')}</span>
-                <span className="px-2 py-1 rounded-md bg-orange-100 text-orange-700 text-xs">{t('pending', 'Pendiente')}</span>
+                <span className="text-gray-600">
+                  {t("certificates", "Certificados")}
+                </span>
+                <span className="px-2 py-1 rounded-md bg-orange-100 text-orange-700 text-xs">
+                  {t("pending", "Pendiente")}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">{t('maintenance', 'Mantenimiento')}</span>
-                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">{t('ok', 'OK')}</span>
+                <span className="text-gray-600">
+                  {t("maintenance", "Mantenimiento")}
+                </span>
+                <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 text-xs">
+                  {t("ok", "OK")}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">{t('inspections', 'Inspecciones')}</span>
-                <span className="px-2 py-1 rounded-md bg-red-100 text-red-700 text-xs">{t('expiring', 'Por vencer')}</span>
+                <span className="text-gray-600">
+                  {t("inspections", "Inspecciones")}
+                </span>
+                <span className="px-2 py-1 rounded-md bg-red-100 text-red-700 text-xs">
+                  {t("expiring", "Por vencer")}
+                </span>
               </div>
             </div>
           </div>
@@ -1355,44 +1816,91 @@ const BuildingDetail: React.FC = () => {
       )}
 
       {/* Pestaña MANTENIMIENTO */}
-      {currentTab === 'mantenimiento' && (
+      {currentTab === "mantenimiento" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Plan de mantenimiento */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-4">{t('maintenancePlan', 'Plan de mantenimiento')}</h3>
+            <h3 className="text-sm mb-4">
+              {t("maintenancePlan", "Plan de mantenimiento")}
+            </h3>
             <div className="flex items-center justify-center py-8">
               <div className="relative w-48 h-48">
                 <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="150.8 351.7" />
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#3b82f6" strokeWidth="20" strokeDasharray="100.5 401.9" strokeDashoffset="-150.8" />
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f97316" strokeWidth="20" strokeDasharray="75.4 426.5" strokeDashoffset="-251.3" />
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#ef4444" strokeWidth="20" strokeDasharray="75.4 426.5" strokeDashoffset="-326.7" />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="20"
+                    strokeDasharray="150.8 351.7"
+                  />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="20"
+                    strokeDasharray="100.5 401.9"
+                    strokeDashoffset="-150.8"
+                  />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#f97316"
+                    strokeWidth="20"
+                    strokeDasharray="75.4 426.5"
+                    strokeDashoffset="-251.3"
+                  />
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="80"
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth="20"
+                    strokeDasharray="75.4 426.5"
+                    strokeDashoffset="-326.7"
+                  />
                 </svg>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-gray-600">{t('completedPercentage', 'Completado')} (30%)</span>
+                <span className="text-gray-600">
+                  {t("completedPercentage", "Completado")} (30%)
+                </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-gray-600">{t('inProgressPercentage', 'En progreso')} (20%)</span>
+                <span className="text-gray-600">
+                  {t("inProgressPercentage", "En progreso")} (20%)
+                </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                <span className="text-gray-600">{t('scheduledPercentage', 'Programado')} (15%)</span>
+                <span className="text-gray-600">
+                  {t("scheduledPercentage", "Programado")} (15%)
+                </span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-gray-600">{t('overduePercentage', 'Vencido')} (15%)</span>
+                <span className="text-gray-600">
+                  {t("overduePercentage", "Vencido")} (15%)
+                </span>
               </div>
             </div>
           </div>
 
           {/* Alertas y próximos vencimientos */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-4">{t('alertsUpcoming', 'Alertas y próximos vencimientos')}</h3>
+            <h3 className="text-sm mb-4">
+              {t("alertsUpcoming", "Alertas y próximos vencimientos")}
+            </h3>
             <div className="space-y-3">
               {/* Alerta urgente */}
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -1400,12 +1908,16 @@ const BuildingDetail: React.FC = () => {
                   <div className="flex items-start gap-3 flex-1">
                     <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">{t('elevatorReview', 'Revisión ascensor')}</p>
-                      <p className="text-xs text-gray-600 mt-1">{t('mainElevator', 'Ascensor principal')}</p>
+                      <p className="text-sm text-gray-900">
+                        {t("elevatorReview", "Revisión ascensor")}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {t("mainElevator", "Ascensor principal")}
+                      </p>
                     </div>
                   </div>
                   <button className="px-3 py-1.5 bg-red-600 text-white rounded-md text-xs hover:bg-red-700 whitespace-nowrap">
-                    {t('schedule', 'Programar')}
+                    {t("schedule", "Programar")}
                   </button>
                 </div>
               </div>
@@ -1416,12 +1928,16 @@ const BuildingDetail: React.FC = () => {
                   <div className="flex items-start gap-3 flex-1">
                     <Clock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">{t('riteMaintenance', 'Mantenimiento RITE')}</p>
-                      <p className="text-xs text-gray-600 mt-1">{t('hvacSystem', 'Sistema HVAC')}</p>
+                      <p className="text-sm text-gray-900">
+                        {t("riteMaintenance", "Mantenimiento RITE")}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {t("hvacSystem", "Sistema HVAC")}
+                      </p>
                     </div>
                   </div>
                   <button className="px-3 py-1.5 bg-amber-600 text-white rounded-md text-xs hover:bg-amber-700 whitespace-nowrap">
-                    {t('viewDetails', 'Ver detalles')}
+                    {t("viewDetails", "Ver detalles")}
                   </button>
                 </div>
               </div>
@@ -1432,12 +1948,16 @@ const BuildingDetail: React.FC = () => {
                   <div className="flex items-start gap-3 flex-1">
                     <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">{t('manualUpdate', 'Actualización manual')}</p>
-                      <p className="text-xs text-gray-600 mt-1">{t('electricalSystem', 'Sistema eléctrico')}</p>
+                      <p className="text-sm text-gray-900">
+                        {t("manualUpdate", "Actualización manual")}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {t("electricalSystem", "Sistema eléctrico")}
+                      </p>
                     </div>
                   </div>
                   <button className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 whitespace-nowrap">
-                    {t('review', 'Revisar')}
+                    {t("review", "Revisar")}
                   </button>
                 </div>
               </div>
@@ -1447,45 +1967,67 @@ const BuildingDetail: React.FC = () => {
       )}
 
       {/* Pestaña ACTIVIDAD */}
-      {currentTab === 'actividad' && (
+      {currentTab === "actividad" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Actividad reciente */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-4">{t('recentActivity', 'Actividad reciente')}</h3>
+            <h3 className="text-sm mb-4">
+              {t("recentActivity", "Actividad reciente")}
+            </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
                 <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{t('ceeRenewed', 'CEE renovado')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t('daysAgo', 'Hace 2 días')}</p>
+                  <p className="text-sm text-gray-900">
+                    {t("ceeRenewed", "CEE renovado")}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("daysAgo", "Hace 2 días")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{t('hvacCompleted', 'Mantenimiento HVAC completado')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t('weekAgo', 'Hace 1 semana')}</p>
+                  <p className="text-sm text-gray-900">
+                    {t("hvacCompleted", "Mantenimiento HVAC completado")}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("weekAgo", "Hace 1 semana")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
                 <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{t('elevatorInspection', 'Inspección ascensor')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t('twoWeeksAgo', 'Hace 2 semanas')}</p>
+                  <p className="text-sm text-gray-900">
+                    {t("elevatorInspection", "Inspección ascensor")}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("twoWeeksAgo", "Hace 2 semanas")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
                 <div className="w-2 h-2 rounded-full bg-gray-400 mt-1.5"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{t('icaDpli', 'ICA/DPLI')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t('twoMonthsAgo', 'Hace 2 meses')}</p>
+                  <p className="text-sm text-gray-900">
+                    {t("icaDpli", "ICA/DPLI")}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("twoMonthsAgo", "Hace 2 meses")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5"></div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{t('documentationUpdate', 'Actualización documentación')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t('threeMonthsAgo', 'Hace 3 meses')}</p>
+                  <p className="text-sm text-gray-900">
+                    {t("documentationUpdate", "Actualización documentación")}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t("threeMonthsAgo", "Hace 3 meses")}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1493,23 +2035,35 @@ const BuildingDetail: React.FC = () => {
 
           {/* Resumen de actividad */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
-            <h3 className="text-sm mb-4">{t('activitySummary', 'Resumen de actividad')}</h3>
+            <h3 className="text-sm mb-4">
+              {t("activitySummary", "Resumen de actividad")}
+            </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('tasksCompleted', 'Tareas completadas')}</span>
+                <span className="text-sm text-gray-600">
+                  {t("tasksCompleted", "Tareas completadas")}
+                </span>
                 <span className="text-lg text-gray-900">24</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('tasksPending', 'Tareas pendientes')}</span>
+                <span className="text-sm text-gray-600">
+                  {t("tasksPending", "Tareas pendientes")}
+                </span>
                 <span className="text-lg text-orange-600">8</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('activeAlerts', 'Alertas activas')}</span>
+                <span className="text-sm text-gray-600">
+                  {t("activeAlerts", "Alertas activas")}
+                </span>
                 <span className="text-lg text-red-600">3</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{t('lastUpdate', 'Última actualización')}</span>
-                <span className="text-sm text-gray-900">{t('twoDaysAgo', 'Hace 2 días')}</span>
+                <span className="text-sm text-gray-600">
+                  {t("lastUpdate", "Última actualización")}
+                </span>
+                <span className="text-sm text-gray-900">
+                  {t("twoDaysAgo", "Hace 2 días")}
+                </span>
               </div>
             </div>
           </div>
@@ -1521,19 +2075,41 @@ const BuildingDetail: React.FC = () => {
       {/* Modal de Carga (solo imagen) */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={handleCloseUpload} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={handleCloseUpload}
+          />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">
-                {uploadStep === 'select' ? t('uploadEnergyCertificate', { defaultValue: 'Cargar certificado energético' }) : t('reviewExtractedData', { defaultValue: 'Revisar datos extraídos' })}
+                {uploadStep === "select"
+                  ? t("uploadEnergyCertificate", {
+                      defaultValue: "Cargar certificado energético",
+                    })
+                  : t("reviewExtractedData", {
+                      defaultValue: "Revisar datos extraídos",
+                    })}
               </h3>
-              <button onClick={handleCloseUpload} className="p-2 text-gray-500 hover:text-gray-700">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <button
+                onClick={handleCloseUpload}
+                className="p-2 text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
-            {uploadStep === 'select' ? (
+            {uploadStep === "select" ? (
               <div className="p-6 overflow-y-auto">
                 <FileUpload
                   onFilesSelected={handleFilesSelected}
@@ -1541,8 +2117,13 @@ const BuildingDetail: React.FC = () => {
                   multiple={false}
                   maxFiles={1}
                   maxSizeInMB={10}
-                  label={t('uploadCertificateImage', { defaultValue: 'Subir imagen del certificado' })}
-                  description={t('dragOrClickToSelect', { defaultValue: 'Arrastra una imagen o haz clic para seleccionar' })}
+                  label={t("uploadCertificateImage", {
+                    defaultValue: "Subir imagen del certificado",
+                  })}
+                  description={t("dragOrClickToSelect", {
+                    defaultValue:
+                      "Arrastra una imagen o haz clic para seleccionar",
+                  })}
                 />
 
                 {/* Estado del servicio de IA */}
@@ -1550,17 +2131,43 @@ const BuildingDetail: React.FC = () => {
                   <div className="mt-3 p-3 rounded-lg border text-sm">
                     {aiServiceAvailable ? (
                       <div className="flex items-center text-green-700">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
-                        {t('aiServiceAvailable', { defaultValue: 'Servicio de IA disponible - Los datos se extraerán automáticamente' })}
+                        {t("aiServiceAvailable", {
+                          defaultValue:
+                            "Servicio de IA disponible - Los datos se extraerán automáticamente",
+                        })}
                       </div>
                     ) : (
                       <div className="flex items-center text-orange-700">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                          />
                         </svg>
-                        {t('aiServiceUnavailable', { defaultValue: 'Servicio de IA no disponible - Los datos deberán introducirse manualmente' })}
+                        {t("aiServiceUnavailable", {
+                          defaultValue:
+                            "Servicio de IA no disponible - Los datos deberán introducirse manualmente",
+                        })}
                       </div>
                     )}
                   </div>
@@ -1568,10 +2175,16 @@ const BuildingDetail: React.FC = () => {
 
                 {selectedFile && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t('selectedImage', { defaultValue: 'Imagen seleccionada' })}</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      {t("selectedImage", {
+                        defaultValue: "Imagen seleccionada",
+                      })}
+                    </h4>
                     <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3 text-sm text-gray-700">
                       <span className="truncate mr-2">{selectedFile.name}</span>
-                      <span className="text-gray-500 text-xs">{(selectedFile.size / (1024 * 1024)).toFixed(1)}MB</span>
+                      <span className="text-gray-500 text-xs">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(1)}MB
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1581,7 +2194,11 @@ const BuildingDetail: React.FC = () => {
                 {/* Previsualización */}
                 <div>
                   {selectedFileUrl ? (
-                    <img src={selectedFileUrl} alt="Previsualización certificado" className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200" />
+                    <img
+                      src={selectedFileUrl}
+                      alt="Previsualización certificado"
+                      className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200"
+                    />
                   ) : (
                     <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
                       Sin previsualización
@@ -1590,25 +2207,47 @@ const BuildingDetail: React.FC = () => {
                 </div>
                 {/* Datos extraídos (editables) */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('detectedDataEditable', { defaultValue: 'Datos detectados (puedes editar)' })}</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">
+                    {t("detectedDataEditable", {
+                      defaultValue: "Datos detectados (puedes editar)",
+                    })}
+                  </h4>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('rating', { defaultValue: 'Rating' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("rating", { defaultValue: "Rating" })}
+                        </label>
                         <select
                           value={reviewData.rating}
-                          onChange={e => setReviewData(v => ({ ...v, rating: e.target.value as any }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              rating: e.target.value as any,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         >
                           <option value="">-</option>
-                          {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(r => <option key={r} value={r}>{r}</option>)}
+                          {["A", "B", "C", "D", "E", "F", "G"].map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('scope', { defaultValue: 'Ámbito' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("scope", { defaultValue: "Ámbito" })}
+                        </label>
                         <select
                           value={reviewData.scope}
-                          onChange={e => setReviewData(v => ({ ...v, scope: e.target.value as any }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              scope: e.target.value as any,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         >
                           <option value="building">Edificio</option>
@@ -1619,67 +2258,126 @@ const BuildingDetail: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('primaryEnergyKwh', { defaultValue: 'Energía primaria kWh/m²·año' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("primaryEnergyKwh", {
+                            defaultValue: "Energía primaria kWh/m²·año",
+                          })}
+                        </label>
                         <input
                           type="number"
                           value={reviewData.primaryEnergyKwhPerM2Year}
-                          onChange={e => setReviewData(v => ({ ...v, primaryEnergyKwhPerM2Year: e.target.value }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              primaryEnergyKwhPerM2Year: e.target.value,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('emissionsKg', { defaultValue: 'Emisiones kgCO₂/m²·año' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("emissionsKg", {
+                            defaultValue: "Emisiones kgCO₂/m²·año",
+                          })}
+                        </label>
                         <input
                           type="number"
                           value={reviewData.emissionsKgCo2PerM2Year}
-                          onChange={e => setReviewData(v => ({ ...v, emissionsKgCo2PerM2Year: e.target.value }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              emissionsKgCo2PerM2Year: e.target.value,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('certificateNumber', { defaultValue: 'Nº de certificado' })}</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("certificateNumber", {
+                          defaultValue: "Nº de certificado",
+                        })}
+                      </label>
                       <input
                         type="text"
                         value={reviewData.certificateNumber}
-                        onChange={e => setReviewData(v => ({ ...v, certificateNumber: e.target.value }))}
+                        onChange={(e) =>
+                          setReviewData((v) => ({
+                            ...v,
+                            certificateNumber: e.target.value,
+                          }))
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('issueDate', { defaultValue: 'Fecha emisión' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("issueDate", { defaultValue: "Fecha emisión" })}
+                        </label>
                         <input
                           type="date"
                           value={reviewData.issueDate}
-                          onChange={e => setReviewData(v => ({ ...v, issueDate: e.target.value }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              issueDate: e.target.value,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">{t('expiryDate', { defaultValue: 'Fecha vencimiento' })}</label>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          {t("expiryDate", {
+                            defaultValue: "Fecha vencimiento",
+                          })}
+                        </label>
                         <input
                           type="date"
                           value={reviewData.expiryDate}
-                          onChange={e => setReviewData(v => ({ ...v, expiryDate: e.target.value }))}
+                          onChange={(e) =>
+                            setReviewData((v) => ({
+                              ...v,
+                              expiryDate: e.target.value,
+                            }))
+                          }
                           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('cadastralRef', { defaultValue: 'Referencia catastral' })}</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("cadastralRef", {
+                          defaultValue: "Referencia catastral",
+                        })}
+                      </label>
                       <input
                         type="text"
                         value={reviewData.propertyReference}
-                        onChange={e => setReviewData(v => ({ ...v, propertyReference: e.target.value }))}
+                        onChange={(e) =>
+                          setReviewData((v) => ({
+                            ...v,
+                            propertyReference: e.target.value,
+                          }))
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('notes', { defaultValue: 'Notas' })}</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("notes", { defaultValue: "Notas" })}
+                      </label>
                       <textarea
                         value={reviewData.notes}
-                        onChange={e => setReviewData(v => ({ ...v, notes: e.target.value }))}
+                        onChange={(e) =>
+                          setReviewData((v) => ({
+                            ...v,
+                            notes: e.target.value,
+                          }))
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         rows={3}
                       />
@@ -1689,29 +2387,36 @@ const BuildingDetail: React.FC = () => {
               </div>
             )}
 
-
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 shrink-0">
               <button
-                onClick={uploadStep === 'select' ? handleCloseUpload : handleBackToUpload}
+                onClick={
+                  uploadStep === "select"
+                    ? handleCloseUpload
+                    : handleBackToUpload
+                }
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
                 disabled={isProcessingAI}
               >
-                {uploadStep === 'select' ? t('cancel', { defaultValue: 'Cancelar' }) : t('back', { defaultValue: 'Volver' })}
+                {uploadStep === "select"
+                  ? t("cancel", { defaultValue: "Cancelar" })
+                  : t("back", { defaultValue: "Volver" })}
               </button>
-              {uploadStep === 'select' ? (
+              {uploadStep === "select" ? (
                 <button
                   onClick={handleContinueToReview}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!selectedFile || isProcessingAI}
                 >
-                  {isProcessingAI ? t('processing', { defaultValue: 'Procesando...' }) : t('continue', { defaultValue: 'Continuar' })}
+                  {isProcessingAI
+                    ? t("processing", { defaultValue: "Procesando..." })
+                    : t("continue", { defaultValue: "Continuar" })}
                 </button>
               ) : (
                 <button
                   onClick={handleConfirmAndSave}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                 >
-                  {t('confirmAndSave', { defaultValue: 'Confirmar y guardar' })}
+                  {t("confirmAndSave", { defaultValue: "Confirmar y guardar" })}
                 </button>
               )}
             </div>
@@ -1722,18 +2427,32 @@ const BuildingDetail: React.FC = () => {
       {/* Modal de gestión de imágenes */}
       {showImageManager && building && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowImageManager(false)} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowImageManager(false)}
+          />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">
-                {t('manageImagesOf', { defaultValue: 'Gestionar imágenes de' })} {building.name}
+                {t("manageImagesOf", { defaultValue: "Gestionar imágenes de" })}{" "}
+                {building.name}
               </h3>
               <button
                 onClick={() => setShowImageManager(false)}
                 className="p-2 text-gray-500 hover:text-gray-700"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -1753,11 +2472,17 @@ const BuildingDetail: React.FC = () => {
       {/* Modal de vista de certificado energético */}
       {selectedCertificateForView && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCertificateForView(null)} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setSelectedCertificateForView(null)}
+          />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">
-                {t('energyCertificate', { defaultValue: 'Certificado Energético' })} #{selectedCertificateForView.certificateNumber}
+                {t("energyCertificate", {
+                  defaultValue: "Certificado Energético",
+                })}{" "}
+                #{selectedCertificateForView.certificateNumber}
               </h3>
               <div className="flex items-center gap-2">
                 <button
@@ -1768,14 +2493,24 @@ const BuildingDetail: React.FC = () => {
                   className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {t('delete', 'Eliminar')}
+                  {t("delete", "Eliminar")}
                 </button>
                 <button
                   onClick={() => setSelectedCertificateForView(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1783,105 +2518,203 @@ const BuildingDetail: React.FC = () => {
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto">
               {/* Imagen del certificado */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">{t('originalDocument', { defaultValue: 'Documento original' })}</h4>
-                {(selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl) ? (
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  {t("originalDocument", {
+                    defaultValue: "Documento original",
+                  })}
+                </h4>
+                {selectedCertificateForView.imageUrl ||
+                selectedCertificateForView.sourceDocumentUrl ||
+                reviewData.imageUrl ? (
                   <img
-                    src={selectedCertificateForView.imageUrl || selectedCertificateForView.sourceDocumentUrl || reviewData.imageUrl}
+                    src={
+                      selectedCertificateForView.imageUrl ||
+                      selectedCertificateForView.sourceDocumentUrl ||
+                      reviewData.imageUrl
+                    }
                     alt="Certificado energético"
                     className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200"
                   />
                 ) : (
                   <div className="w-full h-64 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500">
-                    {t('imageNotAvailable', { defaultValue: 'Imagen no disponible' })}
+                    {t("imageNotAvailable", {
+                      defaultValue: "Imagen no disponible",
+                    })}
                   </div>
                 )}
                 {selectedCertificateForView.imageFilename && (
                   <p className="text-xs text-gray-500 mt-2">
-                    {t('file', { defaultValue: 'Archivo:' })} {selectedCertificateForView.imageFilename}
+                    {t("file", { defaultValue: "Archivo:" })}{" "}
+                    {selectedCertificateForView.imageFilename}
                   </p>
                 )}
               </div>
 
               {/* Datos del certificado (solo lectura) */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">{t('certificateInfo', { defaultValue: 'Información del certificado' })}</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  {t("certificateInfo", {
+                    defaultValue: "Información del certificado",
+                  })}
+                </h4>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('energyRating', { defaultValue: 'Rating energético' })}</label>
-                      <div className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(selectedCertificateForView.rating)}`}>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("energyRating", {
+                          defaultValue: "Rating energético",
+                        })}
+                      </label>
+                      <div
+                        className={`inline-flex items-center px-2 py-1 rounded-sm text-sm font-bold ${getRatingClasses(
+                          selectedCertificateForView.rating
+                        )}`}
+                      >
                         {selectedCertificateForView.rating}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('scope', { defaultValue: 'Ámbito' })}</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("scope", { defaultValue: "Ámbito" })}
+                      </label>
                       <p className="text-sm text-gray-900 capitalize">
-                        {selectedCertificateForView.scope === 'building' ? 'Edificio' :
-                          selectedCertificateForView.scope === 'dwelling' ? 'Vivienda' : 'Local'}
+                        {selectedCertificateForView.scope === "building"
+                          ? "Edificio"
+                          : selectedCertificateForView.scope === "dwelling"
+                          ? "Vivienda"
+                          : "Local"}
                       </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('primaryEnergyKwh', { defaultValue: 'Energía primaria kWh/m²·año' })}</label>
-                      <p className="text-sm text-gray-900 capitalize">{selectedCertificateForView.primaryEnergyKwhPerM2Year}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("primaryEnergyKwh", {
+                          defaultValue: "Energía primaria kWh/m²·año",
+                        })}
+                      </label>
+                      <p className="text-sm text-gray-900 capitalize">
+                        {selectedCertificateForView.primaryEnergyKwhPerM2Year}
+                      </p>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('emissionsKg', { defaultValue: 'Emisiones kgCO₂/m²·año' })}</label>
-                      <p className="text-sm text-gray-900 capitalize">{selectedCertificateForView.emissionsKgCo2PerM2Year}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("emissionsKg", {
+                          defaultValue: "Emisiones kgCO₂/m²·año",
+                        })}
+                      </label>
+                      <p className="text-sm text-gray-900 capitalize">
+                        {selectedCertificateForView.emissionsKgCo2PerM2Year}
+                      </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">{t('certificateNumber', { defaultValue: 'Nº de certificado' })}</label>
-                    <p className="text-sm text-gray-900">{selectedCertificateForView.certificateNumber}</p>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      {t("certificateNumber", {
+                        defaultValue: "Nº de certificado",
+                      })}
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {selectedCertificateForView.certificateNumber}
+                    </p>
                   </div>
 
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">{t('issuer', { defaultValue: 'Organismo certificador' })}</label>
-                    <p className="text-sm text-gray-900">{selectedCertificateForView.issuerName}</p>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      {t("issuer", { defaultValue: "Organismo certificador" })}
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {selectedCertificateForView.issuerName}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('issueDate', { defaultValue: 'Fecha de emisión' })}</label>
-                      <p className="text-sm text-gray-900">{new Date(selectedCertificateForView.issueDate).toLocaleDateString('es-ES')}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("issueDate", { defaultValue: "Fecha de emisión" })}
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(
+                          selectedCertificateForView.issueDate
+                        ).toLocaleDateString("es-ES")}
+                      </p>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('expiryDate', { defaultValue: 'Fecha de vencimiento' })}</label>
-                      <p className="text-sm text-gray-900">{new Date(selectedCertificateForView.expiryDate).toLocaleDateString('es-ES')}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("expiryDate", {
+                          defaultValue: "Fecha de vencimiento",
+                        })}
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(
+                          selectedCertificateForView.expiryDate
+                        ).toLocaleDateString("es-ES")}
+                      </p>
                     </div>
                   </div>
 
                   {selectedCertificateForView.propertyReference && (
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('cadastralRef', { defaultValue: 'Referencia catastral' })}</label>
-                      <p className="text-sm text-gray-900">{selectedCertificateForView.propertyReference}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("cadastralRef", {
+                          defaultValue: "Referencia catastral",
+                        })}
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {selectedCertificateForView.propertyReference}
+                      </p>
                     </div>
                   )}
 
                   {selectedCertificateForView.notes && (
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">{t('notes', { defaultValue: 'Notas' })}</label>
-                      <p className="text-sm text-gray-900">{selectedCertificateForView.notes}</p>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t("notes", { defaultValue: "Notas" })}
+                      </label>
+                      <p className="text-sm text-gray-900">
+                        {selectedCertificateForView.notes}
+                      </p>
                     </div>
                   )}
 
                   <div className="pt-4 border-t border-gray-200">
                     <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
                       <div>
-                        <label className="block mb-1">{t('uploadDate', { defaultValue: 'Fecha de carga' })}</label>
-                        <p>{new Date(selectedCertificateForView.createdAt).toLocaleDateString('es-ES')}</p>
+                        <label className="block mb-1">
+                          {t("uploadDate", { defaultValue: "Fecha de carga" })}
+                        </label>
+                        <p>
+                          {new Date(
+                            selectedCertificateForView.createdAt
+                          ).toLocaleDateString("es-ES")}
+                        </p>
                       </div>
                       <div>
-                        <label className="block mb-1">{t('lastUpdate', { defaultValue: 'Última actualización' })}</label>
-                        <p>{new Date(selectedCertificateForView.updatedAt).toLocaleDateString('es-ES')}</p>
+                        <label className="block mb-1">
+                          {t("lastUpdate", {
+                            defaultValue: "Última actualización",
+                          })}
+                        </label>
+                        <p>
+                          {new Date(
+                            selectedCertificateForView.updatedAt
+                          ).toLocaleDateString("es-ES")}
+                        </p>
                       </div>
                       {selectedCertificateForView.imageUploadedAt && (
                         <div className="col-span-2">
-                          <label className="block mb-1">{t('imageUploaded', { defaultValue: 'Imagen subida' })}</label>
-                          <p>{new Date(selectedCertificateForView.imageUploadedAt).toLocaleDateString('es-ES')}</p>
+                          <label className="block mb-1">
+                            {t("imageUploaded", {
+                              defaultValue: "Imagen subida",
+                            })}
+                          </label>
+                          <p>
+                            {new Date(
+                              selectedCertificateForView.imageUploadedAt
+                            ).toLocaleDateString("es-ES")}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1896,30 +2729,63 @@ const BuildingDetail: React.FC = () => {
       {/* Modal de confirmación de eliminación */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={cancelDeleteCertificate} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={cancelDeleteCertificate}
+          />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{t('deleteCertificate', { defaultValue: 'Eliminar certificado' })}</h3>
-                  <p className="text-sm text-gray-500">{t('actionCannotBeUndone', { defaultValue: 'Esta acción no se puede deshacer' })}</p>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {t("deleteCertificate", {
+                      defaultValue: "Eliminar certificado",
+                    })}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {t("actionCannotBeUndone", {
+                      defaultValue: "Esta acción no se puede deshacer",
+                    })}
+                  </p>
                 </div>
               </div>
 
               <div className="mb-6">
                 <p className="text-gray-700 mb-2">
-                  {t('confirmDeleteCertificate', { defaultValue: '¿Estás seguro de que quieres eliminar el certificado energético?' })}
+                  {t("confirmDeleteCertificate", {
+                    defaultValue:
+                      "¿Estás seguro de que quieres eliminar el certificado energético?",
+                  })}
                 </p>
                 {certificateToDelete && (
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm font-medium text-gray-900">{t('certificateNumber', { defaultValue: 'N°' })} {certificateToDelete.certificateNumber}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("certificateNumber", { defaultValue: "N°" })}{" "}
+                      {certificateToDelete.certificateNumber}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      {t('rating', { defaultValue: 'Rating:' })} {certificateToDelete.rating} • {certificateToDelete.scope === 'building' ? t('building', { defaultValue: 'Edificio' }) : certificateToDelete.scope === 'dwelling' ? t('dwelling', { defaultValue: 'Vivienda' }) : t('commercialUnit', { defaultValue: 'Local' })}
+                      {t("rating", { defaultValue: "Rating:" })}{" "}
+                      {certificateToDelete.rating} •{" "}
+                      {certificateToDelete.scope === "building"
+                        ? t("building", { defaultValue: "Edificio" })
+                        : certificateToDelete.scope === "dwelling"
+                        ? t("dwelling", { defaultValue: "Vivienda" })
+                        : t("commercialUnit", { defaultValue: "Local" })}
                     </p>
                   </div>
                 )}
@@ -1929,28 +2795,30 @@ const BuildingDetail: React.FC = () => {
                 <button
                   onClick={cancelDeleteCertificate}
                   disabled={isDeleting}
-                  className={`px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg transition-colors duration-200 ${isDeleting
-                    ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                    : 'text-gray-700 bg-white hover:bg-gray-50'
-                    }`}
+                  className={`px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg transition-colors duration-200 ${
+                    isDeleting
+                      ? "text-gray-400 bg-gray-50 cursor-not-allowed"
+                      : "text-gray-700 bg-white hover:bg-gray-50"
+                  }`}
                 >
-                  {t('cancel', { defaultValue: 'Cancelar' })}
+                  {t("cancel", { defaultValue: "Cancelar" })}
                 </button>
                 <button
                   onClick={confirmDeleteCertificate}
                   disabled={isDeleting}
-                  className={`px-4 py-2 text-sm font-medium text-white border border-red-600 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${isDeleting
-                    ? 'bg-red-400 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
-                    }`}
+                  className={`px-4 py-2 text-sm font-medium text-white border border-red-600 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+                    isDeleting
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
                 >
                   {isDeleting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {t('deleting', { defaultValue: 'Eliminando...' })}
+                      {t("deleting", { defaultValue: "Eliminando..." })}
                     </>
                   ) : (
-                    t('delete', { defaultValue: 'Eliminar' })
+                    t("delete", { defaultValue: "Eliminar" })
                   )}
                 </button>
               </div>

@@ -1,30 +1,341 @@
 import { X, Send, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
+
+const CLASSIFIER_URL = "https://orquestador-clasificador-n8n-v2.fly.dev/webhook/agente-clasificador";
 
 interface AIAssistantProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+type AgentChunk = {
+  type: string;
+  content?: string;
+  metadata?: Record<string, unknown>;
+};
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  isStreaming?: boolean;
+}
+
+type ClassifierResponse = {
+  success: boolean;
+  tipo: 'redirect' | 'directo';
+  categoria: 'financiero' | 'ambiental' | 'saludo' | 'fuera_scope';
+  url?: string;
+  prompt?: string;
+  session_id?: string;
+  respuesta?: string;
+};
+
 export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const { t } = useLanguage();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Un sessionId único por pestaña/sesión
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2)
+  );
+  const sessionId = sessionIdRef.current;
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  // Auto-scroll cuando lleguen nuevos mensajes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const createId = () => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+    return Math.random().toString(36).slice(2);
+  };
+
+  // Normalizar texto: quitar emojis, formatear saltos de línea
+  const normalizeText = (text: string): string => {
+    if (!text) return '';
     
-    setMessages(prev => [...prev, { role: 'user', content: message }]);
+    // Función para eliminar emojis de forma segura
+    const removeEmojis = (str: string): string => {
+      return str
+        .replace(/[\u{1F300}-\u{1F9FF}]/gu, '') // Emojis Unicode
+        .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Símbolos
+        .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+        .replace(/[\u2600-\u27BF]/g, '')        // Más símbolos
+        .replace(/\p{Emoji_Presentation}/gu, '') // Emojis generales
+        .replace(/\*\*/g, '')                   // Negritas markdown
+        .replace(/###\s*/g, '')                 // Títulos markdown (###)
+        .replace(/##\s*/g, '')                  // Títulos markdown (##)
+        .replace(/#\s*/g, '');                  // Títulos markdown (#)
+    };
+    
+    const cleaned = removeEmojis(text).trim();
+    return cleaned;
+  };
+
+  // Renderizar contenido formateado
+  const renderMessageContent = (content: string) => {
+    if (!content) return null;
+    
+    const normalized = normalizeText(content);
+    
+    // Dividir por líneas
+    const lines = normalized.split('\n').filter(line => line.trim());
+    
+    return (
+      <div className="space-y-2">
+        {lines.map((line, idx) => {
+          const trimmed = line.trim();
+          
+          // Lista con guiones o números
+          if (trimmed.match(/^[-•]\s/) || trimmed.match(/^\d+\.\s/)) {
+            return (
+              <div key={idx} className="flex gap-2 items-start">
+                <span className="text-gray-400 mt-0.5">•</span>
+                <span className="flex-1">{trimmed.replace(/^[-•]\s/, '').replace(/^\d+\.\s/, '')}</span>
+              </div>
+            );
+          }
+          
+          // Títulos (líneas cortas seguidas de contenido)
+          if (trimmed.length < 50 && trimmed.endsWith(':')) {
+            return (
+              <p key={idx} className="font-semibold text-gray-900 mt-3 first:mt-0">
+                {trimmed}
+              </p>
+            );
+          }
+          
+          // Texto normal
+          return (
+            <p key={idx} className="leading-relaxed">
+              {trimmed}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const streamFromAgent = async (
+    agentUrl: string,
+    originalPrompt: string,
+    assistantId: string
+  ) => {
+    try {
+      const res = await fetch(agentUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatInput: originalPrompt,
+          sessionId,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content:
+                    text ||
+                    `Error HTTP ${res.status}. No se pudo obtener respuesta del agente.`,
+                  isStreaming: false,
+                }
+              : m
+          )
+        );
+        return;
+      }
+
+      if (!res.body) {
+        const text = await res.text().catch(() => "");
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: text || "", isStreaming: false } : m
+          )
+        );
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let done = false;
+      let buffer = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+
+        if (value) {
+          // acumulamos chunk en el buffer
+          buffer += decoder.decode(value, { stream: !done });
+
+          // separamos por líneas (NDJSON)
+          const lines = buffer.split("\n");
+
+          // la última línea puede estar incompleta → la dejamos en buffer
+          if (!done) {
+            buffer = lines.pop() || "";
+          }
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            let obj: AgentChunk;
+            try {
+              obj = JSON.parse(trimmed);
+            } catch {
+              // si alguna línea viene cortada o mal formada, la ignoramos
+              continue;
+            }
+
+            if (obj.type === "item" && obj.content) {
+              // concatenamos el contenido al mensaje del assistant
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId
+                    ? { ...m, content: (m.content || "") + obj.content }
+                    : m
+                )
+              );
+            }
+          }
+        }
+      }
+
+      // por si queda una última línea pendiente
+      const last = buffer.trim();
+      if (last) {
+        try {
+          const obj: AgentChunk = JSON.parse(last);
+          if (obj.type === "item" && obj.content) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? { ...m, content: (m.content || "") + obj.content }
+                  : m
+              )
+            );
+          }
+        } catch {
+          // ignoramos basura final
+        }
+      }
+
+      // Marcar como finalizado el streaming
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, isStreaming: false }
+            : m
+        )
+      );
+    } catch (err) {
+      console.error("Error en streamFromAgent:", err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content:
+                  "Hubo un error al conectar con el agente. Por favor, intenta nuevamente.",
+                isStreaming: false,
+              }
+            : m
+        )
+      );
+    }
+  };
+
+  const handleSend = async () => {
+    const prompt = message.trim();
+    if (!prompt || loading) return;
+
     setMessage("");
-    
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: t('aiAssistantResponse', 'Estoy aquí para ayudarte con la gestión de tus edificios. ¿En qué puedo asistirte?')
-      }]);
-    }, 1000);
+    setLoading(true);
+
+    const userId = createId();
+    const assistantId = createId();
+
+    // 1) agregamos el mensaje del usuario y uno vacío del asistente
+    setMessages((prev) => [
+      ...prev,
+      { id: userId, role: "user", content: prompt },
+      { id: assistantId, role: "assistant", content: "", isStreaming: true },
+    ]);
+
+    try {
+      // PASO 1: Llamar al clasificador
+      const classifierRes = await fetch(CLASSIFIER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: prompt,
+          session_id: sessionId,
+        }),
+      });
+
+      if (!classifierRes.ok) {
+        throw new Error(`Clasificador respondió con status ${classifierRes.status}`);
+      }
+
+      const classifierData: ClassifierResponse = await classifierRes.json();
+
+      if (!classifierData.success) {
+        throw new Error("El clasificador respondió con error");
+      }
+
+      console.log(`✅ Clasificador: ${classifierData.tipo} → ${classifierData.categoria}`);
+
+      // PASO 2: Manejar respuesta según el tipo
+      if (classifierData.tipo === 'directo') {
+        // Respuesta directa (SALUDO o FUERA_SCOPE)
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, content: classifierData.respuesta || "Sin respuesta", isStreaming: false }
+              : m
+          )
+        );
+      } else if (classifierData.tipo === 'redirect') {
+        // Redirect a agente específico (FINANCIERO o AMBIENTAL)
+        if (!classifierData.url) {
+          throw new Error("El clasificador no devolvió una URL válida");
+        }
+        console.log(`🔄 Redirigiendo a: ${classifierData.url}`);
+        await streamFromAgent(classifierData.url, prompt, assistantId);
+      } else {
+        throw new Error(`Tipo de respuesta desconocido: ${classifierData.tipo}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content:
+                  "Hubo un error al conectar con el agente. Revisá la consola para más detalles.",
+                isStreaming: false,
+              }
+            : m
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -63,22 +374,36 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg, index) => (
+            {messages.map((msg) => (
               <div
-                key={index}
+                key={msg.id}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] md:max-w-[80%] rounded-lg px-4 py-2.5 text-sm ${
+                  className={`max-w-[85%] md:max-w-[80%] rounded-lg px-4 py-3 text-sm ${
                     msg.role === 'user'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      : 'bg-gray-50 text-gray-800 border border-gray-200'
                   }`}
                 >
-                  {msg.content}
+                  {msg.content ? (
+                    msg.role === 'user' ? (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    ) : (
+                      // Siempre formato estructurado limpio
+                      renderMessageContent(msg.content)
+                    )
+                  ) : (loading && msg.role === 'assistant' ? (
+                    <span className="inline-flex items-center gap-1 text-gray-400">
+                      <span className="animate-pulse">•</span>
+                      <span className="animate-pulse animation-delay-200">•</span>
+                      <span className="animate-pulse animation-delay-400">•</span>
+                    </span>
+                  ) : '')}
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
@@ -97,7 +422,7 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           />
           <button
             onClick={handleSend}
-            disabled={!message.trim()}
+            disabled={!message.trim() || loading}
             className="p-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
             <Send className="w-5 h-5" />

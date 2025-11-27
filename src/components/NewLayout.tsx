@@ -1,24 +1,29 @@
-import React from 'react';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
-import { NavigationProvider, useNavigation } from '../contexts/NavigationContext';
-import { LanguageProvider } from '../contexts/LanguageContext';
-import { Sidebar } from './navigation/Sidebar';
-import { AppHeader } from './navigation/AppHeader';
-import { SecondaryNav } from './navigation/SecondaryNav';
-import { AssetsDashboard } from './dashboard/AssetsDashboard';
-import AssetsList from './AssetsList';
-import ErrorBoundary from './ErrorBoundary';
+import React from "react";
+import { Outlet, useLocation, useParams } from "react-router-dom";
+import {
+  NavigationProvider,
+  useNavigation,
+} from "../contexts/NavigationContext";
+import { LanguageProvider } from "../contexts/LanguageContext";
+import { Sidebar } from "./navigation/Sidebar";
+import { AppHeader } from "./navigation/AppHeader";
+import { SecondaryNav } from "./navigation/SecondaryNav";
+import { AssetsDashboard } from "./dashboard/AssetsDashboard";
+import AssetsList from "./AssetsList";
+import ErrorBoundary from "./ErrorBoundary";
 
 function NewLayoutContent() {
   const location = useLocation();
   const params = useParams<{ id?: string }>();
-  
+
   // Intentar obtener navegación, con valores por defecto si falla
-  let activeModule = 'edificios';
-  let activeSection = 'dashboard';
+  let activeModule = "inicio";
+  let activeSection = "dashboard";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
-  
+  let setActiveModule: ((module: string) => void) | null = null;
+  let setActiveSection: ((section: string) => void) | null = null;
+
   try {
     const navigation = useNavigation();
     if (navigation) {
@@ -26,51 +31,126 @@ function NewLayoutContent() {
       activeSection = navigation.activeSection;
       selectedBuildingId = navigation.selectedBuildingId;
       setSelectedBuildingId = navigation.setSelectedBuildingId;
+      setActiveModule = navigation.setActiveModule;
+      setActiveSection = navigation.setActiveSection;
     }
   } catch (error) {
-    console.error('Error en useNavigation:', error);
+    console.error("Error en useNavigation:", error);
     // Valores por defecto ya establecidos arriba
   }
 
   // Detectar si estamos en una ruta de detalle de edificio
-  const isBuildingDetail = location.pathname.startsWith('/edificio/') && params.id;
-  
-  // Sincronizar selectedBuildingId con la URL
+  const isBuildingDetail =
+    location.pathname.startsWith("/building/") && params.id;
+
+  // Sincronizar selectedBuildingId y activeModule con la URL
   React.useEffect(() => {
+    // Si estamos en una ruta de edificio o relacionada, establecer el módulo activo
+    const isBuildingRelatedPath =
+      location.pathname.startsWith("/building/") ||
+      location.pathname.startsWith("/digital-book") ||
+      location.pathname.startsWith("/cfo-intake") ||
+      location.pathname === "/assets";
+
+    if (isBuildingRelatedPath && setActiveModule) {
+      if (activeModule !== "edificios") {
+        setActiveModule("edificios");
+      }
+    }
+
     if (setSelectedBuildingId) {
-      if (isBuildingDetail && params.id && selectedBuildingId !== params.id) {
-        setSelectedBuildingId(params.id);
-      } else if (!isBuildingDetail && selectedBuildingId) {
-        // Si salimos de la vista de detalle, limpiar el ID seleccionado
-        // pero solo si no estamos navegando a otra ruta de edificio
-        if (!location.pathname.startsWith('/edificio/')) {
-          setSelectedBuildingId(null);
+      // Extraer buildingId de diferentes tipos de rutas
+      let buildingIdFromPath: string | null = null;
+
+      if (isBuildingDetail && params.id) {
+        buildingIdFromPath = params.id;
+      } else if (location.pathname.startsWith("/digital-book/hub/")) {
+        // Ruta: /digital-book/hub/:buildingId
+        const match = location.pathname.match(/\/digital-book\/hub\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/digital-book/section/")) {
+        // Ruta: /digital-book/section/:buildingId/:sectionId
+        const match = location.pathname.match(
+          /\/digital-book\/section\/([^/]+)/
+        );
+        buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/cfo-intake/")) {
+        // Ruta: /cfo-intake/:buildingId
+        const match = location.pathname.match(/\/cfo-intake\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/building/") && location.pathname.includes("/analysis-general")) {
+        // Ruta: /building/:id/analysis-general
+        const match = location.pathname.match(/\/building\/([^/]+)\/analysis-general/);
+        buildingIdFromPath = match ? match[1] : null;
+      }
+
+      if (buildingIdFromPath && selectedBuildingId !== buildingIdFromPath) {
+        setSelectedBuildingId(buildingIdFromPath);
+      } else if (
+        !buildingIdFromPath &&
+        selectedBuildingId &&
+        !isBuildingRelatedPath
+      ) {
+        // Si salimos de todas las rutas relacionadas con edificios, limpiar el ID seleccionado
+        setSelectedBuildingId(null);
+      }
+    }
+
+    // Detectar y actualizar activeSection según la ruta
+    if (setActiveSection) {
+      if (location.pathname.includes("/analysis-general")) {
+        if (activeSection !== "analisis") {
+          setActiveSection("analisis");
+        }
+      } else if (location.pathname.startsWith("/building/") && !location.pathname.includes("/analysis-general") && !location.pathname.includes("/units") && !location.pathname.includes("/documents")) {
+        // Ruta de detalle de edificio (vista general)
+        if (activeSection !== "todos") {
+          setActiveSection("todos");
         }
       }
     }
-  }, [isBuildingDetail, params.id, selectedBuildingId, setSelectedBuildingId, location.pathname]);
+  }, [
+    isBuildingDetail,
+    params.id,
+    selectedBuildingId,
+    setSelectedBuildingId,
+    setActiveModule,
+    setActiveSection,
+    activeModule,
+    activeSection,
+    location.pathname,
+  ]);
 
   // Determinar qué mostrar según el estado de navegación
   const renderContent = () => {
     // Si estamos en una ruta específica que necesita su propio componente, usar Outlet
-    if (location.pathname.startsWith('/libro-digital') || 
-        location.pathname.startsWith('/cfo-') || 
-        location.pathname.startsWith('/edificios/crear') ||
-        location.pathname.startsWith('/mantenimiento') ||
-        location.pathname.startsWith('/cumplimiento') ||
-        location.pathname.startsWith('/edificio/') && (location.pathname.includes('/unidades') || location.pathname.includes('/documentacion') || location.pathname.includes('/analisis-general'))) {
+    if (
+      location.pathname.startsWith("/digital-book") ||
+      location.pathname.startsWith("/cfo-") ||
+       location.pathname.startsWith('/users') || 
+      location.pathname.startsWith("/buildings/crear") ||
+      location.pathname.startsWith("/mantenimiento") ||
+      location.pathname.startsWith("/cumplimiento") ||
+      (location.pathname.startsWith("/building/") &&
+        (location.pathname.includes("/unidades") ||
+          location.pathname.includes("/documentacion") ||
+          location.pathname.includes("/analysis-general")))
+    ) {
       return <Outlet />;
     }
 
-    // Si estamos en /edificio/:id (vista detalle), mostrar BuildingDetail
+    // Si estamos en /building/:id (vista detalle), mostrar BuildingDetail
     if (isBuildingDetail) {
       return <Outlet />;
     }
 
-    // Si estamos en /activos o ruta raíz de activos
-    if (location.pathname === '/activos' || location.pathname === '/cfo-dashboard') {
+    // Si estamos en /assets o ruta raíz de activos
+    if (
+      location.pathname === "/assets" ||
+      location.pathname === "/cfo-dashboard"
+    ) {
       // Si estamos en modo dashboard, mostrar AssetsDashboard
-      if (activeSection === 'dashboard') {
+      if (activeSection === "dashboard") {
         return <AssetsDashboard />;
       }
       // Si estamos en modo lista, mostrar AssetsList
@@ -82,62 +162,70 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ['edificios'];
+  const modulesWithSecondaryNav = ["edificios", "inicio", "users"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
-  const showSecondaryNav = modulesWithSecondaryNav.includes(activeModule);
+  // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
+  // Incluir rutas relacionadas con edificios: digital-book, cfo-intake, etc.
+  const isBuildingRelatedRoute =
+    location.pathname.startsWith("/building/") ||
+    location.pathname.startsWith("/digital-book") ||
+    location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/cfo-intake") ||
+    location.pathname === "/assets";
 
-  try {
-    return (
-      <ErrorBoundary>
-        <div className="min-h-screen bg-gray-50">
+  const showSecondaryNav =
+    modulesWithSecondaryNav.includes(activeModule) || isBuildingRelatedRoute;
+
+  // La sidebar SIEMPRE debe renderizarse, sin condiciones
+  console.log(
+    "NewLayout renderizando, ruta:",
+    location.pathname,
+    "showSecondaryNav:",
+    showSecondaryNav
+  );
+
+  return (
+    <ErrorBoundary>
+      <div
+        className="min-h-screen bg-gray-50"
+        style={{ overflowX: "visible", position: "relative" }}
+      >
+        {/* Sidebar SIEMPRE visible - FUERA del contenedor para evitar overflow */}
+        <Sidebar />
+
+        {/* SecondaryNav condicional */}
+        {showSecondaryNav && (
           <ErrorBoundary>
-            <Sidebar />
+            <SecondaryNav />
           </ErrorBoundary>
-          {showSecondaryNav && (
-            <ErrorBoundary>
-              <SecondaryNav />
-            </ErrorBoundary>
-          )}
-          
-          <div className={`
-            ${showSecondaryNav ? 'lg:ml-80' : 'lg:ml-16 md:ml-16'} 
-            ml-0
-          `}>
-            <ErrorBoundary>
-              <AppHeader />
-            </ErrorBoundary>
+        )}
 
-            <main className={`
+        {/* Contenido principal con margen para la sidebar */}
+        <div
+          className={`
+            ${showSecondaryNav ? "lg:ml-80" : "lg:ml-16 md:ml-16"} 
+            ml-0
+            relative
+          `}
+        >
+          <ErrorBoundary>
+            <AppHeader />
+          </ErrorBoundary>
+
+          <main
+            className={`
               px-3 md:px-6 lg:px-8 
               py-3 md:py-4 
               max-w-[1400px] 
               pt-[140px] md:pt-[104px]
-            `}>
-              <ErrorBoundary>
-                {renderContent()}
-              </ErrorBoundary>
-            </main>
-          </div>
-        </div>
-      </ErrorBoundary>
-    );
-  } catch (error) {
-    console.error('Error crítico en NewLayoutContent:', error);
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
-          <h2 className="text-lg font-semibold mb-2">Error al cargar la aplicación</h2>
-          <p className="text-gray-600 mb-4">Por favor, recarga la página o contacta con soporte.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            `}
           >
-            Recargar página
-          </button>
+            <ErrorBoundary>{renderContent()}</ErrorBoundary>
+          </main>
         </div>
       </div>
-    );
-  }
+    </ErrorBoundary>
+  );
 }
 
 export default function NewLayout() {
@@ -153,4 +241,3 @@ export default function NewLayout() {
     </ErrorBoundary>
   );
 }
-
