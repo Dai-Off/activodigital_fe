@@ -119,7 +119,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const userNotifications =
-        await notificationApiService.getUserNotifications(user.id);
+        await notificationApiService.getUserNotifications(user.userId);
       setNotifications(userNotifications);
     } catch (err) {
       setError(
