@@ -134,7 +134,6 @@ export function MainPanel() {
       },
     };
     date = getTimeRemaining(date);
-    console.log(value);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
