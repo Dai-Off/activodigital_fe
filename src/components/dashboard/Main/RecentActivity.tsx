@@ -21,7 +21,7 @@ import {
   type DashboardStats,
 } from "~/services/buildingsApi";
 import { getTrazability, type trazabilityList } from "~/services/trazability";
-import { formatofechaCorta } from "~/utils/fechas";
+import { formatofechaCorta, howTimeWas } from "~/utils/fechas";
 import { capitalize } from "~/utils/funciones.utils";
 
 export function RecentActivity() {
@@ -203,7 +203,7 @@ export function RecentActivity() {
     };
 
     return (
-      <div className="flex items-start gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
+      <div className="cursor-pointer flex items-start gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 transition-colors">
         {type ? TypeActivity[type] : TypeActivity[1]}
         <div className="flex-1 min-w-0">
           <p className="text-xs mb-0.5">
@@ -212,7 +212,7 @@ export function RecentActivity() {
           </p>
           <p className="text-xs text-gray-500">{nameBuilding}</p>
         </div>
-        <span className="text-xs text-gray-400 flex-shrink-0">{date}</span>
+        <span className="text-xs text-gray-400 flex-shrink-0" title={formatofechaCorta(date)}>{howTimeWas(date)}</span>
       </div>
     );
   }
@@ -241,7 +241,7 @@ export function RecentActivity() {
               <Activity
                 key={idx}
                 type={getActivityNumber(act.action || '')}
-                date={formatofechaCorta(act.createdAt)}
+                date={act.createdAt}
                 nameBuilding={act.building?.name || 'Edificio Desconocido'}
                 nameUser={act?.user?.fullName || 'Usuario Desconocido'}
                 title={act.description || 'Actividad sin descripción'}
