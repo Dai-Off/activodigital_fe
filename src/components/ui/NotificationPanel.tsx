@@ -229,7 +229,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = () => {
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-gray-500">
-                            {formatDate(notification.createdAt)}
+                            {formatDate(notification.created_at)}
                           </span>
                           {notification.status === "unread" && (
                             <span className="text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full font-medium">
