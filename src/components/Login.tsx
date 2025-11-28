@@ -125,7 +125,7 @@ export default function Login() {
         } else if (userRole === "cfo") {
           navigate("/cfo-dashboard");
         } else {
-          navigate("/Dashboard");
+          navigate("/dashboard");
         }
       } else {
         // Respuesta exitosa pero sin access_token

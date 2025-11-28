@@ -52,11 +52,11 @@ function NewLayoutContent() {
       location.pathname.startsWith("/cfo-intake") ||
       location.pathname === "/assets";
 
-    if (isBuildingRelatedPath && setActiveModule) {
-      if (activeModule !== "edificios") {
-        setActiveModule("edificios");
-      }
-    }
+    // if (isBuildingRelatedPath && setActiveModule) {
+    //   if (activeModule !== "edificios") {
+    //     setActiveModule("edificios");
+    //   }
+    // }
 
     if (setSelectedBuildingId) {
       // Extraer buildingId de diferentes tipos de rutas

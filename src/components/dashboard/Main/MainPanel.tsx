@@ -14,23 +14,75 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainPanelLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
+import { useNotifications } from "~/contexts/NotificationContext";
 import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
+import { getTimeRemaining } from "~/utils/getTimeRemaining";
 
 export function MainPanel() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigate();
+  const {
+    fetchUserNotifications,
+    refreshUnreadCount,
+    UnreadNotifications,
+    unreadNotifications,
+    notifications,
+    unreadCount,
+  } = useNotifications();
+  const [buildingNames, setBuildingNames] = useState<Record<string, string>>(
+    {}
+  );
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
       .then(setStats)
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
-  }, []);
+    fetchUserNotifications();
+    UnreadNotifications();
+    refreshUnreadCount();
+  }, [fetchUserNotifications, UnreadNotifications, refreshUnreadCount]);
+
+  useEffect(() => {
+    const fetchBuildingNames = async () => {
+      if (!unreadNotifications || unreadNotifications.length === 0) return;
+
+      const uniqueIds = [
+        ...new Set(unreadNotifications.map((n) => n.buildingId)),
+      ];
+
+      const idsToFetch = uniqueIds.filter((id) => !buildingNames[id]);
+
+      if (idsToFetch.length === 0) return;
+
+      try {
+        const promises = idsToFetch.map((id) =>
+          BuildingsApiService.getBuildingById(id).catch(() => null)
+        );
+
+        const buildings = await Promise.all(promises);
+
+        const newNames: Record<string, string> = {};
+        buildings.forEach((b) => {
+          if (b) newNames[b.id] = b.name;
+        });
+
+        setBuildingNames((prev) => ({ ...prev, ...newNames }));
+      } catch (error) {
+        console.error(
+          "Error cargando nombres de edificios en MainPanel",
+          error
+        );
+      }
+    };
+
+    fetchBuildingNames();
+  }, [unreadNotifications]);
 
   if (loading) {
     return <MainPanelLoading />;
@@ -46,6 +98,7 @@ export function MainPanel() {
     );
   }
 
+  let urgentCount = unreadNotifications.filter((not) => not.priority > 2);
   let percentageBooks = 0;
   if (stats.pendingBooks || stats.completedBooks) {
     percentageBooks = stats.pendingBooks / stats.completedBooks;
@@ -64,20 +117,23 @@ export function MainPanel() {
     value: number;
   }) {
     const values: any = {
-      1: {
+      3: {
         name: "URGENTE",
         icon: <TriangleAlert className="w-4 h-4 text-red-600"></TriangleAlert>,
+        color: "bg-red-600",
       },
       2: {
         name: "PRÓXIMO",
         icon: <Clock className="w-4 h-4 text-orange-600"></Clock>,
+        color: "bg-orange-600",
       },
-      3: {
+      1: {
         name: "PENDIENTE",
         icon: <FileText className="w-4 h-4 text-yellow-600"></FileText>,
+        color: "bg-yellow-600",
       },
     };
-
+    date = getTimeRemaining(date);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
@@ -91,7 +147,9 @@ export function MainPanel() {
                 {nameBuilding} - {date}
               </p>
             </div>
-            <span className="text-xs px-2 py-0.5 bg-red-600 text-white rounded flex-shrink-0">
+            <span
+              className={`text-xs px-2 py-0.5 ${values[value].color} text-white rounded flex-shrink-0`}
+            >
               {values[value].name}
             </span>
           </div>
@@ -217,10 +275,10 @@ export function MainPanel() {
               <p className="text-xs text-gray-500 mb-0.5">
                 {t("Pending Alerts", "Alertas Pendientes")}
               </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
+              <p className="text-2xl mb-0.5">{unreadCount}</p>
               <div className="flex items-center gap-0.5 text-xs text-red-600">
                 <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>3 urgentes</span>
+                <span>{urgentCount.length} urgentes</span>
               </div>
             </div>
             <div className="p-2 bg-orange-50 rounded-lg">
@@ -259,12 +317,19 @@ export function MainPanel() {
               </button>
             </div>
             <div className="p-3 space-y-2">
-              <PendingAlerts
-                date="Requiere acción"
-                nameBuilding="Plaza Shopping"
-                text="Inspección vence en 2 días"
-                value={1}
-              />
+              {notifications.map((not) => {
+                if (not.priority > 0) {
+                  return (
+                    <PendingAlerts
+                      key={not.id}
+                      date={not.expiration as string}
+                      nameBuilding={buildingNames[not.buildingId]}
+                      text={not.title}
+                      value={not.priority}
+                    />
+                  );
+                }
+              })}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col">

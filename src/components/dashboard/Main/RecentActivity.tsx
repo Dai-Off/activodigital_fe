@@ -14,7 +14,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { data } from "react-router-dom";
 import { RecentActivityLoading } from "~/components/ui/dashboardLoading";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
@@ -32,10 +31,6 @@ export function RecentActivity() {
     nameUser: string;
     date: string;
     nameBuilding: string;
-  }
-
-  interface TrazabilityCounts {
-    [action: string]: number;
   }
 
   interface listDetailsTrazability {
