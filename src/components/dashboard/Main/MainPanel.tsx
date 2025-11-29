@@ -19,11 +19,15 @@ import {
   BuildingsApiService,
   type DashboardStats,
 } from "~/services/buildingsApi";
+import { getTrazability, type trazabilityList } from "~/services/trazability";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
+import { formatofechaCorta } from "~/utils/fechas";
+import { timeAgo } from "~/utils/timeAgo";
 
 export function MainPanel() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setAtivity] = useState<trazabilityList[]>([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigate();
   const {
@@ -43,10 +47,17 @@ export function MainPanel() {
       .then(setStats)
       .catch(() => setStats(null))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
     fetchUserNotifications();
     UnreadNotifications();
     refreshUnreadCount();
   }, [fetchUserNotifications, UnreadNotifications, refreshUnreadCount]);
+
+  useEffect(() => {
+    getTrazability().then((data) => setAtivity(data.data));
+  }, [getTrazability]);
 
   useEffect(() => {
     const fetchBuildingNames = async () => {
@@ -96,6 +107,10 @@ export function MainPanel() {
         </div>
       </div>
     );
+  }
+
+  if (!activity) {
+    return;
   }
 
   let urgentCount = unreadNotifications.filter((not) => not.priority > 2);
@@ -194,6 +209,27 @@ export function MainPanel() {
     );
   }
 
+  function getActivityNumber(activity: string) {
+    const ActionsValues = {
+      "ACTUALIZAR O MODIFICAR DOCUMENTOS": 1,
+      "SUBIR DOCUMENTOS": 2,
+      "COMPLETAR MANTENIMIENTO": 3,
+      "GENERAR INFORMES": 4,
+      "PROGRAMAR EVENTOS": 5,
+      ALERTAS: 6,
+      "ACTUALIZAR LIBRE DEL EDIFICIO": 7,
+      "APROBAR PRESUPUESTO": 8,
+      "ACTUALIZAR DATOS FINANCIEROS": 9,
+      "COMPLETAR INSPECCION ELECTRICA": 10,
+      CREAR: 11,
+      ELIMINAR: 0,
+      APROBAR: 0,
+      RECHAZAR: 0,
+    };
+
+    return ActionsValues[activity as keyof typeof ActionsValues] || 0;
+  }
+
   function RecentActivity({
     text,
     type,
@@ -213,9 +249,14 @@ export function MainPanel() {
       5: "bg-yellow-600",
       6: "bg-red-600",
       7: "bg-blue-600",
-      8: "bg-blue-600",
-      9: "bg-purple-600",
+      8: "bg-gray-600",
+      9: "bg-blue-600",
+      10: "bg-purple-600",
+      11: "bg-green-600",
     };
+
+    date = formatofechaCorta(date);
+    date = timeAgo(date);
     return (
       <div className="flex items-start gap-2">
         <div
@@ -388,18 +429,25 @@ export function MainPanel() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 max-h-80">
             <div className="px-3 py-2 border-b border-gray-100 flex-shrink-0">
               <h3 className="text-sm">Actividad Reciente</h3>
             </div>
             <div className="p-3 flex-1 overflow-auto">
               <div className="space-y-3">
-                <RecentActivity
-                  date="Hace 2h"
-                  nameBuilding="Plaza Shopping"
-                  text="Actualiza libro del edificio"
-                  type={7}
-                />
+                {activity.map((act) => {
+                  return (
+                    <RecentActivity
+                      key={act.id}
+                      date={act.createdAt}
+                      nameBuilding={
+                        act.building?.name || "Edificio desconocido"
+                      }
+                      text={act.description || "No hay descripción"}
+                      type={getActivityNumber(act.action || "")}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>
