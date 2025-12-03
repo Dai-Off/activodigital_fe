@@ -7,7 +7,7 @@ import VenUsuario, { type VenUsuarioRefMethods, type UserFormData } from "./wind
 import { SkeletonUsers } from './ui/LoadingSystem';
 import { Button } from "./ui/button";
 import { useToast } from "~/contexts/ToastContext";
-import { formatofechaCorta } from "~/utils/fechas";
+import { formatofechaCorta, howTimeWas } from "~/utils/fechas";
 import { useIsMobile } from "./ui/use-mobile";
 
 interface User {
@@ -17,7 +17,7 @@ interface User {
   role?: Role;
   createdAt: string;
   updatedAt: string;
-  twoFactorEnabled: boolean
+  status: boolean
 }
 
 type Mode = 'USUARIOS' | 'PERMISOS';
@@ -75,6 +75,20 @@ export default function App() {
     }
   }, [roleParam]);
 
+  const reloadData = () => {
+    setLoading(true);
+    getAllUsers()
+      .then((data) => {
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setUsers([]);
+        setLoading(false);
+      });
+  };
+
+
   function handleCreateUser() {
     modalRef.current?.create();
   }
@@ -99,12 +113,24 @@ export default function App() {
       }
       showError('¡Ups! Ocurrió algo.', errorMsg)
     } finally {
-      getAllUsers().then((data) => setUsers(data))
+      reloadData()
     }
   };
 
   const handleDelete = async (userId: string) => {
-    await deleteUser(userId);
+    try {
+      await deleteUser(userId);
+    } catch (err) {
+      let errorMsg = 'Puedes reportar este fallo a nuestro equipo.';
+     if (err instanceof Error) {
+        errorMsg = err.message || errorMsg;
+      } else if (typeof err === 'string') {
+        errorMsg = err;
+      }
+      showError('¡Ups! Ocurrió algo.', errorMsg)
+    }finally{
+      reloadData()
+    }
   };
 
   const filteredUsers = (users || []).filter((u) => {
@@ -118,7 +144,7 @@ export default function App() {
 
     const matchesRole = roleFilter ? roleName === roleFilter : true;
     const matchesStatus = statusFilter !== null
-      ? u.twoFactorEnabled === statusFilter
+      ? u.status === statusFilter
       : true;
 
     return matchesSearch && matchesRole && matchesStatus;
@@ -372,11 +398,11 @@ export default function App() {
                             </td>
                             <td className="p-4 text-gray-500">{u.email}</td>
                             <td className="p-4">
-                              <span className={`text-xs px-3 py-1.5 font-semibold rounded-full ${u.twoFactorEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {u.twoFactorEnabled ? "Activo" : "Inactivo"}
+                              <span className={`text-xs px-3 py-1.5 font-semibold rounded-full ${u.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {u.status ? "Activo" : "Inactivo"}
                               </span>
                             </td>
-                            <td className="p-4 text-gray-500">{formatofechaCorta(u.updatedAt)}</td>
+                            <td className="p-4 text-gray-500" title={formatofechaCorta(u.updatedAt)}>{howTimeWas(u.updatedAt)}</td>
                             <td className="p-4 text-center">
                               <button
                                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
@@ -387,6 +413,7 @@ export default function App() {
                                     fullName: u.fullName,
                                     email: u.email,
                                     role: typeof u.role === "string" ? u.role : u.role?.name,
+                                    status: u.status
                                   });
                                 }}
                               >
@@ -441,8 +468,8 @@ export default function App() {
                             <span className="text-gray-700 font-medium">
                               {typeof u.role === 'string' ? u.role : u.role?.name}
                             </span>
-                            <span className={`text-xs px-2 py-1 font-semibold rounded-full ${u.twoFactorEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {u.twoFactorEnabled ? "Activo" : "Inactivo"}
+                            <span className={`text-xs px-2 py-1 font-semibold rounded-full ${u.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                              {u.status ? "Activo" : "Inactivo"}
                             </span>
                           </div>
                           <p className="text-xs text-right text-gray-400 mt-1">

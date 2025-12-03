@@ -1,12 +1,15 @@
 import React, { useState, useImperativeHandle, forwardRef } from "react";
 import type { Role } from "~/services/users";
 import { useIsMobile } from "../ui/use-mobile";
+import { Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export interface UserFormData {
   id?: string;
   email?: string;
   fullName?: string;
   role?: string;
+  status?: boolean;
 }
 
 export interface VenUsuarioRefMethods {
@@ -29,7 +32,9 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
       email: "",
       fullName: "",
       role: "",
+      status: true,
     });
+    const { t } = useTranslation()
     const [isEdit, setIsEdit] = useState(false);
     const [errors, setErrors] = useState<
       Partial<Record<keyof UserFormData, string>>
@@ -37,7 +42,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
 
     useImperativeHandle(ref, () => ({
       create: () => {
-        setForm({ email: "", fullName: "", role: "" });
+        setForm({ email: "", fullName: "", role: "", status: true });
         setIsEdit(false);
         setErrors({});
         setVisible(true);
@@ -65,7 +70,9 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
     const handleChange = (
       e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
-      setForm({ ...form, [e.target.name]: e.target.value });
+      const value =
+        e.target.name === "status" ? e.target.value === "true" : e.target.value;
+      setForm({ ...form, [e.target.name]: value });
       setErrors((errs) => ({ ...errs, [e.target.name]: undefined }));
     };
 
@@ -84,30 +91,34 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
     };
 
     if (!visible) return null;
-
     return (
       <div
         onClick={() => setVisible(!visible)}
         className={`fixed z-50 backdrop-blur-sm inset-0 bg-black/30 flex 
-        ${isMobile ? "items-start pt-10 ml-16" : "items-center"} justify-center`}
+        ${
+          isMobile ? "items-start pt-10 ml-16" : "items-center"
+        } justify-center`}
       >
         <div
-    onClick={e => e.stopPropagation()}
-    className={`
+          onClick={(e) => e.stopPropagation()}
+          className={`
         bg-white rounded-lg shadow-lg 
         w-full 
         ${isMobile ? "h-[90vh] mx-2 p-5" : "max-w-lg mx-3 px-7 py-8"} 
         overflow-y-auto
     `}
->
-
+        >
           <div className={`${isMobile ? "px-2" : "px-7"}`}>
-            <h1 className={`${isMobile ? "text-xl" : "text-2xl"} font-bold text-gray-900 mb-1`}>
+            <h1
+              className={`${
+                isMobile ? "text-xl" : "text-2xl"
+              } font-bold text-gray-900 mb-1`}
+            >
               {isEdit ? "Editar usuario" : "Nuevo usuario"}
             </h1>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-3 text-sm">
               {isEdit
-                ? "Modifica los datos del usuario. El email no se puede cambiar aquí."
+                ? "Modifica los datos del usuario."
                 : "Agrega un nuevo usuario al sistema."}
             </p>
             <form onSubmit={handleSubmit} className="space-y-7">
@@ -117,7 +128,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                   htmlFor="fullName"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Nombre completo<span className="text-primary">*</span>
+                  {t('Fullname', 'Nombre completo')}<span className="text-primary">*</span>
                 </label>
                 <input
                   id="fullName"
@@ -141,7 +152,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Correo electrónico<span className="text-primary">*</span>
+                  {t('Email', 'Correo electrónico')}<span className="text-primary">*</span>
                 </label>
                 <input
                   id="email"
@@ -150,7 +161,6 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                   value={form.email || ""}
                   onChange={handleChange}
                   required
-                  disabled={isEdit} // En edición no permitimos cambiar el email
                   placeholder="usuario@email.com"
                   className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.email ? "border-red-300" : "border-gray-300"
@@ -166,7 +176,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                   htmlFor="role"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Rol <span className="text-primary">*</span>
+                  {t('Role', 'Rol')} <span className="text-primary">*</span>
                 </label>
                 <select
                   id="role"
@@ -191,30 +201,56 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                   <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                 )}
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row pt-5">
+              <div>
+                <label
+                  htmlFor="status"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  {t('Status', 'Estado')} <span className="text-primary">*</span>
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={form.status === undefined ? "" : String(form.status)}
+                  onChange={handleChange}
+                  required
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.status ? "border-red-300" : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Selecciona un rol</option>
+                  <option value="true">Activo</option>
+                  <option value="false">Inactivo</option>
+                </select>
+                {errors.status && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row pt-5  justify-between">
                 <button
                   type="button"
                   onClick={() => setVisible(false)}
                   className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  Cancelar
+                  {t('Cancel', 'Cancelar')}
                 </button>
-                {isEdit && onDelete && (
+                <div className=" gap-1 flex justify-between">
+                  {isEdit && onDelete && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                      <Trash2Icon className="inline mr-2 h-4 w-4" />
+                    </button>
+                  )}
                   <button
-                    hidden={true}
-                    type="button"
-                    onClick={handleDelete}
-                    className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    type="submit"
+                    className="sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
                   >
-                    Eliminar usuario
+                    {isEdit ? t('Save', "Guardar cambios") : t('Create',"Crear usuario")}
                   </button>
-                )}
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
-                >
-                  {isEdit ? "Guardar cambios" : "Crear usuario"}
-                </button>
+                </div>
               </div>
             </form>
           </div>
