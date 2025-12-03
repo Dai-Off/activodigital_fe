@@ -91,7 +91,6 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
     };
 
     if (!visible) return null;
-
     return (
       <div
         onClick={() => setVisible(!visible)}
