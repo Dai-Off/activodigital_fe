@@ -78,9 +78,14 @@ function NewLayoutContent() {
         // Ruta: /cfo-intake/:buildingId
         const match = location.pathname.match(/\/cfo-intake\/([^/]+)/);
         buildingIdFromPath = match ? match[1] : null;
-      } else if (location.pathname.startsWith("/building/") && location.pathname.includes("/analysis-general")) {
+      } else if (
+        location.pathname.startsWith("/building/") &&
+        location.pathname.includes("/analysis-general")
+      ) {
         // Ruta: /building/:id/analysis-general
-        const match = location.pathname.match(/\/building\/([^/]+)\/analysis-general/);
+        const match = location.pathname.match(
+          /\/building\/([^/]+)\/analysis-general/
+        );
         buildingIdFromPath = match ? match[1] : null;
       }
 
@@ -102,7 +107,12 @@ function NewLayoutContent() {
         if (activeSection !== "analisis") {
           setActiveSection("analisis");
         }
-      } else if (location.pathname.startsWith("/building/") && !location.pathname.includes("/analysis-general") && !location.pathname.includes("/units") && !location.pathname.includes("/documents")) {
+      } else if (
+        location.pathname.startsWith("/building/") &&
+        !location.pathname.includes("/analysis-general") &&
+        !location.pathname.includes("/units") &&
+        !location.pathname.includes("/documents")
+      ) {
         // Ruta de detalle de edificio (vista general)
         if (activeSection !== "todos") {
           setActiveSection("todos");
@@ -127,7 +137,7 @@ function NewLayoutContent() {
     if (
       location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-") ||
-       location.pathname.startsWith('/users') || 
+      location.pathname.startsWith("/users") ||
       location.pathname.startsWith("/buildings/crear") ||
       location.pathname.startsWith("/mantenimiento") ||
       location.pathname.startsWith("/cumplimiento") ||
@@ -184,6 +194,7 @@ function NewLayoutContent() {
     showSecondaryNav
   );
 
+  console.log(location.pathname);
   return (
     <ErrorBoundary>
       <div
