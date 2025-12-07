@@ -157,9 +157,7 @@ export const AppRouter = () => {
               </ErrorBoundary>
             </ProtectedRoute>
           }
-        >
-          {/*<Route index element={<TuComponenteUsers/>}></Route>*/}
-        </Route>
+        ></Route>
         <Route
           path="/assets"
           element={
