@@ -1,4 +1,11 @@
-import { Download, LucideCircleQuestionMark } from "lucide-react";
+import {
+  ChartColumn,
+  CircleCheck,
+  Clock,
+  Download,
+  LucideCircleQuestionMark,
+  Search,
+} from "lucide-react";
 
 export function OpportunityRadar() {
   interface BuildingOpportunity {
@@ -83,22 +90,7 @@ export function OpportunityRadar() {
         </td>
         <td className="px-4 py-3 text-center">
           <div className="flex items-center justify-center gap-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              className="lucide lucide-clock w-3 h-3 text-gray-400"
-              aria-hidden="true"
-            >
-              <path d="M12 6v6l4 2"></path>
-              <circle cx="12" cy="12" r="10"></circle>
-            </svg>
+            <Clock className="w-3 h-3 text-gray-400" />
             <span className="text-sm text-gray-700">8m</span>
           </div>
         </td>
@@ -116,22 +108,7 @@ export function OpportunityRadar() {
         <td className="px-4 py-3">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-circle-check w-3 h-3"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="m9 12 2 2 4-4"></path>
-              </svg>
+              <CircleCheck className="w-3 h-3" />
               Bank-Ready
             </div>
             <div className="text-xs text-gray-500">92% score</div>
@@ -146,24 +123,7 @@ export function OpportunityRadar() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white p-3 rounded-xl shadow-lg">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              className="lucide lucide-chart-column w-6 h-6"
-              aria-hidden="true"
-            >
-              <path d="M3 3v16a2 2 0 0 0 2 2h16"></path>
-              <path d="M18 17V9"></path>
-              <path d="M13 17V5"></path>
-              <path d="M8 17v-3"></path>
-            </svg>
+            <ChartColumn className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl text-gray-900">Radar de Oportunidades</h1>
@@ -214,27 +174,11 @@ export function OpportunityRadar() {
       <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative max-w-md">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              className="lucide lucide-search w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            >
-              <path d="m21 21-4.34-4.34"></path>
-              <circle cx="11" cy="11" r="8"></circle>
-            </svg>
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar edificio..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]"
-              value=""
             />
           </div>
           <div className="flex gap-2">

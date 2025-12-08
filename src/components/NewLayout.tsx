@@ -11,6 +11,7 @@ import { SecondaryNav } from "./navigation/SecondaryNav";
 import { AssetsDashboard } from "./dashboard/AssetsDashboard";
 import AssetsList from "./AssetsList";
 import ErrorBoundary from "./ErrorBoundary";
+import { HeaderGreenFinancial } from "./navigation/HeaderGreenFinancial";
 
 function NewLayoutContent() {
   const location = useLocation();
@@ -220,16 +221,28 @@ function NewLayoutContent() {
           `}
         >
           <ErrorBoundary>
-            <AppHeader />
+            {location.pathname === "/green-financial" ? (
+              <HeaderGreenFinancial />
+            ) : (
+              <AppHeader />
+            )}
           </ErrorBoundary>
 
           <main
-            className={`
+            className={
+              location.pathname === "/green-financial"
+                ? `
+              px-3 md:px-6 lg:px-8 
+              py-3 md:py-4 
+              max-w-[1400px] 
+            `
+                : `
               px-3 md:px-6 lg:px-8 
               py-3 md:py-4 
               max-w-[1400px] 
               pt-[140px] md:pt-[104px]
-            `}
+            `
+            }
           >
             <ErrorBoundary>{renderContent()}</ErrorBoundary>
           </main>
