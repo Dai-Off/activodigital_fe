@@ -37,6 +37,8 @@ import SectionsList from "~/components/digitalbook/SectionsList";
 import { useTranslation } from "react-i18next";
 import { AssetsMain } from "~/components/dashboard/Assets/AssetsMain";
 import Users from "~/components/Users";
+import { GreenFinancial } from "~/components/dashboard/GreenFinancial/GreenFinancial";
+import { OpportunityRadar } from "~/components/dashboard/GreenFinancial/OpportunityRadar";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -155,9 +157,7 @@ export const AppRouter = () => {
               </ErrorBoundary>
             </ProtectedRoute>
           }
-        >
-          {/*<Route index element={<TuComponenteUsers/>}></Route>*/}
-        </Route>
+        ></Route>
         <Route
           path="/assets"
           element={
@@ -168,7 +168,18 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         ></Route>
-
+        <Route
+          path="/green-financial"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <GreenFinancial />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<OpportunityRadar />} />
+        </Route>
         <Route
           path="/cfo-dashboard"
           element={

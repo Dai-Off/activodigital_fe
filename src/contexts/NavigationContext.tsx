@@ -31,7 +31,9 @@ const NavigationContext = createContext<NavigationContextType | undefined>(
 );
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [activeModule, setActiveModule] = useState("inicio");
+  const [activeModule, setActiveModule] = useState(
+    location.pathname.split("/")[1]
+  );
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(

@@ -1,4 +1,4 @@
-import { Building2, House, Users } from "lucide-react";
+import { Building2, House, LucideLeaf, Users } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +55,13 @@ export function Sidebar() {
       icon: Users,
       label: t ? t("users", "Usuarios") : "Usuarios",
     },
+    {
+      id: "green-financial",
+      icon: LucideLeaf,
+      label: t
+        ? t("green-financial", "Financiación verde")
+        : "Financiación verde",
+    },
   ];
 
   const handleModuleChange = (moduleId: string) => {
@@ -79,6 +86,12 @@ export function Sidebar() {
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
         navigate("/assets");
+        break;
+      case "green-financial":
+        if (setActiveSection) setActiveSection("dashboard");
+        if (setActiveTab) setActiveTab("dashboard");
+        if (setViewMode) setViewMode("list");
+        navigate("/green-financial");
         break;
       default:
         if (setActiveSection) setActiveSection("dashboard");
