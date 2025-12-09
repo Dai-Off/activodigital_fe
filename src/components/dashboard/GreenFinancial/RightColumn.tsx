@@ -9,12 +9,12 @@ import {
 import { Button } from "~/components/ui/button";
 import HelperMetrics from "./componentes/HelperMetrics";
 import MetricTooltip from "./componentes/MetricTooltip";
-import type { helpMetricasI } from "./FinancialTwin";
+import type { HelpMetricas } from "./FinancialTwin";
 import HelperCashFlow from "./componentes/HelperCashFlow";
 
 interface Props {
   cardBase: string;
-  metricHelp: helpMetricasI;
+  metricHelp: HelpMetricas;
   setMetricHelp: any;
 }
 
