@@ -28,7 +28,7 @@ interface DNSHInterface {
   adaptation: boolean;
 }
 
-export interface helpMetricasI {
+export interface HelpMetricas {
   General: boolean;
   CashFlow: boolean;
   TIR: boolean;
@@ -45,7 +45,7 @@ const FinancialTwin: React.FC = () => {
 
   const [financialTwin, setFinancialTwin] = useState<boolean>(false);
 
-  const [metricHelp, setMetricHelp] = useState<helpMetricasI>({
+  const [metricHelp, setMetricHelp] = useState<HelpMetricas>({
     General: false,
     CashOnCash: false,
     DSCRProyectado: false,
@@ -94,7 +94,6 @@ const FinancialTwin: React.FC = () => {
 
           <HeroCard />
 
-          {/* Layout adaptable */}
           {!isMobile ? (
             <div className="grid grid-cols-5 gap-6">
               <div className="col-span-3 space-y-4">
@@ -112,7 +111,6 @@ const FinancialTwin: React.FC = () => {
                   cardBase={cardBase}
                   metricHelp={metricHelp}
                   setMetricHelp={setMetricHelp}
-                  isMobile={isMobile}
                 />
               </div>
             </div>
@@ -131,7 +129,6 @@ const FinancialTwin: React.FC = () => {
                 cardBase={cardBase}
                 metricHelp={metricHelp}
                 setMetricHelp={setMetricHelp}
-                isMobile={isMobile}
               />
             </div>
           )}

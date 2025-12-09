@@ -16,15 +16,11 @@ interface Props {
   cardBase: string;
   metricHelp: helpMetricasI;
   setMetricHelp: any;
-  isMobile?: boolean;
 }
 
 const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) => {
   return (
     <>
-      {/* ---------------------------------------------------------------------- */}
-      {/* 1. ESTRUCTURACIÓN DE LA OPERACIÓN */}
-      {/* ---------------------------------------------------------------------- */}
       <div className={cardBase}>
         <h3 className="text-lg mb-4 flex items-center gap-2 text-[#1e3a8a]">
           <DollarSignIcon className="w-5 h-5" />
@@ -89,10 +85,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------- */}
-      {/* 2. CADENA DOCUMENTAL */}
-      {/* ---------------------------------------------------------------------- */}
-
       <div className={cardBase}>
         <h3 className="text-lg mb-4 flex items-center gap-2 text-[#1e3a8a]">
           <FileTextIcon className="w-5 h-5" />
@@ -129,12 +121,8 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------- */}
-      {/* 3. MÉTRICAS DE RETORNO (CON TODOS LOS TOOLTIPS RESTAURADOS) */}
-      {/* ---------------------------------------------------------------------- */}
 
       <div className={`${cardBase} relative tooltip-container group`}>
-        {/* BOTÓN GENERAL */}
         <Button
           onClick={() =>
             setMetricHelp((prev: any) => ({
@@ -147,7 +135,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
           <CircleQuestionMarkIcon className="w-3 h-3 text-blue-600" />
         </Button>
 
-        {/* TOOLTIP GENERAL */}
         {metricHelp?.General && <HelperMetrics />}
 
         <h3 className="text-lg mb-4 flex items-center gap-2 text-[#1e3a8a]">
@@ -155,10 +142,8 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
           Métricas de Retorno
         </h3>
 
-        {/* GRID MÉTRICAS */}
         <div className="space-y-3">
 
-          {/* TIR */}
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -184,7 +169,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
             <div className="text-xs text-gray-600">A 5 años - Value Add</div>
           </div>
 
-          {/* CASH ON CASH */}
           <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -213,7 +197,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
             <div className="text-xs text-emerald-600 mt-1">Bonificación Verde: +3.5pp</div>
           </div>
 
-          {/* EQUITY MULTIPLE */}
           <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -239,7 +222,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
             <div className="text-xs text-gray-600">Multiplicador de Capital a 5 años</div>
           </div>
 
-          {/* YIELD ON COST */}
           <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -268,7 +250,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
             <div className="text-xs text-green-600 mt-1">+1.2pp post-reforma</div>
           </div>
 
-          {/* LTV VERDE */}
           <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -294,7 +275,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
             <div className="text-xs text-gray-600">Préstamo: 9.65M€</div>
           </div>
 
-          {/* DSCR PROYECTADO */}
           <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 relative">
             <button
               onClick={() =>
@@ -322,9 +302,6 @@ const RightColumn: React.FC<Props> = ({ cardBase, metricHelp, setMetricHelp }) =
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------- */}
-      {/* 4. CASH FLOW */}
-      {/* ---------------------------------------------------------------------- */}
 
       <div className={`${cardBase} relative`}>
         <h3 className="text-lg mb-3 flex items-center gap-2 text-[#5f6986]">
