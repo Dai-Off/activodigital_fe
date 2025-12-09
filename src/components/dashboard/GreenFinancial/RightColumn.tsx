@@ -10,9 +10,7 @@ import { Button } from "~/components/ui/button";
 
 interface Props {
   cardBase: string;
-  metricHelp: any;
   setMetricHelp: any;
-  isMobile: boolean;
 }
 
 const RightColumn: React.FC<Props> = ({ cardBase, setMetricHelp }) => {

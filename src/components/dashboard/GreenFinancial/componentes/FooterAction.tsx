@@ -1,7 +1,7 @@
 import React from "react";
 import { SendIcon } from "lucide-react";
 
-const FooterAction: React.FC<{ onOpen: () => void; isMobile?: boolean }> = ({ onOpen }) => {
+const FooterAction: React.FC<{ onOpen: () => void}> = ({ onOpen }) => {
   return (
     <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
       <button

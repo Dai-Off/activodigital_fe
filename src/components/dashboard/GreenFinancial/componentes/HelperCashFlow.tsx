@@ -79,8 +79,7 @@ const HelperCashFlow = () => {
                     <LightbulbIcon className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                         <h4 className="text-xs font-semibold text-gray-900 mb-1 flex items-center gap-2">
-                            Ejemplo Práctico
-                            <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded">Aplicado</span>
+                            Ejemplo Práctico <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded">Aplicado</span>
                         </h4>
                         <p className="text-xs text-gray-700 leading-relaxed">
                             NOI actual 637k€/año mejora a 891k€ (+39.8%) post-obra. Este incremento de **254k€/año** se capitaliza en el valor del edificio, multiplicándolo por cap rate objetivo (5.5%).
