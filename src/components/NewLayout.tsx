@@ -221,7 +221,7 @@ function NewLayoutContent() {
           `}
         >
           <ErrorBoundary>
-            {location.pathname === "/green-financial" || location.pathname === "/green-financial/financial-twin" ? (
+            {location.pathname === "/green-financial" ? (
               <HeaderGreenFinancial />
             ) : (
               <AppHeader />

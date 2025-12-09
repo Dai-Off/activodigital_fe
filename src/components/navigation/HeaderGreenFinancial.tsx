@@ -1,11 +1,6 @@
 import { Building2, ChartColumn, LucideLeaf, LucideShield } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
 
 export function HeaderGreenFinancial() {
-  const location = useLocation();
-  const isFinancialTwin = location.pathname === "/green-financial/financial-twin";
-  const isGreenFianncial = location.pathname === "/green-financial";
-  
   return (
     <header className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white px-6 py-4 shadow-lg">
       <div className="flex items-center justify-between">
@@ -42,20 +37,23 @@ export function HeaderGreenFinancial() {
         </div>
       </div>
       <div className="flex gap-2 mt-4 border-t border-white/20 pt-3">
-        <Link to="/green-financial" className={`px-4 py-2 rounded-lg text-sm transition-all ${isGreenFianncial ? 'bg-white text-[#1e3a8a] shadow-lg': 'bg-white/10 hover:bg-white/20 text-white'}`}>
+        <button className="px-4 py-2 rounded-lg text-sm transition-all bg-white text-[#1e3a8a] shadow-lg">
           <div className="flex items-center gap-2">
             <ChartColumn className="w-4 h-4" />
             <span>Radar de Oportunidades</span>
           </div>
-        </Link>
-        <Link to="/green-financial/financial-twin" className={`px-4 py-2 rounded-lg text-sm transition-all ${isFinancialTwin ? 'bg-white text-[#1e3a8a] shadow-lg': 'bg-white/10 hover:bg-white/20 text-white'}`}>
+        </button>
+        <button
+          className="px-4 py-2 rounded-lg text-sm transition-all bg-white/10 hover:bg-white/20 text-white"
+          disabled={true}
+        >
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             <span>Financial Twin</span>
           </div>
-        </Link>
+        </button>
         <button
-          className={`px-4 py-2 rounded-lg text-sm transition-all bg-white/10 hover:bg-white/20 text-white`}
+          className="px-4 py-2 rounded-lg text-sm transition-all bg-white/10 hover:bg-white/20 text-white"
           disabled={true}
         >
           <div className="flex items-center gap-2">
