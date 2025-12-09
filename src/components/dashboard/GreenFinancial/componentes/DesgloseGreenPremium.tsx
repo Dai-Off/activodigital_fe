@@ -1,7 +1,7 @@
 import { CircleQuestionMarkIcon, TrendingUpIcon } from "lucide-react";
 import { useState } from "react";
 
-interface helpersSectionI {
+interface HelpersI {
     greenPremiunTotal: boolean,
     yield: boolean,
     ahorro: boolean,
@@ -11,7 +11,7 @@ interface helpersSectionI {
 
 
 const DesgloseGreenPremium = () => {
-    const [helper, setHelper] = useState<helpersSectionI>({
+    const [helper, setHelper] = useState<HelpersI>({
         greenPremiunTotal: false,
         ROI: false,
         greenRentPremium: false,

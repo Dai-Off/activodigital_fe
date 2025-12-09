@@ -26,10 +26,6 @@ interface Props {
   setShowSection: React.Dispatch<React.SetStateAction<SectionI>>;
   showDNSH: DNSHInterface;
   setShowDNSH: React.Dispatch<React.SetStateAction<DNSHInterface>>;
-  metricHelp: any;
-  setMetricHelp: any;
-  isMobile?: boolean;
-  components?: any;
 }
 
 const LeftColumn: React.FC<Props> = ({
@@ -71,7 +67,7 @@ const LeftColumn: React.FC<Props> = ({
               onClick={() => setShowSection((prev) => ({ ...prev, validationInfo: !showSection?.validationInfo }))}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium flex-shrink-0"
             >
-              {!showSection?.validationInfo ? "Más información" : "Menos info..."}
+              {showSection?.validationInfo ? "Menos info...": "Más información"}
             </Button>
           </div>
 
