@@ -5,12 +5,7 @@ import { useIsMobile } from "~/components/ui/use-mobile";
 
 /* Componentes ya existentes en tu repo (los dejo como import) */
 import HelpersTwin from "./componentes/HelpersTwin";
-import DesgloseGreenPremium from "./componentes/DesgloseGreenPremium";
-import HelperMetrics from "./componentes/HelperMetrics";
-import HelperCashFlow from "./componentes/HelperCashFlow";
-import MetricTooltip from "./componentes/MetricTooltip";
 import ModalFinancial from "./componentes/ModalFinancial";
-import DesgloseCostRehabilit from "./componentes/DesgloseCostRehabilit";
 import HeroCard from "./HeroCard";
 import RightColumn from "./RightColumn";
 
@@ -33,7 +28,7 @@ interface DNSHInterface {
   adaptation: boolean;
 }
 
-interface helpMetricasI {
+export interface helpMetricasI {
   General: boolean;
   CashFlow: boolean;
   TIR: boolean;
@@ -109,16 +104,6 @@ const FinancialTwin: React.FC = () => {
                   setShowSection={setShowSection}
                   showDNSH={showDNSH}
                   setShowDNSH={setShowDNSH}
-                  metricHelp={metricHelp}
-                  setMetricHelp={setMetricHelp}
-                  isMobile={isMobile}
-                  components={{
-                    DesgloseCostRehabilit,
-                    DesgloseGreenPremium,
-                    HelperMetrics,
-                    HelperCashFlow,
-                    MetricTooltip,
-                  }}
                 />
               </div>
 
@@ -140,16 +125,6 @@ const FinancialTwin: React.FC = () => {
                 setShowSection={setShowSection}
                 showDNSH={showDNSH}
                 setShowDNSH={setShowDNSH}
-                metricHelp={metricHelp}
-                setMetricHelp={setMetricHelp}
-                isMobile={isMobile}
-                components={{
-                  DesgloseCostRehabilit,
-                  DesgloseGreenPremium,
-                  HelperMetrics,
-                  HelperCashFlow,
-                  MetricTooltip,
-                }}
               />
 
               <RightColumn
@@ -161,7 +136,7 @@ const FinancialTwin: React.FC = () => {
             </div>
           )}
 
-          <FooterAction onOpen={() => setFinancialTwin(true)} isMobile={isMobile} />
+          <FooterAction onOpen={() => setFinancialTwin(true)}/>
         </div>
       </div>
     </>
