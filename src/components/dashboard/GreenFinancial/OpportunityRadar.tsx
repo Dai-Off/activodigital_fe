@@ -7,117 +7,101 @@ import {
   Search,
 } from "lucide-react";
 
+function BuildingOpportunityRow() {
+  return (
+    <tr className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
+      <td className="px-4 py-3 text-center">
+        <input
+          type="checkbox"
+          className="w-4 h-4 text-[#1e3a8a] rounded focus:ring-2 focus:ring-[#1e3a8a] cursor-pointer"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+            <img
+              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800"
+              alt="Plaza Shopping"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="text-sm text-gray-900">Plaza Shopping</div>
+            <div className="text-xs text-gray-500">
+              Carretera de Miraflores, Colmenar Viejo
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <span className="text-xs text-gray-700">Comercial</span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="bg-yellow-500 text-white px-2 py-1 rounded text-xs w-8 text-center">
+            D
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="bg-green-600 text-white px-2 py-1 rounded text-xs w-8 text-center">
+            A
+          </div>
+          <div className="text-xs text-green-600">-50%</div>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="text-sm text-[#1e3a8a]">18.5%</div>
+        <div className="text-xs text-gray-500">a 5 años</div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="text-sm text-emerald-700">11.5%</div>
+        <div className="text-xs text-gray-500">2.4x mult.</div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="text-sm text-gray-900">1.35M€</div>
+        <div className="text-xs text-gray-500">Inversión Total</div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="text-sm text-green-600">270k€</div>
+        <div className="text-xs text-gray-500">20% CAPEX</div>
+      </td>
+      <td className="px-4 py-3 text-right">
+        <div className="text-sm text-green-700">+2.43M€</div>
+        <div className="text-xs text-gray-500">180% ROI</div>
+      </td>
+      <td className="px-4 py-3 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <Clock className="w-3 h-3 text-gray-400" />
+          <span className="text-sm text-gray-700">8m</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="text-sm text-gray-900">90%</div>
+          <div className="w-16 bg-gray-200 rounded-full h-1">
+            <div
+              className="h-1 rounded-full bg-green-600"
+              style={{ width: "90%" }}
+            ></div>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+            <CircleCheck className="w-3 h-3" />
+            Bank-Ready
+          </div>
+          <div className="text-xs text-gray-500">92% score</div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export function OpportunityRadar() {
-  interface BuildingOpportunity {
-    img: string;
-    name: string;
-    address: string;
-    type: string;
-    actualState: string;
-    potential: string;
-    tir: string;
-    cashoncash: string;
-    subvencion: string;
-    "green-premium": string;
-    plazo: string;
-    taxonomía: string;
-    state: string;
-  }
-
-  function BuildingOpportunity() {
-    return (
-      <tr className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
-        <td className="px-4 py-3 text-center">
-          <input
-            type="checkbox"
-            className="w-4 h-4 text-[#1e3a8a] rounded focus:ring-2 focus:ring-[#1e3a8a] cursor-pointer"
-          />
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-              <img
-                src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800"
-                alt="Plaza Shopping"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <div className="text-sm text-gray-900">Plaza Shopping</div>
-              <div className="text-xs text-gray-500">
-                Carretera de Miraflores, Colmenar Viejo
-              </div>
-            </div>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          <span className="text-xs text-gray-700">Comercial</span>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex flex-col items-center gap-1">
-            <div className="bg-yellow-500 text-white px-2 py-1 rounded text-xs w-8 text-center">
-              D
-            </div>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex flex-col items-center gap-1">
-            <div className="bg-green-600 text-white px-2 py-1 rounded text-xs w-8 text-center">
-              A
-            </div>
-            <div className="text-xs text-green-600">-50%</div>
-          </div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="text-sm text-[#1e3a8a]">18.5%</div>
-          <div className="text-xs text-gray-500">a 5 años</div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="text-sm text-emerald-700">11.5%</div>
-          <div className="text-xs text-gray-500">2.4x mult.</div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="text-sm text-gray-900">1.35M€</div>
-          <div className="text-xs text-gray-500">Inversión Total</div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="text-sm text-green-600">270k€</div>
-          <div className="text-xs text-gray-500">20% CAPEX</div>
-        </td>
-        <td className="px-4 py-3 text-right">
-          <div className="text-sm text-green-700">+2.43M€</div>
-          <div className="text-xs text-gray-500">180% ROI</div>
-        </td>
-        <td className="px-4 py-3 text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Clock className="w-3 h-3 text-gray-400" />
-            <span className="text-sm text-gray-700">8m</span>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex flex-col items-center gap-1">
-            <div className="text-sm text-gray-900">90%</div>
-            <div className="w-16 bg-gray-200 rounded-full h-1">
-              <div
-                className="h-1 rounded-full bg-green-600"
-                style={{ width: "90%" }}
-              ></div>
-            </div>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-              <CircleCheck className="w-3 h-3" />
-              Bank-Ready
-            </div>
-            <div className="text-xs text-gray-500">92% score</div>
-          </div>
-        </td>
-      </tr>
-    );
-  }
-
   return (
     <div className="max-w-[1800px] mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -159,7 +143,7 @@ export function OpportunityRadar() {
             <LucideCircleQuestionMark className="w-3 h-3 text-green-600" />
           </button>
           <p className="text-sm text-gray-600 mb-1">Valor Creado</p>
-          <p className="text-2xl text-green-600 mb-1">29.0M€</p>
+          <p className="text-2xl text-green-600 mb-1">29M€</p>
           <p className="text-xs text-gray-500">Green Premium total</p>
         </div>
         <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4 relative group tooltip-container">
@@ -250,7 +234,7 @@ export function OpportunityRadar() {
               </tr>
             </thead>
             <tbody>
-              <BuildingOpportunity />
+              <BuildingOpportunityRow />
             </tbody>
           </table>
         </div>

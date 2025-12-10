@@ -74,7 +74,7 @@ const FinancialTwin: React.FC = () => {
   const cardBase = "bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6";
 
   return (
-    <>
+    <div>
       <HelpersTwin
         active={showSection.showHelpers}
         setActive={(value) => setShowSection((prev) => ({ ...prev, showHelpers: value }))}
@@ -94,7 +94,24 @@ const FinancialTwin: React.FC = () => {
 
           <HeroCard />
 
-          {!isMobile ? (
+          {isMobile ? (
+            /* Mobile: Left stacked then right stacked (handled inside LeftColumn when isMobile true) */
+            <div>
+              <LeftColumn
+                cardBase={cardBase}
+                showSection={showSection}
+                setShowSection={setShowSection}
+                showDNSH={showDNSH}
+                setShowDNSH={setShowDNSH}
+              />
+
+              <RightColumn
+                cardBase={cardBase}
+                metricHelp={metricHelp}
+                setMetricHelp={setMetricHelp}
+              />
+            </div>
+          ) : (
             <div className="grid grid-cols-5 gap-6">
               <div className="col-span-3 space-y-4">
                 <LeftColumn
@@ -114,29 +131,12 @@ const FinancialTwin: React.FC = () => {
                 />
               </div>
             </div>
-          ) : (
-            /* Mobile: Left stacked then right stacked (handled inside LeftColumn when isMobile true) */
-            <div>
-              <LeftColumn
-                cardBase={cardBase}
-                showSection={showSection}
-                setShowSection={setShowSection}
-                showDNSH={showDNSH}
-                setShowDNSH={setShowDNSH}
-              />
-
-              <RightColumn
-                cardBase={cardBase}
-                metricHelp={metricHelp}
-                setMetricHelp={setMetricHelp}
-              />
-            </div>
           )}
 
           <FooterAction onOpen={() => setFinancialTwin(true)}/>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

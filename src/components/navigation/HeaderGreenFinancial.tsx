@@ -9,13 +9,13 @@ export function HeaderGreenFinancial() {
   return (
     <header className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white px-6 py-4 shadow-lg">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+        <div className="flex items-center gap-3" role="group" aria-label="Header branding">
+          <div className="bg-white/10 backdrop-blur-sm p-2 rounded-lg" role="img" aria-label="Green finance icon">
             <LucideLeaf className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-xl flex items-center gap-2">
-              Financiación Verde
+              Financiación Verde{' '}
               <span className="text-xs bg-green-500 px-2 py-0.5 rounded">
                 PACK BANCA
               </span>
@@ -55,8 +55,11 @@ export function HeaderGreenFinancial() {
           </div>
         </Link>
         <button
+          type="button"
           className={`px-4 py-2 rounded-lg text-sm transition-all bg-white/10 hover:bg-white/20 text-white`}
           disabled={true}
+          aria-label="Data Room"
+          aria-disabled="true"
         >
           <div className="flex items-center gap-2">
             <LucideShield className="w-4 h-4" />
