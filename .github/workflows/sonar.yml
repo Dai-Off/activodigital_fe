@@ -8,7 +8,7 @@ on:
 
 jobs:
   sonarcloud:
-    if: github.base_ref == 'main'  # 🔥 DOBLE FILTRO, IMPOSIBLE QUE FALLE
+    if: github.base_ref == 'main' 
     runs-on: ubuntu-latest
 
     steps:
