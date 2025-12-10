@@ -1,6 +1,4 @@
 import type { RegistroTable as BuildingOpportunity } from '~/components/dashboard/GreenFinancial/OpportunityRadar';
-// import { apiFetch } from './api';
-// import { data } from 'react-router-dom';
 
 export const buildingData: BuildingOpportunity[] = [
   {
@@ -92,8 +90,6 @@ export class FinancialGreenService {
   static async getAll(): Promise<BuildingOpportunity[]> {
     await new Promise((resolve) => setTimeout(resolve, 300));
     let data : BuildingOpportunity[]
-    // const response =  await apiFetch('/financial-green');
-    // data = response?.data
     data = buildingData;
     return data;
   }
