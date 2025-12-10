@@ -9,19 +9,19 @@ interface HelpersTwinProps {
 const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
     if (!active) return null;
 
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
         if (e.target === e.currentTarget) {
             setActive(false);
         }
     };
 
-    const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDialogElement>) => {
         if (e.key === 'Escape') {
             setActive(false);
         }
     };
 
-    const handleBackdropKeyUp = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const handleBackdropKeyUp = (e: React.KeyboardEvent<HTMLDialogElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
             if (e.target === e.currentTarget) {
                 e.preventDefault();
@@ -31,22 +31,17 @@ const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
     };
 
     return (
-        <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-90 flex items-center justify-center p-4"
+        <dialog 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-90 flex items-center justify-center p-4 border-0 bg-transparent"
             onClick={handleBackdropClick}
             onKeyDown={handleBackdropKeyDown}
             onKeyUp={handleBackdropKeyUp}
-            role="dialog"
             aria-modal="true"
             aria-labelledby="helpers-modal-title"
-            tabIndex={-1}
+            open={active}
         >
             <div 
                 className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-                role="document"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                onKeyUp={(e) => e.stopPropagation()}
             >
                 
                 <div className="bg-gradient-to-r from-[#1e3a8a] to-blue-600 text-white p-6">
@@ -327,7 +322,7 @@ const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </dialog>
     );
 }
 
