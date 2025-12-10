@@ -10,6 +10,7 @@ import {
 import { useEffect, useState, useCallback } from "react";
 import MetricTooltip from "./componentes/MetricTooltip";
 import { FinancialGreenService } from "~/services/GreenFinancialServices";
+import { exportToPdf } from "./componentes/exportarData";
 
 interface SectionHelpersRadar {
   TotalActivos: boolean,
@@ -262,6 +263,7 @@ const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) 
   )
 }
 
+
 export function OpportunityRadar() {
 
   const [helpStatus, setHelpStatus] = useState<SectionHelpersRadar>({
@@ -270,6 +272,10 @@ export function OpportunityRadar() {
     TotalActivos: false,
     ValorCreado: false
   })
+
+  const handleExport = () => {
+    exportToPdf(dataFiltrada, "Radar_Oportunidades_Filtro.pdf");
+  };
 
   const [dataOriginal, setDataOriginal] = useState<RegistroTable[]>([]);
 
@@ -393,7 +399,7 @@ export function OpportunityRadar() {
             </p>
           </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm">
           <Download className="w-4 h-4" />
           Exportar Cartera
         </button>
