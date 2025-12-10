@@ -1,3 +1,4 @@
+import React from 'react';
 import { X, CircleAlert, CircleCheck, Calendar, ExternalLink, Clock, Info } from 'lucide-react';
 
 interface HelpersTwinProps {
@@ -8,21 +9,45 @@ interface HelpersTwinProps {
 const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
     if (!active) return null;
 
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+        if (e.target === e.currentTarget) {
+            setActive(false);
+        }
+    };
+
+    const handleBackdropKeyDown = (e: React.KeyboardEvent<HTMLDialogElement>) => {
+        if (e.key === 'Escape') {
+            setActive(false);
+        }
+    };
+
+    const handleBackdropKeyUp = (e: React.KeyboardEvent<HTMLDialogElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            if (e.target === e.currentTarget) {
+                e.preventDefault();
+                setActive(false);
+            }
+        }
+    };
+
     return (
-        <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-90 flex items-center justify-center p-4"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                    setActive(false);
-                }
-            }}
+        <dialog 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-90 flex items-center justify-center p-4 border-0 bg-transparent"
+            onClick={handleBackdropClick}
+            onKeyDown={handleBackdropKeyDown}
+            onKeyUp={handleBackdropKeyUp}
+            aria-modal="true"
+            aria-labelledby="helpers-modal-title"
+            open={active}
         >
-            <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div 
+                className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            >
                 
                 <div className="bg-gradient-to-r from-[#1e3a8a] to-blue-600 text-white p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h2 className="text-2xl mb-1">Subvenciones y Ayudas Disponibles</h2>
+                            <h2 id="helpers-modal-title" className="text-2xl mb-1">Subvenciones y Ayudas Disponibles</h2>
                             <p className="text-sm text-blue-100">Total disponible: 1.78M€</p>
                         </div>
                         {/* Botón de Cierre */}
@@ -277,8 +302,8 @@ const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
                             <div>
                                 <h4 className="text-sm text-gray-900 mb-2">Nota Importante</h4>
                                 <p className="text-xs text-gray-700">
-                                    Las subvenciones y deducciones fiscales son **acumulables** en la mayoría de casos. 
-                                    Total máximo financiable: <strong className="text-blue-600">1.78M€</strong> 
+                                    Las subvenciones y deducciones fiscales son **acumulables** en la mayoría de casos.{' '}
+                                    Total máximo financiable: <strong className="text-blue-600">1.78M€</strong>{' '}
                                     (118.8% del CAPEX de 1.5M€)
                                 </p>
                             </div>
@@ -297,7 +322,7 @@ const HelpersTwin = ({ active, setActive }: HelpersTwinProps) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </dialog>
     );
 }
 

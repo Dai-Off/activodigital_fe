@@ -9,6 +9,10 @@ import {
 import React from 'react';
 import { useIsMobile } from '~/components/ui/use-mobile';
 
+const IconCircleCheck = (props: any) => <CircleCheckIcon className="w-4 h-4 text-green-600" {...props} />;
+const IconCircleAlert = (props: any) => <CircleAlertIcon className="w-4 h-4 text-orange-600" {...props} />;
+const IconCircleAlertRed = (props: any) => <CircleAlertIcon className="w-4 h-4 text-red-600" {...props} />;
+
 const DesgloseCostRehabilit: React.FC = () => {
 
     const isMobile = useIsMobile();
@@ -25,94 +29,90 @@ const DesgloseCostRehabilit: React.FC = () => {
         { nombre: 'Todas las categorías', partidas: 19, coste: 1196, porcentaje: 100, isTotal: true },
         { nombre: 'Envolvente Térmica', partidas: 3, coste: 359, porcentaje: 30.01 },
         { nombre: 'Instalaciones Térmicas', partidas: 3, coste: 229, porcentaje: 19.13 },
-        { nombre: 'Energías Renovables', partidas: 3, coste: 225, porcentaje: 18.80 },
+        { nombre: 'Energías Renovables', partidas: 3, coste: 225, porcentaje: 18.8 },
         { nombre: 'Gestión y Honorarios', partidas: 4, coste: 211, porcentaje: 17.64 },
         { nombre: 'Calidad Aire', partidas: 1, coste: 80, porcentaje: 6.67 },
         { nombre: 'Accesibilidad', partidas: 1, coste: 77, porcentaje: 6.43 },
-        { nombre: 'Eficiencia Energética', partidas: 1, coste: 12, porcentaje: 1.00 },
+        { nombre: 'Eficiencia Energética', partidas: 1, coste: 12, porcentaje: 1 },
         { nombre: 'Certificaciones', partidas: 3, coste: 4, porcentaje: 0.29 }
     ];
-
-    const IconCircleCheck = (props: any) => <CircleCheckIcon className="w-4 h-4 text-green-600" {...props} />;
-    const IconCircleAlert = (props: any) => <CircleAlertIcon className="w-4 h-4 text-orange-600" {...props} />;
-    const IconCircleAlertRed = (props: any) => <CircleAlertIcon className="w-4 h-4 text-red-600" {...props} />;
 
     const partidas = [
         {
             nombre: 'SATE (Sistema Aislamiento Térmico Exterior) 12cm EPS', categoria: 'Envolvente Térmica', descripcion: 'IVE.050 - Trasdosado autoportante, sistema ETICS/SATE 12cm EPS c/revestimiento acrílico',
-            medicion: 2450, unidad: 'm²', precioUnitario: 85.50, unidadPrecio: '/m²', total: 209475, fuente: 'GenPrecios', fiabilidad: 'Alta'
+            medicion: 2450, unidad: 'm²', precioUnitario: 85.5, unidadPrecio: '/m²', total: 209475, fuente: 'GenPrecios', fiabilidad: 'Alta'
         },
         {
             nombre: 'Ventanas PVC doble acristalamiento 4/16/4 bajo emisivo', categoria: 'Envolvente Térmica', descripcion: 'FVC.010 - Ventana PVC perfil 70mm, Uw=1.4 W/m²K, vidrio 4/16/4 low-e',
-            medicion: 320, unidad: 'm²', precioUnitario: 285.00, unidadPrecio: '/m²', total: 91200, fuente: 'CYPE', fiabilidad: 'Alta'
+            medicion: 320, unidad: 'm²', precioUnitario: 285, unidadPrecio: '/m²', total: 91200, fuente: 'CYPE', fiabilidad: 'Alta'
         },
         {
             nombre: 'Aislamiento cubierta XPS 10cm + impermeabilización', categoria: 'Envolvente Térmica', descripcion: 'QAN.020 - Aislamiento térmico cubierta XPS e=100mm + lámina asfáltica',
-            medicion: 850, unidad: 'm²', precioUnitario: 68.50, unidadPrecio: '/m²', total: 58225, fuente: 'GenPrecios', fiabilidad: 'Alta'
+            medicion: 850, unidad: 'm²', precioUnitario: 68.5, unidadPrecio: '/m²', total: 58225, fuente: 'GenPrecios', fiabilidad: 'Alta'
         },
         {
             nombre: 'Sistema Aerotermia centralizado 150 kW (calefacción + ACS)', categoria: 'Instalaciones Térmicas', descripcion: 'IFI.040 - Bomba calor aire-agua aerotermia Daikin Altherma 3 (o equiv.) 150kW',
-            medicion: 1, unidad: 'ud', precioUnitario: 145000.00, unidadPrecio: '/ud', total: 145000, fuente: 'Presupuesto', fiabilidad: 'Media'
+            medicion: 1, unidad: 'ud', precioUnitario: 145000, unidadPrecio: '/ud', total: 145000, fuente: 'Presupuesto', fiabilidad: 'Media'
         },
         {
             nombre: 'Radiadores baja temperatura aluminio con válvulas termostáticas', categoria: 'Instalaciones Térmicas', descripcion: 'IFC.010 - Radiador aluminio inyectado 600mm + válvula termostática Honeywell',
-            medicion: 168, unidad: 'elemento', precioUnitario: 185.00, unidadPrecio: '/elemento', total: 31080, fuente: 'CYPE', fiabilidad: 'Alta'
+            medicion: 168, unidad: 'elemento', precioUnitario: 185, unidadPrecio: '/elemento', total: 31080, fuente: 'CYPE', fiabilidad: 'Alta'
         },
         {
             nombre: 'Red distribución calefacción PEX multicapa aislado', categoria: 'Instalaciones Térmicas', descripcion: 'IFT.010 - Tubería PEX-AL-PEX Ø20mm + aislamiento coquilla e=20mm',
-            medicion: 1850, unidad: 'm', precioUnitario: 28.50, unidadPrecio: '/m', total: 52725, fuente: 'GenPrecios', fiabilidad: 'Media'
+            medicion: 1850, unidad: 'm', precioUnitario: 28.5, unidadPrecio: '/m', total: 52725, fuente: 'GenPrecios', fiabilidad: 'Media'
         },
         {
             nombre: 'Instalación fotovoltaica 120 kWp (300 paneles 400Wp)', categoria: 'Energías Renovables', descripcion: 'IEI.070 - Sistema FV 120kWp: paneles monocristalinos + inversores + estructura cubierta',
-            medicion: 120, unidad: 'kWp', precioUnitario: 1150.00, unidadPrecio: '/kWp', total: 138000, fuente: 'Presupuesto', fiabilidad: 'Media'
+            medicion: 120, unidad: 'kWp', precioUnitario: 1150, unidadPrecio: '/kWp', total: 138000, fuente: 'Presupuesto', fiabilidad: 'Media'
         },
         {
             nombre: 'Sistema almacenamiento baterías litio 100 kWh', categoria: 'Energías Renovables', descripcion: 'IEI.090 - Baterías Li-ion modular 100kWh + sistema gestión energía (BMS)',
-            medicion: 100, unidad: 'kWh', precioUnitario: 650.00, unidadPrecio: '/kWh', total: 65000, fuente: 'Presupuesto', fiabilidad: 'Baja'
+            medicion: 100, unidad: 'kWh', precioUnitario: 650, unidadPrecio: '/kWh', total: 65000, fuente: 'Presupuesto', fiabilidad: 'Baja'
         },
         {
             nombre: 'Apoyo solar térmica ACS - 45 m² captadores planos', categoria: 'Energías Renovables', descripcion: 'IFS.010 - Captador solar térmico plano + acumuladores + grupo hidráulico',
-            medicion: 45, unidad: 'm²', precioUnitario: 485.00, unidadPrecio: '/m²', total: 21825, fuente: 'CYPE', fiabilidad: 'Alta'
+            medicion: 45, unidad: 'm²', precioUnitario: 485, unidadPrecio: '/m²', total: 21825, fuente: 'CYPE', fiabilidad: 'Alta'
         },
         {
             nombre: 'Renovación 2 ascensores con tecnología regenerativa', categoria: 'Accesibilidad', descripcion: 'EAS.010 - Ascensor eléctrico 6 personas con sistema regenerativo -30% consumo',
-            medicion: 2, unidad: 'ud', precioUnitario: 38500.00, unidadPrecio: '/ud', total: 77000, fuente: 'Presupuesto', fiabilidad: 'Media'
+            medicion: 2, unidad: 'ud', precioUnitario: 38500, unidadPrecio: '/ud', total: 77000, fuente: 'Presupuesto', fiabilidad: 'Media'
         },
         {
             nombre: 'Renovación iluminación LED zonas comunes con sensores', categoria: 'Eficiencia Energética', descripcion: 'IEI.020 - Luminarias LED + sensores presencia + regulación daylight',
-            medicion: 650, unidad: 'm²', precioUnitario: 18.50, unidadPrecio: '/m²', total: 12025, fuente: 'GenPrecios', fiabilidad: 'Alta'
+            medicion: 650, unidad: 'm²', precioUnitario: 18.5, unidadPrecio: '/m²', total: 12025, fuente: 'GenPrecios', fiabilidad: 'Alta'
         },
         {
             nombre: 'Sistema ventilación mecánica controlada (VMC) con recuperador calor', categoria: 'Calidad Aire', descripcion: 'IFV.010 - VMC doble flujo con recuperador entálpico 90% eficiencia',
-            medicion: 28, unidad: 'vivienda', precioUnitario: 2850.00, unidadPrecio: '/vivienda', total: 79800, fuente: 'CYPE', fiabilidad: 'Media'
+            medicion: 28, unidad: 'vivienda', precioUnitario: 2850, unidadPrecio: '/vivienda', total: 79800, fuente: 'CYPE', fiabilidad: 'Media'
         },
         {
             nombre: 'Proyecto básico + ejecución + dirección obra', categoria: 'Gestión y Honorarios', descripcion: '6% sobre PEM - Arquitecto + aparejador',
-            medicion: 1, unidad: '% PEM', precioUnitario: 78000.00, unidadPrecio: '/% PEM', total: 78000, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: '% PEM', precioUnitario: 78000, unidadPrecio: '/% PEM', total: 78000, fuente: 'Manual', fiabilidad: 'Alta'
         },
         {
             nombre: 'Licencias, tasas municipales, CEE, etc.', categoria: 'Gestión y Honorarios', descripcion: '~3.2% PEM - ICIO (bonif. 95%) + tasa urbanística + otros',
-            medicion: 1, unidad: '% PEM', precioUnitario: 42000.00, unidadPrecio: '/% PEM', total: 42000, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: '% PEM', precioUnitario: 42000, unidadPrecio: '/% PEM', total: 42000, fuente: 'Manual', fiabilidad: 'Alta'
         },
         {
             nombre: 'Seguridad y salud + control calidad', categoria: 'Gestión y Honorarios', descripcion: '2% PEM - Coordinador SS + ensayos materiales',
-            medicion: 1, unidad: '% PEM', precioUnitario: 26000.00, unidadPrecio: '/% PEM', total: 26000, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: '% PEM', precioUnitario: 26000, unidadPrecio: '/% PEM', total: 26000, fuente: 'Manual', fiabilidad: 'Alta'
         },
         {
             nombre: 'Imprevistos y contingencias', categoria: 'Gestión y Honorarios', descripcion: '5% PEM - Reserva para desviaciones',
-            medicion: 1, unidad: '% PEM', precioUnitario: 65000.00, unidadPrecio: '/% PEM', total: 65000, fuente: 'Manual', fiabilidad: 'Media'
+            medicion: 1, unidad: '% PEM', precioUnitario: 65000, unidadPrecio: '/% PEM', total: 65000, fuente: 'Manual', fiabilidad: 'Media'
         },
         {
             nombre: 'Certificado Eficiencia Energética inicial', categoria: 'Certificaciones', descripcion: 'Técnico certificador homologado - Registro CCAA',
-            medicion: 1, unidad: 'ud', precioUnitario: 850.00, unidadPrecio: '/ud', total: 850, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: 'ud', precioUnitario: 850, unidadPrecio: '/ud', total: 850, fuente: 'Manual', fiabilidad: 'Alta'
         },
         {
             nombre: 'Certificado Eficiencia Energética final', categoria: 'Certificaciones', descripcion: 'CEE tras obras + visado + registro - Demuestra mejora ≥30%',
-            medicion: 1, unidad: 'ud', precioUnitario: 1200.00, unidadPrecio: '/ud', total: 1200, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: 'ud', precioUnitario: 1200, unidadPrecio: '/ud', total: 1200, fuente: 'Manual', fiabilidad: 'Alta'
         },
         {
             nombre: 'Informe ITE renovado post-obra', categoria: 'Certificaciones', descripcion: 'Inspección Técnica Edificios - Validez 5-10 años',
-            medicion: 1, unidad: 'ud', precioUnitario: 1500.00, unidadPrecio: '/ud', total: 1500, fuente: 'Manual', fiabilidad: 'Alta'
+            medicion: 1, unidad: 'ud', precioUnitario: 1500, unidadPrecio: '/ud', total: 1500, fuente: 'Manual', fiabilidad: 'Alta'
         }
     ];
 
@@ -136,9 +136,21 @@ const DesgloseCostRehabilit: React.FC = () => {
         );
     };
 
+    const getFuenteClassName = (fuente: string) => {
+        if (fuente === 'CYPE') {
+            return 'bg-green-100 text-green-700';
+        }
+        if (fuente === 'GenPrecios') {
+            return 'bg-blue-100 text-blue-700';
+        }
+        if (fuente === 'Presupuesto') {
+            return 'bg-purple-100 text-purple-700';
+        }
+        return 'bg-gray-100 text-gray-700';
+    };
+
     return (
-        <>
-            <div className="border-t-2 border-gray-200 pt-6 space-y-4">
+        <div className="border-t-2 border-gray-200 pt-6 space-y-4">
 
                 {/* ------------------------------------------- */}
                 {/*     HEADER ADAPTADO A MOBILE                */}
@@ -195,9 +207,9 @@ const DesgloseCostRehabilit: React.FC = () => {
                     <h3 className="text-sm text-gray-900 mb-4">Distribución por Categorías</h3>
 
                     <div className="space-y-2">
-                        {categorias.map((cat, i) => (
+                        {categorias.map((cat) => (
                             <button
-                                key={i}
+                                key={cat.nombre}
                                 className={`w-full p-3 rounded-lg transition-all 
                                     ${cat.isTotal ? 'bg-blue-100 border border-blue-300' : 'bg-gray-50 hover:bg-gray-100'}
                                 `}
@@ -240,7 +252,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                     {isMobile ? (
                         /* ----------- VISTA MÓVIL TIPO “CARDS” ----------- */
                         <div className="space-y-4 p-3">
-                            {partidas.map((p, i) => {
+                            {partidas.map((p) => {
                                 const total = new Intl.NumberFormat('es-ES', {
                                     style: 'currency', currency: 'EUR', minimumFractionDigits: 0
                                 }).format(p.total);
@@ -250,7 +262,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                                 }).format(p.precioUnitario);
 
                                 return (
-                                    <div key={i} className="p-4 bg-gray-50 rounded-xl shadow-sm">
+                                    <div key={`${p.nombre}-${p.categoria}`} className="p-4 bg-gray-50 rounded-xl shadow-sm">
 
                                         <div className="text-sm font-semibold text-gray-900">
                                             {p.nombre}
@@ -274,14 +286,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                                         </div>
 
                                         <div className="flex justify-between items-center mt-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${p.fuente === 'CYPE'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : p.fuente === 'GenPrecios'
-                                                        ? 'bg-blue-100 text-blue-700'
-                                                        : p.fuente === 'Presupuesto'
-                                                            ? 'bg-purple-100 text-purple-700'
-                                                            : 'bg-gray-100 text-gray-700'
-                                                }`}>
+                                            <span className={`px-2 py-1 rounded text-xs ${getFuenteClassName(p.fuente)}`}>
                                                 {p.fuente}
                                             </span>
 
@@ -307,7 +312,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                                 </thead>
 
                                 <tbody className="divide-y divide-gray-100">
-                                    {partidas.map((p, i) => {
+                                    {partidas.map((p) => {
                                         const total = new Intl.NumberFormat('es-ES', {
                                             style: 'currency', currency: 'EUR', minimumFractionDigits: 0
                                         }).format(p.total);
@@ -317,7 +322,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                                         }).format(p.precioUnitario);
 
                                         return (
-                                            <tr key={i} className="hover:bg-gray-50">
+                                            <tr key={`${p.nombre}-${p.categoria}`} className="hover:bg-gray-50">
                                                 <td className="px-4 py-3">
                                                     <div className="text-sm text-gray-900 mb-1">{p.nombre}</div>
                                                     <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 inline-block rounded">
@@ -339,14 +344,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                                                 <td className="px-4 py-3 text-right text-sm text-gray-900">{total}</td>
 
                                                 <td className="px-4 py-3 text-center">
-                                                    <span className={`px-2 py-1 rounded text-xs ${p.fuente === 'GenPrecios'
-                                                            ? 'bg-blue-100 text-blue-700'
-                                                            : p.fuente === 'CYPE'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : p.fuente === 'Presupuesto'
-                                                                    ? 'bg-purple-100 text-purple-700'
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                        }`}>
+                                                    <span className={`px-2 py-1 rounded text-xs ${getFuenteClassName(p.fuente)}`}>
                                                         {p.fuente}
                                                     </span>
                                                 </td>
@@ -403,8 +401,7 @@ const DesgloseCostRehabilit: React.FC = () => {
                     </button>
                 </div>
 
-            </div>
-        </>
+        </div>
     );
 };
 
