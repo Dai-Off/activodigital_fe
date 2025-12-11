@@ -2,13 +2,14 @@ import {
   Building2,
   ChevronRight,
   Circle,
+  House,
   SlidersHorizontal,
   X,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   BuildingsApiService,
   type Building,
@@ -103,8 +104,30 @@ export function SidebarAssets() {
     );
   };
 
+  const { pathname } = useLocation();
+  const menuItems = [
+    {
+      id: "assets",
+      label: "Panel Principal",
+      Icon: House,
+      route: "/assets",
+    },
+    {
+      id: "assetslist",
+      label: "Listado de activos",
+      Icon: House,
+      route: "/assets/list",
+    },
+    {
+      id: "unitslist",
+      label: "Listado de unidades",
+      Icon: House,
+      route: "/assets/units",
+    },
+  ];
+
   return (
-    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="hidden px-3 lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <nav className="py-4">
         {/* Sección de Filtros */}
         <div className="px-3 mb-4">
@@ -185,7 +208,49 @@ export function SidebarAssets() {
             </div>
           )}
         </div>
+        {menuItems.map((item) => {
+          const isActive = pathname === item.route;
 
+          const buttonClasses = `
+              w-full px-3 py-3 rounded-md flex items-center gap-3 text-sm transition-colors
+              ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-50"
+              }
+            `;
+
+          return (
+            <div className="mb-1" key={item.id}>
+              <button
+                className={buttonClasses.trim()}
+                // Lógica modificada para el Panel Principal
+
+                onClick={() => {
+                  console.log({ itemId: item.id });
+                  if (selectedBuildingId) {
+                    setSelectedBuildingId(null);
+                    setActiveSection(item.id);
+                    setActiveTab(item.id);
+                  }
+                  console.log({ identificador: selectedBuildingId });
+                  navigate(item.route);
+                }}
+              >
+                {/* El color del ícono también cambia */}
+                <item.Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-white" : "text-gray-00"
+                  }`}
+                />
+                <span className="flex-1 text-left leading-relaxed">
+                  {item.label}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+        <div className="my-4 border-t border-gray-200"></div>
         <div className="space-y-1.5 px-3">
           {/* Edificios */}
           {loading ? (

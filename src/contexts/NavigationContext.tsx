@@ -42,7 +42,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [navigationHistory, setNavigationHistory] = useState<NavigationState[]>(
-    [{ module: "inicio", tab: "dashboard", section: "dashboard" }]
+    [{ module: "dashboard", tab: "dashboard", section: "dashboard" }]
   );
   const [currentIndex, setCurrentIndex] = useState(0);
 

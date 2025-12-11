@@ -40,6 +40,8 @@ import Users from "~/components/Users";
 import { GreenFinancial } from "~/components/dashboard/GreenFinancial/GreenFinancial";
 import { OpportunityRadar } from "~/components/dashboard/GreenFinancial/OpportunityRadar";
 import FinancialTwin from "~/components/dashboard/GreenFinancial/FinancialTwin";
+import { Assets } from "~/components/dashboard/Assets/Assets";
+import { AssetsListDashboard } from "~/components/dashboard/Assets/AssetsListsDashboard";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -164,11 +166,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <AssetsMain />
+                <Assets />
               </ErrorBoundary>
             </ProtectedRoute>
           }
-        ></Route>
+        >
+          <Route index element={<AssetsMain />} />
+          <Route path="list" element={<AssetsListDashboard />} />
+        </Route>
         <Route
           path="/green-financial"
           element={
@@ -180,19 +185,9 @@ export const AppRouter = () => {
           }
         >
           <Route index element={<OpportunityRadar />} />
+          <Route path="financial-twin" element={<FinancialTwin />}></Route>
         </Route>
-        <Route
-          path="/green-financial/financial-twin"
-          element={
-            <ProtectedRoute>
-              <ErrorBoundary>
-                <GreenFinancial />
-              </ErrorBoundary>
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<FinancialTwin />} />
-        </Route>
+
         <Route
           path="/cfo-dashboard"
           element={
