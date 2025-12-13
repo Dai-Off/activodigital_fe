@@ -108,11 +108,17 @@ function NewLayoutContent() {
         if (activeSection !== "analisis") {
           setActiveSection("analisis");
         }
+      } else if (location.pathname.includes("/general-view")) {
+        // === NUEVA LÓGICA: Sincronizar la nueva vista ===
+        if (activeSection !== "general-view") {
+          setActiveSection("general-view");
+        }
       } else if (
         location.pathname.startsWith("/building/") &&
         !location.pathname.includes("/analysis-general") &&
         !location.pathname.includes("/units") &&
-        !location.pathname.includes("/documents")
+        !location.pathname.includes("/documents") &&
+        !location.pathname.includes("/general-view")
       ) {
         // Ruta de detalle de edificio (vista general)
         if (activeSection !== "todos") {

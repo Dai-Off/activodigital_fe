@@ -107,12 +107,6 @@ export function SidebarAssets() {
   const { pathname } = useLocation();
   const menuItems = [
     {
-      id: "assets",
-      label: "Panel Principal",
-      Icon: House,
-      route: "/assets",
-    },
-    {
       id: "assetslist",
       label: "Listado de activos",
       Icon: House,
@@ -227,13 +221,12 @@ export function SidebarAssets() {
                 // Lógica modificada para el Panel Principal
 
                 onClick={() => {
-                  console.log({ itemId: item.id });
                   if (selectedBuildingId) {
                     setSelectedBuildingId(null);
                     setActiveSection(item.id);
+                    setViewMode("list");
                     setActiveTab(item.id);
                   }
-                  console.log({ identificador: selectedBuildingId });
                   navigate(item.route);
                 }}
               >
@@ -266,7 +259,7 @@ export function SidebarAssets() {
                   <button
                     onClick={() => toggleBuildingExpansion(building.id)}
                     className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${
-                      isSelected && activeSection === "todos"
+                      isSelected
                         ? "bg-blue-600 text-white shadow-sm"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -304,6 +297,26 @@ export function SidebarAssets() {
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
                           {t("generalView", "Vista General")}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("general-view");
+                          setActiveTab("general-view");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/general-view`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          selectedBuildingId === building.id &&
+                          activeSection === "general-view"
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("generalView", "Vista General") + " nueva"}
                         </span>
                       </button>
 

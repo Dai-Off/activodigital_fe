@@ -42,6 +42,15 @@ import { OpportunityRadar } from "~/components/dashboard/GreenFinancial/Opportun
 import FinancialTwin from "~/components/dashboard/GreenFinancial/FinancialTwin";
 import { Assets } from "~/components/dashboard/Assets/Assets";
 import { AssetsListDashboard } from "~/components/dashboard/Assets/AssetsListsDashboard";
+import { BuildingGeneralView } from "~/components/BuildingGeneralView";
+import { GeneralView } from "~/components/GeneralView";
+import { BuildingCertificates } from "~/components/BuildingCertificates";
+import { BuildingActivity } from "~/components/BuildingActivity";
+import { BuildingFinancial } from "~/components/BuildingFinancial";
+import { BuildingInsurance } from "~/components/BuildingInsurance";
+import { BuildingRent } from "~/components/BuildingRent";
+import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency";
+import { BuildingMaintenance } from "~/components/BuildingMaintenance";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -136,7 +145,6 @@ export const AppRouter = () => {
       {/* Rutas con nuevo diseño (NewLayout) */}
       <Route element={<NewLayout />}>
         {/* Si tienes varias opciones de navegación utiliza subrutas para ello de ejemplo la ruta /dashboard */}
-
         <Route
           path="/dashboard"
           element={
@@ -187,7 +195,6 @@ export const AppRouter = () => {
           <Route index element={<OpportunityRadar />} />
           <Route path="financial-twin" element={<FinancialTwin />}></Route>
         </Route>
-
         <Route
           path="/cfo-dashboard"
           element={
@@ -214,6 +221,9 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* Subrutas Edificios */}
+
         <Route
           path="/building/:id/units"
           element={
@@ -230,6 +240,29 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/building/:id/general-view"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <GeneralView />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<BuildingGeneralView />} />
+          <Route path="financial" element={<BuildingFinancial />} />
+          <Route path="insurance" element={<BuildingInsurance />} />
+          <Route path="rent" element={<BuildingRent />} />
+          <Route
+            path="energy-efficiency"
+            element={<BuildingEnergyEfficiency />}
+          />
+          <Route path="maintenance" element={<BuildingMaintenance />} />
+          <Route path="certificates" element={<BuildingCertificates />} />
+          <Route path="activity" element={<BuildingActivity />} />
+        </Route>
+
         <Route
           path="/digital-book"
           element={
