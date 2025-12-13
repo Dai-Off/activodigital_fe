@@ -1,4 +1,55 @@
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { type InsurancePolicy } from "~/types/insurance";
+import { insuranceApiService } from "~/services/insurance";
+
 export function BuildingInsurance() {
+  // 1. Obtener el ID del edificio de la URL (igual que en tu ejemplo)
+  const { id: buildingId } = useParams<{ id: string }>();
+
+  // 2. Definir estados para los datos y la carga
+  const [policies, setPolicies] = useState<InsurancePolicy[] | undefined>();
+  const [loading, setLoading] = useState(true);
+  // const [building, setBuilding] = useState<Building | null>(); // Opcional si necesitas info del edificio
+
+  useEffect(() => {
+    if (!buildingId) {
+      setLoading(false);
+      return;
+    }
+
+    // BuildingsApiService.getBuildingById(buildingId).then((data) =>
+    //   setBuilding(data)
+    // );
+
+    // 3. Llamar al servicio para obtener las pólizas del edificio
+    insuranceApiService
+      .getBuildingInsurances(buildingId)
+      .then((data) => {
+        // La respuesta del servicio es { data: policies[], count: number }
+        setPolicies(data.data);
+      })
+      .catch((error) => {
+        console.error("Error al cargar seguros:", error);
+        setPolicies(undefined); // En caso de error, dejamos el array indefinido o vacío
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [buildingId]);
+
+  if (loading) {
+    return <div>Cargando pólizas de seguro...</div>;
+  }
+
+  if (!policies || policies.length === 0) {
+    return (
+      <div>No se han encontrado pólizas de seguro para este edificio.</div>
+    );
+  }
+
+  console.log(policies);
+
   return (
     <div className="flex-1 overflow-y-auto mt-2 pr-1">
       <div className="space-y-3">
