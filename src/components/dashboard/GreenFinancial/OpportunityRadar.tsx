@@ -11,6 +11,9 @@ import { useEffect, useState, useCallback } from "react";
 import MetricTooltip from "./componentes/MetricTooltip";
 import { FinancialGreenService } from "~/services/GreenFinancialServices";
 import { exportToPdf } from "./componentes/exportarData";
+import { formatMoneyShort, getEnergyRatingColorClass, getEnergyRatingTextColorClass } from "~/lib/utils";
+import { SkeletonCardsHeader, SkeletonOpportunityTableBody } from "~/components/ui/LoadingSystem";
+import type { BuildingImage } from "~/services/buildingsApi";
 
 interface SectionHelpersRadar {
   TotalActivos: boolean,
@@ -18,6 +21,17 @@ interface SectionHelpersRadar {
   ValorCreado: boolean,
   TIRPromedio: boolean,
 }
+
+export interface FinancialSnapshotSummary {
+  total_activos: number; // El número total de FinancialSnapshots
+  capex_total: number; // Suma de todos los campos 'capex.total'
+  valor_creado: number; // Suma de todos los campos 'green_premium.valor'
+  tir_promedio: number | null; // El promedio de todos los campos 'tir.valor', o null si no hay datos
+  bankReady: number | null; // El total de activos en estado 'Bank-Ready'
+}
+
+
+
 
 export interface RegistroTable {
   id?: string,
@@ -40,6 +54,7 @@ export interface RegistroTable {
   green_premium: GreenPremium;
 
   plazo: string;
+  images: BuildingImage[],
 
   taxonomia: Taxonomia;
 
@@ -52,7 +67,7 @@ export interface Potencial {
 }
 
 export interface TIR {
-  valor: string;
+  valor: number;
   plazo: string;
 }
 
@@ -62,41 +77,47 @@ export interface CashOnCash {
 }
 
 export interface CAPEX {
-  total: string;
+  total: number;
   descripcion: string;
+  estimated?: number
 }
 
 export interface Subvencion {
-  valor: string;
-  porcentaje: string;
+  valor: number;
+  porcentaje: number;
 }
 
 export interface GreenPremium {
-  valor: string;
-  roi: string;
+  valor: number;
+  roi: number;
 }
 
 export interface Taxonomia {
-  porcentaje: string;
+  porcentaje: number;
 }
 
 export interface Estado {
   etiqueta: string;
-  score: string;
+  score: number;
   pendientes?: string;
 }
 
 function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
   return (
     <>
-      {data.map((value, idx) => (
+      {data?.map((value, idx) => (
         <tr key={idx} className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
           <td className="px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                 <img
-                  src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800"
-                  alt="Plaza Shopping"
+                  src={value?.images?.find(v => v?.isMain)?.url || value?.images[0]?.url || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800"}
+                  alt={value?.activo}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -113,38 +134,39 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
           </td>
           <td className="px-4 py-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="bg-yellow-500 text-white px-2 py-1 rounded text-xs w-8 text-center">
+              <div className={`${getEnergyRatingColorClass(value.estado_actual)} px-2 py-1 rounded text-xs w-8 text-center`}>
                 {value.estado_actual}
               </div>
             </div>
           </td>
           <td className="px-4 py-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="bg-green-600 text-white px-2 py-1 rounded text-xs w-8 text-center">
+              <div className={`${getEnergyRatingColorClass(value.potencial.letra)} text-white px-2 py-1 rounded text-xs w-8 text-center`}>
                 {value.potencial.letra}
               </div>
-              <div className="text-xs text-green-600">{value.potencial.variacion}</div>
+              <div className={`text-xs ${getEnergyRatingTextColorClass(value.potencial.letra)}`}>{value.potencial.variacion}%</div>
+              {/* <div className="text-xs text-green-600">{value.potencial.variacion}%</div> */}
             </div>
           </td>
           <td className="px-4 py-3 text-right">
-            <div className="text-sm text-[#1e3a8a]">{value.tir.valor}</div>
+            <div className="text-sm text-[#1e3a8a]">{value.tir.valor}%</div>
             <div className="text-xs text-gray-500">{value.tir.plazo}</div>
           </td>
           <td className="px-4 py-3 text-right">
-            <div className="text-sm text-emerald-700">{value.cash_on_cash.valor}</div>
-            <div className="text-xs text-gray-500">{value.cash_on_cash.multiplicador} mult.</div>
+            <div className="text-sm text-emerald-700">{value.cash_on_cash.valor}%</div>
+            <div className="text-xs text-gray-500">{value.cash_on_cash.multiplicador}x mult.</div>
           </td>
           <td className="px-4 py-3 text-right">
-            <div className="text-sm text-gray-900">{value.capex.total}€</div>
+            <div className="text-sm text-gray-900">{formatMoneyShort(value.capex.total)}€</div>
             <div className="text-xs text-gray-500">{value.capex.descripcion}</div>
           </td>
           <td className="px-4 py-3 text-right">
-            <div className="text-sm text-green-600">{value.subvencion.valor}€</div>
-            <div className="text-xs text-gray-500">{value.subvencion.porcentaje}</div>
+            <div className="text-sm text-green-600">{formatMoneyShort(value.subvencion.valor)}€</div>
+            <div className="text-xs text-gray-500">{value.subvencion.porcentaje}% CAPEX</div>
           </td>
           <td className="px-4 py-3 text-right">
-            <div className="text-sm text-green-700">{value.green_premium.valor}€</div>
-            <div className="text-xs text-gray-500">{value.green_premium.roi}</div>
+            <div className="text-sm text-green-700">{formatMoneyShort(value.green_premium.valor)}€</div>
+            <div className="text-xs text-gray-500">{value.green_premium.roi}% ROI</div>
           </td>
           <td className="px-4 py-3 text-center">
             <div className="flex items-center justify-center gap-1">
@@ -154,7 +176,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
           </td>
           <td className="px-4 py-3">
             <div className="flex flex-col items-center gap-1">
-              <div className="text-sm text-gray-900">{value.taxonomia.porcentaje}</div>
+              <div className="text-sm text-gray-900">{value.taxonomia.porcentaje}%</div>
               <div className="w-16 bg-gray-200 rounded-full h-1">
                 <div
                   className="h-1 rounded-full bg-green-600"
@@ -169,7 +191,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                 {value?.estado.etiqueta === "Bank-Ready" ? (<CircleCheck className="w-3 h-3" />) : (<TriangleAlert className="w-3 h-3" />)}
                 {value.estado.etiqueta}
               </div>
-              <div className="text-xs text-gray-500">{value?.estado?.etiqueta === "Bank-Ready" ? value?.estado?.score : value?.estado?.pendientes}</div>
+              <div className="text-xs text-gray-500">{value?.estado?.etiqueta === "Bank-Ready" ? `${value?.estado?.score}%` : value?.estado?.pendientes || "Revisar"}</div>
             </div>
           </td>
         </tr>
@@ -181,10 +203,10 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
 interface StatusIParams {
   helpStatus: SectionHelpersRadar,
   setHelpStatus: React.Dispatch<React.SetStateAction<SectionHelpersRadar>>,
-  carterBuild: number
+  summary: FinancialSnapshotSummary
 }
 
-const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) => {
+const CardsHeader = ({ helpStatus, setHelpStatus, summary }: StatusIParams) => {
   const handleToggle = (
     e: React.MouseEvent<HTMLButtonElement>, // Tipamos el evento de clic
     key: keyof SectionHelpersRadar
@@ -207,13 +229,12 @@ const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) 
           <MetricTooltip
             borderColor="blue"
             size={50}
-            // ! TODO número va dinamico
-            text={`Edificios en cartera. ${carterBuild} están Bank-Ready con documentación completa.`}
+            text={`Edificios en cartera. ${summary?.bankReady} están Bank-Ready con documentación completa.`}
           />
         )}
         <p className="text-sm text-gray-600 mb-1">Total Activos</p>
-        <p className="text-2xl text-[#1e3a8a] mb-1">13</p>
-        <p className="text-xs text-gray-500">9 Bank-Ready</p>
+        <p className="text-2xl text-[#1e3a8a] mb-1">{summary?.total_activos}</p>
+        <p className="text-xs text-gray-500">{summary?.bankReady} Bank-Ready</p>
       </div>
       <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4 relative group tooltip-container">
         <button onClick={(e) => handleToggle(e, 'CAPEXTotal')} className="absolute top-2 right-2 p-1 rounded-full bg-white hover:bg-orange-100 border-orange-200 border group-hover:opacity-100 transition-opacity shadow-sm z-10">
@@ -227,7 +248,7 @@ const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) 
           />
         )}
         <p className="text-sm text-gray-600 mb-1">CAPEX Total</p>
-        <p className="text-2xl text-orange-600 mb-1">16.1M€</p>
+        <p className="text-2xl text-orange-600 mb-1">{formatMoneyShort(summary?.capex_total)}€</p>
         <p className="text-xs text-gray-500">Inversión necesaria</p>
       </div>
       <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4 relative group tooltip-container">
@@ -241,7 +262,7 @@ const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) 
           )}
         </button>
         <p className="text-sm text-gray-600 mb-1">Valor Creado</p>
-        <p className="text-2xl text-green-600 mb-1">29M€</p>
+        <p className="text-2xl text-green-600 mb-1">{formatMoneyShort(summary?.valor_creado)}€</p>
         <p className="text-xs text-gray-500">Green Premium total</p>
       </div>
       <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4 relative group tooltip-container">
@@ -256,7 +277,7 @@ const CardsHeader = ({ helpStatus, setHelpStatus, carterBuild }: StatusIParams) 
           />
         )}
         <p className="text-sm text-gray-600 mb-1">TIR Promedio</p>
-        <p className="text-2xl text-purple-600 mb-1">18.5%</p>
+        <p className="text-2xl text-purple-600 mb-1">{summary?.tir_promedio}%</p>
         <p className="text-xs text-gray-500">Retorno anualizado</p>
       </div>
     </>
@@ -273,12 +294,21 @@ export function OpportunityRadar() {
     ValorCreado: false
   })
 
-  const handleExport = () => {
-    exportToPdf(dataFiltrada, "Radar_Oportunidades_Filtro.pdf");
-  };
 
   const [dataOriginal, setDataOriginal] = useState<RegistroTable[]>([]);
+  const [summary, setSummary] = useState<FinancialSnapshotSummary>({
+    bankReady: 0,
+    capex_total: 0,
+    tir_promedio: 0,
+    total_activos: 0,
+    valor_creado: 0,
+  });
 
+  const handleExport = () => {
+    exportToPdf(dataFiltrada, summary, "Radar_Oportunidades_Filtro.pdf");
+  };
+
+  const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"todos" | "bank" | "pendientes">("todos");
   const [dataFiltrada, setDataFiltrada] = useState<RegistroTable[]>([]);
@@ -286,11 +316,17 @@ export function OpportunityRadar() {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+        setLoading(true);
         const datos = await FinancialGreenService.getAll();
+        const summary = await FinancialGreenService.getsumary();
+        setSummary(summary)
         setDataOriginal(datos);
         setDataFiltrada(datos);
       } catch (error) {
         console.error("Error al cargar los datos:", error);
+        setLoading(false)
+      } finally {
+        setLoading(false)
       }
     };
     cargarDatos();
@@ -305,10 +341,10 @@ export function OpportunityRadar() {
     let datos = [...dataOriginal];
 
     if (filter === "bank") {
-      datos = datos.filter((r) => r.estado.etiqueta === "Bank-Ready");
+      datos = datos?.filter((r) => r?.estado?.etiqueta === "Bank-Ready");
     }
     if (filter === "pendientes") {
-      datos = datos.filter((r) => r.estado.etiqueta !== "Bank-Ready");
+      datos = datos?.filter((r) => r?.estado?.etiqueta !== "Bank-Ready");
     }
 
     if (search.trim() !== "") {
@@ -331,38 +367,33 @@ export function OpportunityRadar() {
     }
 
     if (tipo === "bank") {
-      setDataFiltrada(dataOriginal.filter((r) => r.estado.etiqueta === "Bank-Ready"));
+      setDataFiltrada(dataOriginal?.filter((r) => r?.estado?.etiqueta === "Bank-Ready"));
       return;
     }
 
     if (tipo === "pendientes") {
-      setDataFiltrada(dataOriginal.filter((r) => r.estado.etiqueta !== "Bank-Ready"));
+      setDataFiltrada(dataOriginal?.filter((r) => r?.estado?.etiqueta !== "Bank-Ready"));
       return;
     }
 
   };
 
-  const parsePercent = (val: string) => parseFloat(val.replace("%", ""));
-
-  const parseMoney = (val: string) =>
-    parseFloat(val.replace("+", "").replace("M", "").replace("€", "").replace("k", "")) *
-    (val.includes("M") ? 1_000_000 : val.includes("k") ? 1_000 : 1);
 
   const ordenar = (tipo: string) => {
     const copia = [...dataFiltrada];
 
     switch (tipo) {
       case "irr":
-        copia.sort((a, b) => parsePercent(b.tir.valor) - parsePercent(a.tir.valor));
+        copia.sort((a, b) => (b.tir.valor - a.tir.valor));
         break;
 
       case "capex":
-        copia.sort((a, b) => parseMoney(a.capex.total) - parseMoney(b.capex.total));
+        copia.sort((a, b) => ((a.capex.total) - b.capex.total));
         break;
 
       case "bankability":
         copia.sort(
-          (a, b) => parseMoney(b.green_premium.valor) - parseMoney(a.green_premium.valor)
+          (a, b) => (b.green_premium.valor - a.green_premium.valor)
         );
         break;
 
@@ -384,6 +415,7 @@ export function OpportunityRadar() {
   };
 
 
+  const pendientes = (summary?.total_activos - (summary?.bankReady || 0));
 
   return (
     <div onClick={closeAllHelpers} className="max-w-[1800px] mx-auto space-y-6">
@@ -405,7 +437,9 @@ export function OpportunityRadar() {
         </button>
       </div>
       <div className="grid grid-cols-4 gap-4">
-        <CardsHeader carterBuild={9} helpStatus={helpStatus} setHelpStatus={setHelpStatus} />
+        {loading ? (<SkeletonCardsHeader />) : (
+          <CardsHeader helpStatus={helpStatus} setHelpStatus={setHelpStatus} summary={summary} />
+        )}
       </div>
       <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-4">
         <div className="flex items-center gap-4">
@@ -423,10 +457,10 @@ export function OpportunityRadar() {
               Todos ({dataOriginal?.length})
             </button>
             <button onClick={() => aplicarFiltroEstado("bank")} className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === 'bank' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              Bank-Ready ({dataOriginal.filter((d) => (d.estado.etiqueta === "Bank-Ready"))?.length})
+              Bank-Ready ({summary?.bankReady})
             </button>
             <button onClick={() => aplicarFiltroEstado("pendientes")} className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === 'pendientes' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              Pendientes ({dataOriginal.filter((d) => (d.estado.etiqueta !== "Bank-Ready"))?.length})
+              Pendientes ({pendientes})
             </button>
           </div>
           <select
@@ -483,9 +517,11 @@ export function OpportunityRadar() {
                 </th>
               </tr>
             </thead>
-            <tbody>
-              <BuildingOpportunityRow data={dataFiltrada} />
-            </tbody>
+            {loading ? (<SkeletonOpportunityTableBody rows={5} />) : (
+              <tbody>
+                <BuildingOpportunityRow data={dataFiltrada} />
+              </tbody>
+            )}
           </table>
         </div>
       </div>
