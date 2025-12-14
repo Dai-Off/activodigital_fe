@@ -2,13 +2,33 @@ import { useEffect, useState } from "react";
 import { getTrazability, type trazabilityList } from "~/services/trazability";
 import { formatofechaCorta } from "~/utils/fechas";
 import { timeAgo } from "~/utils/timeAgo";
+import { BuildingActivityLoading } from "./ui/dashboardLoading";
 
 export function BuildingActivity() {
-  const [activity, setAtivity] = useState<trazabilityList[]>([]);
+  const [activity, setAtivity] = useState<trazabilityList[] | undefined>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTrazability().then((data) => setAtivity(data.data));
+    getTrazability()
+      .then((data) => setAtivity(data.data))
+      .catch((error) => {
+        console.error("Error al cargar la actividad reciente:", error);
+        setAtivity(undefined);
+      })
+      .finally(() => setLoading(false));
   }, [getTrazability]);
+
+  if (loading) {
+    return <BuildingActivityLoading />;
+  }
+
+  if (!activity || activity.length === 0) {
+    return (
+      <div className="text-center pt-4">
+        No se ha encontrado actividad reciente para este edificio.
+      </div>
+    );
+  }
 
   function getActivityNumber(activity: string) {
     const ActionsValues = {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { type InsurancePolicy } from "~/types/insurance";
 import { insuranceApiService } from "~/services/insurance";
+import { BuildingInsuranceLoading } from "./ui/dashboardLoading";
 
 export function BuildingInsurance() {
   // 1. Obtener el ID del edificio de la URL (igual que en tu ejemplo)
@@ -39,12 +40,14 @@ export function BuildingInsurance() {
   }, [buildingId]);
 
   if (loading) {
-    return <div>Cargando pólizas de seguro...</div>;
+    return <BuildingInsuranceLoading />;
   }
 
   if (!policies || policies.length === 0) {
     return (
-      <div>No se han encontrado pólizas de seguro para este edificio.</div>
+      <div className="text-center pt-4">
+        No se han encontrado pólizas de seguro para este edificio.
+      </div>
     );
   }
 
@@ -79,7 +82,7 @@ export function BuildingInsurance() {
               <div>
                 <h3 className="text-lg">Gestión de Seguros del Inmueble</h3>
                 <p className="text-sm text-white/80 mt-1">
-                  3 pólizas activas • Prima total anual: €30,500
+                  {policies.length} pólizas activas • Prima total anual: €30,500
                 </p>
               </div>
             </div>

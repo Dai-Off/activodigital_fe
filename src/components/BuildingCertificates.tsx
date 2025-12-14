@@ -7,6 +7,7 @@ import {
   EnergyCertificatesService,
 } from "~/services/energyCertificates";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
+import { BuildingCertificatesLoading } from "./ui/dashboardLoading";
 
 export function BuildingCertificates() {
   const { id: buildingId } = useParams<{ id: string }>();
@@ -26,11 +27,13 @@ export function BuildingCertificates() {
   }, []);
 
   if (loading) {
-    return "Cargando certificados";
+    return <BuildingCertificatesLoading />;
   }
 
   if (!certificates) {
-    return <div>No se han conseguido Certificados</div>;
+    return (
+      <div className="text-center pt-4">No se han conseguido Certificados</div>
+    );
   }
 
   interface CertificateProps {
