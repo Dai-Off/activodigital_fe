@@ -1,4 +1,4 @@
-import { Sparkles, Upload } from "lucide-react";
+import { FileText, Sparkles, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { type Building, BuildingsApiService } from "~/services/buildingsApi";
@@ -30,9 +30,125 @@ export function BuildingCertificates() {
     return <BuildingCertificatesLoading />;
   }
 
-  if (!certificates) {
+  if (!certificates || certificates.length === 0) {
     return (
-      <div className="text-center pt-4">No se han conseguido Certificados</div>
+      <div className="flex-1 overflow-hidden mt-2">
+        <div className="h-full flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-2">
+              {/* Encabezado y Botón (Estilo similar al que tienes) */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm mb-0.5">Certificados Energéticos</h2>
+                    <p className="text-xs text-gray-500">
+                      {building?.name || "Cargando nombre del edificio..."}
+                    </p>
+                  </div>
+                  <button
+                    data-slot="button"
+                    className="inline-flex text-white items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium px-4 py-2 bg-blue-600 hover:bg-blue-700 text-xs h-8"
+                  >
+                    <Upload className="w-3 h-3 mr-1.5" />
+                    Cargar Certificado
+                  </button>
+                </div>
+              </div>
+
+              {/* --- Contenedor Principal de la Alerta de No Data --- */}
+              <div className="bg-white rounded-lg shadow-sm">
+                {/* Tabla Placeholder */}
+                <div className="relative w-full overflow-x-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead className="[&amp;_tr]:border-b border-gray-200">
+                      <tr className="border-b border-gray-200">
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Tipo
+                        </th>
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Calificación
+                        </th>
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Emisiones
+                        </th>
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Emisión
+                        </th>
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Vencimiento
+                        </th>
+                        <th className="h-10 px-2 text-left text-xs py-2 w-1/6">
+                          Estado
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="[&amp;_tr:last-child]:border-0 text-xs text-gray-400">
+                      <tr className="border-b border-gray-100">
+                        <td className="p-2 py-3">Certificado Energético</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">Sin Datos</td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="p-2 py-3">Inspección Técnica</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">-</td>
+                        <td className="p-2 py-3">Sin Datos</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Gran Call-to-Action / Mensaje central (Estilo Seguros) */}
+                <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-b-lg">
+                  <FileText className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                  <h4 className="text-lg text-gray-700 mb-2">
+                    No hay certificados registrados.
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Sube el Certificado Energético y la ITE para comenzar a
+                    gestionar los vencimientos y la IA de análisis.
+                  </p>
+                  <button className="flex items-center gap-2 px-6 py-2 mx-auto bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-md">
+                    <Upload className="w-4 h-4" />
+                    Cargar Documentos Ahora
+                  </button>
+                </div>
+              </div>
+
+              {/* Placeholder de Análisis IA (Para mantener el layout) */}
+              <div className="bg-white rounded-lg shadow-sm">
+                <div className="mt-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-purple-200 rounded">
+                      <Sparkles className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-purple-600 mb-2">
+                        IA • Análisis de eficiencia energética
+                      </p>
+                      <div className="space-y-2 text-gray-500">
+                        <p className="text-sm leading-relaxed">
+                          • La IA espera los datos del Certificado Energético
+                          para generar el análisis.
+                        </p>
+                        <p className="text-sm leading-relaxed">
+                          • Una vez cargado, verás recomendaciones de mejora,
+                          comparación de consumo y riesgo de caducidad.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
