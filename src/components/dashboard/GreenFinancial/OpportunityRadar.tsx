@@ -110,7 +110,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
 
   return (
     <>
-      {data?.map((value, idx) => (
+      {data?.length && data?.map((value, idx) => (
         <tr key={idx} className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors">
           <td className="px-4 py-3">
             <div className="flex items-center gap-3">
