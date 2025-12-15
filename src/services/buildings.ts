@@ -8,6 +8,11 @@ export const buildingService = {
     return apiFetch('/edificios', { method: 'GET' });
   },
 
+  // Obtener todos los edificios del usuario
+  getAllWithFinancialData: async (): Promise<Building[]> => {
+    return apiFetch('/edificios', { method: 'GET' });
+  },
+
   // Obtener edificio por ID
   getById: async (id: string): Promise<Building> => {
     return apiFetch(`/edificios/${id}`, { method: 'GET' });
