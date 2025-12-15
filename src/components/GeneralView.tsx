@@ -1,6 +1,7 @@
 import {
   Activity,
   Building2,
+  Calendar,
   Euro,
   FileText,
   Shield,
@@ -40,6 +41,12 @@ export function GeneralView() {
       label: "Seguros",
       Icon: Shield,
       route: "/building/:id/general-view/insurance",
+    },
+    {
+      id: "buildingCalendar",
+      label: "Calendario de acciones",
+      Icon: Calendar,
+      route: "/building/:id/general-view/calendar",
     },
     {
       id: "buildingRent",

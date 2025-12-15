@@ -51,6 +51,7 @@ import { BuildingInsurance } from "~/components/BuildingInsurance";
 import { BuildingRent } from "~/components/BuildingRent";
 import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency";
 import { BuildingMaintenance } from "~/components/BuildingMaintenance";
+import { BuildingCalendar } from "~/components/BuildingCalendar";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -253,6 +254,7 @@ export const AppRouter = () => {
           <Route index element={<BuildingGeneralView />} />
           <Route path="financial" element={<BuildingFinancial />} />
           <Route path="insurance" element={<BuildingInsurance />} />
+          <Route path="calendar" element={<BuildingCalendar />} />
           <Route path="rent" element={<BuildingRent />} />
           <Route
             path="energy-efficiency"
