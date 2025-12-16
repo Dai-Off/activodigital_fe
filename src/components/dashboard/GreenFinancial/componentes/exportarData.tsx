@@ -2,14 +2,15 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { ChartColumn } from 'lucide-react';
 import ReactDOMServer from 'react-dom/server';
-import type { RegistroTable } from '../OpportunityRadar';
+import type { FinancialSnapshotSummary, RegistroTable } from '../OpportunityRadar';
+import { formatMoneyShort } from '~/lib/utils';
 
 
 const BuildingOpportunityRowPrint = ({ data }: { data: RegistroTable[] }) => {
     return (
         <>
             {data.map((value, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}> 
+                <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div>
@@ -70,10 +71,11 @@ const BuildingOpportunityRowPrint = ({ data }: { data: RegistroTable[] }) => {
                     </td>
                     {/* Estado */}
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '12px', fontWeight: '500', borderRadius: '4px', padding: '4px 8px', 
-                              backgroundColor: value?.estado?.etiqueta === "Bank-Ready" ? '#d1fae5' : '#fff7ed', // bg-green-100 / bg-orange-100
-                              color: value?.estado?.etiqueta === "Bank-Ready" ? '#047857' : '#ea580c' // text-green-700 / text-orange-700
-                            }}>
+                        <div style={{
+                            fontSize: '12px', fontWeight: '500', borderRadius: '4px', padding: '4px 8px',
+                            backgroundColor: value?.estado?.etiqueta === "Bank-Ready" ? '#d1fae5' : '#fff7ed', // bg-green-100 / bg-orange-100
+                            color: value?.estado?.etiqueta === "Bank-Ready" ? '#047857' : '#ea580c' // text-green-700 / text-orange-700
+                        }}>
                             {value.estado.etiqueta}
                         </div>
                     </td>
@@ -84,7 +86,7 @@ const BuildingOpportunityRowPrint = ({ data }: { data: RegistroTable[] }) => {
 };
 
 // Componente principal de la vista estática: Actualizado con estilos HEX/RGB
-const PrintableRadar = ({ dataFiltrada }: { dataFiltrada: RegistroTable[] }) => (
+const PrintableRadar = ({ dataFiltrada, summary }: { dataFiltrada: RegistroTable[], summary: FinancialSnapshotSummary }) => (
     <div id="pdf-content-container" style={{ padding: '24px', backgroundColor: '#FFFFFF', width: '1000px', margin: '0 auto', fontFamily: 'sans-serif' }}>
         {/* HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', paddingBottom: '16px', marginBottom: '16px' }}>
@@ -101,25 +103,25 @@ const PrintableRadar = ({ dataFiltrada }: { dataFiltrada: RegistroTable[] }) => 
                 Reporte generado el {new Date().toLocaleDateString()}
             </div>
         </div>
-        
+
         {/* CARDS HEADER */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
             {/* Usando estilos directos en lugar de clases de Tailwind problemáticas */}
             <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Total Activos</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>13</p>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>{summary?.total_activos}</p>
             </div>
             <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>CAPEX Total</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#f97316', margin: 0 }}>16.1M€</p>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#f97316', margin: 0 }}>{formatMoneyShort(summary?.capex_total)}€</p>
             </div>
             <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Valor Creado</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669', margin: 0 }}>29M€</p>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#059669', margin: 0 }}>{formatMoneyShort(summary?.valor_creado)}€</p>
             </div>
             <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                 <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>TIR Promedio</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333ea', margin: 0 }}>18.5%</p>
+                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333ea', margin: 0 }}>{summary?.tir_promedio}%</p>
             </div>
         </div>
 
@@ -172,9 +174,9 @@ const PrintableRadar = ({ dataFiltrada }: { dataFiltrada: RegistroTable[] }) => 
         </div>
     </div>
 );
-export const exportToPdf = async (data: RegistroTable[], fileName: string = "Radar_Oportunidades.pdf") => {
+export const exportToPdf = async (data: RegistroTable[], summary: FinancialSnapshotSummary, fileName: string = "Radar_Oportunidades.pdf") => {
     const htmlContent = ReactDOMServer.renderToString(
-        <PrintableRadar dataFiltrada={data} />
+        <PrintableRadar dataFiltrada={data} summary={summary} />
     );
 
     const tempContainer = document.createElement('div');
