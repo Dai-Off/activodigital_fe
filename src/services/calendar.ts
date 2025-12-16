@@ -45,12 +45,9 @@ export class CalendarApiService {
     }
 
     // Nota: Asumo que la ruta base para este módulo es /calendar/events
-    const response = await apiFetch(
-      `/calendar/events?${queryParams.toString()}`,
-      {
-        method: "GET",
-      }
-    );
+    const response = await apiFetch(`/calendar?${queryParams.toString()}`, {
+      method: "GET",
+    });
 
     return response;
   }

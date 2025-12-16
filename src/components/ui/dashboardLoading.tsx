@@ -533,6 +533,106 @@ export function BuildingInsuranceLoading() {
   );
 }
 
+// Skeleton para Calendario del edificio
+export function BuildingCalendarLoading() {
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Header Skeleton */}
+      <div className="bg-white rounded-lg p-2 shadow-sm mb-2 flex-shrink-0">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {/* Icono del calendario */}
+            <div className="w-7 h-7 bg-gray-200 rounded animate-pulse" />
+            <div>
+              {/* Título */}
+              <div className="h-3 w-32 bg-gray-200 rounded mb-1 animate-pulse" />
+              {/* Subtítulo */}
+              <div className="h-2.5 w-24 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </div>
+          {/* Alerta de urgentes placeholder */}
+          <div className="h-6 w-24 bg-gray-100 rounded animate-pulse" />
+        </div>
+
+        {/* Filtros Skeleton */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {/* Icono filtro */}
+          <div className="w-3 h-3 bg-gray-200 rounded-full animate-pulse mr-1" />
+          {/* Botones de filtro simulados */}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="h-6 w-20 bg-gray-100 rounded animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Lista de Eventos Skeleton */}
+      <div className="flex-1 overflow-y-auto pr-1">
+        <div className="space-y-3">
+          {/* Simulamos 2 meses de datos */}
+          {[1, 2].map((monthIndex) => (
+            <div key={monthIndex}>
+              {/* Encabezado del Mes */}
+              <div className="sticky top-0 bg-gray-50 border-l-4 border-gray-200 px-2 py-1.5 mb-2 rounded-r shadow-sm">
+                <div className="h-3 w-28 bg-gray-200 rounded animate-pulse" />
+              </div>
+
+              {/* Lista de eventos del mes (Simulamos 3 eventos) */}
+              <div className="space-y-2 ml-2">
+                {[1, 2, 3].map((eventIndex) => (
+                  <div
+                    key={eventIndex}
+                    className="relative border-l-4 border-gray-200 rounded shadow-sm p-2 bg-white"
+                  >
+                    <div className="flex items-start gap-2">
+                      {/* Icono de Categoría */}
+                      <div className="w-7 h-7 rounded-full bg-gray-200 flex-shrink-0 animate-pulse" />
+
+                      <div className="flex-1 min-w-0">
+                        {/* Título y Badges */}
+                        <div className="flex items-start justify-between gap-1.5 mb-1.5">
+                          <div className="h-3 w-40 bg-gray-200 rounded animate-pulse" />
+                          <div className="flex gap-1">
+                            <div className="h-4 w-12 bg-gray-100 rounded-full animate-pulse" />
+                            <div className="h-4 w-12 bg-gray-100 rounded-full animate-pulse" />
+                          </div>
+                        </div>
+
+                        {/* Descripción (2 líneas) */}
+                        <div className="space-y-1.5 mb-2">
+                          <div className="h-2 w-full bg-gray-100 rounded animate-pulse" />
+                          <div className="h-2 w-3/4 bg-gray-100 rounded animate-pulse" />
+                        </div>
+
+                        {/* Footer (Fecha y Asset) */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-gray-200 rounded-full animate-pulse" />
+                            <div className="h-2.5 w-20 bg-gray-100 rounded animate-pulse" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-gray-200 rounded-full animate-pulse" />
+                            <div className="h-2.5 w-24 bg-gray-100 rounded animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botón Ver detalles */}
+                      <div className="h-6 w-20 bg-gray-200 rounded animate-pulse flex-shrink-0" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Componente auxiliar para las tarjetas individuales de póliza
 function PolicyCardSkeleton() {
   return (
