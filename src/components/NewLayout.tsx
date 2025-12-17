@@ -18,7 +18,7 @@ function NewLayoutContent() {
   const params = useParams<{ id?: string }>();
 
   // Intentar obtener navegación, con valores por defecto si falla
-  let activeModule = "inicio";
+  let activeModule = "dashboard";
   let activeSection = "dashboard";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
@@ -108,11 +108,17 @@ function NewLayoutContent() {
         if (activeSection !== "analisis") {
           setActiveSection("analisis");
         }
+      } else if (location.pathname.includes("/general-view")) {
+        // === NUEVA LÓGICA: Sincronizar la nueva vista ===
+        if (activeSection !== "general-view") {
+          setActiveSection("general-view");
+        }
       } else if (
         location.pathname.startsWith("/building/") &&
         !location.pathname.includes("/analysis-general") &&
         !location.pathname.includes("/units") &&
-        !location.pathname.includes("/documents")
+        !location.pathname.includes("/documents") &&
+        !location.pathname.includes("/general-view")
       ) {
         // Ruta de detalle de edificio (vista general)
         if (activeSection !== "todos") {
@@ -173,7 +179,7 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ["edificios", "inicio", "users"];
+  const modulesWithSecondaryNav = ["assets", "dashboard", "users"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
   // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
   // Incluir rutas relacionadas con edificios: digital-book, cfo-intake, etc.
@@ -221,7 +227,8 @@ function NewLayoutContent() {
           `}
         >
           <ErrorBoundary>
-            {location.pathname === "/green-financial" || location.pathname === "/green-financial/financial-twin" ? (
+            {location.pathname === "/green-financial" ||
+            location.pathname === "/green-financial/financial-twin" ? (
               <HeaderGreenFinancial />
             ) : (
               <AppHeader />

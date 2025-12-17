@@ -535,6 +535,10 @@ export const LandingFeatures = memo(function FeaturesSection() {
                       width: idx === currentTableSlide ? '24px' : '8px'
                     }}
                     onClick={() => setCurrentTableSlide(idx)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setCurrentTableSlide(idx)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ir a slide ${idx + 1}`}
                   />
                 ))}
               </div>

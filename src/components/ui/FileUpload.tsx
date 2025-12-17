@@ -128,6 +128,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !disabled && handleClick()}
+        role="button"
+        tabIndex={0}
       >
         {/* Icono */}
         <div className="mb-3">

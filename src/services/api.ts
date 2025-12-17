@@ -223,7 +223,7 @@ export async function apiFetch(
     );
   }
 
-  return isJson ? payload : payload; // devuelve JSON o texto (según content-type)
+  return payload; // devuelve payload (JSON o texto según content-type)
 }
 
 //
@@ -267,5 +267,5 @@ export async function certificateExtractorFetch(
     throw new Error(typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody));
   }
 
-  return isJson ? payload : payload;
+  return payload;
 }

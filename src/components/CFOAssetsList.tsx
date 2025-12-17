@@ -635,14 +635,6 @@ export default function CFOAssetsList() {
           </Link>
         </div>
 
-        {/* Hack para evitar warning TS de componente no usado */}
-        {false && buildings[0] && (
-          <span className="hidden">
-            {/** Mantener referencia a tipos **/}
-            {JSON.stringify({ id: buildings[0].id })}
-          </span>
-        )}
-
         <div
           className="mb-8"
           style={{ animation: "fadeInUp 0.6s ease-out 0.1s both" }}

@@ -41,12 +41,12 @@ export function Sidebar() {
 
   const menuItems = [
     {
-      id: "inicio",
+      id: "dashboard",
       icon: House,
       label: t ? t("home", "Inicio") : "Inicio",
     },
     {
-      id: "edificios",
+      id: "assets",
       icon: Building2,
       label: t ? t("buildings", "Edificios") : "Edificios",
     },
@@ -69,7 +69,7 @@ export function Sidebar() {
     if (setSelectedBuildingId) setSelectedBuildingId(null);
     // Establecer sección y tab predeterminados según el módulo
     switch (moduleId) {
-      case "inicio":
+      case "dashboard":
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
@@ -81,7 +81,7 @@ export function Sidebar() {
         if (setViewMode) setViewMode("list");
         navigate("/users");
         break;
-      case "edificios":
+      case "assets":
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");

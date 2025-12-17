@@ -94,6 +94,10 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
     return (
       <div
         onClick={() => setVisible(!visible)}
+        onKeyDown={(e) => e.key === 'Escape' && setVisible(!visible)}
+        role="button"
+        tabIndex={0}
+        aria-label="Cerrar modal"
         className={`fixed z-50 backdrop-blur-sm inset-0 bg-black/30 flex 
         ${
           isMobile ? "items-start pt-10 ml-16" : "items-center"
@@ -101,6 +105,8 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
       >
         <div
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          role="presentation"
           className={`
         bg-white rounded-lg shadow-lg 
         w-full 

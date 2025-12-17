@@ -420,9 +420,7 @@ const SectionEditor: React.FC = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className={`w-9 h-9 rounded-md flex items-center justify-center ${
-                      canEdit ? 'bg-gray-50' : 'bg-gray-50'
-                    }`}>
+                    <div className="w-9 h-9 rounded-md flex items-center justify-center bg-gray-50">
                       {canEdit ? (
                         <Edit className="w-4 h-4 text-gray-600" strokeWidth={2} />
                       ) : (

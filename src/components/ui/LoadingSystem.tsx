@@ -9,9 +9,9 @@ export const LOADING_DURATION = {
 } as const;
 
 // Spinner principal de la aplicación con animación profesional
-export const AppSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({ 
-  size = 'md', 
-  className = '' 
+export const AppSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({
+  size = 'md',
+  className = ''
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
@@ -41,65 +41,65 @@ export const PageLoader: React.FC<{ message?: string }> = ({ message }) => {
 };
 
 // Skeleton base con animación profesional
-export const SkeletonBase: React.FC<{ 
-  className?: string; 
+export const SkeletonBase: React.FC<{
+  className?: string;
   children?: React.ReactNode;
   animate?: boolean;
   shimmer?: boolean;
-}> = ({ 
-  className = '', 
-  children, 
+}> = ({
+  className = '',
+  children,
   animate = true,
   shimmer = false
 }) => (
-  <div 
-    className={`
+    <div
+      className={`
       skeleton-element
       ${shimmer ? 'skeleton-shimmer' : 'rounded-md'}
       ${animate && !shimmer ? 'animate-pulse' : ''} 
       ${className}
     `}
-    style={{
-      backgroundColor: !shimmer ? '#fafafa' : undefined,
-      animationDuration: animate ? '2.5s' : undefined,
-      animationTimingFunction: animate ? 'cubic-bezier(0.4, 0, 0.6, 1)' : undefined,
-      animationIterationCount: animate ? 'infinite' : undefined
-    }}
-  >
-    {children}
-  </div>
-);
+      style={{
+        backgroundColor: !shimmer ? '#fafafa' : undefined,
+        animationDuration: animate ? '2.5s' : undefined,
+        animationTimingFunction: animate ? 'cubic-bezier(0.4, 0, 0.6, 1)' : undefined,
+        animationIterationCount: animate ? 'infinite' : undefined
+      }}
+    >
+      {children}
+    </div>
+  );
 
 // Skeleton para texto
-export const SkeletonText: React.FC<{ 
-  lines?: number; 
+export const SkeletonText: React.FC<{
+  lines?: number;
   className?: string;
   widths?: string[];
-}> = ({ 
-  lines = 1, 
+}> = ({
+  lines = 1,
   className = '',
   widths = ['w-full']
 }) => (
-  <div className={`space-y-2 ${className}`}>
-    {Array.from({ length: lines }).map((_, index) => {
-      const width = widths[index % widths.length];
-      return (
-        <SkeletonBase 
-          key={index} 
-          className={`h-4 ${width}`} 
-        />
-      );
-    })}
-  </div>
-);
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: lines }).map((_, index) => {
+        const width = widths[index % widths.length];
+        return (
+          <SkeletonBase
+            key={index}
+            className={`h-4 ${width}`}
+          />
+        );
+      })}
+    </div>
+  );
 
 // LightSkeleton: variant with a lighter palette (used across skeletons)
 // Duplicate LightSkeleton removed (already declared above).
 
 // Skeleton para tarjetas con shimmer
-export const SkeletonCard: React.FC<{ className?: string; shimmer?: boolean }> = ({ 
-  className = '', 
-  shimmer = true 
+export const SkeletonCard: React.FC<{ className?: string; shimmer?: boolean }> = ({
+  className = '',
+  shimmer = true
 }) => (
   <div className={`skeleton-card ${className}`}>
     <div className="p-6">
@@ -169,6 +169,123 @@ export const SkeletonBuildingList: React.FC = () => (
   </div>
 );
 
+// Componente que simula una sola fila de la tabla de oportunidades
+export const SkeletonOpportunityRow: React.FC = () => (
+  <tr className="border-b border-gray-100 animate-pulse">
+    {/* 1. Activo (Imagen + Nombre + Dirección) */}
+    <td className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-lg bg-gray-300 flex-shrink-0"></div>
+        <div>
+          <div className="h-4 w-32 bg-gray-300 rounded mb-1"></div>
+          <div className="h-3 w-40 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    </td>
+
+    {/* 2. Tipo */}
+    <td className="px-4 py-3">
+      <div className="h-3 w-16 bg-gray-200 rounded"></div>
+    </td>
+
+    {/* 3. Estado Actual (Etiqueta de color) */}
+    <td className="px-4 py-3 text-center">
+      <div className="h-5 w-8 bg-gray-300 rounded mx-auto"></div>
+    </td>
+
+    {/* 4. Potencial (Etiqueta + Variación %) */}
+    <td className="px-4 py-3 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <div className="h-5 w-8 bg-gray-300 rounded"></div>
+        <div className="h-3 w-8 bg-gray-200 rounded"></div>
+      </div>
+    </td>
+
+    {/* 5. TIR */}
+    <td className="px-4 py-3 text-right">
+      <div className="h-4 w-12 bg-gray-300 rounded ml-auto mb-1"></div>
+      <div className="h-3 w-16 bg-gray-200 rounded ml-auto"></div>
+    </td>
+
+    {/* 6. Cash on Cash */}
+    <td className="px-4 py-3 text-right">
+      <div className="h-4 w-16 bg-gray-300 rounded ml-auto mb-1"></div>
+      <div className="h-3 w-20 bg-gray-200 rounded ml-auto"></div>
+    </td>
+
+    {/* 7. CAPEX */}
+    <td className="px-4 py-3 text-right">
+      <div className="h-4 w-20 bg-gray-300 rounded ml-auto mb-1"></div>
+      <div className="h-3 w-16 bg-gray-200 rounded ml-auto"></div>
+    </td>
+
+    {/* 8. Subvención */}
+    <td className="px-4 py-3 text-right">
+      <div className="h-4 w-16 bg-gray-300 rounded ml-auto mb-1"></div>
+      <div className="h-3 w-16 bg-gray-200 rounded ml-auto"></div>
+    </td>
+
+    {/* 9. Green Premium */}
+    <td className="px-4 py-3 text-right">
+      <div className="h-4 w-20 bg-gray-300 rounded ml-auto mb-1"></div>
+      <div className="h-3 w-12 bg-gray-200 rounded ml-auto"></div>
+    </td>
+
+    {/* 10. Plazo */}
+    <td className="px-4 py-3 text-center">
+      <div className="h-4 w-16 bg-gray-300 rounded mx-auto"></div>
+    </td>
+
+    {/* 11. Taxonomía (Porcentaje + Barra) */}
+    <td className="px-4 py-3 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <div className="h-4 w-8 bg-gray-300 rounded"></div>
+        <div className="w-16 bg-gray-200 rounded-full h-1">
+          <div className="h-1 rounded-full w-10 bg-gray-300"></div>
+        </div>
+      </div>
+    </td>
+
+    {/* 12. Estado (Bank-Ready / Pendientes) */}
+    <td className="px-4 py-3 text-center">
+      <div className="flex flex-col items-center gap-1">
+        <div className="h-5 w-20 bg-gray-300 rounded"></div>
+        <div className="h-3 w-16 bg-gray-200 rounded"></div>
+      </div>
+    </td>
+  </tr>
+);
+
+// Componente que simula la carga de las 4 tarjetas de resumen
+export const SkeletonCardsHeader: React.FC = () => (
+  <>
+    {[1, 2, 3, 4].map((i) => (
+      <div key={i} className="bg-white rounded-lg shadow border-2 border-gray-200 p-4 relative animate-pulse">
+        {/* Botón de ayuda */}
+        <div className="absolute top-2 right-2 p-1 w-5 h-5 rounded-full bg-gray-300"></div>
+
+        {/* Etiqueta (Total Activos, CAPEX Total, etc.) */}
+        <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
+
+        {/* Valor Principal (2xl) */}
+        <div className="h-7 w-2/3 bg-gray-300 rounded mb-1"></div>
+
+        {/* Etiqueta Secundaria (xs) */}
+        <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+      </div>
+    ))}
+  </>
+);
+
+// Componente que simula el <tbody> con N filas de oportunidades
+export const SkeletonOpportunityTableBody: React.FC<{ rows: number }> = ({ rows }) => (
+  <tbody>
+    {Array.from({ length: rows }).map((_, i) => (
+      <SkeletonOpportunityRow key={i} />
+    ))}
+  </tbody>
+);
+
 // Skeleton para perfil de usuario con shimmer
 export const SkeletonUserProfile: React.FC = () => (
   <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between loading-transition">
@@ -217,38 +334,38 @@ export const SkeletonDashboardSummary: React.FC = () => (
     <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
       {/* Left Section - Metrics and Details */}
       <div className="flex-1 w-full lg:pr-6">
-         {/* Main Metrics Skeleton - Mobile Carousel, Desktop Grid */}
-         <div className="lg:grid lg:grid-cols-4 lg:gap-6 mb-4">
-           {/* Mobile Carousel Skeleton */}
-           <div className="lg:hidden">
-             <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
-               {[1, 2, 3, 4].map((i) => (
-                 <div key={i} className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
-                   <div className="text-center">
-                     <div className="h-8 w-20 bg-gray-200 rounded animate-pulse mb-1 mx-auto" />
-                     <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto" />
-                   </div>
-                 </div>
-               ))}
-             </div>
-           </div>
-           
-           {/* Desktop Grid Skeleton */}
-           <div className="hidden lg:contents">
-             {[1, 2, 3, 4].map((i) => (
-               <div key={i} className="text-center">
-                 <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1 mx-auto" />
-                 <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mx-auto" />
-               </div>
-             ))}
-           </div>
-         </div>
+        {/* Main Metrics Skeleton - Mobile Carousel, Desktop Grid */}
+        <div className="lg:grid lg:grid-cols-4 lg:gap-6 mb-4">
+          {/* Mobile Carousel Skeleton */}
+          <div className="lg:hidden">
+            <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-hide">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 snap-start shadow-sm">
+                  <div className="text-center">
+                    <div className="h-8 w-20 bg-gray-200 rounded animate-pulse mb-1 mx-auto" />
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mx-auto" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Grid Skeleton */}
+          <div className="hidden lg:contents">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="text-center">
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-1 mx-auto" />
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Separator Line */}
         <div className="border-t border-gray-200 mb-4"></div>
 
-         {/* Performance Details Skeleton */}
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Performance Details Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="text-center">
               <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-1 mx-auto" />
@@ -285,25 +402,25 @@ export const SkeletonSidebarBuildings: React.FC = () => (
   </div>
 );
 
-export const SkeletonButton: React.FC<{ 
+export const SkeletonButton: React.FC<{
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-}> = ({ 
-  size = 'md', 
-  className = '' 
+}> = ({
+  size = 'md',
+  className = ''
 }) => {
-  const sizeClasses = {
-    sm: 'h-8 w-20',
-    md: 'h-10 w-24',
-    lg: 'h-12 w-32'
-  };
+    const sizeClasses = {
+      sm: 'h-8 w-20',
+      md: 'h-10 w-24',
+      lg: 'h-12 w-32'
+    };
 
-  return (
-    <SkeletonBase 
-      className={`${sizeClasses[size]} rounded-lg ${className}`} 
-    />
-  );
-};
+    return (
+      <SkeletonBase
+        className={`${sizeClasses[size]} rounded-lg ${className}`}
+      />
+    );
+  };
 
 // Loading state para formularios
 export const FormLoader: React.FC<{ message?: string }> = ({ message = 'Procesando...' }) => (
@@ -344,34 +461,34 @@ export const useLoadingState = (initialLoading = false) => {
   };
 };
 
-export const LightSkeleton: React.FC<{ 
-  className?: string; 
+export const LightSkeleton: React.FC<{
+  className?: string;
   children?: React.ReactNode;
   animate?: boolean;
   shimmer?: boolean;
-}> = ({ 
-  className = '', 
-  children, 
+}> = ({
+  className = '',
+  children,
   animate = true,
   shimmer = false
 }) => (
-  <div 
-    className={` 
+    <div
+      className={` 
       skeleton-element
       ${shimmer ? 'skeleton-shimmer' : 'rounded-md'}
       ${animate && !shimmer ? 'animate-pulse' : ''} 
       ${className}
     `}
-    style={{
-      backgroundColor: !shimmer ? '#fafafa' : undefined,
-      animationDuration: animate ? '2.5s' : undefined,
-      animationTimingFunction: animate ? 'cubic-bezier(0.4, 0, 0.6, 1)' : undefined,
-      animationIterationCount: animate ? 'infinite' : undefined
-    }}
-  >
-    {children}
-  </div>
-);
+      style={{
+        backgroundColor: !shimmer ? '#fafafa' : undefined,
+        animationDuration: animate ? '2.5s' : undefined,
+        animationTimingFunction: animate ? 'cubic-bezier(0.4, 0, 0.6, 1)' : undefined,
+        animationIterationCount: animate ? 'infinite' : undefined
+      }}
+    >
+      {children}
+    </div>
+  );
 
 // skeleton para lista de usuarios
 export const SkeletonUsers: React.FC = () => (
@@ -395,12 +512,12 @@ export const SkeletonUsers: React.FC = () => (
     {/* Search + filters skeleton */}
     <div className="bg-gray-50 p-4 rounded-xl shadow-md border border-gray-100">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-          <div className="flex-1 min-w-0 flex items-center border border-gray-300 rounded-xl px-4 py-2 shadow-sm">
+        <div className="flex-1 min-w-0 flex items-center border border-gray-300 rounded-xl px-4 py-2 shadow-sm">
           <div className="w-5 h-5 mr-2 rounded bg-gray-300 animate-pulse" />
           <div className="h-4 w-full rounded bg-gray-300 animate-pulse" />
         </div>
 
-          <div className="flex gap-2 items-center w-full md:w-auto justify-between sm:justify-start flex-wrap">
+        <div className="flex gap-2 items-center w-full md:w-auto justify-between sm:justify-start flex-wrap">
           <div className="h-10 w-28 rounded-xl bg-gray-300 animate-pulse" />
           <div className="h-10 w-20 rounded-xl bg-gray-300 animate-pulse" />
           <div className="h-10 w-16 rounded-xl bg-gray-300 animate-pulse" />
@@ -411,44 +528,44 @@ export const SkeletonUsers: React.FC = () => (
     {/* Table skeleton */}
     <div className="bg-gray-50 rounded-xl shadow-md border border-gray-100 overflow-x-auto">
       <table className="min-w-full text-sm">
-      <thead>
-        <tr className="bg-gray-50 border-b text-left text-gray-600 uppercase tracking-wider">
-          <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
-          <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
-          <th className="p-4 font-semibold"><div className="h-4 w-32 rounded bg-gray-300 animate-pulse" /></th>
-          <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
-          <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
-          <th className="p-4 font-semibold text-center"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
-        </tr>
-      </thead>
-      <tbody>
-        {Array.from({ length: 6 }).map((_, index) => (
-          <tr key={index} className="border-b border-gray-100">
-              <td className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-300 animate-pulse" />
-              <div className="flex-1">
-                <div className="h-4 w-32 mb-2 rounded bg-gray-300 animate-pulse" />
-                <div className="h-3 w-20 rounded bg-gray-300 animate-pulse" />
-              </div>
-            </td>
-            <td className="p-4">
-              <div className="h-4 w-20 rounded bg-gray-300 animate-pulse" />
-            </td>
-            <td className="p-4">
-              <div className="h-4 w-48 rounded bg-gray-300 animate-pulse" />
-            </td>
-            <td className="p-4">
-              <div className="h-4 w-24 rounded bg-gray-300 animate-pulse" />
-            </td>
-            <td className="p-4">
-              <div className="h-4 w-28 rounded bg-gray-300 animate-pulse" />
-            </td>
-            <td className="p-4 text-center">
-              <div className="h-8 w-16 rounded-lg bg-gray-300 animate-pulse" />
-            </td>
+        <thead>
+          <tr className="bg-gray-50 border-b text-left text-gray-600 uppercase tracking-wider">
+            <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
+            <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
+            <th className="p-4 font-semibold"><div className="h-4 w-32 rounded bg-gray-300 animate-pulse" /></th>
+            <th className="p-4 font-semibold"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
+            <th className="p-4 font-semibold"><div className="h-4 w-24 rounded bg-gray-300 animate-pulse" /></th>
+            <th className="p-4 font-semibold text-center"><div className="h-4 w-20 rounded bg-gray-300 animate-pulse" /></th>
           </tr>
-        ))}
-      </tbody>  
+        </thead>
+        <tbody>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <tr key={index} className="border-b border-gray-100">
+              <td className="p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-300 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-4 w-32 mb-2 rounded bg-gray-300 animate-pulse" />
+                  <div className="h-3 w-20 rounded bg-gray-300 animate-pulse" />
+                </div>
+              </td>
+              <td className="p-4">
+                <div className="h-4 w-20 rounded bg-gray-300 animate-pulse" />
+              </td>
+              <td className="p-4">
+                <div className="h-4 w-48 rounded bg-gray-300 animate-pulse" />
+              </td>
+              <td className="p-4">
+                <div className="h-4 w-24 rounded bg-gray-300 animate-pulse" />
+              </td>
+              <td className="p-4">
+                <div className="h-4 w-28 rounded bg-gray-300 animate-pulse" />
+              </td>
+              <td className="p-4 text-center">
+                <div className="h-8 w-16 rounded-lg bg-gray-300 animate-pulse" />
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     </div>
   </div>

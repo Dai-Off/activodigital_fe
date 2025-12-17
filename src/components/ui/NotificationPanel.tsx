@@ -202,6 +202,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = () => {
               <div
                 key={notification.id}
                 onClick={() => handleMarkAsRead(notification)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleMarkAsRead(notification)}
+                role="button"
+                tabIndex={0}
                 className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
                   notification.status === "unread"
                     ? "bg-blue-50/30 border-l-2 border-l-blue-500"
