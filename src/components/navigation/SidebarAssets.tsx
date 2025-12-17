@@ -2,13 +2,14 @@ import {
   Building2,
   ChevronRight,
   Circle,
+  House,
   SlidersHorizontal,
   X,
 } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   BuildingsApiService,
   type Building,
@@ -103,8 +104,24 @@ export function SidebarAssets() {
     );
   };
 
+  const { pathname } = useLocation();
+  const menuItems = [
+    {
+      id: "assetslist",
+      label: "Listado de activos",
+      Icon: House,
+      route: "/assets/list",
+    },
+    {
+      id: "unitslist",
+      label: "Listado de unidades",
+      Icon: House,
+      route: "/assets/units",
+    },
+  ];
+
   return (
-    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="hidden px-3 lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <nav className="py-4">
         {/* Sección de Filtros */}
         <div className="px-3 mb-4">
@@ -185,7 +202,48 @@ export function SidebarAssets() {
             </div>
           )}
         </div>
+        {menuItems.map((item) => {
+          const isActive = pathname === item.route;
 
+          const buttonClasses = `
+              w-full px-3 py-3 rounded-md flex items-center gap-3 text-sm transition-colors
+              ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-50"
+              }
+            `;
+
+          return (
+            <div className="mb-1" key={item.id}>
+              <button
+                className={buttonClasses.trim()}
+                // Lógica modificada para el Panel Principal
+
+                onClick={() => {
+                  if (selectedBuildingId) {
+                    setSelectedBuildingId(null);
+                    setActiveSection(item.id);
+                    setViewMode("list");
+                    setActiveTab(item.id);
+                  }
+                  navigate(item.route);
+                }}
+              >
+                {/* El color del ícono también cambia */}
+                <item.Icon
+                  className={`w-4 h-4 ${
+                    isActive ? "text-white" : "text-gray-00"
+                  }`}
+                />
+                <span className="flex-1 text-left leading-relaxed">
+                  {item.label}
+                </span>
+              </button>
+            </div>
+          );
+        })}
+        <div className="my-4 border-t border-gray-200"></div>
         <div className="space-y-1.5 px-3">
           {/* Edificios */}
           {loading ? (
@@ -201,7 +259,7 @@ export function SidebarAssets() {
                   <button
                     onClick={() => toggleBuildingExpansion(building.id)}
                     className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${
-                      isSelected && activeSection === "todos"
+                      isSelected
                         ? "bg-blue-600 text-white shadow-sm"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -239,6 +297,26 @@ export function SidebarAssets() {
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
                           {t("generalView", "Vista General")}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("general-view");
+                          setActiveTab("general-view");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/general-view`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          selectedBuildingId === building.id &&
+                          activeSection === "general-view"
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("generalView", "Vista General") + " nueva"}
                         </span>
                       </button>
 
