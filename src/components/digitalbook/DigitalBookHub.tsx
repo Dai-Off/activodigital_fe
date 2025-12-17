@@ -749,6 +749,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                       }
                     `}
                       onClick={() => handleSectionClick(section.key)}
+                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleSectionClick(section.key)}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="p-4">
                         <div className="flex items-start gap-3">

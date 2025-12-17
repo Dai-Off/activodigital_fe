@@ -746,6 +746,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                     alt={img.alt || t('chatAI', 'Chat IA')}
                     className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                     onClick={() => setModalImage({ src: img.src, alt: img.alt })}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setModalImage({ src: img.src, alt: img.alt })}
+                    role="button"
+                    tabIndex={0}
                     style={{ maxWidth: 128, maxHeight: 128 }}
                   />
                   {img.alt && (
@@ -975,6 +978,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                             alt={m.imageAlt || t('chatAI', 'Chat IA')}
                             className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                             onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                            role="button"
+                            tabIndex={0}
                             style={{ maxWidth: 128, maxHeight: 128 }}
                           />
                           {m.imageAlt && (
@@ -1071,6 +1077,10 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             {/* Backdrop */}
             <div
               onClick={() => setIsChatOpen(false)}
+              onKeyDown={(e) => e.key === 'Escape' && setIsChatOpen(false)}
+              role="button"
+              tabIndex={0}
+              aria-label="Cerrar chat"
               className={`absolute inset-0 bg-black/30 transition-opacity ${isChatOpen ? 'opacity-100' : 'opacity-0'}`}
             />
 
@@ -1173,6 +1183,9 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                               alt={m.imageAlt || t('chatAI', 'Chat IA')}
                               className="w-32 h-32 object-cover block transition-transform group-hover:scale-105"
                               onClick={() => setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setModalImage({ src: m.imageSrc!, alt: m.imageAlt })}
+                              role="button"
+                              tabIndex={0}
                               style={{ maxWidth: 128, maxHeight: 128 }}
                             />
                           {m.imageAlt && (
@@ -1241,7 +1254,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             <div
               className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 cursor-zoom-out animate-fadeIn"
               onClick={() => setModalImage(null)}
-              tabIndex={-1}
+              onKeyDown={(e) => e.key === 'Escape' && setModalImage(null)}
+              tabIndex={0}
               aria-modal="true"
               role="dialog"
             >
@@ -1250,6 +1264,8 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 alt={modalImage.alt || t('chatAI', 'Chat IA')}
                 className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl border-4 border-white"
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="presentation"
               />
               <button
                 className="absolute top-6 right-6 text-white bg-black/60 rounded-full p-2 hover:bg-black/80 focus:outline-none"

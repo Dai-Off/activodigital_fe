@@ -2078,6 +2078,10 @@ const BuildingDetail: React.FC = () => {
           <div
             className="absolute inset-0 bg-black/40"
             onClick={handleCloseUpload}
+            onKeyDown={(e) => e.key === 'Escape' && handleCloseUpload()}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
           />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
@@ -2430,6 +2434,10 @@ const BuildingDetail: React.FC = () => {
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowImageManager(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setShowImageManager(false)}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
           />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
@@ -2475,6 +2483,10 @@ const BuildingDetail: React.FC = () => {
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setSelectedCertificateForView(null)}
+            onKeyDown={(e) => e.key === 'Escape' && setSelectedCertificateForView(null)}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
           />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between shrink-0">
@@ -2732,6 +2744,10 @@ const BuildingDetail: React.FC = () => {
           <div
             className="absolute inset-0 bg-black/40"
             onClick={cancelDeleteCertificate}
+            onKeyDown={(e) => e.key === 'Escape' && cancelDeleteCertificate()}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
           />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-6">

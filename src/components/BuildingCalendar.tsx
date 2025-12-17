@@ -161,9 +161,10 @@ export function BuildingCalendar() {
     "all"
   );
 
-  if (!buildingId) return "No se encontró un edificio";
-
+  // Hooks must be called before any conditional returns
   useEffect(() => {
+    if (!buildingId) return;
+    
     const fetchEvents = async () => {
       try {
         setLoading(true);
@@ -179,8 +180,6 @@ export function BuildingCalendar() {
     };
     fetchEvents();
   }, [buildingId]);
-
-  const urgentCount = events.filter((e) => e.priority === "urgent").length;
 
   const filteredEvents = useMemo(() => {
     return filterCategory === "all"
@@ -208,6 +207,10 @@ export function BuildingCalendar() {
     return groups;
   }, [filteredEvents]);
 
+  const urgentCount = events.filter((e) => e.priority === "urgent").length;
+
+  // Conditional returns after all hooks
+  if (!buildingId) return "No se encontró un edificio";
   if (loading) return <BuildingCalendarLoading />;
 
   return (

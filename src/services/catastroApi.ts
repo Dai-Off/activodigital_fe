@@ -562,16 +562,10 @@ export class CatastroApiService {
       const x = typeof inmueble.x === 'string' ? parseFloat(inmueble.x) : inmueble.x;
       const y = typeof inmueble.y === 'string' ? parseFloat(inmueble.y) : inmueble.y;
       
-      // Si x está en rango de longitud (-180 a 180) y y en rango de latitud (-90 a 90)
-      // asumimos que ya son coordenadas geográficas
-      if (x >= -180 && x <= 180 && y >= -90 && y <= 90) {
-        lng = x;
-        lat = y;
-      } else {
-        // Podrían ser UTM o otro sistema - por ahora las usamos como están
-        lng = x;
-        lat = y;
-      }
+      // Asignamos las coordenadas tal como vienen
+      // Podrían ser coordenadas geográficas o UTM/otro sistema
+      lng = x;
+      lat = y;
     } else if (inmueble.coordenadas) {
       // Si viene como objeto coordenadas
       const coords = inmueble.coordenadas;

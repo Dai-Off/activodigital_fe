@@ -59,6 +59,10 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
           width: 'calc(100% - 64px)'
         }}
         onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        role="button"
+        tabIndex={0}
+        aria-label="Cerrar modal"
         onWheel={(e) => e.preventDefault()}
         onTouchMove={(e) => e.preventDefault()}
       />

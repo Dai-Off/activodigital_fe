@@ -166,6 +166,9 @@ const SectionsList: React.FC<SectionsListProps> = ({
             key={section.id}
             className="p-6 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
             onClick={() => handleSectionClick(section.id)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleSectionClick(section.id)}
+            role="button"
+            tabIndex={0}
           >
             <div className="flex items-center justify-between">
               {/* Contenido de la sección */}
