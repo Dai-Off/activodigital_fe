@@ -160,7 +160,14 @@ const AIProcessingModal: React.FC<AIProcessingModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50" 
+          onClick={onClose}
+          onKeyDown={(e) => e.key === 'Escape' && onClose()}
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar modal"
+        ></div>
         
         <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full">
           {/* Header */}

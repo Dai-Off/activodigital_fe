@@ -113,8 +113,8 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
 
   return (
     <>
-      {data?.length &&
-        data?.map((value, idx) => (
+      {data && data.length > 0 &&
+        data.map((value, idx) => (
           <tr
             key={idx}
             className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors"
@@ -488,7 +488,12 @@ export function OpportunityRadar() {
   const pendientes = summary?.total_activos - (summary?.bankReady || 0);
 
   return (
-    <div onClick={closeAllHelpers} className="max-w-[1800px] mx-auto space-y-6">
+    <div 
+      onClick={closeAllHelpers} 
+      onKeyDown={(e) => e.key === 'Escape' && closeAllHelpers()}
+      role="presentation"
+      className="max-w-[1800px] mx-auto space-y-6"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white p-3 rounded-xl shadow-lg">

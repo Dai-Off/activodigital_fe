@@ -438,6 +438,9 @@ export default function App() {
                           key={u.id}
                           className={`p-4 transition-colors cursor-pointer ${selectedUserId === u.id ? 'bg-blue-50 shadow-inner' : 'hover:bg-gray-50'}`}
                           onClick={() => setSelectedUserId(u.id)}
+                          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSelectedUserId(u.id)}
+                          role="button"
+                          tabIndex={0}
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-3">

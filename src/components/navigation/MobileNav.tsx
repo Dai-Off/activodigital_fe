@@ -75,7 +75,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         })
         .filter(Boolean)
     );
-    return Array.from(uniqueCities).sort();
+    return Array.from(uniqueCities).sort((a, b) => a.localeCompare(b));
   }, [buildings]);
 
   // Aplicar filtros

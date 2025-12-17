@@ -75,7 +75,12 @@ export const LandingHeader = memo(function Header() {
         style={{ transitionDelay: '0.15s', transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
         >
           {/* Language Selector */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="relative" 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()}
+            role="presentation"
+          >
             <Button 
               variant="ghost"
               onClick={(e) => { e.stopPropagation(); setShowLangMenu(!showLangMenu); }}

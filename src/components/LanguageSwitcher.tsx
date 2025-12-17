@@ -26,7 +26,12 @@ const LanguageSwitcher = () => {
   };
 
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="relative" 
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.key === 'Escape' && e.stopPropagation()}
+      role="presentation"
+    >
       <button
         onClick={(e) => { e.stopPropagation(); setShowLangMenu(!showLangMenu); }}
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 transition-colors hover:bg-blue-50"
