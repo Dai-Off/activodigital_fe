@@ -7,7 +7,17 @@ export type EventCategory =
   | "audit"
   | "operations"
   | "contract"
-  | "general";
+  | "general"
+  | "inspections"
+  | "meeting"
+  | "expiration";
+
+export type EventExecution =
+  | "scheduled"
+  | "urgent"
+  | "pending"
+  | "confirmed"
+  | "refused";
 
 export interface BuildingEvent {
   id: string;
@@ -15,9 +25,11 @@ export interface BuildingEvent {
   title: string;
   description?: string;
   eventDate: string; // ISO String
+  buildingName: string,
   category: EventCategory;
   priority: EventPriority;
   status: EventStatus;
+  execution?: EventExecution;
   relatedAsset?: string;
   createdAt: string;
 }
