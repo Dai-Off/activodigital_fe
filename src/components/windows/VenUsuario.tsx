@@ -72,6 +72,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
     ) => {
       const value =
         e.target.name === "status" ? e.target.value === "true" : e.target.value;
+        
       setForm({ ...form, [e.target.name]: value });
       setErrors((errs) => ({ ...errs, [e.target.name]: undefined }));
     };

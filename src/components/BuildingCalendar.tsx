@@ -19,6 +19,7 @@ import {
   Building2,
   Users,
   Lightbulb,
+  ClockIcon,
 } from "lucide-react";
 import { BuildingCalendarLoading } from "./ui/dashboardLoading";
 
@@ -57,6 +58,9 @@ const getCategoryIcon = (category: EventCategory) => {
     case "general":
       // Usaremos Users para simular una reunión de la comunidad/junta
       return <Users className="w-3.5 h-3.5 text-teal-600" />;
+    case "expiration":
+      // Usaremos Users para simular una reunión de la comunidad/junta
+      return <ClockIcon className="w-4 h-4 text-red-600" />;
     default:
       return <ClipboardList className="w-3.5 h-3.5 text-gray-600" />;
   }
@@ -74,6 +78,8 @@ const getCategoryBg = (category: EventCategory) => {
       return "bg-green-100";
     case "general":
       return "bg-teal-100";
+    case "expiration":
+      return "bg-red-100";
     default:
       return "bg-gray-100";
   }
@@ -119,6 +125,9 @@ const EventBadges = ({ priority, status, category }: EventBadgesProps) => {
     audit: "Regulatorio", // O Financiero/Técnico, lo dejaremos en Regulatorio por defecto
     operations: "Operativo",
     general: "Administrativo",
+    expiration: "Vencimiento",
+    inspections: "Inspección",
+    meeting: "Reunión",
   }[category];
 
   // Estilos base para la etiqueta secundaria
@@ -164,7 +173,7 @@ export function BuildingCalendar() {
   // Hooks must be called before any conditional returns
   useEffect(() => {
     if (!buildingId) return;
-    
+
     const fetchEvents = async () => {
       try {
         setLoading(true);
@@ -259,11 +268,10 @@ export function BuildingCalendar() {
               onClick={() =>
                 setFilterCategory(filter.id as EventCategory | "all")
               }
-              className={`px-2 py-1 text-xs rounded transition-colors whitespace-nowrap ${
-                filterCategory === filter.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`px-2 py-1 text-xs rounded transition-colors whitespace-nowrap ${filterCategory === filter.id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               {filter.label} (
               {filter.id === "all"
