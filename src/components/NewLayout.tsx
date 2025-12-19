@@ -145,6 +145,7 @@ function NewLayoutContent() {
       location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-") ||
       location.pathname.startsWith("/users") ||
+      location.pathname.startsWith("/events") ||
       location.pathname.startsWith("/buildings/crear") ||
       location.pathname.startsWith("/mantenimiento") ||
       location.pathname.startsWith("/cumplimiento") ||
@@ -179,7 +180,7 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ["assets", "dashboard", "users"];
+  const modulesWithSecondaryNav = ["assets", "dashboard", "users", "events"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
   // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
   // Incluir rutas relacionadas con edificios: digital-book, cfo-intake, etc.
@@ -187,6 +188,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/building/") ||
     location.pathname.startsWith("/digital-book") ||
     location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/events") ||
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname === "/assets";
 

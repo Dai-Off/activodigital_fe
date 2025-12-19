@@ -52,6 +52,7 @@ import { BuildingRent } from "~/components/BuildingRent";
 import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency";
 import { BuildingMaintenance } from "~/components/BuildingMaintenance";
 import { BuildingCalendar } from "~/components/BuildingCalendar";
+import { Events } from "~/components/Events";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -166,6 +167,16 @@ export const AppRouter = () => {
             <ProtectedRoute>
               <ErrorBoundary>
                 <Users />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Events />
               </ErrorBoundary>
             </ProtectedRoute>
           }
