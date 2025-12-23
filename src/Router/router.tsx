@@ -52,6 +52,7 @@ import { BuildingRent } from "~/components/BuildingRent";
 import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency";
 import { BuildingMaintenance } from "~/components/BuildingMaintenance";
 import { BuildingCalendar } from "~/components/BuildingCalendar";
+import { BuildingGestion } from "~/components/BuildingGestion";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -310,6 +311,16 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <BuildingAnalysisGeneral />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/gestion"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <BuildingGestion />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />

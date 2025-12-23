@@ -6,7 +6,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useLayoutEffect } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -58,6 +58,44 @@ export function SidebarAssets() {
     }
   }, [selectedBuildingId, expandedBuildings]);
 
+  const { pathname } = useLocation();
+
+  // Sincronizar activeSection y selectedBuildingId con la ruta actual
+  // Usamos useLayoutEffect para que se ejecute de forma síncrona antes del render
+  useLayoutEffect(() => {
+    // Detectar rutas de edificios
+    const buildingRouteMatch = pathname.match(/^\/building\/([^/]+)(?:\/(.+))?$/);
+    if (buildingRouteMatch) {
+      const buildingId = buildingRouteMatch[1];
+      const subRoute = buildingRouteMatch[2];
+      
+      // Determinar qué activeSection debería ser según la ruta
+      let expectedSection = "";
+      if (subRoute === "gestion") {
+        expectedSection = "gestion";
+      } else if (subRoute === "analysis-general") {
+        expectedSection = "analisis";
+      } else if (subRoute === "general-view") {
+        expectedSection = "general-view";
+      } else if (!subRoute || subRoute === "") {
+        expectedSection = "todos";
+      }
+      
+      // FORZAR la actualización del estado basándose SOLO en la ruta
+      // No verificamos el estado actual para evitar problemas de sincronización
+      if (expectedSection) {
+        // Actualizar el estado basándonos SOLO en la ruta
+        setActiveSection(expectedSection);
+        setActiveTab(expectedSection);
+        setViewMode("detail");
+      }
+      
+      // Establecer selectedBuildingId
+      setSelectedBuildingId(buildingId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]); // Solo dependemos de pathname para evitar loops
+
   // Obtener lista única de ciudades para el filtro
   const cities = useMemo(() => {
     const uniqueCities = new Set(
@@ -104,7 +142,6 @@ export function SidebarAssets() {
     );
   };
 
-  const { pathname } = useLocation();
   const menuItems = [
     {
       id: "assetslist",
@@ -339,6 +376,28 @@ export function SidebarAssets() {
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
                           {t("generalAnalysis", "Análisis general")}
+                        </span>
+                      </button>
+
+                      {/* Gestión */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("gestion");
+                          setActiveTab("gestion");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/gestion`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          selectedBuildingId === building.id &&
+                          activeSection === "gestion"
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("gestion", "Gestión")}
                         </span>
                       </button>
                     </div>

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   ArrowUpRight,
   Bell,
@@ -28,6 +30,10 @@ import {
 } from "lucide-react";
 import { Chevron } from "react-day-picker";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import {
+  ServiceInvoicesService,
+  type MonthlyServiceCosts,
+} from "~/services/serviceInvoices";
 
 export function BuildingGeneralView() {
   interface ChartData {
@@ -36,6 +42,14 @@ export function BuildingGeneralView() {
     color: string;
     [key: string]: any;
   }
+
+  const { id: buildingId } = useParams<{ id: string }>();
+
+  const [monthlyCosts, setMonthlyCosts] = useState<MonthlyServiceCosts | null>(
+    null
+  );
+  const [loadingCosts, setLoadingCosts] = useState(false);
+  const [costsError, setCostsError] = useState<string | null>(null);
 
   const data: ChartData[] = [
     { name: "Sector A", value: 400, color: "#10b981" }, // Verde
@@ -48,6 +62,42 @@ export function BuildingGeneralView() {
   const outerRadius = 50; // 50px
 
   const COLORS = data.map((d) => d.color);
+
+  const formatCurrency = (value: number | undefined) => {
+    if (!value || Number.isNaN(value)) return "€0";
+    return `€${value.toLocaleString("es-ES", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  };
+
+  const totalMonth = monthlyCosts?.total ?? 0;
+  const estimatedYearTotal = totalMonth * 12;
+
+  useEffect(() => {
+    if (!buildingId) return;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // 1-12
+
+    setLoadingCosts(true);
+    setCostsError(null);
+
+    ServiceInvoicesService.getMonthlyCostsForBuilding(buildingId, year, month)
+      .then((costs) => {
+        setMonthlyCosts(costs);
+      })
+      .catch((error: unknown) => {
+        console.error("Error cargando costes mensuales:", error);
+        setCostsError(
+          "No se pudieron cargar los costes mensuales. Inténtalo más tarde."
+        );
+      })
+      .finally(() => {
+        setLoadingCosts(false);
+      });
+  }, [buildingId]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -530,13 +580,30 @@ export function BuildingGeneralView() {
                 <h3 className="text-xs text-black">Costes Mensuales</h3>
               </div>
               <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[11px] text-gray-500">
+                    Basado en las facturas de servicios registradas
+                  </p>
+                  {loadingCosts && (
+                    <span className="text-[11px] text-gray-500">
+                      Cargando...
+                    </span>
+                  )}
+                </div>
+                {costsError && (
+                  <div className="mb-2 rounded border border-red-200 bg-red-50 px-2 py-1">
+                    <p className="text-[11px] text-red-700">{costsError}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-6 gap-1.5 mb-2">
                   <div className="p-1.5 border border-blue-200 bg-blue-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Zap className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">Electricidad</p>
                     </div>
-                    <p className="text-xs text-blue-700">€1850</p>
+                    <p className="text-xs text-blue-700">
+                      {formatCurrency(monthlyCosts?.byService.electricity)}
+                    </p>
                     <p className="text-xs text-blue-600">Edificio</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
@@ -544,7 +611,9 @@ export function BuildingGeneralView() {
                       <Droplet className="w-3 h-3 text-cyan-600" />
                       <p className="text-xs text-cyan-900">Agua</p>
                     </div>
-                    <p className="text-xs text-cyan-700">€1005</p>
+                    <p className="text-xs text-cyan-700">
+                      {formatCurrency(monthlyCosts?.byService.water)}
+                    </p>
                     <p className="text-xs text-cyan-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
@@ -552,7 +621,9 @@ export function BuildingGeneralView() {
                       <Flame className="w-3 h-3 text-orange-600" />
                       <p className="text-xs text-orange-900">Gas</p>
                     </div>
-                    <p className="text-xs text-orange-700">€95</p>
+                    <p className="text-xs text-orange-700">
+                      {formatCurrency(monthlyCosts?.byService.gas)}
+                    </p>
                     <p className="text-xs text-orange-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
@@ -560,7 +631,9 @@ export function BuildingGeneralView() {
                       <FileText className="w-3 h-3 text-purple-600" />
                       <p className="text-xs text-purple-900">IBI</p>
                     </div>
-                    <p className="text-xs text-purple-700">€562</p>
+                    <p className="text-xs text-purple-700">
+                      {formatCurrency(monthlyCosts?.byService.ibi)}
+                    </p>
                     <p className="text-xs text-purple-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
@@ -568,7 +641,9 @@ export function BuildingGeneralView() {
                       <Trash2 className="w-3 h-3 text-amber-600" />
                       <p className="text-xs text-amber-900">Basuras</p>
                     </div>
-                    <p className="text-xs text-amber-700">€107</p>
+                    <p className="text-xs text-amber-700">
+                      {formatCurrency(monthlyCosts?.byService.waste)}
+                    </p>
                     <p className="text-xs text-amber-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
@@ -576,8 +651,12 @@ export function BuildingGeneralView() {
                       <Euro className="w-3 h-3 text-green-600" />
                       <p className="text-xs text-green-900">Total</p>
                     </div>
-                    <p className="text-xs text-green-800">€3619</p>
-                    <p className="text-xs text-green-700">€43.428/año</p>
+                    <p className="text-xs text-green-800">
+                      {formatCurrency(totalMonth)}
+                    </p>
+                    <p className="text-xs text-green-700">
+                      {formatCurrency(estimatedYearTotal)}/año
+                    </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -594,27 +673,39 @@ export function BuildingGeneralView() {
                           <Zap className="w-3 h-3 text-blue-600" />
                           <span className="text-gray-700">Electricidad</span>
                         </div>
-                        <span className="text-gray-900">€1850</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.electricity)}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Droplet className="w-3 h-3 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€420</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.water)}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-3 h-3 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€0</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.gas)}
+                        </span>
                       </div>
                       <div className="pt-1 mt-1 border-t border-purple-300 flex items-center justify-between">
                         <span className="text-xs text-purple-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-purple-800">€2270</span>
+                        <span className="text-xs text-purple-800">
+                          {formatCurrency(
+                            (monthlyCosts?.byService.electricity ?? 0) +
+                              (monthlyCosts?.byService.water ?? 0) +
+                              (monthlyCosts?.byService.gas ?? 0)
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -629,34 +720,49 @@ export function BuildingGeneralView() {
                           <Droplet className="w-3 h-3 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€585</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.water)}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-3 h-3 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€95</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.gas)}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <FileText className="w-3 h-3 text-purple-600" />
                           <span className="text-gray-700">IBI</span>
                         </div>
-                        <span className="text-gray-900">€562</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.ibi)}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Trash2 className="w-3 h-3 text-amber-600" />
                           <span className="text-gray-700">Basuras</span>
                         </div>
-                        <span className="text-gray-900">€107</span>
+                        <span className="text-gray-900">
+                          {formatCurrency(monthlyCosts?.byService.waste)}
+                        </span>
                       </div>
                       <div className="pt-1 mt-1 border-t border-indigo-300 flex items-center justify-between">
                         <span className="text-xs text-indigo-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-indigo-800">€1349</span>
+                        <span className="text-xs text-indigo-800">
+                          {formatCurrency(
+                            (monthlyCosts?.byService.water ?? 0) +
+                              (monthlyCosts?.byService.gas ?? 0) +
+                              (monthlyCosts?.byService.ibi ?? 0) +
+                              (monthlyCosts?.byService.waste ?? 0)
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>

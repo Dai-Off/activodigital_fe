@@ -113,12 +113,18 @@ function NewLayoutContent() {
         if (activeSection !== "general-view") {
           setActiveSection("general-view");
         }
+      } else if (location.pathname.includes("/gestion")) {
+        // Ruta de gestión
+        if (activeSection !== "gestion") {
+          setActiveSection("gestion");
+        }
       } else if (
         location.pathname.startsWith("/building/") &&
         !location.pathname.includes("/analysis-general") &&
         !location.pathname.includes("/units") &&
         !location.pathname.includes("/documents") &&
-        !location.pathname.includes("/general-view")
+        !location.pathname.includes("/general-view") &&
+        !location.pathname.includes("/gestion")
       ) {
         // Ruta de detalle de edificio (vista general)
         if (activeSection !== "todos") {
