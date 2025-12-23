@@ -1,12 +1,5 @@
+import type { UserFormData } from "~/components/windows/VenUsuario";
 import { apiFetch } from "./api";
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export interface Role {
   id: string;
@@ -28,7 +21,8 @@ export async function getAllUsers() {
   return apiFetch('/users/all-users', { method: 'GET' });
 }
 
-export async function editUser(id: string, data: any) {
+export async function editUser(id: string, data: UserFormData) {
+  console.log(data)
   return apiFetch(`/users/edit/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),

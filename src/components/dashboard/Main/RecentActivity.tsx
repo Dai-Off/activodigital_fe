@@ -59,7 +59,7 @@ export function RecentActivity() {
       'GENERAR INFORMES': 4,
       'PROGRAMAR EVENTOS': 5,
       ALERTAS: 6,
-      'ACTUALIZAR LIBRE DEL EDIFICIO': 7,
+      'ACTUALIZAR LIBRO DEL EDIFICIO': 7,
       'APROBAR PRESUPUESTO': 8,
       'ACTUALIZAR DATOS FINANCIEROS': 9,
       'COMPLETAR INSPECCION ELECTRICA': 10,
@@ -242,7 +242,7 @@ export function RecentActivity() {
                 key={idx}
                 type={getActivityNumber(act.action || '')}
                 date={act.createdAt}
-                nameBuilding={act.building?.name || 'Edificio Desconocido'}
+                nameBuilding={act.building?.name || ''}
                 nameUser={act?.user?.fullName || 'Usuario Desconocido'}
                 title={act.description || 'Actividad sin descripción'}
               />

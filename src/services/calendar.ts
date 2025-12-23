@@ -15,6 +15,14 @@ export interface EventListResponse {
 
 export class CalendarApiService {
   /** 1. GET /calendar/events: Obtiene la lista de eventos de un edificio con filtros. */
+  async getAllEvents(): Promise<EventListResponse> {
+    const response = await apiFetch(`/calendar/all`, {
+      method: "GET",
+    });
+
+    return response;
+  }
+
   async getBuildingEvents(
     buildingId: string,
     filters: EventFilters = {}
