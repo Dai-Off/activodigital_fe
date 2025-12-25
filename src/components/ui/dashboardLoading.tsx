@@ -743,6 +743,266 @@ function PolicyCardSkeleton() {
   );
 }
 
+// Skeleton para Vista General del edificio
+export function BuildingGeneralViewLoading() {
+  return (
+    <div className="flex-1 overflow-y-auto mt-2 pr-1">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Columna izquierda */}
+          <div className="space-y-3">
+            {/* Galería de Imágenes */}
+            <div className="bg-white rounded-lg p-2 shadow-sm">
+              <div className="h-3 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+              <div className="relative w-full h-[140px] bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Info General */}
+            <div>
+              <div className="h-3 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+              <div className="grid grid-cols-3 gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-sm p-3">
+                    <div className="h-3 w-24 bg-gray-200 rounded mb-2 animate-pulse" />
+                    <div className="space-y-1.5">
+                      {[1, 2, 3].map((j) => (
+                        <div
+                          key={j}
+                          className="h-3 w-full bg-gray-100 rounded animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Columna derecha - Identificación */}
+          <div className="flex flex-col">
+            <div className="h-3 w-40 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="grid grid-cols-2 gap-2 flex-1">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm p-2">
+                  <div className="h-3 w-20 bg-gray-200 rounded mb-2 animate-pulse" />
+                  <div className="space-y-1.5">
+                    {[1, 2, 3].map((j) => (
+                      <div
+                        key={j}
+                        className="h-3 w-full bg-gray-100 rounded animate-pulse"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Estado Técnico y Costes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Estado Técnico */}
+          <div>
+            <div className="h-3 w-24 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="space-y-2">
+              {/* Libro del Edificio */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded p-2">
+                <div className="h-3 w-32 bg-blue-500/50 rounded mb-1 animate-pulse" />
+                <div className="h-3 w-40 bg-blue-500/50 rounded animate-pulse" />
+              </div>
+              {/* Certificados */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded p-2">
+                <div className="h-3 w-36 bg-blue-500/50 rounded mb-1 animate-pulse" />
+                <div className="h-3 w-32 bg-blue-500/50 rounded animate-pulse" />
+              </div>
+              {/* Mantenimiento */}
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="h-3 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="h-[120px] bg-gray-100 rounded animate-pulse mb-2" />
+                <div className="grid grid-cols-2 gap-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="h-3 w-full bg-gray-100 rounded animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Costes Mensuales */}
+          <div className="flex flex-col">
+            <div className="h-3 w-28 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="bg-white rounded-lg p-2 shadow-sm flex-1">
+              <div className="grid grid-cols-6 gap-1.5 mb-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="p-1.5 bg-gray-100 rounded">
+                    <div className="h-3 w-full bg-gray-200 rounded mb-1 animate-pulse" />
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[1, 2].map((i) => (
+                  <div key={i} className="p-1.5 bg-gray-100 rounded">
+                    <div className="space-y-0.5">
+                      {[1, 2, 3].map((j) => (
+                        <div
+                          key={j}
+                          className="h-3 w-full bg-gray-200 rounded animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Auditoría y Rentas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Auditoría */}
+          <div>
+            <div className="h-3 w-20 bg-gray-200 rounded mb-2 animate-pulse" />
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow-sm p-2">
+                  <div className="h-3 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+                  <div className="space-y-1.5">
+                    {[1, 2, 3].map((j) => (
+                      <div
+                        key={j}
+                        className="h-3 w-full bg-gray-100 rounded animate-pulse"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Rentas y Calendario */}
+          <div className="space-y-3">
+            <div>
+              <div className="h-3 w-16 bg-gray-200 rounded mb-2 animate-pulse" />
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="h-3 w-20 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-12 bg-gray-100 rounded animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="h-3 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-8 bg-gray-100 rounded animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton para Eficiencia Energética del edificio
+export function BuildingEnergyEfficiencyLoading() {
+  return (
+    <div className="flex-1 overflow-hidden mt-2">
+      <div className="h-full flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Columna izquierda */}
+            <div className="space-y-2">
+              {/* Eficiencia Energética Card */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-3 animate-pulse" />
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-2 bg-gray-50 rounded">
+                      <div className="h-3 w-16 bg-gray-200 rounded mb-2 animate-pulse" />
+                      <div className="h-8 w-full bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cumplimiento Card */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="h-4 w-40 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                  <div className="h-2 w-full bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+
+              {/* Libro del Edificio Card */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="space-y-1.5">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-3 w-full bg-gray-100 rounded animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Columna derecha */}
+            <div className="space-y-2">
+              {/* Estado de la Sección Card */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="space-y-1.5">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="flex justify-between">
+                      <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Oportunidades de Mejora Card */}
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="h-4 w-40 bg-gray-200 rounded mb-2 animate-pulse" />
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="w-5 h-5 bg-gray-200 rounded-full animate-pulse" />
+                      <div className="flex-1 space-y-1">
+                        <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Mantener compatibilidad con el nombre anterior
 export function DashboardLoading() {
   return <MainPanelLoading />;

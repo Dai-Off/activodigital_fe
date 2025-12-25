@@ -1,3 +1,14 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "~/contexts/ToastContext";
+import { BuildingsApiService, type Building } from "~/services/buildingsApi";
+import { getBookByBuilding, type DigitalBook } from "~/services/digitalbook";
+import {
+  calculateESGScore,
+  getESGScore,
+  type ESGResponse,
+} from "~/services/esg";
+import { FinancialSnapshotsService } from "~/services/financialSnapshots";
 import {
   ArrowUpRight,
   Bell,
@@ -27,8 +38,162 @@ import {
   Zap,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
 
 export function BuildingGeneralView() {
+  // Hooks de navegación y notificaciones
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { showError } = useToast();
+
+  // Estado para datos del edificio
+  const [loading, setLoading] = useState(true);
+  const [building, setBuilding] = useState<Building | null>(null);
+  const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
+  const [_esgData, setEsgData] = useState<ESGResponse | null>(null);
+  const [_esgLoading, setEsgLoading] = useState(false);
+  const [_hasFinancialData, setHasFinancialData] = useState<boolean | null>(
+    null
+  );
+  const [_currentImageIndex, _setCurrentImageIndex] = useState(0);
+
+  // Función para cargar datos ESG - Ready to use when needed
+  /*
+  const loadESGData = async () => {
+    const buildingId = building?.id || id;
+    if (!buildingId) return;
+
+    setEsgLoading(true);
+    try {
+      const esgResponse = await calculateESGScore(buildingId);
+      setEsgData(esgResponse);
+    } catch (error) {
+      console.error("Error cargando ESG:", error);
+      try {
+        const savedESG = await getESGScore(buildingId);
+        setEsgData(savedESG);
+      } catch {
+        setEsgData(null);
+      }
+    } finally {
+      setEsgLoading(false);
+    }
+  };
+  */
+
+  // Función para crear libro digital
+  const handleCreateDigitalBook = async () => {
+    if (!building?.id) return;
+
+    try {
+      const { getOrCreateBookForBuilding } = await import(
+        "~/services/digitalbook"
+      );
+      const createdBook = await getOrCreateBookForBuilding(building.id);
+      setDigitalBook(createdBook);
+      navigate(`/digital-book/hub/${building.id}`, {
+        state: {
+          buildingId: building.id,
+          buildingName: building.name,
+          isNewBook: true,
+        },
+      });
+    } catch (error) {
+      showError("Error al crear el libro del edificio");
+    }
+  };
+
+  // Función para ver libro digital
+  const handleViewDigitalBook = () => {
+    if (!building?.id) return;
+    navigate(`/digital-book/hub/${building.id}`, {
+      state: {
+        buildingId: building.id,
+        buildingName: building.name,
+        isNewBook: false,
+      },
+    });
+  };
+
+  // Función para navegar a datos financieros - Ready to use when needed
+  /*
+  const handleFinancialData = () => {
+    if (!building?.id) return;
+    if (hasFinancialData) {
+      navigate(`/cfo-due-diligence/${building.id}`);
+    } else {
+      navigate(`/cfo-intake/${building.id}`);
+    }
+  };
+  */
+
+  // Cargar datos del edificio al montar
+  useEffect(() => {
+    const loadBuilding = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        const buildingData = await BuildingsApiService.getBuildingById(id);
+        setBuilding(buildingData);
+
+        // Cargar libro digital si existe
+        try {
+          const book = await getBookByBuilding(id);
+          setDigitalBook(book);
+        } catch (e) {
+          setDigitalBook(null);
+        }
+
+        // Cargar datos financieros
+        try {
+          const snapshots =
+            await FinancialSnapshotsService.getFinancialSnapshots(
+              buildingData.id
+            );
+          setHasFinancialData(snapshots && snapshots.length > 0);
+        } catch (error) {
+          console.error("Error cargando datos financieros:", error);
+          setHasFinancialData(false);
+        }
+
+        // Cargar datos ESG
+        setEsgLoading(true);
+        try {
+          const esgResponse = await calculateESGScore(buildingData.id);
+          setEsgData(esgResponse);
+        } catch (error) {
+          console.error("Error cargando ESG:", error);
+          try {
+            const savedESG = await getESGScore(buildingData.id);
+            setEsgData(savedESG);
+          } catch {
+            setEsgData(null);
+          }
+        } finally {
+          setEsgLoading(false);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        showError(
+          "Error al cargar edificio",
+          "No se pudo cargar la información del edificio"
+        );
+        navigate("/assets");
+        setLoading(false);
+      }
+    };
+
+    loadBuilding();
+  }, [id, navigate, showError]);
+
+  // Mostrar skeleton mientras carga
+  if (loading) {
+    return <BuildingGeneralViewLoading />;
+  }
+
+  // Datos para el gráfico (mantener hardcodeados)
   interface ChartData {
     name: string;
     value: number;
@@ -284,9 +449,16 @@ export function BuildingGeneralView() {
                       </p>
                     </div>
                   </div>
-                  <button className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7">
+                  <button
+                    onClick={
+                      digitalBook
+                        ? handleViewDigitalBook
+                        : handleCreateDigitalBook
+                    }
+                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                  >
                     <Eye className="w-3 h-3" />
-                    Ver Libro
+                    {digitalBook ? "Ver Libro" : "Crear Libro"}
                   </button>
                 </div>
               </div>
@@ -305,7 +477,12 @@ export function BuildingGeneralView() {
                       </p>
                     </div>
                   </div>
-                  <button className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7">
+                  <button
+                    onClick={() =>
+                      navigate(`/building/${id}/general-view/certificates`)
+                    }
+                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                  >
                     <Eye className="w-3 h-3" />
                     Ver Certificados
                   </button>
