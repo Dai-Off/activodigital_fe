@@ -811,6 +811,7 @@ function UploadModal({
                 acceptedTypes={["image/*", "application/pdf"]}
                 multiple={false}
                 maxFiles={1}
+                maxSizeInMB={10}
                 label="Arrastra el certificado energético aquí o haz clic para seleccionar"
               />
 

@@ -64,11 +64,13 @@ export function SidebarAssets() {
   // Usamos useLayoutEffect para que se ejecute de forma síncrona antes del render
   useLayoutEffect(() => {
     // Detectar rutas de edificios
-    const buildingRouteMatch = pathname.match(/^\/building\/([^/]+)(?:\/(.+))?$/);
+    const buildingRouteMatch = pathname.match(
+      /^\/building\/([^/]+)(?:\/(.+))?$/
+    );
     if (buildingRouteMatch) {
       const buildingId = buildingRouteMatch[1];
       const subRoute = buildingRouteMatch[2];
-      
+
       // Determinar qué activeSection debería ser según la ruta
       let expectedSection = "";
       if (subRoute === "gestion") {
@@ -80,7 +82,7 @@ export function SidebarAssets() {
       } else if (!subRoute || subRoute === "") {
         expectedSection = "todos";
       }
-      
+
       // FORZAR la actualización del estado basándose SOLO en la ruta
       // No verificamos el estado actual para evitar problemas de sincronización
       if (expectedSection) {
@@ -89,7 +91,7 @@ export function SidebarAssets() {
         setActiveTab(expectedSection);
         setViewMode("detail");
       }
-      
+
       // Establecer selectedBuildingId
       setSelectedBuildingId(buildingId);
     }
@@ -316,26 +318,7 @@ export function SidebarAssets() {
                   {isExpanded && (
                     <div className="ml-4 mt-3 space-y-1.5 pl-3 border-l-2 border-gray-200">
                       {/* Vista General */}
-                      <button
-                        onClick={() => {
-                          setSelectedBuildingId(building.id);
-                          setActiveSection("todos");
-                          setActiveTab("todos");
-                          setViewMode("detail");
-                          navigate(`/building/${building.id}`);
-                        }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "todos"
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
-                      >
-                        <Circle className="w-1.5 h-1.5 fill-current" />
-                        <span className="leading-relaxed">
-                          {t("generalView", "Vista General")}
-                        </span>
-                      </button>
+
                       <button
                         onClick={() => {
                           setSelectedBuildingId(building.id);
@@ -353,7 +336,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("generalView", "Vista General") + " nueva"}
+                          {t("generalView", "Vista General")}
                         </span>
                       </button>
 
