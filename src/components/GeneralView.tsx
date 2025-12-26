@@ -169,7 +169,7 @@ export function GeneralView() {
         <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           <button
             onClick={() => {
-              navigate("/building/:id/general-view/activity");
+              navigate(`/building/${buildingId}/general-view/activity`);
             }}
             className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-white rounded-lg transition-colors shadow-sm text-gray-700 hover:bg-gray-50"
             title="Ver Actividad Reciente"
