@@ -469,22 +469,15 @@ export function BuildingGeneralView() {
                       <Shield className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h4 className="text-xs mb-0.5">
-                        Certificados Energéticos
-                      </h4>
-                      <p className="text-xs text-blue-100">
-                        2 certificados • 2 vigentes
-                      </p>
+                      <h4 className="text-xs mb-0.5">Datos financieros</h4>
                     </div>
                   </div>
                   <button
-                    onClick={() =>
-                      navigate(`/building/${id}/general-view/certificates`)
-                    }
+                    onClick={() => navigate(`/cfo-intake/${id}`)}
                     className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
                   >
                     <Eye className="w-3 h-3" />
-                    Ver Certificados
+                    Cargar Datos Financieros
                   </button>
                 </div>
               </div>
