@@ -23,7 +23,8 @@ export function GeneralView() {
     route: string;
   }
   const navigate = useNavigate();
-  const { setActiveSection, setActiveTab, setViewMode } = useNavigation();
+  const { setActiveSection, setActiveTab, setViewMode, setActiveModule } =
+    useNavigation();
   const [DropdownMenu, setDropdownMenu] = useState<boolean>(false);
   const { pathname } = useLocation();
   const { id: buildingId } = useParams<{ id: string }>();
@@ -182,6 +183,10 @@ export function GeneralView() {
             className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 bg-white text-green-700 rounded-lg hover:bg-green-50 transition-colors shadow-sm"
             title="Ver en Financiación Verde"
             onClick={() => {
+              setActiveModule("green-financial");
+              setActiveSection("dashboard");
+              setActiveTab("dashboard");
+              setViewMode("list");
               navigate("/green-financial");
             }}
           >
