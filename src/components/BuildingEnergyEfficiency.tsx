@@ -1,4 +1,61 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "~/contexts/ToastContext";
+import { BuildingsApiService, type Building } from "~/services/buildingsApi";
+import {
+  EnergyCertificatesService,
+  type PersistedEnergyCertificate,
+} from "~/services/energyCertificates";
+import { BuildingEnergyEfficiencyLoading } from "./ui/dashboardLoading";
+
 export function BuildingEnergyEfficiency() {
+  // Hooks
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { showError } = useToast();
+
+  // Estado
+  const [loading, setLoading] = useState(true);
+  const [building, setBuilding] = useState<Building | null>(null);
+  const [_energyCertificates, setEnergyCertificates] = useState<
+    PersistedEnergyCertificate[]
+  >([]);
+
+  // Cargar datos del edificio
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        const buildingData = await BuildingsApiService.getBuildingById(id);
+        setBuilding(buildingData);
+
+        // Cargar certificados energéticos
+        try {
+          const certificatesData =
+            await EnergyCertificatesService.getByBuilding(buildingData.id);
+          setEnergyCertificates(certificatesData.certificates || []);
+        } catch (error) {
+          console.error("Error cargando certificados:", error);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        showError("Error al cargar datos del edificio");
+        navigate("/assets");
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, navigate, showError]);
+
+  // Mostrar skeleton mientras carga
+  if (loading) {
+    return <BuildingEnergyEfficiencyLoading />;
+  }
+
   return (
     <div className="flex-1 overflow-hidden mt-2">
       <div className="h-full flex flex-col overflow-hidden">
@@ -48,7 +105,9 @@ export function BuildingEnergyEfficiency() {
                   </div>
                   <div>
                     <h2 className="text-sm">Eficiencia Energética</h2>
-                    <p className="text-xs text-gray-500">Plaza Shopping</p>
+                    <p className="text-xs text-gray-500">
+                      {building?.name || "Edificio"}
+                    </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
