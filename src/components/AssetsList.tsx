@@ -969,12 +969,12 @@ export default function AssetsList() {
                   >
                     <Card
                       className="bg-blue-50 border border-blue-200 hover:border-blue-300 transition-all duration-300 overflow-hidden cursor-pointer flex flex-col sm:flex-row sm:h-[280px] lg:h-[224px]"
-                      onClick={() => navigate(`/building/${building.id}`)}
+                      onClick={() => navigate(`/building/${building.id}/general-view`)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e: React.KeyboardEvent) => {
                         if (e.key === "Enter")
-                          navigate(`/building/${building.id}`);
+                          navigate(`/building/${building.id}/general-view`);
                       }}
                     >
                       {/* Image Carousel */}

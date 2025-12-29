@@ -43,8 +43,9 @@ export function SecondaryNav() {
   }
 
   // Para otros componentes (como DashboardComponent), usar el contenedor del SecondaryNav
+  // Oculto completamente en mobile (solo visible desde lg en adelante)
   return (
-    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <nav className="py-4">{componentToShow}</nav>
     </div>
   );

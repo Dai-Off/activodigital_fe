@@ -266,7 +266,7 @@ export function AppHeader() {
     if (setActiveTab) setActiveTab("todos");
     setSearchTerm("");
     setShowSearchResults(false);
-    navigate(`/building/${buildingId}`);
+    navigate(`/building/${buildingId}/general-view`);
   };
   const handleBackToList = () => {
     if (setSelectedBuildingId) setSelectedBuildingId(null);

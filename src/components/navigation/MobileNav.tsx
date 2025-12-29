@@ -127,7 +127,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     setActiveSection("todos");
     setActiveTab("todos");
     setViewMode("detail");
-    navigate(`/building/${buildingId}`);
+    navigate(`/building/${buildingId}/general-view`);
     onClose();
   };
 

@@ -8,12 +8,14 @@ import type { BuildingStep1Data } from './CreateBuildingWizard';
 
 interface CreateBuildingStep1Props {
   onNext: (data: BuildingStep1Data) => void;
+  onCancel?: () => void;
   onSaveDraft: (data: BuildingStep1Data) => void;
   initialData?: Partial<BuildingStep1Data>;
 }
 
 const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   onNext,
+  onCancel,
   onSaveDraft,
   initialData = {},
 }) => {
@@ -437,6 +439,16 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 pt-6">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {t('common.back', 'Volver')}
+            </button>
+          )}
+          
           <button
             type="button"
             onClick={handleSaveDraft}
