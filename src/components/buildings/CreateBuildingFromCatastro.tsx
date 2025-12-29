@@ -294,25 +294,25 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       </div>
 
       {/* Selector de método */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {t('buildingWizard.searchMethod', 'Método de búsqueda')}
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-2">
           <button
             type="button"
             onClick={() => {
               setSearchMethod('rc');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'rc'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <Hash className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
+            <Hash className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
           </button>
           <button
             type="button"
@@ -320,14 +320,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
               setSearchMethod('address');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'address'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
           </button>
           <button
             type="button"
@@ -335,14 +335,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
               setSearchMethod('coordinates');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'coordinates'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <Navigation className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
+            <Navigation className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
           </button>
         </div>
       </div>
@@ -700,14 +700,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       </form>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-8 mt-8 border-top border-t border-gray-200">
+      <div className="flex flex-col sm:flex-row gap-3 pt-6">
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t('common.cancel', 'Cancelar')}
+          {t('common.back', 'Volver')}
         </button>
 
         <button

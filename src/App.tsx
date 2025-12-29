@@ -4,6 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import ToastContainer from "./components/ui/Toast";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Página de lista de secciones (opcional)
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ function App() {
       <AuthProvider>
         <NotificationProvider>
           <Router>
+            <ScrollToTop />
             <AppRouter />
             <ToastContainer />
           </Router>

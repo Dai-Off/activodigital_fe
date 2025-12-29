@@ -87,11 +87,11 @@ function mapGestionToDocument(gestionDoc: GestionDocument): Document {
   const iconType = MIME_TO_ICON[gestionDoc.mimeType] || 'FileText';
   const fileExtension = gestionDoc.fileName.split('.').pop()?.toUpperCase() || 'FILE';
   const uploadDate = new Date(gestionDoc.uploadedAt);
-  const formattedDate = uploadDate.toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  // Formato YYYY-MM-DD para coincidir con el HTML
+  const year = uploadDate.getFullYear();
+  const month = String(uploadDate.getMonth() + 1).padStart(2, '0');
+  const day = String(uploadDate.getDate()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day}`;
 
   // Por defecto, todos los documentos subidos son "activos"
   // TODO: Cuando haya API, obtener el status real

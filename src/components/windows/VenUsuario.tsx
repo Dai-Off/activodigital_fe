@@ -101,7 +101,7 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
         aria-label="Cerrar modal"
         className={`fixed z-50 backdrop-blur-sm inset-0 bg-black/30 flex 
         ${
-          isMobile ? "items-start pt-10 ml-16" : "items-center"
+          isMobile ? "items-start pt-10" : "items-center"
         } justify-center`}
       >
         <div
@@ -111,11 +111,11 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
           className={`
         bg-white rounded-lg shadow-lg 
         w-full 
-        ${isMobile ? "h-[90vh] mx-2 p-5" : "max-w-lg mx-3 px-7 py-8"} 
+        ${isMobile ? "h-[90vh] mx-3 p-4" : "max-w-lg mx-3 px-7 py-8"} 
         overflow-y-auto
     `}
         >
-          <div className={`${isMobile ? "px-2" : "px-7"}`}>
+          <div>
             <h1
               className={`${
                 isMobile ? "text-xl" : "text-2xl"
@@ -225,15 +225,15 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                     errors.status ? "border-red-300" : "border-gray-300"
                   }`}
                 >
-                  <option value="">Selecciona un rol</option>
+                  <option value="">Selecciona un estado</option>
                   <option value="true">Activo</option>
                   <option value="false">Inactivo</option>
                 </select>
                 {errors.status && (
-                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.status}</p>
                 )}
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row pt-5  justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row pt-5 justify-between">
                 <button
                   type="button"
                   onClick={() => setVisible(false)}
@@ -241,19 +241,19 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
                 >
                   {t('Cancel', 'Cancelar')}
                 </button>
-                <div className=" gap-1 flex justify-between">
+                <div className="flex gap-2 justify-end">
                   {isEdit && onDelete && (
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
-                      <Trash2Icon className="inline mr-2 h-4 w-4" />
+                      <Trash2Icon className="inline h-4 w-4" />
                     </button>
                   )}
                   <button
                     type="submit"
-                    className="sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     {isEdit ? t('Save', "Guardar cambios") : t('Create',"Crear usuario")}
                   </button>
