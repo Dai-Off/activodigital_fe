@@ -114,7 +114,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
   const handleLogoClick = () => {
     setSelectedBuildingId(null);
-    setActiveModule("edificios");
+    setActiveModule("assets");
     setActiveSection("dashboard");
     setActiveTab("dashboard");
     setViewMode("list");
@@ -133,9 +133,9 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
   const handleAnalysisClick = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
-    setActiveSection('analisis');
-    setActiveTab('analisis');
-    setViewMode('detail');
+    setActiveSection("analisis");
+    setActiveTab("analisis");
+    setViewMode("detail");
     navigate(`/building/${buildingId}/analysis-general`);
     onClose();
   };

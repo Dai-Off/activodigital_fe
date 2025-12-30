@@ -31,9 +31,23 @@ const NavigationContext = createContext<NavigationContextType | undefined>(
 );
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [activeModule, setActiveModule] = useState(
-    location.pathname.split("/")[1]
-  );
+  const [activeModule, setActiveModule] = useState(() => {
+    const segments = location.pathname.substring(1).split("/");
+    const firstSegment = segments[0];
+
+    // Mapeo centralizado de rutas que pertenecen al módulo de activos
+    const assetRelatedPaths = [
+      "building",
+      "assets",
+      "digital-book",
+      "cfo-intake",
+      "cfo-due-diligence",
+      "cfo-simulation",
+    ];
+
+    if (assetRelatedPaths.includes(firstSegment)) return "assets";
+    return firstSegment || "dashboard";
+  });
   const [activeTab, setActiveTab] = useState("dashboard");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(
