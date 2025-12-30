@@ -1,4 +1,10 @@
-import { Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 import NewLayout from "../components/NewLayout";
 import Mantenimiento from "../components/Mantenimiento";
 import Cumplimiento from "../components/Cumplimiento";
@@ -368,17 +374,17 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/cfo-simulation"
+          element={
+            <ProtectedRoute>
+              <CFOFinancialAnalysisSimulation />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Rutas fullscreen protegidas (sin sidebar) */}
-      <Route
-        path="/cfo-simulation"
-        element={
-          <ProtectedRoute>
-            <CFOFinancialAnalysisSimulation />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/building/create"
         element={

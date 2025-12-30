@@ -50,6 +50,7 @@ function NewLayoutContent() {
       location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-intake") ||
       location.pathname.startsWith("/cfo-due-diligence") ||
+      location.pathname.startsWith("/cfo-simulation") ||
       location.pathname === "/assets";
 
     // if (isBuildingRelatedPath && setActiveModule) {
@@ -203,6 +204,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/events") ||
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname.startsWith("/cfo-due-diligence") ||
+    location.pathname.startsWith("/cfo-simulation") ||
     location.pathname === "/assets";
 
   const showSecondaryNav =
@@ -262,7 +264,7 @@ function NewLayoutContent() {
               px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
               max-w-[1920px] mx-auto
-              mt-[120px] md:mt-[120px]
+              mt-[100px] md:mt-[100px]
             `
             }
           >

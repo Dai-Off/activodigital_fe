@@ -18,7 +18,6 @@ import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
 
 export function SidebarAssets() {
   const {
-    activeSection,
     setActiveSection,
     setActiveTab,
     setViewMode,
@@ -73,13 +72,20 @@ export function SidebarAssets() {
 
       // Determinar qué activeSection debería ser según la ruta
       let expectedSection = "";
-      if (subRoute === "gestion") {
-        expectedSection = "gestion";
-      } else if (subRoute === "analysis-general") {
-        expectedSection = "analisis";
-      } else if (subRoute === "general-view") {
-        expectedSection = "general-view";
-      } else if (!subRoute || subRoute === "") {
+      if (subRoute) {
+        if (subRoute === "gestion") {
+          expectedSection = "gestion";
+        } else if (subRoute === "analysis-general") {
+          expectedSection = "analisis";
+        } else if (subRoute === "general-view") {
+          expectedSection = "general-view";
+        } else if (subRoute.startsWith("general-view/")) {
+          // Si estamos en una sub-vista como financiero, seguros, etc.
+          // Extraemos la parte después de general-view/ (ej: financial, insurance)
+          const subPart = subRoute.split("/")[1];
+          expectedSection = subPart;
+        }
+      } else {
         expectedSection = "todos";
       }
 
@@ -328,8 +334,9 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/general-view`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "general-view"
+                          pathname.startsWith(
+                            `/building/${building.id}/general-view`
+                          )
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
@@ -350,8 +357,8 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/analysis-general`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "analisis"
+                          pathname ===
+                          `/building/${building.id}/analysis-general`
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
@@ -372,8 +379,7 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/gestion`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "gestion"
+                          pathname === `/building/${building.id}/gestion`
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}

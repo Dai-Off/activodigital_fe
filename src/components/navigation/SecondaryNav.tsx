@@ -19,14 +19,16 @@ export function SecondaryNav() {
     assets: <SidebarAssets />,
     edificio: <SidebarAssets />, // Mostrar lista de activos también en rutas de edificio
     users: <SidebarUsers />,
-    events: <SidebarEvents />
+    events: <SidebarEvents />,
   };
 
   // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent
   const isBuildingRoute =
     currentPath.startsWith("/building/") ||
     currentPath.startsWith("/digital-book") ||
-    currentPath.startsWith("/cfo-intake");
+    currentPath.startsWith("/cfo-intake") ||
+    currentPath.startsWith("/cfo-due-diligence") ||
+    currentPath.startsWith("/cfo-simulation");
 
   const componentToShow = isBuildingRoute ? (
     <SidebarAssets />

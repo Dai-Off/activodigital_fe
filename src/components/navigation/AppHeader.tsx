@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -125,6 +125,8 @@ export function AppHeader() {
         return translate("financialTwin", "Gemelo Financiero");
       case "cfo-due-diligence":
         return translate("cfoDueDiligence", "CFO Due Diligence");
+      case "cfo-simulation":
+        return translate("cfoSimulation", "Simulación CFO");
       case "building":
         return translate("buildings", "Edificios");
       case "general-view":
@@ -681,7 +683,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2 text-xs md:text-sm whitespace-nowrap min-w-max">
           <button
             onClick={() => navigate("/dashboard")}
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
           >
             ARKIA
           </button>
@@ -692,19 +694,21 @@ export function AppHeader() {
             const label = getBreadcrumbLabel(segment);
 
             return (
-              <div key={url} className="flex items-center gap-2">
+              <Fragment key={url}>
                 <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
                 {isLast ? (
-                  <span className="text-gray-900 font-medium">{label}</span>
+                  <span className="text-gray-900 font-medium leading-tight">
+                    {label}
+                  </span>
                 ) : (
                   <button
                     onClick={() => navigate(url)}
-                    className="text-gray-600 hover:text-blue-600 transition-colors"
+                    className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
                   >
                     {label}
                   </button>
                 )}
-              </div>
+              </Fragment>
             );
           })}
         </div>

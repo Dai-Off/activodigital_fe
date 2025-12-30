@@ -42,6 +42,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       "digital-book",
       "cfo-intake",
       "cfo-due-diligence",
+      "cfo-simulation",
     ];
 
     if (assetRelatedPaths.includes(firstSegment)) return "assets";
