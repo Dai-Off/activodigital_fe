@@ -272,10 +272,10 @@ export function MainPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Layout Principal */}
       {/* 4 KPIs superiores */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -348,7 +348,7 @@ export function MainPanel() {
       </div>
 
       {/* Bloque KPIs inferiores */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0">
         <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
@@ -458,7 +458,7 @@ export function MainPanel() {
             <div className="p-3 space-y-1.5">
               <button
                 onClick={() => {
-                  navigation("/buildings/create");
+                  navigation("/building/create");
                 }}
                 className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group"
               >
@@ -469,14 +469,24 @@ export function MainPanel() {
 
                 <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors"></ArrowRight>
               </button>
-              <button className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group">
+              <button
+                onClick={() => {
+                  navigation("/gestion");
+                }}
+                className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group"
+              >
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-blue-600"></FileText>
                   <span className="text-xs text-gray-900">Generar Informe</span>
                 </div>
                 <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors"></ArrowRight>
               </button>
-              <button className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group">
+              <button
+                onClick={() => {
+                  navigation("/events");
+                }}
+                className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group"
+              >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-blue-600"></Calendar>
                   <span className="text-xs text-gray-900">

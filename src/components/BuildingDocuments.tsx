@@ -255,7 +255,7 @@ export default function BuildingDocuments() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => building && navigate(`/building/${building.id}`)}
+                onClick={() => building && navigate(`/building/${building.id}/general-view`)}
               >
                 {t("building.documentsBackToDetail", {
                   defaultValue: "Volver al detalle",

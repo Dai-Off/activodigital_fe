@@ -47,16 +47,14 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
 
   return (
     <>
-      {/* Overlay - solo oscurece el área de contenido, NO el sidebar ni navbar */}
+      {/* Overlay - responsive: full width en mobile, con margen en desktop */}
       <div 
-        className="fixed bg-black/40 backdrop-blur-sm z-[60] pointer-events-auto overflow-hidden"
+        className="fixed bg-black/40 backdrop-blur-sm z-[60] pointer-events-auto overflow-hidden left-0 md:left-16 w-full md:w-[calc(100%-4rem)]"
         style={{ 
-          left: '64px', // Ancho del sidebar
           top: '0px',
           right: '0px',
           bottom: '0px',
-          height: '100vh',
-          width: 'calc(100% - 64px)'
+          height: '100vh'
         }}
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
@@ -67,23 +65,23 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
         onTouchMove={(e) => e.preventDefault()}
       />
       
-      {/* Modal Content - flotante centrado, z-index más alto que overlay */}
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-6 pointer-events-auto">
+      {/* Modal Content - responsive: centrado con padding adecuado */}
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 md:p-4 pointer-events-none">
+        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-4 md:p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-start justify-between mb-4 md:mb-6">
+          <div className="flex-1 pr-2">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900">
               {t('buildingWizard.selectMethod', 'Selecciona cómo crear el edificio')}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
               {t('buildingWizard.selectMethodDesc', 'Elige el método que prefieras para cargar los datos del edificio')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2"
             aria-label={t('common.close', 'Cerrar')}
           >
             <X className="w-5 h-5" />
@@ -91,21 +89,21 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
         </div>
 
         {/* Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           {/* Opción Manual */}
           <button
             type="button"
             onClick={() => onSelectMethod('manual')}
-            className="group relative p-6 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 text-left"
+            className="group relative p-4 md:p-6 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 text-left"
           >
             <div className="flex flex-col items-start">
-              <div className="mb-3 p-3 bg-white rounded-lg group-hover:bg-gray-50 transition-colors border border-gray-200">
-                <FileText className="w-5 h-5 text-gray-600" />
+              <div className="mb-3 p-2 md:p-3 bg-white rounded-lg group-hover:bg-gray-50 transition-colors border border-gray-200">
+                <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </div>
-              <h3 className="text-base font-medium text-gray-700 mb-2">
+              <h3 className="text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
                 {t('buildingWizard.manualMethod', 'Cargar datos manualmente')}
               </h3>
-              <p className="text-gray-500 text-sm">
+              <p className="text-xs md:text-sm text-gray-500">
                 {t(
                   'buildingWizard.manualMethodDesc',
                   'Completa el formulario paso a paso con la información del edificio'
@@ -118,16 +116,16 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
           <button
             type="button"
             onClick={() => onSelectMethod('catastro')}
-            className="group relative p-6 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 text-left"
+            className="group relative p-4 md:p-6 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-100 transition-all duration-200 text-left"
           >
             <div className="flex flex-col items-start">
-              <div className="mb-3 p-3 bg-white rounded-lg group-hover:bg-gray-50 transition-colors border border-gray-200">
-                <Database className="w-5 h-5 text-gray-600" />
+              <div className="mb-3 p-2 md:p-3 bg-white rounded-lg group-hover:bg-gray-50 transition-colors border border-gray-200">
+                <Database className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </div>
-              <h3 className="text-base font-medium text-gray-700 mb-2">
+              <h3 className="text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
                 {t('buildingWizard.catastroMethod', 'Cargar desde Catastro')}
               </h3>
-              <p className="text-gray-500 text-sm">
+              <p className="text-xs md:text-sm text-gray-500">
                 {t(
                   'buildingWizard.catastroMethodDesc',
                   'Ingresa el ID de catastro y obtén automáticamente toda la información del edificio'

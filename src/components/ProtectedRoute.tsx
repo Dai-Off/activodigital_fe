@@ -1,6 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { SkeletonText } from './ui/LoadingSystem';
 import { useTranslation } from 'react-i18next';
 
 interface ProtectedRouteProps {
@@ -20,25 +19,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
   const { t } = useTranslation();
 
-  // Mostrar skeleton inline mientras se carga la autenticación
-  if (isLoading) {
-    return (
-      <div className="p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            <SkeletonText lines={1} widths={['w-64']} className="mb-2" />
-            <SkeletonText lines={1} widths={['w-96']} />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <SkeletonText lines={3} widths={['w-full', 'w-3/4', 'w-1/2']} />
-        </div>
-      </div>
-    );
-  }
-
-  // Si requiere autenticación y no hay usuario, redirigir a login
-  if (requireAuth && !user) {
+  // Si requiere autenticación y no hay usuario (después de cargar), redirigir a login
+  // Si está cargando, permitir que el componente hijo maneje su propio loading
+  if (!isLoading && requireAuth && !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

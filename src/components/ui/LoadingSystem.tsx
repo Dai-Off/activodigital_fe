@@ -573,41 +573,47 @@ export const SkeletonUsers: React.FC = () => (
 
 export const SkeletonEvents = () => {
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         {/* Cabecera del Skeleton */}
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100 animate-pulse">
-          <div className="p-2 bg-gray-100 rounded-lg w-9 h-9" />
+        <div className="flex items-center gap-3 mb-4 pb-4 sm:pb-5 border-b border-gray-200">
+          <div className="p-2 bg-gray-100 rounded-lg w-9 h-9 sm:w-10 sm:h-10 animate-pulse" />
           <div className="flex-1">
-            <div className="h-5 bg-gray-200 rounded w-40 mb-2" />
-            <div className="h-3 bg-gray-100 rounded w-24" />
+            <div className="h-5 sm:h-6 bg-gray-200 rounded w-40 sm:w-48 mb-1 animate-pulse" />
+            <div className="h-3 sm:h-4 bg-gray-100 rounded w-24 sm:w-32 animate-pulse" />
           </div>
         </div>
 
-        {/* Lista de Eventos Skeleton */}
-        <div className="space-y-2">
+        {/* Lista de Eventos Skeleton - Responsive */}
+        <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <div 
               key={i} 
-              className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg animate-pulse"
+              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border border-gray-200 rounded-lg"
             >
-              {/* Icono de Categoría */}
-              <div className="p-2 rounded-lg flex-shrink-0 bg-gray-100 w-8 h-8" />
-              
-              {/* Título y Edificio */}
-              <div className="flex-1 min-w-0 space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-3/4" />
-                <div className="h-2 bg-gray-100 rounded w-1/2" />
+              {/* Contenedor izquierdo - Icono y texto */}
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                {/* Icono de Categoría */}
+                <div className="p-2.5 rounded-lg flex-shrink-0 bg-gray-100 w-10 h-10 animate-pulse" />
+                
+                {/* Título y Edificio */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-4 sm:h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
+                  <div className="h-3 sm:h-4 bg-gray-100 rounded w-1/2 animate-pulse" />
+                </div>
               </div>
 
-              {/* Fecha y Hora */}
-              <div className="text-right flex-shrink-0 space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-12 ml-auto" />
-                <div className="h-2 bg-gray-100 rounded w-8 ml-auto" />
-              </div>
+              {/* Contenedor derecho - Fecha, hora y badge */}
+              <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-11 sm:pl-0">
+                {/* Fecha y Hora */}
+                <div className="text-left sm:text-right flex-shrink-0 space-y-1">
+                  <div className="h-3 sm:h-4 bg-gray-200 rounded w-16 sm:w-20 animate-pulse" />
+                  <div className="h-3 bg-gray-100 rounded w-12 sm:w-16 animate-pulse" />
+                </div>
 
-              {/* Badge de Estado */}
-              <div className="h-6 w-20 bg-gray-100 rounded flex-shrink-0" />
+                {/* Badge de Estado */}
+                <div className="h-6 sm:h-7 w-20 sm:w-24 bg-gray-100 rounded flex-shrink-0 animate-pulse" />
+              </div>
             </div>
           ))}
         </div>

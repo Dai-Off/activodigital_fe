@@ -143,14 +143,32 @@ const CreateBuildingWizard: React.FC = () => {
   };
 
   const handleCatastroCancel = () => {
-    setSelectedMethod(null);
-    setCurrentStep(-1); // Volver a selección de método
+    // Si no hay método desde state, volver al modal de selección
+    if (!methodFromState) {
+      setSelectedMethod(null);
+      setStep1Data(null);
+      setCurrentStep(0);
+    } else {
+      // Si viene desde state, volver a /assets
+      navigate("/assets");
+    }
   };
 
   // -------------------- Handlers: Step 1 --------------------
   const handleStep1Next = (data: BuildingStep1Data) => {
     setStep1Data(data);
     setCurrentStep(1);
+  };
+
+  const handleStep1Cancel = () => {
+    // Si no hay método desde state, volver al modal de selección
+    if (!methodFromState) {
+      setSelectedMethod(null);
+      setStep1Data(null);
+    } else {
+      // Si viene desde state, volver a /assets
+      navigate("/assets");
+    }
   };
 
   const handleStep1SaveDraft = (data: BuildingStep1Data) => {
@@ -434,6 +452,7 @@ const CreateBuildingWizard: React.FC = () => {
         return (
           <CreateBuildingStep1
             onNext={handleStep1Next}
+            onCancel={handleStep1Cancel}
             onSaveDraft={handleStep1SaveDraft}
             initialData={step1Data || ({} as Partial<BuildingStep1Data>)}
           />
@@ -476,12 +495,12 @@ const CreateBuildingWizard: React.FC = () => {
 
   // -------------------- JSX --------------------
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Breadcrumb / Header */}
-        <div className="mb-8">
-          <nav className="mb-4" aria-label={t("nav.breadcrumb", "Breadcrumb")}>
-            <ol className="flex items-center space-x-2 text-sm text-gray-500">
+        <div className="mb-4 md:mb-8">
+          <nav className="mb-2 md:mb-4" aria-label={t("nav.breadcrumb", "Breadcrumb")}>
+            <ol className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500">
               <li>
                 <button
                   type="button"
@@ -494,7 +513,7 @@ const CreateBuildingWizard: React.FC = () => {
               </li>
               <li aria-hidden="true">
                 <svg
-                  className="w-4 h-4 mx-1"
+                  className="w-3 h-3 md:w-4 md:h-4 mx-1"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -526,14 +545,14 @@ const CreateBuildingWizard: React.FC = () => {
           <Wizard
             steps={wizardSteps}
             currentStep={currentStep}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4 lg:p-6"
           >
             <div className="relative">{renderCurrentStep()}</div>
           </Wizard>
         )}
 
         {/* Footer Help */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
           <p>
             {t("help.needHelp", "¿Necesitas ayuda?")}{" "}
             <a href="#" className="text-blue-600 hover:text-blue-700">
