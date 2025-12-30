@@ -125,9 +125,15 @@ function NewLayoutContent() {
       ) {
         // Ruta de detalle de edificio (vista general o general-view)
         // Ahora /building/:id redirige a /building/:id/general-view
-        if (activeSection !== "general-view" && location.pathname.includes("/general-view")) {
+        if (
+          activeSection !== "general-view" &&
+          location.pathname.includes("/general-view")
+        ) {
           setActiveSection("general-view");
-        } else if (activeSection !== "todos" && !location.pathname.includes("/general-view")) {
+        } else if (
+          activeSection !== "todos" &&
+          !location.pathname.includes("/general-view")
+        ) {
           // Mantener compatibilidad con otras rutas de building que no sean general-view
           setActiveSection("todos");
         }
@@ -245,7 +251,6 @@ function NewLayoutContent() {
               px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
               max-w-[1920px] mx-auto
-              mt-[120px] md:mt-[120px]
             `
                 : `
               px-3 md:px-6 lg:px-8 xl:px-12
