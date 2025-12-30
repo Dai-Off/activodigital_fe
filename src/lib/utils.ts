@@ -62,8 +62,7 @@ export const formatMoneyShort = (value: number): string => {
 };
 
 export const getEnergyRatingColorClass = (rating: string): string => {
-  const normalizedRating = rating.toUpperCase();
-  switch (normalizedRating) {
+  switch (rating) {
       case 'A':
           return 'bg-green-600 text-white'; 
       case 'B':
@@ -84,10 +83,7 @@ export const getEnergyRatingColorClass = (rating: string): string => {
 };
 
 export const getEnergyRatingTextColorClass = (rating: string): string => {
-  // Convertimos la entrada a mayúsculas para asegurar la consistencia.
-  const normalizedRating = rating.toUpperCase();
-
-  switch (normalizedRating) {
+  switch (rating) {
       case 'A':
           return 'text-green-600'; 
       case 'B':
