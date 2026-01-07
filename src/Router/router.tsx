@@ -1,4 +1,10 @@
-import { Routes, Route, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 import NewLayout from "../components/NewLayout";
 import Mantenimiento from "../components/Mantenimiento";
 import Cumplimiento from "../components/Cumplimiento";
@@ -12,7 +18,7 @@ import AcceptAssignment from "../components/AcceptAssignment";
 import InvitationHandler from "../components/InvitationHandler";
 import Landing from "../components/Landing";
 import CFOAssetsList from "../components/CFOAssetsList";
-import BuildingDetail from "../components/BuildingDetail";
+// import BuildingDetail from "../components/BuildingDetail"; // Ya no se usa, pero se mantiene por si acaso
 import BuildingAnalysisGeneral from "../components/BuildingAnalysisGeneral";
 import CFOIntakeForm from "../components/cfo/CFOIntakeForm";
 import CFOFinancialAnalysisDashboard from "../components/cfo/screens/CFOFinancialAnalysisDashboard";
@@ -52,7 +58,15 @@ import { BuildingRent } from "~/components/BuildingRent";
 import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency";
 import { BuildingMaintenance } from "~/components/BuildingMaintenance";
 import { BuildingCalendar } from "~/components/BuildingCalendar";
+import { BuildingGestion } from "~/components/BuildingGestion";
+import { GeneralGestion } from "~/components/GeneralGestion";
 import { Events } from "~/components/Events";
+
+// Componente para redirigir /building/:id a /building/:id/general-view
+const NavigateToGeneralView = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/building/${id}/general-view`} replace />;
+};
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -177,6 +191,16 @@ export const AppRouter = () => {
             <ProtectedRoute>
               <ErrorBoundary>
                 <Events />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path="/gestion"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <GeneralGestion />
               </ErrorBoundary>
             </ProtectedRoute>
           }
@@ -312,7 +336,7 @@ export const AppRouter = () => {
           path="/building/:id"
           element={
             <ProtectedRoute>
-              <BuildingDetail />
+              <NavigateToGeneralView />
             </ProtectedRoute>
           }
         />
@@ -321,6 +345,16 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <BuildingAnalysisGeneral />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/gestion"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <BuildingGestion />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -340,17 +374,17 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/cfo-simulation"
+          element={
+            <ProtectedRoute>
+              <CFOFinancialAnalysisSimulation />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Rutas fullscreen protegidas (sin sidebar) */}
-      <Route
-        path="/cfo-simulation"
-        element={
-          <ProtectedRoute>
-            <CFOFinancialAnalysisSimulation />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/building/create"
         element={

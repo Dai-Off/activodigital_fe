@@ -1,4 +1,4 @@
-import { Activity, Calendar, CircleAlertIcon, ClipboardList, ClockIcon, FileText, Lightbulb, Users, Wrench } from "lucide-react"
+import { Calendar, CircleAlertIcon, ClockIcon, Wrench } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { calendarApiService } from "~/services/calendar"
 import type { BuildingEvent, EventCategory, EventExecution } from "~/types/calendar"
@@ -21,26 +21,6 @@ export const getExecutionBg = (execution: EventExecution) => {
     }
 };
 
-const getCategoryIcon = (category: EventCategory) => {
-    switch (category) {
-        case "maintenance":
-            return <Wrench className="w-3.5 h-3.5 text-orange-600" />;
-        case "inspections":
-            return <CircleAlertIcon className="w-3.5 h-3.5 text-yellow-600" />;
-        case "contract":
-            return <FileText className="w-3.5 h-3.5 text-blue-600" />;
-        case "audit":
-            return <Lightbulb className="w-3.5 h-3.5 text-purple-600" />;
-        case "operations":
-            return <Activity className="w-3.5 h-3.5 text-green-600" />;
-        case "general":
-            return <Users className="w-3.5 h-3.5 text-teal-600" />;
-        case "expiration":
-            return <ClockIcon className="w-4 h-4 text-red-600" />;
-        default:
-            return <ClipboardList className="w-3.5 h-3.5 text-gray-600" />;
-    }
-};
 
 const getCategoryBg = (category: EventCategory, intecity?: number) => {
     switch (category) {
@@ -67,7 +47,7 @@ const getCategoryBg = (category: EventCategory, intecity?: number) => {
 
 export const Events = () => {
     const [events, setEvents] = useState<BuildingEvent[]>([])
-    const [loading, setLoading] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(true)
     const [count, setCount] = useState<number>(0)
     const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -195,20 +175,54 @@ export const Events = () => {
                             </div>
                         )
                     } else {
+                        const categoryBgColor = event.category === 'maintenance' ? 'bg-[#1e3a8a]/10' : 
+                                                event.category === 'inspections' ? 'bg-orange-100' :
+                                                event.category === 'expiration' ? 'bg-red-100' :
+                                                event.category === 'general' ? 'bg-purple-100' :
+                                                getCategoryBg(event.category);
+                        
+                        const categoryIconColor = event.category === 'maintenance' ? 'text-[#1e3a8a]' :
+                                                  event.category === 'inspections' ? 'text-orange-600' :
+                                                  event.category === 'expiration' ? 'text-red-600' :
+                                                  event.category === 'general' ? 'text-purple-600' :
+                                                  '';
+                        
+                        const executionBgWithBorder = executionValue === 'scheduled' || executionValue === 'confirmed' 
+                            ? `${getExecutionBg(executionValue)} border border-green-200`
+                            : executionValue === 'urgent'
+                            ? `${getExecutionBg(executionValue)} border border-red-200`
+                            : executionValue === 'pending'
+                            ? `${getExecutionBg(executionValue)} border border-yellow-200`
+                            : getExecutionBg(executionValue);
+
+                        const IconComponent = event.category === 'maintenance' ? Wrench :
+                                             event.category === 'inspections' ? CircleAlertIcon :
+                                             event.category === 'expiration' ? ClockIcon :
+                                             event.category === 'general' ? Calendar :
+                                             Wrench;
+
                         return (
-                            <div key={idx} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                <div className={`p-2 rounded-lg flex-shrink-0 ${getCategoryBg(event.category)}`}>
-                                    {getCategoryIcon(event.category)}
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all">
+                                <div className="flex items-start gap-3 flex-1 min-w-0">
+                                    <div className={`p-2.5 rounded-lg flex-shrink-0 ${categoryBgColor}`}>
+                                        <IconComponent className={`w-5 h-5 ${categoryIconColor}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm sm:text-base text-gray-900 break-words">{event?.title}</p>
+                                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{event?.buildingName}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs text-gray-900">{event?.title}</p>
-                                    <p className="text-xs text-gray-500">{event?.buildingName}</p>
+                                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-11 sm:pl-0">
+                                    <div className="text-left sm:text-right flex-shrink-0">
+                                        <p className="text-xs sm:text-sm text-gray-900 whitespace-nowrap">{formatEventDate(event?.eventDate, 'date')}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5 whitespace-nowrap">
+                                            {formatEventDate(event?.eventDate, 'time') !== '--' ? formatEventDate(event?.eventDate, 'time') : '-'}
+                                        </p>
+                                    </div>
+                                    <span className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm flex-shrink-0 whitespace-nowrap ${executionBgWithBorder}`}>
+                                        {labelExe}
+                                    </span>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="text-xs text-gray-900">{formatEventDate(event?.eventDate, 'date')}</p>
-                                    <p className="text-xs text-gray-500">{formatEventDate(event?.eventDate, 'time')}</p>
-                                </div>
-                                <span className={`px-2 py-1 rounded text-xs flex-shrink-0 ${getExecutionBg(executionValue)}`}>{labelExe}</span>
                             </div>
                         )
                     }
@@ -240,31 +254,31 @@ export const Events = () => {
 
     return (
         <>
-            <div className="flex-1 overflow-y-auto p-6">
-                {['maintenance', 'inspections', 'expiration', 'general'].includes(viewParam) && (<div className="bg-white rounded-xl p-6 shadow-sm"><div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100 ">
+            <div className="bg-white shadow-sm h-full flex flex-col overflow-hidden">
+                <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-gray-200 flex-shrink-0">
                     <div className="p-2 bg-orange-100 rounded-lg">
-                        <Calendar className="w-5 h-5 text-orange-600 " />
+                        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                     </div>
                     <div>
-                        <h2 className="text-lg">Agenda de Eventos</h2>
-                        <p className="text-xs text-gray-500">{count} eventos próximos</p>
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900">Agenda de Eventos</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">{count} eventos próximos</p>
                     </div>
                 </div>
-                    <div className="space-y-2">
+                {['maintenance', 'inspections', 'expiration', 'general'].includes(viewParam) && (
+                    <div className="space-y-3 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
                         {showData(eventsFilter, viewParam)}
                     </div>
-                </div>
                 )}
 
                 {viewParam === "week" && (
-                    <div className="bg-white rounded-xl p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-3">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-orange-100 rounded-lg">
                                     <Calendar className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold">Vista Semanal</h2>
+                                    <h2 className="text-base sm:text-lg font-semibold">Vista Semanal</h2>
                                     <p className="text-xs text-gray-500">
                                         {weekDays[0].toLocaleDateString('es-ES', { day: 'numeric' })} -
                                         {weekDays[6].toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -293,7 +307,7 @@ export const Events = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-7 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-7 gap-2 overflow-x-auto">
                             {weekDays.map((date, i) => {
                                 const isToday = new Date().toDateString() === date.toDateString();
                                 const dateStr = date.toISOString().split('T')[0];
@@ -325,7 +339,7 @@ export const Events = () => {
 
                         <div className="mt-4 pt-4 border-t border-gray-100">
                             <h3 className="text-xs font-semibold mb-2">Eventos de la semana</h3>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div className="p-2 bg-orange-50 rounded-lg">
                                     <p className="text-xs text-gray-600">Mantenimientos</p>
                                     <p className="text-orange-600 font-bold">{categoryCounts?.maintenance || 0}</p>
@@ -344,14 +358,14 @@ export const Events = () => {
                 )}
 
                 {viewParam === "month" && (
-                    <div className="bg-white rounded-xl p-6 shadow-sm">
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                    <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-3">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-orange-100 rounded-lg">
                                     <Calendar className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold">Calendario de Eventos</h2>
+                                    <h2 className="text-base sm:text-lg font-semibold">Calendario de Eventos</h2>
                                     <p className="text-xs text-gray-500 capitalize">{monthData.monthName}</p>
                                 </div>
                             </div>
@@ -409,7 +423,7 @@ export const Events = () => {
 
                         <div className="mt-4 pt-4 border-t border-gray-100">
                             <h3 className="text-xs font-semibold mb-2">Eventos del mes</h3>
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <p className="text-xs text-gray-600">Contratos</p>
                                     <p className="text-blue-600 font-bold">{categoryCounts?.contract || 0}</p>

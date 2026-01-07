@@ -25,7 +25,7 @@ const Wizard: React.FC<WizardProps> = ({
   return (
     <div className={`w-full ${className}`}>
       {/* Header con pasos */}
-      <div className="mb-8">
+      <div className="mb-4 md:mb-8">
         <nav aria-label="Progress">
           <ol className="flex items-center">
             {steps.map((step, index) => {
@@ -38,7 +38,7 @@ const Wizard: React.FC<WizardProps> = ({
                   {/* Línea conectora */}
                   {!isLast && (
                     <div 
-                      className={`absolute top-4 left-1/2 w-full h-0.5 
+                      className={`absolute top-3 md:top-4 left-1/2 w-full h-0.5 
                         ${isCompleted ? 'bg-blue-600' : 'bg-gray-300'}`} 
                       style={{ left: '50%' }}
                     />
@@ -48,7 +48,7 @@ const Wizard: React.FC<WizardProps> = ({
                   <div className="relative flex flex-col items-center group">
                     <div 
                       className={`
-                        flex items-center justify-center w-8 h-8 rounded-full border-2 
+                        flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full border-2 
                         transition-colors duration-200 z-10 bg-white
                         ${isActive 
                           ? 'border-blue-600 text-blue-600' 
@@ -59,7 +59,7 @@ const Wizard: React.FC<WizardProps> = ({
                       `}
                     >
                       {isCompleted && !isActive ? (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-3 h-3 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path 
                             fillRule="evenodd" 
                             d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
@@ -67,20 +67,20 @@ const Wizard: React.FC<WizardProps> = ({
                           />
                         </svg>
                       ) : (
-                        <span className="text-sm font-medium">{index + 1}</span>
+                        <span className="text-xs md:text-sm font-medium">{index + 1}</span>
                       )}
                     </div>
 
                     {/* Step info */}
-                    <div className="mt-2 text-center">
+                    <div className="mt-1 md:mt-2 text-center">
                       <p 
-                        className={`text-sm font-medium 
+                        className={`text-xs md:text-sm font-medium 
                           ${isActive ? 'text-blue-600' : 'text-gray-900'}`}
                       >
                         {t(step.title, step.title)}
                       </p>
                       {step.description && (
-                        <p className="text-xs text-gray-500">{t(step.description, step.description)}</p>
+                        <p className="hidden md:block text-xs text-gray-500">{t(step.description, step.description)}</p>
                       )}
                     </div>
                   </div>

@@ -8,8 +8,6 @@ import { LanguageProvider } from "../contexts/LanguageContext";
 import { Sidebar } from "./navigation/Sidebar";
 import { AppHeader } from "./navigation/AppHeader";
 import { SecondaryNav } from "./navigation/SecondaryNav";
-import { AssetsDashboard } from "./dashboard/AssetsDashboard";
-import AssetsList from "./AssetsList";
 import ErrorBoundary from "./ErrorBoundary";
 import { HeaderGreenFinancial } from "./navigation/HeaderGreenFinancial";
 
@@ -51,6 +49,8 @@ function NewLayoutContent() {
       location.pathname.startsWith("/building/") ||
       location.pathname.startsWith("/digital-book") ||
       location.pathname.startsWith("/cfo-intake") ||
+      location.pathname.startsWith("/cfo-due-diligence") ||
+      location.pathname.startsWith("/cfo-simulation") ||
       location.pathname === "/assets";
 
     // if (isBuildingRelatedPath && setActiveModule) {
@@ -88,6 +88,10 @@ function NewLayoutContent() {
           /\/building\/([^/]+)\/analysis-general/
         );
         buildingIdFromPath = match ? match[1] : null;
+      } else if (location.pathname.startsWith("/cfo-due-diligence/")) {
+        // Ruta: /cfo-due-diligence/:buildingId
+        const match = location.pathname.match(/\/cfo-due-diligence\/([^/]+)/);
+        buildingIdFromPath = match ? match[1] : null;
       }
 
       if (buildingIdFromPath && selectedBuildingId !== buildingIdFromPath) {
@@ -113,15 +117,30 @@ function NewLayoutContent() {
         if (activeSection !== "general-view") {
           setActiveSection("general-view");
         }
+      } else if (location.pathname.includes("/gestion")) {
+        // Ruta de gestión
+        if (activeSection !== "gestion") {
+          setActiveSection("gestion");
+        }
       } else if (
         location.pathname.startsWith("/building/") &&
         !location.pathname.includes("/analysis-general") &&
         !location.pathname.includes("/units") &&
         !location.pathname.includes("/documents") &&
-        !location.pathname.includes("/general-view")
+        !location.pathname.includes("/gestion")
       ) {
-        // Ruta de detalle de edificio (vista general)
-        if (activeSection !== "todos") {
+        // Ruta de detalle de edificio (vista general o general-view)
+        // Ahora /building/:id redirige a /building/:id/general-view
+        if (
+          activeSection !== "general-view" &&
+          location.pathname.includes("/general-view")
+        ) {
+          setActiveSection("general-view");
+        } else if (
+          activeSection !== "todos" &&
+          !location.pathname.includes("/general-view")
+        ) {
+          // Mantener compatibilidad con otras rutas de building que no sean general-view
           setActiveSection("todos");
         }
       }
@@ -157,25 +176,19 @@ function NewLayoutContent() {
       return <Outlet />;
     }
 
-    // Si estamos en /building/:id (vista detalle), mostrar BuildingDetail
+    // Si estamos en /building/:id (redirige a /building/:id/general-view), usar Outlet
     if (isBuildingDetail) {
       return <Outlet />;
     }
 
-    // Si estamos en /assets o ruta raíz de activos
-    if (
-      location.pathname === "/assets" ||
-      location.pathname === "/cfo-dashboard"
-    ) {
-      // Si estamos en modo dashboard, mostrar AssetsDashboard
-      if (activeSection === "dashboard") {
-        return <AssetsDashboard />;
-      }
-      // Si estamos en modo lista, mostrar AssetsList
-      return <AssetsList />;
+    // Si estamos en /cfo-dashboard, usar lógica específica
+    if (location.pathname === "/cfo-dashboard") {
+      // Mantener lógica específica para CFO si es necesario
+      return <Outlet />;
     }
 
-    // Por defecto, usar Outlet para otras rutas
+    // Por defecto, usar Outlet para todas las rutas (incluyendo /assets)
+    // Esto permite que el router maneje qué componente renderizar
     return <Outlet />;
   };
 
@@ -190,6 +203,8 @@ function NewLayoutContent() {
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/events") ||
     location.pathname.startsWith("/cfo-intake") ||
+    location.pathname.startsWith("/cfo-due-diligence") ||
+    location.pathname.startsWith("/cfo-simulation") ||
     location.pathname === "/assets";
 
   const showSecondaryNav =
@@ -224,7 +239,7 @@ function NewLayoutContent() {
         <div
           className={`
             ${showSecondaryNav ? "lg:ml-80" : "lg:ml-16 md:ml-16"} 
-            ml-0
+            ml-0 md:ml-0
             relative
           `}
         >
@@ -241,15 +256,15 @@ function NewLayoutContent() {
             className={
               location.pathname === "/green-financial"
                 ? `
-              px-3 md:px-6 lg:px-8 
+              px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
-              max-w-[1400px] 
+              max-w-[1920px] mx-auto
             `
                 : `
-              px-3 md:px-6 lg:px-8 
+              px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
-              max-w-[1400px] 
-              pt-[140px] md:pt-[104px]
+              max-w-[1920px] mx-auto
+              mt-[100px] md:mt-[100px]
             `
             }
           >
