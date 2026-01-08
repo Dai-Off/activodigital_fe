@@ -61,6 +61,7 @@ import { BuildingCalendar } from "~/components/BuildingCalendar";
 import { BuildingGestion } from "~/components/BuildingGestion";
 import { GeneralGestion } from "~/components/GeneralGestion";
 import { Events } from "~/components/Events";
+import Configuration from "~/components/Configuration";
 
 // Componente para redirigir /building/:id a /building/:id/general-view
 const NavigateToGeneralView = () => {
@@ -181,6 +182,16 @@ export const AppRouter = () => {
             <ProtectedRoute>
               <ErrorBoundary>
                 <Users />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
+          path="/configuration"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Configuration />
               </ErrorBoundary>
             </ProtectedRoute>
           }

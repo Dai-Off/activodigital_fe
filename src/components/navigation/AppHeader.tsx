@@ -9,14 +9,14 @@ import {
   ChevronRight as ChevronRightIcon,
   Settings,
   LogOut,
-  UserCircle,
   ChevronDown,
   Menu,
+  Shield,
 } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useState, useEffect, useRef, useMemo, Fragment } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   BuildingsApiService,
@@ -31,8 +31,8 @@ import { timeAgo } from "~/utils/timeAgo";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
 
 export function AppHeader() {
-  let goBack = () => {},
-    goForward = () => {},
+  let goBack = () => { },
+    goForward = () => { },
     canGoBack = false,
     canGoForward = false;
   let viewMode: "list" | "detail" = "list";
@@ -560,11 +560,10 @@ export function AppHeader() {
                             )} ${lang.name}`
                           );
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm ${
-                          language === lang.code
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-700"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm ${language === lang.code
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-700"
+                          }`}
                       >
                         <span className="text-lg">{lang.flag}</span>
                         <span>{lang.name}</span>
@@ -612,26 +611,30 @@ export function AppHeader() {
                       </div>
                     </div>
                     <div className="p-2">
-                      <button
-                        onClick={() => {
-                          toast.info(translate("profile", "Mi perfil"));
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
-                      >
-                        <UserCircle className="w-4 h-4" />
-                        <span>{translate("profile", "Mi perfil")}</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          toast.info(translate("settings", "Configuración"));
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>{translate("settings", "Configuración")}</span>
-                      </button>
+                      <Link to={`/configuration`}>
+                        <button
+                          onClick={() => {
+                            toast.info(translate("settings", "Configuración"));
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>{translate("settings", "Configuración")}</span>
+                        </button>
+                      </Link>
+                      <Link to={`/users?role=permisos`}>
+                        <button
+                          onClick={() => {
+                            toast.info(translate("profile", "Mi perfil"));
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
+                        >
+                          <Shield className="w-4 h-4" />
+                          <span>{translate("profile and Roles", "Permisos y Roles")}</span>
+                        </button>
+                      </Link>
                     </div>
                     <div className="p-2 border-t border-gray-200">
                       <button
@@ -652,11 +655,10 @@ export function AppHeader() {
               <button
                 onClick={goBack}
                 disabled={!canGoBack}
-                className={`p-1.5 rounded ${
-                  canGoBack
-                    ? "hover:bg-gray-100"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
+                className={`p-1.5 rounded ${canGoBack
+                  ? "hover:bg-gray-100"
+                  : "opacity-30 cursor-not-allowed"
+                  }`}
                 title={translate("back", "Volver")}
               >
                 <ChevronLeft className="w-4 h-4 text-gray-600" />
@@ -664,11 +666,10 @@ export function AppHeader() {
               <button
                 onClick={goForward}
                 disabled={!canGoForward}
-                className={`p-1.5 rounded ${
-                  canGoForward
-                    ? "hover:bg-gray-100"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
+                className={`p-1.5 rounded ${canGoForward
+                  ? "hover:bg-gray-100"
+                  : "opacity-30 cursor-not-allowed"
+                  }`}
                 title={translate("forward", "Avanzar")}
               >
                 <ChevronRight className="w-4 h-4 text-gray-600" />
