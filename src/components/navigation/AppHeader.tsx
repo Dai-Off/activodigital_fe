@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   BuildingsApiService,
@@ -92,6 +92,72 @@ export function AppHeader() {
       return t(key, defaultValue);
     }
     return defaultValue || key;
+  };
+
+  const location = useLocation();
+
+  const pathSegments = useMemo(() => {
+    return location.pathname.split("/").filter(Boolean);
+  }, [location.pathname]);
+
+  // Función para obtener la etiqueta traducida de un segmento de ruta
+  const getBreadcrumbLabel = (segment: string) => {
+    if (segment === selectedBuildingId && selectedBuildingName) {
+      return selectedBuildingName;
+    }
+
+    switch (segment) {
+      case "dashboard":
+        return translate("dashboard", "Dashboard");
+      case "statistics":
+        return translate("statistics", "Estadísticas");
+      case "activity":
+        return translate("activity", "Actividad");
+      case "assets":
+        return translate("assets", "Activos");
+      case "users":
+        return translate("users", "Usuarios");
+      case "events":
+        return translate("events", "Eventos");
+      case "green-financial":
+        return translate("greenFinancial", "Financiación Verde");
+      case "financial-twin":
+        return translate("financialTwin", "Gemelo Financiero");
+      case "cfo-due-diligence":
+        return translate("cfoDueDiligence", "CFO Due Diligence");
+      case "cfo-simulation":
+        return translate("cfoSimulation", "Simulación CFO");
+      case "building":
+        return translate("buildings", "Edificios");
+      case "general-view":
+        return translate("generalView", "Vista General");
+      case "financial":
+        return translate("financial", "Financiero");
+      case "insurance":
+        return translate("insurance", "Seguros");
+      case "calendar":
+        return translate("calendar", "Calendario");
+      case "rent":
+        return translate("rent", "Rentas");
+      case "energy-efficiency":
+        return translate("energyEfficiency", "Eficiencia Energética");
+      case "certificates":
+        return translate("certificates", "Certificados");
+      case "maintenance":
+        return translate("maintenance", "Mantenimiento");
+      case "gestion":
+        return translate("gestion", "Gestión");
+      case "analysis-general":
+        return translate("generalAnalysis", "Análisis General");
+      case "hub":
+        return translate("digitalBook", "Libro Digital");
+      case "digital-book":
+        return translate("digitalBook", "Libro Digital");
+      default:
+        return (
+          segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
+        );
+    }
   };
 
   const [showAIAssistant, setShowAIAssistant] = useState(false);
@@ -616,27 +682,35 @@ export function AppHeader() {
       <div className="px-3 md:px-6 py-2.5 md:py-1.5 bg-gray-50 border-t border-gray-200 overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2 text-xs md:text-sm whitespace-nowrap min-w-max">
           <button
-            onClick={handleBackToList}
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            onClick={() => navigate("/dashboard")}
+            className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
           >
             ARKIA
           </button>
-          <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-          <button
-            onClick={handleBackToList}
-            className="text-gray-600 hover:text-blue-600 transition-colors"
-          >
-            {translate("assetsList", "Listado de activos")}
-          </button>
 
-          {viewMode === "detail" && selectedBuildingId && (
-            <>
-              <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-              <span className="text-gray-900">
-                {selectedBuildingName || selectedBuildingId}
-              </span>
-            </>
-          )}
+          {pathSegments.map((segment, index) => {
+            const url = `/${pathSegments.slice(0, index + 1).join("/")}`;
+            const isLast = index === pathSegments.length - 1;
+            const label = getBreadcrumbLabel(segment);
+
+            return (
+              <Fragment key={url}>
+                <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
+                {isLast ? (
+                  <span className="text-gray-900 font-medium leading-tight">
+                    {label}
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => navigate(url)}
+                    className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
+                  >
+                    {label}
+                  </button>
+                )}
+              </Fragment>
+            );
+          })}
         </div>
       </div>
 
