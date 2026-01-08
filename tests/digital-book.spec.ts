@@ -7,7 +7,7 @@ import {
 } from "@playwright/test";
 
 test.describe("Digital Book & Compliance", () => {
-  const BASE_URL = "http://localhost:5173";
+  const BASE_URL = "http://127.0.0.1:5173";
   const BUILDING_ID = "building-1";
   const SECTION_ID = "installations"; // UI ID for "Instalaciones y consumos"
   const API_SECTION_TYPE = "facilities_and_consumption"; // API ID mapping
