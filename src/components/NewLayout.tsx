@@ -201,6 +201,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/building/") ||
     location.pathname.startsWith("/digital-book") ||
     location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/configuration") ||
     location.pathname.startsWith("/events") ||
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname.startsWith("/cfo-due-diligence") ||

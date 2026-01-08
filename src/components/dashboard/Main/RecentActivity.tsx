@@ -7,9 +7,11 @@ import {
   LucideArrowUpRight,
   LucideCircleCheckBig,
   LucideFileText,
+  LucideTrash,
   LucideTrendingUp,
   LucideTriangleAlert,
   LucideUsers,
+  LucideX,
   TriangleAlert,
   Zap,
 } from "lucide-react";
@@ -64,7 +66,7 @@ export function RecentActivity() {
       'ACTUALIZAR DATOS FINANCIEROS': 9,
       'COMPLETAR INSPECCION ELECTRICA': 10,
       CREAR: 11,
-      ELIMINAR: 0,
+      ELIMINAR: 12,
       APROBAR: 0,
       RECHAZAR: 0,
     }
@@ -141,6 +143,12 @@ export function RecentActivity() {
     Caso 10: completar inspección eléctrica | Icono: Zap | color: purple
 
     Caso 11: Crear | Icono: ArrowUpRight | color: green
+
+    Caso 12: Eliminar | Icono: Trash | color: red
+    
+    Caso 13: Aprobar | Icono: Check | color: green
+    
+    Caso 14: Rechazar | Icono: X | color: red
     
     */
 
@@ -198,6 +206,21 @@ export function RecentActivity() {
       11: (
         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-green-100">
           <ArrowUpRight className="w-4 h-4 text-green-600"></ArrowUpRight>
+        </div>
+      ),
+      12: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
+          <LucideTrash className="w-4 h-4 text-red-600"></LucideTrash>
+        </div>
+      ),
+      13: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
+          <LucideCircleCheckBig className="w-4 h-4 text-gray-600"></LucideCircleCheckBig>
+        </div>
+      ),
+      14: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
+          <LucideX className="w-4 h-4 text-red-600"></LucideX>
         </div>
       ),
     };

@@ -3,6 +3,7 @@ import { SidebarDashboard } from "./SidebarDashboard";
 import { SidebarAssets } from "./SidebarAssets";
 import SidebarUsers from "./SidebarUsers";
 import SidebarEvents from "./SideberEvents";
+import SidebarConfiguration from "./SidebarConfiguration";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -19,6 +20,7 @@ export function SecondaryNav() {
     assets: <SidebarAssets />,
     edificio: <SidebarAssets />, // Mostrar lista de activos también en rutas de edificio
     users: <SidebarUsers />,
+    configuration: <SidebarConfiguration />,
     events: <SidebarEvents />,
   };
 
