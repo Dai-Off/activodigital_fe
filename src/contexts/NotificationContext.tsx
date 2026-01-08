@@ -1,9 +1,17 @@
 // src/contexts/NotificationContext.tsx
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import type { ReactNode } from "react";
 import { notificationApiService } from "../services/notifications";
 import type { Notification, NotificationFilters } from "../types/notifications";
 import { useAuth } from "./AuthContext";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -49,6 +57,46 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const setNotificationBuildingFilters = useCallback((ids: string[]) => {
     setActiveBuildingIds(ids);
   }, []);
+
+  // Socket.io integration
+  useEffect(() => {
+    if (!user?.userId) return;
+
+    // Conectar al socket
+    const socket = io(
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:3000",
+      {
+        path: "/socket.io",
+        transports: ["websocket"], // Forzar websocket para evitar polling inicial si es posible
+      }
+    );
+
+    socket.on("connect", () => {
+      // Unirse a la sala del usuario
+      socket.emit("join", user.userId);
+    });
+
+    socket.on("notification:new", (newNotification: Notification) => {
+      // Mostrar toast
+      toast.info(newNotification.title, {
+        description: newNotification.message || "Nueva notificación recibida",
+      });
+
+      // Actualizar contador
+      setUnreadCount((prev) => prev + 1);
+
+      // Actualizar lista de notificaciones (si estamos viendo todas o si coincide con los filtros actuales)
+      setNotifications((prev) => [newNotification, ...prev]);
+
+      // Actualizar lista de no leídas
+      setUnreadNot((prev) => [newNotification, ...prev]);
+    });
+
+    return () => {
+      console.log("[NotificationContext] Disconnecting socket");
+      socket.disconnect();
+    };
+  }, [user?.userId]);
 
   // Actualiza el conteo de no leídas
   const refreshUnreadCount = useCallback(async () => {
