@@ -121,13 +121,13 @@ export default function App() {
       await deleteUser(userId);
     } catch (err) {
       let errorMsg = 'Puedes reportar este fallo a nuestro equipo.';
-     if (err instanceof Error) {
+      if (err instanceof Error) {
         errorMsg = err.message || errorMsg;
       } else if (typeof err === 'string') {
         errorMsg = err;
       }
       showError('¡Ups! Ocurrió algo.', errorMsg)
-    }finally{
+    } finally {
       reloadData()
     }
   };
@@ -233,12 +233,12 @@ export default function App() {
         {loading ? (
           <SkeletonUsers />
         ) : (
-          <div className={`max-w-7xl mx-auto`}> 
-            
+          <div className={`max-w-7xl mx-auto`}>
+
             {/* HEADER */}
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-                <div className="flex items-center gap-3"> 
+                <div className="flex items-center gap-3">
                   <span className="bg-purple-100 p-2 sm:p-3 rounded-lg flex items-center justify-center">
                     {canSeeUser ? <UsersIcon className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6" /> : <Shield className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6" />}
                   </span>
@@ -252,13 +252,13 @@ export default function App() {
                   </div>
                 </div>
 
-                <Button
+                {canSeeUser && <Button
                   onClick={handleCreateUser}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-700 text-sm transition-all shadow-sm hover:shadow-md">
                   <UserPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">Nuevo Usuario</span>
                   <span className="sm:hidden">Nuevo</span>
-                </Button>
+                </Button>}
               </div>
             </div>
 
@@ -280,7 +280,7 @@ export default function App() {
                       {filteredUsers.length} de {users?.length} usuarios
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                     <select
                       value={sortColumn}
@@ -309,7 +309,7 @@ export default function App() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="text-xs text-gray-500 sm:hidden">
                   {filteredUsers.length} de {users?.length} usuarios
                 </div>
@@ -352,7 +352,7 @@ export default function App() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="flex-1 w-full"> 
+                      <div className="flex-1 w-full">
                         <label className="block text-gray-700 font-medium text-sm mb-2">Rol</label>
                         <select
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors text-sm"
@@ -366,7 +366,7 @@ export default function App() {
                         </select>
                       </div>
 
-                      <div className="flex-1 w-full"> 
+                      <div className="flex-1 w-full">
                         <label className="block text-gray-700 font-medium text-sm mb-2">Estado</label>
                         <select
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors text-sm"
@@ -468,7 +468,7 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
-                  
+
                   {/* LISTA DE TARJETAS PARA MÓVIL (visible solo en móvil) */}
                   <div className="lg:hidden divide-y divide-gray-100">
                     {filteredUsers.length === 0 ? (
@@ -540,7 +540,7 @@ export default function App() {
                             <div key={idx} className="p-4 border border-gray-200 rounded-lg">
                               <h3 className="mb-3 font-semibold text-lg">{rol?.title}</h3> {/* Mejor jerarquía */}
                               {/* Grid: 2 columnas en móvil, 3 columnas en sm+ */}
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4"> 
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                                 {
                                   rol?.permissions.map((per, idx) => {
                                     const { checked = false, name, readonly = false } = per
