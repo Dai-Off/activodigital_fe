@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import {
   loginRequest,
   processPendingAssignments,
-  fetchMe,
   verify2FALogin,
 } from "../services/auth";
 import { useAuth } from "../contexts/AuthContext";
@@ -103,10 +102,6 @@ export default function Login() {
 
         await login(token);
 
-        // Ahora sí podemos obtener la información del usuario
-        const meResp = await fetchMe();
-        const userRole = meResp?.role?.name || "tecnico";
-
         // Procesar invitación pendiente si existe
         const pendingInvitation = localStorage.getItem("pendingInvitation");
         if (pendingInvitation) {
@@ -118,12 +113,10 @@ export default function Login() {
           }
         }
 
-        // Redirigir según rol o parámetro redirect
+        // Redirigir según parámetro redirect o al dashboard por defecto
         const redirectParam = searchParams.get("redirect");
         if (redirectParam) {
           navigate(decodeURIComponent(redirectParam));
-        } else if (userRole === "cfo") {
-          navigate("/cfo-dashboard");
         } else {
           navigate("/dashboard");
         }

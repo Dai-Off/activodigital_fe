@@ -34,12 +34,11 @@ import {
   type PersistedEnergyCertificate,
 } from "../services/energyCertificates";
 
-import { getLatestRating, getCEEColor } from "../utils/energyCalculations";
+import { getLatestRating } from "../utils/energyCalculations";
 import { getBookByBuilding, type DigitalBook } from "../services/digitalbook";
 import {
   calculateESGScore,
   // getESGLabelColor,
-  getESGColorFromScore,
   type ESGResponse,
 } from "../services/esg";
 
@@ -364,30 +363,6 @@ export default function AssetsList() {
     stopStatsLoading,
   ]);
 
-  // Calcular emisiones totales de CO₂ en el frontend
-  const calculatedTotalEmissions = useMemo(() => {
-    if (!buildings.length || !energyCertificates.length) return 0;
-
-    let totalEmissions = 0;
-
-    buildings.forEach((building) => {
-      const cert = energyCertificates.find((c) => c.buildingId === building.id);
-
-      if (
-        cert &&
-        cert.emissionsKgCo2PerM2Year &&
-        cert.emissionsKgCo2PerM2Year > 0
-      ) {
-        const surfaceArea =
-          building.squareMeters || (building.numUnits || 0) * 70;
-        const buildingEmissions =
-          (cert.emissionsKgCo2PerM2Year * surfaceArea) / 1000;
-        totalEmissions += buildingEmissions;
-      }
-    });
-
-    return Math.round(totalEmissions);
-  }, [buildings, energyCertificates]);
 
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
@@ -621,7 +596,7 @@ export default function AssetsList() {
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t(`roles.${user.role}`, { defaultValue: user.role })}
+                  {t(`roles.${user.role}`, { defaultValue: user.role || "Usuario" })}
                 </span>
               </div>
 
@@ -630,95 +605,45 @@ export default function AssetsList() {
                 <div className="flex-1 w-full lg:pr-6">
                   {/* Main Metrics */}
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4">
-                    {user?.role === "propietario" ? (
-                      <>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600 mb-1">
-                            {formatBuildingValue(dashboardStats.totalValue)}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t("totalValue", { defaultValue: "Valor total" })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalAssets}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t("assets", { defaultValue: "Activos" })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()}{" "}
-                            m²
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t("totalSurface", {
-                              defaultValue: "Superficie total",
-                            })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {(
-                              dashboardStats.totalEmissions ??
-                              calculatedTotalEmissions
-                            ).toLocaleString()}{" "}
-                            <span className="text-sm sm:text-base">
-                              tCO₂ eq
-                            </span>
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t("annualEmissions", {
-                              defaultValue: "Emisiones anuales",
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalAssets}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t("assignedBuildings", {
-                              defaultValue: "Edificios asignados",
-                            })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.completedBooks}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t("completedBooks", {
-                              defaultValue: "Libros completados",
-                            })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.pendingBooks}
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500">
-                            {t("pendingBooks", { defaultValue: "Pendientes" })}
-                          </div>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
-                          <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
-                            {dashboardStats.totalSurfaceArea.toLocaleString()}{" "}
-                            m²
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                            {t("totalSurface", {
-                              defaultValue: "Superficie total",
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        {dashboardStats.totalAssets}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                        {t("assignedBuildings", {
+                          defaultValue: "Edificios asignados",
+                        })}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        {dashboardStats.completedBooks}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                        {t("completedBooks", {
+                          defaultValue: "Libros completados",
+                        })}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        {dashboardStats.pendingBooks}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {t("pendingBooks", { defaultValue: "Pendientes" })}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
+                      <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                        {dashboardStats.totalSurfaceArea.toLocaleString()}{" "}
+                        m²
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
+                        {t("totalSurface", {
+                          defaultValue: "Superficie total",
+                        })}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Separator Line */}
@@ -726,121 +651,41 @@ export default function AssetsList() {
 
                   {/* Performance Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {user?.role === "propietario" ? (
-                      <>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("averageEnergyClass", {
-                              defaultValue: "Clase energética promedio",
-                            })}
-                          </div>
-                          <div className="flex items-center justify-center">
-                            {dashboardStats.averageEnergyClass ? (
-                              <div
-                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getCEEColor(
-                                  dashboardStats.averageEnergyClass
-                                )}`}
-                              >
-                                <span className="text-sm sm:text-base font-bold text-white">
-                                  {dashboardStats.averageEnergyClass}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-lg font-bold text-gray-400">
-                                -
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("averageESGScore", {
-                              defaultValue: "ESG Score medio",
-                            })}
-                          </div>
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            {dashboardStats.averageESGScore ? (
-                              <>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill={getESGColorFromScore(
-                                    dashboardStats.averageESGScore
-                                  )}
-                                  className="w-8 h-8 sm:w-10 sm:h-10"
-                                  style={{
-                                    filter:
-                                      "drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))",
-                                  }}
-                                  aria-hidden="true"
-                                >
-                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg>
-                                <span className="text-sm font-bold text-gray-700">
-                                  {dashboardStats.averageESGScore}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-lg font-bold text-gray-400">
-                                -
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center sm:col-span-2 lg:col-span-1">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("completedDigitalBook", {
-                              defaultValue: "Libros completados",
-                            })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.completedBooks}{" "}
-                            <span className="text-sm font-normal text-gray-500">
-                              {t("of", { defaultValue: "de" })}{" "}
-                              {dashboardStats.totalAssets}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("mostCommonTypology", {
-                              defaultValue: "Tipología más común",
-                            })}
-                          </div>
-                          <div className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
-                            {dashboardStats.mostCommonTypology
-                              ? getBuildingTypologyLabel(
-                                  dashboardStats.mostCommonTypology as any
-                                )
-                              : "N/A"}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("averageUnits", {
-                              defaultValue: "Promedio unidades",
-                            })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.averageUnitsPerBuilding}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
-                          <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                            {t("averageAge", { defaultValue: "Edad promedio" })}
-                          </div>
-                          <div className="text-lg sm:text-xl font-bold text-gray-900">
-                            {dashboardStats.averageBuildingAge}{" "}
-                            <span className="text-sm font-normal text-gray-500">
-                              {t("years", { defaultValue: "años" })}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t("mostCommonTypology", {
+                          defaultValue: "Tipología más común",
+                        })}
+                      </div>
+                      <div className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
+                        {dashboardStats.mostCommonTypology
+                          ? getBuildingTypologyLabel(
+                              dashboardStats.mostCommonTypology as any
+                            )
+                          : "N/A"}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t("averageUnits", {
+                          defaultValue: "Promedio unidades",
+                        })}
+                      </div>
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
+                        {dashboardStats.averageUnitsPerBuilding}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <div className="text-xs sm:text-sm text-gray-500 mb-2">
+                        {t("averageAge", { defaultValue: "Edad promedio" })}
+                      </div>
+                      <div className="text-lg sm:text-xl font-bold text-gray-900">
+                        {dashboardStats.averageBuildingAge}{" "}
+                        <span className="text-sm font-normal text-gray-500">
+                          {t("years", { defaultValue: "años" })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -868,11 +713,7 @@ export default function AssetsList() {
                         stroke="currentColor"
                         strokeWidth="3"
                         fill="transparent"
-                        strokeDasharray={`${
-                          user?.role === "propietario"
-                            ? dashboardStats.greenFinancingEligiblePercentage
-                            : dashboardStats.completionPercentage
-                        }, 100`}
+                        strokeDasharray={`${dashboardStats.completionPercentage}, 100`}
                         d="M18 2.0845
                           a 15.9155 15.9155 0 0 1 0 31.831
                           a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -881,9 +722,7 @@ export default function AssetsList() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-base sm:text-lg lg:text-xl font-bold text-green-500">
-                          {user?.role === "propietario"
-                            ? `${dashboardStats.greenFinancingEligiblePercentage}%`
-                            : `${dashboardStats.completionPercentage}%`}
+                          {`${dashboardStats.completionPercentage}%`}
                         </div>
                       </div>
                     </div>
@@ -891,12 +730,7 @@ export default function AssetsList() {
 
                   <div className="text-center max-w-[140px] sm:max-w-[160px]">
                     <div className="text-xs sm:text-sm text-gray-500 leading-tight">
-                      {user?.role === "propietario"
-                        ? t("greenFinancingEligible", {
-                            defaultValue:
-                              "% cartera apta para financiación verde",
-                          })
-                        : t("completedDigitalBooksPercent", {
+                      {t("completedDigitalBooksPercent", {
                             defaultValue: "% libros digitales completados",
                           })}
                     </div>
@@ -1140,22 +974,13 @@ export default function AssetsList() {
                 />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === "propietario"
-                  ? t("noAssetsYet", { defaultValue: "No tienes activos aún" })
-                  : t("noAssignedAssets", {
-                      defaultValue: "No tienes activos asignados",
-                    })}
+                {t("noAssetsYet", { defaultValue: "No tienes activos aún" })}
               </h3>
               <p className="text-gray-600 mb-4">
-                {user?.role === "propietario"
-                  ? t("createFirstAsset", {
-                      defaultValue:
-                        "Comienza creando tu primer activo para gestionar tu cartera.",
-                    })
-                  : t("contactAdmin", {
-                      defaultValue:
-                        "Contacta con tu administrador para que te asigne activos.",
-                    })}
+                {t("createFirstAsset", {
+                  defaultValue:
+                    "Comienza creando tu primer activo para gestionar tu cartera.",
+                })}
               </p>
               <Link
                 to="/buildings/crear"

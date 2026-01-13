@@ -7,7 +7,6 @@ import {
   setup2FA,
   verify2FASetup,
   verify2FALogin,
-  fetchMe,
 } from "../services/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { FormLoader, useLoadingState } from "./ui/LoadingSystem";
@@ -167,22 +166,12 @@ export default function RegisterWithInvitation() {
               "Login en contexto completado, obteniendo info del usuario..."
             );
 
-            // Obtener información del usuario
-            const me = await fetchMe();
-            const roleName = me?.role?.name || "tecnico";
-
-            console.log("Usuario obtenido, rol:", roleName);
-
             // Esperar un momento para asegurar que todo esté listo
             await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Redirigir según rol
+            // Redirigir al dashboard
             console.log("Redirigiendo...");
-            if (roleName === "cfo") {
-              navigate("/cfo-dashboard");
-            } else {
-              navigate("/assets");
-            }
+            navigate("/dashboard");
           } else {
             console.error(
               "verify2FALogin no devolvió access_token:",
