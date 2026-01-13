@@ -1,17 +1,14 @@
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
-  User,
   Sparkles,
   Globe,
   Bell,
   ChevronRight as ChevronRightIcon,
   Settings,
   LogOut,
-  ChevronDown,
   Menu,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -29,12 +26,9 @@ import { useNotifications } from "~/contexts/NotificationContext";
 import { formatofechaCorta } from "~/utils/fechas";
 import { timeAgo } from "~/utils/timeAgo";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
+import { SupportContactModal } from "../SupportContactModal";
 
 export function AppHeader() {
-  let goBack = () => { },
-    goForward = () => { },
-    canGoBack = false,
-    canGoForward = false;
   let viewMode: "list" | "detail" = "list";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
@@ -44,10 +38,6 @@ export function AppHeader() {
 
   try {
     const navigation = useNavigation();
-    goBack = navigation.goBack;
-    goForward = navigation.goForward;
-    canGoBack = navigation.canGoBack;
-    canGoForward = navigation.canGoForward;
     viewMode = navigation.viewMode;
     selectedBuildingId = navigation.selectedBuildingId;
     setSelectedBuildingId = navigation.setSelectedBuildingId;
@@ -164,6 +154,7 @@ export function AppHeader() {
   const [showTranslator, setShowTranslator] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -468,6 +459,18 @@ export function AppHeader() {
               </span>
             </button>
 
+            {/* Support Button */}
+            <button
+              onClick={() => setShowSupportModal(true)}
+              className="flex items-center justify-center px-2 md:px-3 py-2 h-9 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+              title={translate("contactSupport", "Contactar soporte")}
+            >
+              <HelpCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm hidden md:inline whitespace-nowrap ml-2">
+                {translate("support", "Soporte")}
+              </span>
+            </button>
+
             {/* Notifications Button */}
             <div className="relative" ref={notificationsRef}>
               <button
@@ -582,13 +585,12 @@ export function AppHeader() {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center justify-center gap-2 px-2 md:px-3 py-2 h-9 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all"
+                  className="flex items-center justify-center w-9 h-9 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+                  title={user.email || translate("userMenu", "Menú de usuario")}
                 >
-                  <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                  <span className="text-gray-700 hidden lg:inline whitespace-nowrap truncate max-w-[150px]">
-                    {user.email || translate("userArkia", "Usuario ARKIA")}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-gray-400 hidden md:inline flex-shrink-0" />
+                  <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {user.email?.[0]?.toUpperCase() || user.fullName?.[0]?.toUpperCase() || "U"}
+                  </div>
                 </button>
 
                 {/* User Dropdown */}
@@ -650,31 +652,6 @@ export function AppHeader() {
               </div>
             )}
 
-            {/* Navigation Arrows */}
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={goBack}
-                disabled={!canGoBack}
-                className={`p-1.5 rounded ${canGoBack
-                  ? "hover:bg-gray-100"
-                  : "opacity-30 cursor-not-allowed"
-                  }`}
-                title={translate("back", "Volver")}
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                onClick={goForward}
-                disabled={!canGoForward}
-                className={`p-1.5 rounded ${canGoForward
-                  ? "hover:bg-gray-100"
-                  : "opacity-30 cursor-not-allowed"
-                  }`}
-                title={translate("forward", "Avanzar")}
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -725,6 +702,13 @@ export function AppHeader() {
       <AIAssistant
         isOpen={showAIAssistant}
         onClose={() => setShowAIAssistant(false)}
+      />
+
+      {/* Support Contact Modal */}
+      <SupportContactModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        context={`App - ${location.pathname}`}
       />
     </header>
   );

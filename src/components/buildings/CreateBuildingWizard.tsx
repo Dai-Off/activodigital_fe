@@ -22,6 +22,7 @@ import type {
 } from "../../services/buildingsApi";
 
 import { uploadBuildingImages } from "../../services/imageUpload";
+import { SupportContactModal } from "../SupportContactModal";
 
 // -------------------- Types --------------------
 export interface BuildingStep1Data {
@@ -85,6 +86,7 @@ const CreateBuildingWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // -------------------- Steps (i18n) --------------------
   const wizardSteps = [
@@ -562,12 +564,24 @@ const CreateBuildingWizard: React.FC = () => {
               )}
             </a>{" "}
             {t("common.or", "o")}{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-700">
+            <button
+              type="button"
+              onClick={() => setIsSupportModalOpen(true)}
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
               {t("help.contactSupport", "Contactar soporte")}
-            </a>
+            </button>
           </p>
         </div>
       </div>
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        initialSubject={t("help.contactSupport", "Contactar soporte")}
+        context={`Create Building Wizard - ${window.location.href}`}
+      />
     </div>
   );
 };
