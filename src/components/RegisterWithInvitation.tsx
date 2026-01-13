@@ -12,6 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { FormLoader, useLoadingState } from "./ui/LoadingSystem";
 import type { ValidateInvitationResponse } from "../services/auth";
 import QRCode from "react-qr-code";
+import { SupportContactModal } from "./SupportContactModal";
 
 export default function RegisterWithInvitation() {
   const { t } = useTranslation();
@@ -43,6 +44,7 @@ export default function RegisterWithInvitation() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [tempPassword, setTempPassword] = useState(""); // Guardar password temporalmente para login después del setup
   const [success, setSuccess] = useState<string | null>(null);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // Validar token al cargar el componente
   useEffect(() => {
@@ -674,16 +676,28 @@ export default function RegisterWithInvitation() {
                 </div>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
-                  {t(
-                    "qrProblemsHelp",
-                    "¿Problemas? Usa la app oficial o contacta a soporte."
-                  )}
+                  {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsSupportModalOpen(true)}
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
+                    {t("contactSupport", "contacta a soporte")}
+                  </button>
+                  .
                 </p>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        context={`Register with invitation page - ${window.location.href}`}
+      />
     </div>
   );
 }
