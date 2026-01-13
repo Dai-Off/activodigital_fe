@@ -162,7 +162,10 @@ function NewLayoutContent() {
     // Si estamos en una ruta específica que necesita su propio componente, usar Outlet
     if (
       location.pathname.startsWith("/digital-book") ||
-      location.pathname.startsWith("/cfo-") ||
+      location.pathname.startsWith("/cfo-intake") ||
+      location.pathname.startsWith("/cfo-due-diligence") ||
+      location.pathname.startsWith("/cfo-simulation") ||
+      location.pathname.startsWith("/cfo-dashboard") ||
       location.pathname.startsWith("/users") ||
       location.pathname.startsWith("/events") ||
       location.pathname.startsWith("/buildings/crear") ||
@@ -181,11 +184,6 @@ function NewLayoutContent() {
       return <Outlet />;
     }
 
-    // Si estamos en /cfo-dashboard, usar lógica específica
-    if (location.pathname === "/cfo-dashboard") {
-      // Mantener lógica específica para CFO si es necesario
-      return <Outlet />;
-    }
 
     // Por defecto, usar Outlet para todas las rutas (incluyendo /assets)
     // Esto permite que el router maneje qué componente renderizar
@@ -206,6 +204,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname.startsWith("/cfo-due-diligence") ||
     location.pathname.startsWith("/cfo-simulation") ||
+    location.pathname.startsWith("/cfo-dashboard") ||
     location.pathname === "/assets";
 
   const showSecondaryNav =

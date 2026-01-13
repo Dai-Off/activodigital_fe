@@ -17,7 +17,6 @@ import RegisterWithInvitation from "../components/RegisterWithInvitation";
 import AcceptAssignment from "../components/AcceptAssignment";
 import InvitationHandler from "../components/InvitationHandler";
 import Landing from "../components/Landing";
-import CFOAssetsList from "../components/CFOAssetsList";
 // import BuildingDetail from "../components/BuildingDetail"; // Ya no se usa, pero se mantiene por si acaso
 import BuildingAnalysisGeneral from "../components/BuildingAnalysisGeneral";
 import CFOIntakeForm from "../components/cfo/CFOIntakeForm";
@@ -247,7 +246,7 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <CFOAssetsList />
+                <Navigate to="/dashboard" replace />
               </ErrorBoundary>
             </ProtectedRoute>
           }
