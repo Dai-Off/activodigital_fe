@@ -49,13 +49,7 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
     <>
       {/* Overlay - responsive: full width en mobile, con margen en desktop */}
       <div 
-        className="fixed bg-black/40 backdrop-blur-sm z-[60] pointer-events-auto overflow-hidden left-0 md:left-16 w-full md:w-[calc(100%-4rem)]"
-        style={{ 
-          top: '0px',
-          right: '0px',
-          bottom: '0px',
-          height: '100vh'
-        }}
+        className="fixed bg-black/40 backdrop-blur-sm z-[60] pointer-events-auto overflow-hidden inset-0"
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="button"
@@ -67,7 +61,7 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
       
       {/* Modal Content - responsive: centrado con padding adecuado */}
       <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 md:p-4 pointer-events-none">
-        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-4 md:p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 md:p-6 pointer-events-auto max-h-[90vh] overflow-y-auto border-0">
         {/* Header */}
         <div className="flex items-start justify-between mb-4 md:mb-6">
           <div className="flex-1 pr-2">

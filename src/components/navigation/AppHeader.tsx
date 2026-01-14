@@ -87,8 +87,99 @@ export function AppHeader() {
   const location = useLocation();
 
   const pathSegments = useMemo(() => {
-    return location.pathname.split("/").filter(Boolean);
+    const segments = location.pathname.split("/").filter(Boolean);
+    
+    // Filtrar segmentos redundantes
+    const filteredSegments: string[] = [];
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      const prevSegment = i > 0 ? filteredSegments[filteredSegments.length - 1] : null;
+      
+      // Omitir "hub" si viene después de "digital-book" (ambos se traducen a "Libro Digital")
+      if (segment === "hub" && prevSegment === "digital-book") {
+        continue;
+      }
+      
+      filteredSegments.push(segment);
+    }
+    
+    return filteredSegments;
   }, [location.pathname]);
+
+  // Función para verificar si un string es un UUID
+  const isUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
+  // Función para obtener la ruta válida para un segmento del breadcrumb
+  const getBreadcrumbRoute = (segment: string, index: number, segments: string[]): string | null => {
+    // Si es un UUID (ID de edificio), no es clickeable
+    if (isUUID(segment)) {
+      return null;
+    }
+
+    // Si hay un UUID en algún segmento anterior, las sub-rutas no son clickeables
+    const hasUUIDBefore = segments.slice(0, index).some(s => isUUID(s));
+    if (hasUUIDBefore) {
+      // Solo permitir click en "building" que va a /assets
+      if (segment === "building") {
+        return "/assets";
+      }
+      return null;
+    }
+
+    // Mapear rutas conocidas
+    switch (segment) {
+      case "dashboard":
+        return "/dashboard";
+      case "assets":
+        return "/assets";
+      case "building":
+        return "/assets"; // "Edificios" va a la lista de activos
+      case "users":
+        return "/users";
+      case "events":
+        return "/events";
+      case "green-financial":
+        return "/green-financial";
+      case "financial-twin":
+        return "/financial-twin";
+      case "cfo-due-diligence":
+        // Si hay un ID antes, construir la ruta correcta
+        if (index > 0 && isUUID(segments[index - 1])) {
+          return `/cfo-due-diligence/${segments[index - 1]}`;
+        }
+        return "/cfo-due-diligence";
+      case "cfo-simulation":
+        return "/cfo-simulation";
+      case "digital-book":
+        return "/digital-book";
+      case "hub":
+        // Si hay un ID antes, construir la ruta correcta
+        if (index > 0 && isUUID(segments[index - 1])) {
+          return `/digital-book/hub/${segments[index - 1]}`;
+        }
+        return null;
+      // Rutas dentro de un edificio no son clickeables (son sub-rutas)
+      case "general-view":
+      case "financial":
+      case "insurance":
+      case "calendar":
+      case "rent":
+      case "energy-efficiency":
+      case "certificates":
+      case "maintenance":
+      case "gestion":
+      case "analysis-general":
+      case "activity":
+        return null;
+      default:
+        // Para otros segmentos, construir la ruta completa
+        // (ya verificamos hasUUIDBefore arriba, así que si llegamos aquí es seguro)
+        return `/${segments.slice(0, index + 1).join("/")}`;
+    }
+  };
 
   // Función para obtener la etiqueta traducida de un segmento de ruta
   const getBreadcrumbLabel = (segment: string) => {
@@ -144,6 +235,10 @@ export function AppHeader() {
       case "digital-book":
         return translate("digitalBook", "Libro Digital");
       default:
+        // Si es un UUID, mostrar el nombre del edificio si está disponible
+        if (isUUID(segment) && selectedBuildingName) {
+          return selectedBuildingName;
+        }
         return (
           segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
         );
@@ -666,29 +761,46 @@ export function AppHeader() {
             ARKIA
           </button>
 
-          {pathSegments.map((segment, index) => {
-            const url = `/${pathSegments.slice(0, index + 1).join("/")}`;
-            const isLast = index === pathSegments.length - 1;
-            const label = getBreadcrumbLabel(segment);
+          {pathSegments
+            .map((segment, originalIndex) => {
+              const label = getBreadcrumbLabel(segment);
+              return { segment, originalIndex, label };
+            })
+            .filter((item, index, array) => {
+              // Omitir si la etiqueta es igual a la anterior (evita duplicados consecutivos)
+              const prevItem = index > 0 ? array[index - 1] : null;
+              if (prevItem && item.label === prevItem.label) {
+                return false;
+              }
+              return true;
+            })
+            .map(({ segment, originalIndex, label }, filteredIndex, filteredArray) => {
+              const isLast = filteredIndex === filteredArray.length - 1;
+              const route = getBreadcrumbRoute(segment, originalIndex, pathSegments);
+              const isClickable = route !== null && !isLast;
 
-            return (
-              <Fragment key={url}>
-                <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-                {isLast ? (
-                  <span className="text-gray-900 font-medium leading-tight">
-                    {label}
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => navigate(url)}
-                    className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
-                  >
-                    {label}
-                  </button>
-                )}
-              </Fragment>
-            );
-          })}
+              return (
+                <Fragment key={`${segment}-${originalIndex}`}>
+                  <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
+                  {isLast ? (
+                    <span className="text-gray-900 font-medium leading-tight">
+                      {label}
+                    </span>
+                  ) : isClickable ? (
+                    <button
+                      onClick={() => navigate(route)}
+                      className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <span className="text-gray-600 leading-tight cursor-default">
+                      {label}
+                    </span>
+                  )}
+                </Fragment>
+              );
+            })}
         </div>
       </div>
 

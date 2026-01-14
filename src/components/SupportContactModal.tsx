@@ -121,13 +121,11 @@ export function SupportContactModal({
     }
   };
 
-  // Prevenir cierre al hacer clic fuera del modal
+  // Manejar el cambio de estado del modal
   const handleOpenChange = (open: boolean) => {
-    // Solo permitir cerrar si no está enviando y si es un cierre explícito
-    // No cerrar si viene del overlay (click fuera)
+    // Si se intenta cerrar y no está enviando, cerrar el modal
     if (!open && !isSubmitting) {
-      // Solo cerrar si viene de un botón explícito, no del overlay
-      // Esto se maneja mejor con onInteractOutside
+      onClose();
     }
   };
 
@@ -136,12 +134,16 @@ export function SupportContactModal({
       <DialogContent 
         className="sm:max-w-[600px] bg-white p-6"
         onInteractOutside={(e) => {
-          // Prevenir cierre al hacer clic fuera
-          e.preventDefault();
+          // Prevenir cierre al hacer clic fuera solo si está enviando
+          if (isSubmitting) {
+            e.preventDefault();
+          }
         }}
         onEscapeKeyDown={(e) => {
-          // Prevenir cierre con ESC también (opcional, puedes quitarlo si quieres que ESC cierre)
+          // Permitir cierre con ESC si no está enviando
           if (!isSubmitting) {
+            handleClose();
+          } else {
             e.preventDefault();
           }
         }}
@@ -307,20 +309,20 @@ export function SupportContactModal({
             >
               {t('common.cancel', { defaultValue: 'Cancelar' })}
             </Button>
-            <Button
+            <button
               type="submit"
               disabled={isSubmitting || !subject.trim() || !message.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed min-w-[120px]"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all min-w-[140px] h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-600 disabled:opacity-90 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('support.form.sending', { defaultValue: 'Enviando...' })}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>{t('support.form.sending', { defaultValue: 'Enviando...' })}</span>
                 </>
               ) : (
-                t('support.form.send', { defaultValue: 'Enviar mensaje' })
+                <span>{t('support.form.send', { defaultValue: 'Enviar mensaje' })}</span>
               )}
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>
