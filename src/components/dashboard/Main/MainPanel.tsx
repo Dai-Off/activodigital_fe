@@ -23,6 +23,7 @@ import { getTrazability, type trazabilityList } from "~/services/trazability";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
 import { formatofechaCorta } from "~/utils/fechas";
 import { timeAgo } from "~/utils/timeAgo";
+import { useNavigation } from "~/contexts/NavigationContext";
 
 export function MainPanel() {
   const { t } = useLanguage();
@@ -41,6 +42,7 @@ export function MainPanel() {
   const [buildingNames, setBuildingNames] = useState<Record<string, string>>(
     {}
   );
+  const { setActiveModule } = useNavigation();
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
@@ -113,12 +115,7 @@ export function MainPanel() {
     return;
   }
 
-  let urgentCount = unreadNotifications.filter((not) => not.priority > 2);
-  let percentageBooks = 0;
-  if (stats.pendingBooks || stats.completedBooks) {
-    percentageBooks = stats.pendingBooks / stats.completedBooks;
-  }
-
+  let urgentCount = notifications.filter((not) => not.priority > 2);
   /* Componentes anidados */
   function PendingAlerts({
     text,
@@ -299,7 +296,7 @@ export function MainPanel() {
               <p className="text-xs text-gray-500 mb-0.5">
                 {t("Compliance", "Cumplimiento")}
               </p>
-              <p className="text-2xl mb-0.5">{stats.totalAssets}%</p>
+              <p className="text-2xl mb-0.5">{stats.completionPercentage}%</p>
               <div className="flex items-center gap-0.5 text-xs text-green-600">
                 <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
                 <span>+5% vs. anterior</span>
@@ -334,10 +331,10 @@ export function MainPanel() {
                 {t("Completed Books", "Libros Completos")}
               </p>
               <p className="text-2xl mb-0.5">
-                {stats.pendingBooks} / {stats.completedBooks}
+                {stats.completedBooks} / {stats.totalAssets}
               </p>
               <div className="flex items-center gap-0.5 text-xs text-blue-600">
-                <span>{percentageBooks}% completado</span>
+                <span>{stats.completionPercentage}% completado</span>
               </div>
             </div>
             <div className="p-2 bg-purple-50 rounded-lg">
@@ -353,7 +350,13 @@ export function MainPanel() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm">Alertas Urgentes</h3>
-              <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors">
+              <button
+                onClick={() => {
+                  setActiveModule("events");
+                  navigation("/events");
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+              >
                 Ver todas
               </button>
             </div>
