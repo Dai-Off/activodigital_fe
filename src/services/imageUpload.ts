@@ -70,10 +70,15 @@ export async function uploadBuildingImage(
     }
 
     // Generar nombre único para el archivo
+    // Usar performance.now() para mayor precisión y crypto.randomUUID si está disponible
     const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 15);
+    const performanceTime = typeof performance !== 'undefined' ? Math.floor(performance.now() * 1000) : 0;
+    const randomId = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
+      : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const fileExtension = file.name.split('.').pop() || 'jpg';
-    const filename = `${buildingId}/${timestamp}_${randomId}.${fileExtension}`;
+    const uniqueId = `${timestamp}_${performanceTime}_${randomId}`;
+    const filename = `${buildingId}/${uniqueId}.${fileExtension}`;
 
     // Subir archivo a Supabase Storage
     const supabase = getSupabaseClient();
@@ -106,7 +111,7 @@ export async function uploadBuildingImage(
     }
 
     const uploadedImage: UploadedImage = {
-      id: `${buildingId}_${timestamp}_${randomId}`,
+      id: `${buildingId}_${uniqueId}`,
       url: signedUrlData.signedUrl,
       filename: file.name,
       isMain,
@@ -139,11 +144,37 @@ export async function uploadBuildingImages(
   buildingId: string,
   mainImageIndex: number = 0
 ): Promise<ImageUploadResult[]> {
-  const uploadPromises = files.map((file, index) => 
-    uploadBuildingImage(file, buildingId, index === mainImageIndex)
-  );
+  // Subir imágenes secuencialmente para evitar problemas de concurrencia
+  // y asegurar que cada imagen tenga un ID único con timestamp diferente
+  const results: ImageUploadResult[] = [];
+  
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    const isMain = index === mainImageIndex;
+    
+    // Agregar un pequeño delay entre subidas para asegurar timestamps únicos
+    // Esto previene que múltiples imágenes tengan el mismo timestamp
+    if (index > 0) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    const result = await uploadBuildingImage(file, buildingId, isMain);
+    results.push(result);
+    
+    // Log para debugging
+    if (result.success && result.image) {
+      console.log(`[ImageUpload] Imagen ${index + 1}/${files.length} subida:`, {
+        id: result.image.id,
+        filename: result.image.filename,
+        isMain,
+        urlPreview: result.image.url.substring(0, 60) + '...'
+      });
+    } else {
+      console.error(`[ImageUpload] Error en imagen ${index + 1}/${files.length}:`, result.error);
+    }
+  }
 
-  return Promise.all(uploadPromises);
+  return results;
 }
 
 /**
