@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, AlertCircle, Loader2, Hash, MapPin, Navigation } from 'lucide-react';
 import { CatastroApiService, type Provincia, type Municipio, type Via, type CatastroBuildingData } from '../../services/catastroApi';
 import type { BuildingStep1Data } from './CreateBuildingWizard';
+import { SupportContactModal } from '../SupportContactModal';
 
 interface CreateBuildingFromCatastroProps {
   onDataLoaded: (data: BuildingStep1Data, coordinates?: { lat: number; lng: number }) => void;
@@ -20,6 +21,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   const [searchMethod, setSearchMethod] = useState<SearchMethod>('rc');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // Estados para búsqueda por RC
   const [rc, setRc] = useState('');
@@ -628,6 +630,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   const isTip = line.includes('💡') || line.includes('Consejo');
                   const isList = line.trim().startsWith('•');
                   const isSubtitle = line.includes(':') && !line.includes('•') && !isTip;
+                  const hasSupportLink = line.includes('Contactar con soporte') || line.includes('contactar con soporte');
                   
                   if (isTip) {
                     return (
@@ -641,6 +644,30 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                     return (
                       <p key={index} className="font-semibold text-red-900 mt-2 first:mt-0">
                         {line}
+                      </p>
+                    );
+                  }
+                  
+                  if (hasSupportLink) {
+                    // Dividir la línea para separar el texto del enlace
+                    const parts = line.split(/(Contactar con soporte|contactar con soporte)/i);
+                    return (
+                      <p key={index} className="ml-4 text-red-700">
+                        {parts.map((part, partIndex) => {
+                          if (part.match(/Contactar con soporte/i)) {
+                            return (
+                              <button
+                                key={partIndex}
+                                type="button"
+                                onClick={() => setIsSupportModalOpen(true)}
+                                className="text-blue-600 hover:text-blue-700 underline font-medium"
+                              >
+                                {part}
+                              </button>
+                            );
+                          }
+                          return <span key={partIndex}>{part}</span>;
+                        })}
                       </p>
                     );
                   }
@@ -860,6 +887,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           </div>
         </div>
       )}
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        initialSubject={t('buildings.catastroError', 'Problema al buscar edificio en Catastro')}
+        context={`Create Building from Catastro - ${window.location.href} - Search Method: ${searchMethod}`}
+      />
     </div>
   );
 };

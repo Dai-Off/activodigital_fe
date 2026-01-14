@@ -814,7 +814,8 @@ export default function AssetsList() {
                       {/* Image Carousel */}
                       <div className="w-full h-48 sm:w-64 sm:h-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-800">
                         <BuildingCarousel
-                          images={building.images?.map((img) => img.url) ?? []}
+                          key={`carousel-${building.id}`}
+                          images={building.images?.filter(img => img?.url).map((img) => img.url) ?? []}
                           name={building.name}
                         />
                       </div>

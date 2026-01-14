@@ -461,7 +461,7 @@ export function MainPanel() {
             <div className="p-3 space-y-1.5">
               <button
                 onClick={() => {
-                  navigation("/building/create");
+                  navigation("/building/create", { state: { fromDashboard: true } });
                 }}
                 className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-50 transition-colors border border-gray-200 group"
               >
