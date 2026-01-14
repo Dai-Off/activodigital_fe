@@ -1,0 +1,180 @@
+import React, { useMemo } from 'react';
+import { t } from "i18next";
+import { 
+  Settings, 
+  Globe, 
+  Bell, 
+  Key, 
+  Database, 
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+
+interface ConfigItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  iconColor: string;
+  bgColor: string;
+  fullWidth?: boolean;
+}
+
+const GeneralConfigSystem: React.FC = () => {
+  const menuItems: ConfigItem[] = useMemo(() => [
+    { 
+      id: 'gen', 
+      title: 'General', 
+      description: t('Language, timezone and preferences', 'Idioma, zona horaria y preferencias'), 
+      icon: Globe, iconColor: 'text-blue-600', bgColor: 'bg-blue-100' 
+    },
+    { 
+      id: 'not', 
+      title: t('Notifications', 'Notificaciones'), 
+      description: t('Manage alerts and notices', 'Gestiona alertas y avisos'), 
+      icon: Bell, iconColor: 'text-orange-600', bgColor: 'bg-orange-100' 
+    },
+    { 
+      id: 'int', 
+      title: t('Integrations', 'Integraciones'), 
+      description: t('Connect with other tools', 'Conecta con otras herramientas'), 
+      icon: Globe, iconColor: 'text-purple-600', bgColor: 'bg-purple-100' 
+    },
+    { 
+      id: 'sec', 
+      title: t('Security', 'Seguridad'), 
+      description: t('Passwords and authentication', 'Contraseñas y autenticación'), 
+      icon: Key, iconColor: 'text-red-600', bgColor: 'bg-red-100' 
+    },
+    { 
+      id: 'bak', 
+      title: t('Backup and Restoration', 'Backup y Restauración'), 
+      description: t('Backups and data recovery', 'Copias de seguridad y recuperación de datos'), 
+      icon: Database, iconColor: 'text-green-600', bgColor: 'bg-green-100', fullWidth: true 
+    },
+  ], []);
+
+  return (
+    <div className="max-w-[1400px] mx-auto p-3 md:p-6 space-y-3 md:space-y-4 font-sans text-gray-900">
+      
+      {/* Header Principal */}
+      <header className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-2 md:p-2.5 bg-gray-100 rounded-lg flex-shrink-0">
+            <Settings className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
+          </div>
+          <div>
+            <h2 className="text-sm md:text-base font-bold">
+              {t('System Configuration', 'Configuración del Sistema')}
+            </h2>
+            <p className="text-[10px] md:text-xs text-gray-500">
+              {t('General ARKIA settings', 'Ajustes generales de ARKIA')}
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* Grid de Navegación */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {menuItems.map((item) => (
+          <div key={item.id} className={`${item.fullWidth ? 'sm:col-span-2' : ''}`}>
+            <ConfigCard item={item} />
+          </div>
+        ))}
+      </section>
+
+      {/* Panel de Configuración Rápida */}
+      <main className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
+        <h3 className="text-sm md:text-base font-semibold mb-3 md:mb-4 pb-2 md:pb-3 border-b border-gray-200">
+          {t('Quick Setup', 'Configuración Rápida')}
+        </h3>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            {/* Formulario de Preferencias */}
+            <div className="p-3 md:p-4 border border-gray-200 rounded-lg">
+              <SectionTitle icon={Globe} iconColor="text-blue-600" title={t('General Preferences', 'Preferencias Generales')} />
+              <div className="space-y-2 mt-3">
+                <SelectInput 
+                  label={t('Language', 'Idioma')} 
+                  options={[t('Spanish', 'Español'), t('English', 'Inglés'), t('French', 'Francés')]} 
+                />
+                <SelectInput 
+                  label={t('Timezone', 'Zona Horaria')} 
+                  options={['Europe/Madrid (GMT+1)', 'America/New_York (GMT-5)']} 
+                />
+                <SelectInput 
+                  label={t('Date Format', 'Formato de Fecha')} 
+                  options={['DD/MM/YYYY', 'YYYY-MM-DD']} 
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* Info de Cuenta */}
+            <div className="p-3 md:p-4 border border-gray-200 rounded-lg h-fit">
+              <SectionTitle icon={Users} iconColor="text-purple-600" title={t('Account Information', 'Información de la Cuenta')} />
+              <div className="space-y-1.5 mt-3">
+                <DataRow label={t('User', 'Usuario')} value="admin@arkia.com" />
+                <DataRow label={t('Plan', 'Plan')} value="Enterprise" valueClass="text-blue-600 font-semibold" />
+                <DataRow label={t('Licenses', 'Licencias')} value={t('50 active', '50 activas')} />
+                <DataRow label={t('Last access', 'Último acceso')} value="14/11/2025 09:15" />
+              </div>
+            </div>
+
+            {/* Alert Banner */}
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex gap-3">
+              <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-bold text-blue-900 mb-0.5">{t('Quick Access', 'Acceso Rápido')}</p>
+                <p className="text-blue-700">
+                  {t('Use side navigation shortcuts to manage your instance.', 'Usa los atajos de navegación lateral para gestionar tu instancia.')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+const ConfigCard: React.FC<{ item: ConfigItem }> = ({ item }) => (
+  <button className="w-full text-left bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4 hover:border-[#1e3a8a] hover:shadow-md transition-all group outline-none focus:ring-2 focus:ring-blue-500">
+    <div className="flex items-center gap-2 md:gap-3">
+      <div className={`p-2 md:p-2.5 ${item.bgColor} rounded-lg flex-shrink-0 transition-colors`}>
+        <item.icon className={`w-5 h-5 md:w-6 md:h-6 ${item.iconColor}`} />
+      </div>
+      <div>
+        <h3 className="text-sm md:text-base font-medium group-hover:text-[#1e3a8a]">{item.title}</h3>
+        <p className="text-[10px] md:text-xs text-gray-500">{item.description}</p>
+      </div>
+    </div>
+  </button>
+);
+
+const SectionTitle: React.FC<{ icon: LucideIcon, iconColor: string, title: string }> = ({ icon: Icon, iconColor, title }) => (
+  <div className="flex items-center gap-2">
+    <Icon className={`w-4 h-4 ${iconColor}`} />
+    <h4 className="text-xs md:text-sm font-medium">{title}</h4>
+  </div>
+);
+
+const SelectInput: React.FC<{ label: string, options: string[] }> = ({ label, options }) => (
+  <div>
+    <label className="text-[10px] md:text-xs text-gray-600 mb-1 block font-medium">{label}</label>
+    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[10px] md:text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 transition-all">
+      {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+    </select>
+  </div>
+);
+
+const DataRow: React.FC<{ label: string, value: string, valueClass?: string }> = ({ label, value, valueClass = "text-gray-900" }) => (
+  <div className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0">
+    <span className="text-[10px] md:text-xs text-gray-500">{label}</span>
+    <span className={`text-[10px] md:text-xs ${valueClass}`}>{value}</span>
+  </div>
+);
+
+export default GeneralConfigSystem;

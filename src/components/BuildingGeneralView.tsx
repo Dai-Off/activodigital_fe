@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "~/contexts/ToastContext";
 import { BuildingsApiService, type Building } from "~/services/buildingsApi";
@@ -55,7 +55,67 @@ export function BuildingGeneralView() {
   const [_hasFinancialData, setHasFinancialData] = useState<boolean | null>(
     null
   );
-  const [_currentImageIndex, _setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [displayedImageSrc, setDisplayedImageSrc] = useState<string>("/image.png");
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
+  const buildingImages = useMemo(() => {
+    const fallback = "/image.png";
+    const urls =
+      building?.images
+        ?.map((img) => img?.url)
+        .filter((u): u is string => Boolean(u && u.trim() !== "")) ?? [];
+
+    // Dedup manteniendo orden
+    const unique = Array.from(new Set(urls));
+    return unique.length ? unique : [fallback];
+  }, [building?.images]);
+
+  useEffect(() => {
+    // Resetear carrusel al cambiar de edificio / imágenes
+    setCurrentImageIndex(0);
+    setDisplayedImageSrc(buildingImages[0] || "/image.png");
+    setIsImageLoading(false);
+  }, [id, buildingImages.length]);
+
+  // Pre-cargar la imagen objetivo y evitar “pantalla en blanco” al cambiar
+  useEffect(() => {
+    const targetSrc = buildingImages[currentImageIndex] || "/image.png";
+
+    // Si ya se está mostrando, no hacer nada
+    if (targetSrc === displayedImageSrc) return;
+
+    let cancelled = false;
+    setIsImageLoading(true);
+
+    // Ojo: en este componente `Image` es un ícono (lucide), por eso usamos un elemento <img> para pre-cargar.
+    const img = document.createElement("img");
+    img.onload = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc(targetSrc);
+      setIsImageLoading(false);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc("/image.png");
+      setIsImageLoading(false);
+    };
+    img.src = targetSrc;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildingImages, currentImageIndex, displayedImageSrc]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + buildingImages.length) % buildingImages.length
+    );
+  };
 
   // Función para cargar datos ESG - Ready to use when needed
   /*
@@ -219,24 +279,70 @@ export function BuildingGeneralView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="space-y-3">
             <div className="bg-white rounded-lg p-2 shadow-sm">
+              {/* Nombre del edificio */}
+              <div className="mb-3 pb-2.5 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 leading-tight">
+                  {building?.name || "Edificio"}
+                </h2>
+                {building?.address && (
+                  <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{building.address}</span>
+                  </p>
+                )}
+              </div>
+              
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Image className="w-3.5 h-3.5 text-gray-600" />
                 <h3 className="text-sm">Imágenes del Edificio</h3>
               </div>
               <div className="relative w-full h-[140px] bg-gray-100 rounded overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1758113107218-6fbb090db3ff?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaG9wcGluZyUyMG1hbGwlMjBleHRlcmlvcnxlbnwxfHx8fDE3NjI3MjAxMjR8MA&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080"
-                  alt="Plaza Shopping"
+                  key={`${building?.id || "building"}-img-${currentImageIndex}-${buildingImages[currentImageIndex]?.substring(0, 30)}`}
+                  src={displayedImageSrc}
+                  alt={`${building?.name || "Edificio"} - Imagen ${
+                    currentImageIndex + 1
+                  }`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    // fallback si falla una URL firmada
+                    (e.currentTarget as HTMLImageElement).src = "/image.png";
+                  }}
                 />
-                <button className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/55 text-white text-xs shadow-sm">
+                      <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+                      <span>Cargando imagen…</span>
+                    </div>
+                  </div>
+                )}
+
+                {buildingImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevImage}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextImage}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen siguiente"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+
                 <div className="absolute bottom-1 right-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs">
-                  1 / 2
+                  {currentImageIndex + 1} / {buildingImages.length}
                 </div>
               </div>
             </div>

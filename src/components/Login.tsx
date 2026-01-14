@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import {
   loginRequest,
   processPendingAssignments,
-  fetchMe,
   verify2FALogin,
 } from "../services/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { FormLoader, useLoadingState } from "./ui/LoadingSystem";
+import { SupportContactModal } from "./SupportContactModal";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,6 +28,7 @@ export default function Login() {
   const [verifying2FA, setVerifying2FA] = useState(false);
   const [error2FA, setError2FA] = useState("");
   const [tempEmail, setTempEmail] = useState("");
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   const { t } = useTranslation();
 
@@ -103,10 +104,6 @@ export default function Login() {
 
         await login(token);
 
-        // Ahora sí podemos obtener la información del usuario
-        const meResp = await fetchMe();
-        const userRole = meResp?.role?.name || "tecnico";
-
         // Procesar invitación pendiente si existe
         const pendingInvitation = localStorage.getItem("pendingInvitation");
         if (pendingInvitation) {
@@ -118,12 +115,10 @@ export default function Login() {
           }
         }
 
-        // Redirigir según rol o parámetro redirect
+        // Redirigir según parámetro redirect o al dashboard por defecto
         const redirectParam = searchParams.get("redirect");
         if (redirectParam) {
           navigate(decodeURIComponent(redirectParam));
-        } else if (userRole === "cfo") {
-          navigate("/cfo-dashboard");
         } else {
           navigate("/dashboard");
         }
@@ -288,10 +283,15 @@ export default function Login() {
               </form>
 
               <p className="mt-4 text-xs text-center text-gray-500">
-                {t(
-                  "qrProblemsHelp",
-                  "¿Problemas? Usa la app oficial o contacta a soporte."
-                )}
+                {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
+                  {t("contactSupport", "contacta a soporte")}
+                </button>
+                .
               </p>
             </div>
           ) : (
@@ -368,15 +368,33 @@ export default function Login() {
                   )}
                 </button>
               </form>
-              {/* Opción de registro temporalmente deshabilitada */}
-              {/* <p className="mt-4 text-center text-sm text-gray-600">
+
+              <p className="mt-4 text-center text-sm text-gray-600">
                 {t('dontHaveAccount', '¿No tienes cuenta?')}{' '}
                 <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">{t('createAccount', 'Crear cuenta')}</Link>
-              </p> */}
+              </p>
+              <p className="mt-2 text-xs text-center text-gray-500">
+                {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                <button
+                  type="button"
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
+                  {t("contactSupport", "contacta a soporte")}
+                </button>
+                .
+              </p>
             </>
           )}
         </div>
       </div>
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        context={`Login page - ${window.location.href}`}
+      />
     </div>
   );
 }

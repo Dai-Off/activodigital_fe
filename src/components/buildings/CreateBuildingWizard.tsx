@@ -22,6 +22,7 @@ import type {
 } from "../../services/buildingsApi";
 
 import { uploadBuildingImages } from "../../services/imageUpload";
+import { SupportContactModal } from "../SupportContactModal";
 
 // -------------------- Types --------------------
 export interface BuildingStep1Data {
@@ -76,15 +77,19 @@ const CreateBuildingWizard: React.FC = () => {
     stopLoading,
   } = useLoadingState();
 
-  // Obtener el método desde el state de navegación, si existe
-  const methodFromState = (
-    location.state as { method?: BuildingCreationMethod }
-  )?.method;
+  // Obtener el método y el origen desde el state de navegación, si existe
+  const navigationState = location.state as { 
+    method?: BuildingCreationMethod;
+    fromDashboard?: boolean;
+  } | null;
+  const methodFromState = navigationState?.method;
+  const fromDashboard = navigationState?.fromDashboard || false;
   const [selectedMethod, setSelectedMethod] =
     useState<BuildingCreationMethod | null>(methodFromState || null);
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // -------------------- Steps (i18n) --------------------
   const wizardSteps = [
@@ -118,7 +123,7 @@ const CreateBuildingWizard: React.FC = () => {
   };
 
   const handleMethodSelectionClose = () => {
-    navigate("/assets");
+    navigate(fromDashboard ? "/dashboard" : "/assets");
   };
 
   // -------------------- Handlers: Catastro --------------------
@@ -149,8 +154,8 @@ const CreateBuildingWizard: React.FC = () => {
       setStep1Data(null);
       setCurrentStep(0);
     } else {
-      // Si viene desde state, volver a /assets
-      navigate("/assets");
+      // Si viene desde state, volver según el origen
+      navigate(fromDashboard ? "/dashboard" : "/assets");
     }
   };
 
@@ -166,8 +171,8 @@ const CreateBuildingWizard: React.FC = () => {
       setSelectedMethod(null);
       setStep1Data(null);
     } else {
-      // Si viene desde state, volver a /assets
-      navigate("/assets");
+      // Si viene desde state, volver según el origen
+      navigate(fromDashboard ? "/dashboard" : "/assets");
     }
   };
 
@@ -314,10 +319,29 @@ const CreateBuildingWizard: React.FC = () => {
             uploadedAt: r.image!.uploadedAt.toISOString(),
           }));
 
-        if (buildingImages.length) {
+        // Validar que todas las URLs sean únicas
+        const uniqueUrls = new Set(buildingImages.map(img => img.url));
+        if (uniqueUrls.size !== buildingImages.length) {
+          console.warn('[CreateBuildingWizard] Advertencia: Se detectaron URLs duplicadas en las imágenes', {
+            total: buildingImages.length,
+            unicas: uniqueUrls.size,
+            urls: buildingImages.map(img => ({ id: img.id, url: img.url.substring(0, 50) + '...' }))
+          });
+        }
+
+        // Filtrar imágenes duplicadas por URL antes de guardar
+        const uniqueImages = buildingImages.filter((img, index, self) => 
+          index === self.findIndex(i => i.url === img.url)
+        );
+
+        if (uniqueImages.length !== buildingImages.length) {
+          console.warn(`[CreateBuildingWizard] Se filtraron ${buildingImages.length - uniqueImages.length} imágenes duplicadas`);
+        }
+
+        if (uniqueImages.length) {
           await BuildingsApiService.uploadBuildingImages(
             savedBuilding.id,
-            buildingImages
+            uniqueImages
           );
         }
       }
@@ -327,7 +351,7 @@ const CreateBuildingWizard: React.FC = () => {
         t("buildings.buildingCreatedSuccess", "Edificio creado correctamente.")
       );
 
-      navigate("/assets");
+      navigate(fromDashboard ? "/dashboard" : "/assets");
     } catch (err: unknown) {
       // Normalize error
       const rawMessage =
@@ -504,11 +528,11 @@ const CreateBuildingWizard: React.FC = () => {
               <li>
                 <button
                   type="button"
-                  onClick={() => navigate("/assets")}
+                  onClick={() => navigate(fromDashboard ? "/dashboard" : "/assets")}
                   className="hover:text-blue-600"
-                  aria-label={t("nav.backToAssets", "Volver a Activos")}
+                  aria-label={fromDashboard ? t("nav.backToDashboard", "Volver al Dashboard") : t("nav.backToAssets", "Volver a Activos")}
                 >
-                  {t("assets", "Activos")}
+                  {fromDashboard ? t("dashboard", "Dashboard") : t("assets", "Activos")}
                 </button>
               </li>
               <li aria-hidden="true">
@@ -562,12 +586,24 @@ const CreateBuildingWizard: React.FC = () => {
               )}
             </a>{" "}
             {t("common.or", "o")}{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-700">
+            <button
+              type="button"
+              onClick={() => setIsSupportModalOpen(true)}
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
               {t("help.contactSupport", "Contactar soporte")}
-            </a>
+            </button>
           </p>
         </div>
       </div>
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        initialSubject={t("help.contactSupport", "Contactar soporte")}
+        context={`Create Building Wizard - ${window.location.href}`}
+      />
     </div>
   );
 };

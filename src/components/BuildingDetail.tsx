@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
@@ -851,13 +851,22 @@ const BuildingDetail: React.FC = () => {
     };
   };
 
-  // Preparar imágenes del edificio
-  const buildingImages =
-    building.images && building.images.length > 0
-      ? building.images.map((img) => img.url)
-      : building.images?.[0]?.url
-      ? [building.images[0].url]
-      : ["/image.png"];
+  // Preparar imágenes del edificio - filtrar duplicados y URLs vacías
+  const buildingImages = useMemo(() => {
+    if (!building.images || building.images.length === 0) {
+      return ["/image.png"];
+    }
+    
+    // Filtrar imágenes con URLs válidas y eliminar duplicados
+    const validUrls = building.images
+      .map((img) => img?.url)
+      .filter((url) => url && url.trim() !== '');
+    
+    // Eliminar duplicados manteniendo el orden
+    const uniqueUrls = Array.from(new Set(validUrls));
+    
+    return uniqueUrls.length > 0 ? uniqueUrls : ["/image.png"];
+  }, [building.images]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
@@ -1117,9 +1126,11 @@ const BuildingDetail: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="relative w-full aspect-[4/3] bg-gray-100">
                   <img
+                    key={`${building.id}-img-${currentImageIndex}-${buildingImages[currentImageIndex]?.substring(0, 30)}`}
                     src={buildingImages[currentImageIndex] || "/image.png"}
                     alt={`${building.name} - Imagen ${currentImageIndex + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
                   />
 
                   {/* Controles del carrusel */}
@@ -1140,9 +1151,9 @@ const BuildingDetail: React.FC = () => {
 
                       {/* Indicadores */}
                       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                        {buildingImages.map((_, index) => (
+                        {buildingImages.map((url, index) => (
                           <button
-                            key={index}
+                            key={`${building.id}-indicator-${index}-${url?.substring(0, 20)}`}
                             onClick={() => setCurrentImageIndex(index)}
                             className={`w-2 h-2 rounded-full transition-colors ${
                               index === currentImageIndex
