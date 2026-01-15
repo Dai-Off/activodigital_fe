@@ -53,6 +53,7 @@ import { BuildingEnergyEfficiency } from "~/components/BuildingEnergyEfficiency"
 import { BuildingMaintenance } from "~/components/BuildingMaintenance";
 import { BuildingCalendar } from "~/components/BuildingCalendar";
 import { Events } from "~/components/Events";
+import Expired from "~/components/Expired";
 
 const SectionsListPage = () => {
   const navigate = useNavigate();
@@ -207,6 +208,16 @@ export const AppRouter = () => {
           <Route index element={<OpportunityRadar />} />
           <Route path="financial-twin" element={<FinancialTwin />}></Route>
         </Route>
+        <Route
+          path="/expired"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Expired />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/cfo-dashboard"
           element={

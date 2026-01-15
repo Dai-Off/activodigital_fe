@@ -245,6 +245,13 @@ function NewLayoutContent() {
               py-3 md:py-4 
               max-w-[1400px] 
             `
+                : location.pathname === "/expired" || location.pathname.startsWith("/expired/")
+                ? `
+              px-2 md:px-4 lg:px-6
+              py-6 md:py-8
+              max-w-none
+              pt-[140px] md:pt-[104px]
+            `
                 : `
               px-3 md:px-6 lg:px-8 
               py-3 md:py-4 
