@@ -1,4 +1,11 @@
-import { Building2, House, LucideLeaf, Users, Calendar } from "lucide-react";
+import {
+  Building2,
+  House,
+  LucideLeaf,
+  Users,
+  Calendar,
+  Folder,
+} from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -67,6 +74,11 @@ export function Sidebar() {
         ? t("green-financial", "Financiación verde")
         : "Financiación verde",
     },
+    {
+      id: "expired",
+      icon: Folder,
+      label: t ? t("archive", "Archivo") : "Archivo",
+    },
   ];
 
   const handleModuleChange = (moduleId: string) => {
@@ -103,6 +115,12 @@ export function Sidebar() {
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
         navigate("/green-financial");
+        break;
+      case "expired":
+        if (setActiveSection) setActiveSection("dashboard");
+        if (setActiveTab) setActiveTab("dashboard");
+        if (setViewMode) setViewMode("list");
+        navigate("/expired");
         break;
       default:
         if (setActiveSection) setActiveSection("dashboard");
