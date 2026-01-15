@@ -1075,22 +1075,13 @@ export default function CFOAssetsList() {
                 />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {user?.role === "propietario"
-                  ? t("noAssetsYet", { defaultValue: "No tienes activos aÃºn" })
-                  : t("noAssignedAssets", {
-                      defaultValue: "No tienes activos asignados",
-                    })}
+                {t("noAssetsYet", { defaultValue: "No tienes activos aún" })}
               </h3>
               <p className="text-gray-600 mb-4">
-                {user?.role === "propietario"
-                  ? t("createFirstAsset", {
-                      defaultValue:
-                        "Comienza creando tu primer activo para gestionar tu cartera.",
-                    })
-                  : t("contactAdmin", {
-                      defaultValue:
-                        "Contacta con tu administrador para que te asigne activos.",
-                    })}
+                {t("createFirstAsset", {
+                  defaultValue:
+                    "Comienza creando tu primer activo para gestionar tu cartera.",
+                })}
               </p>
               <Link
                 to="/building/create"

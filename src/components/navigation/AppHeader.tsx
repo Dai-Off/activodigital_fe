@@ -1,22 +1,19 @@
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
-  User,
   Sparkles,
   Globe,
   Bell,
   ChevronRight as ChevronRightIcon,
   Settings,
   LogOut,
-  UserCircle,
-  ChevronDown,
   Menu,
+  Shield,
+  HelpCircle,
 } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   BuildingsApiService,
@@ -29,12 +26,9 @@ import { useNotifications } from "~/contexts/NotificationContext";
 import { formatofechaCorta } from "~/utils/fechas";
 import { timeAgo } from "~/utils/timeAgo";
 import { getTimeRemaining } from "~/utils/getTimeRemaining";
+import { SupportContactModal } from "../SupportContactModal";
 
 export function AppHeader() {
-  let goBack = () => {},
-    goForward = () => {},
-    canGoBack = false,
-    canGoForward = false;
   let viewMode: "list" | "detail" = "list";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
@@ -44,10 +38,6 @@ export function AppHeader() {
 
   try {
     const navigation = useNavigation();
-    goBack = navigation.goBack;
-    goForward = navigation.goForward;
-    canGoBack = navigation.canGoBack;
-    canGoForward = navigation.canGoForward;
     viewMode = navigation.viewMode;
     selectedBuildingId = navigation.selectedBuildingId;
     setSelectedBuildingId = navigation.setSelectedBuildingId;
@@ -94,10 +84,172 @@ export function AppHeader() {
     return defaultValue || key;
   };
 
+  const location = useLocation();
+
+  const pathSegments = useMemo(() => {
+    const segments = location.pathname.split("/").filter(Boolean);
+    
+    // Filtrar segmentos redundantes
+    const filteredSegments: string[] = [];
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      const prevSegment = i > 0 ? filteredSegments[filteredSegments.length - 1] : null;
+      
+      // Omitir "hub" si viene después de "digital-book" (ambos se traducen a "Libro Digital")
+      if (segment === "hub" && prevSegment === "digital-book") {
+        continue;
+      }
+      
+      filteredSegments.push(segment);
+    }
+    
+    return filteredSegments;
+  }, [location.pathname]);
+
+  // Función para verificar si un string es un UUID
+  const isUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
+  // Función para obtener la ruta válida para un segmento del breadcrumb
+  const getBreadcrumbRoute = (segment: string, index: number, segments: string[]): string | null => {
+    // Si es un UUID (ID de edificio), no es clickeable
+    if (isUUID(segment)) {
+      return null;
+    }
+
+    // Si hay un UUID en algún segmento anterior, las sub-rutas no son clickeables
+    const hasUUIDBefore = segments.slice(0, index).some(s => isUUID(s));
+    if (hasUUIDBefore) {
+      // Solo permitir click en "building" que va a /assets
+      if (segment === "building") {
+        return "/assets";
+      }
+      return null;
+    }
+
+    // Mapear rutas conocidas
+    switch (segment) {
+      case "dashboard":
+        return "/dashboard";
+      case "assets":
+        return "/assets";
+      case "building":
+        return "/assets"; // "Edificios" va a la lista de activos
+      case "users":
+        return "/users";
+      case "events":
+        return "/events";
+      case "green-financial":
+        return "/green-financial";
+      case "financial-twin":
+        return "/financial-twin";
+      case "cfo-due-diligence":
+        // Si hay un ID antes, construir la ruta correcta
+        if (index > 0 && isUUID(segments[index - 1])) {
+          return `/cfo-due-diligence/${segments[index - 1]}`;
+        }
+        return "/cfo-due-diligence";
+      case "cfo-simulation":
+        return "/cfo-simulation";
+      case "digital-book":
+        return "/digital-book";
+      case "hub":
+        // Si hay un ID antes, construir la ruta correcta
+        if (index > 0 && isUUID(segments[index - 1])) {
+          return `/digital-book/hub/${segments[index - 1]}`;
+        }
+        return null;
+      // Rutas dentro de un edificio no son clickeables (son sub-rutas)
+      case "general-view":
+      case "financial":
+      case "insurance":
+      case "calendar":
+      case "rent":
+      case "energy-efficiency":
+      case "certificates":
+      case "maintenance":
+      case "gestion":
+      case "analysis-general":
+      case "activity":
+        return null;
+      default:
+        // Para otros segmentos, construir la ruta completa
+        // (ya verificamos hasUUIDBefore arriba, así que si llegamos aquí es seguro)
+        return `/${segments.slice(0, index + 1).join("/")}`;
+    }
+  };
+
+  // Función para obtener la etiqueta traducida de un segmento de ruta
+  const getBreadcrumbLabel = (segment: string) => {
+    if (segment === selectedBuildingId && selectedBuildingName) {
+      return selectedBuildingName;
+    }
+
+    switch (segment) {
+      case "dashboard":
+        return translate("dashboard", "Dashboard");
+      case "statistics":
+        return translate("statistics", "Estadísticas");
+      case "activity":
+        return translate("activity", "Actividad");
+      case "assets":
+        return translate("assets", "Activos");
+      case "users":
+        return translate("users", "Usuarios");
+      case "events":
+        return translate("events", "Eventos");
+      case "green-financial":
+        return translate("greenFinancial", "Financiación Verde");
+      case "financial-twin":
+        return translate("financialTwin", "Gemelo Financiero");
+      case "cfo-due-diligence":
+        return translate("cfoDueDiligence", "CFO Due Diligence");
+      case "cfo-simulation":
+        return translate("cfoSimulation", "Simulación CFO");
+      case "building":
+        return translate("buildings", "Edificios");
+      case "general-view":
+        return translate("generalView", "Vista General");
+      case "financial":
+        return translate("financial", "Financiero");
+      case "insurance":
+        return translate("insurance", "Seguros");
+      case "calendar":
+        return translate("calendar", "Calendario");
+      case "rent":
+        return translate("rent", "Rentas");
+      case "energy-efficiency":
+        return translate("energyEfficiency", "Eficiencia Energética");
+      case "certificates":
+        return translate("certificates", "Certificados");
+      case "maintenance":
+        return translate("maintenance", "Mantenimiento");
+      case "gestion":
+        return translate("gestion", "Gestión");
+      case "analysis-general":
+        return translate("generalAnalysis", "Análisis General");
+      case "hub":
+        return translate("digitalBook", "Libro Digital");
+      case "digital-book":
+        return translate("digitalBook", "Libro Digital");
+      default:
+        // Si es un UUID, mostrar el nombre del edificio si está disponible
+        if (isUUID(segment) && selectedBuildingName) {
+          return selectedBuildingName;
+        }
+        return (
+          segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
+        );
+    }
+  };
+
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showTranslator, setShowTranslator] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -266,7 +418,7 @@ export function AppHeader() {
     if (setActiveTab) setActiveTab("todos");
     setSearchTerm("");
     setShowSearchResults(false);
-    navigate(`/building/${buildingId}`);
+    navigate(`/building/${buildingId}/general-view`);
   };
   const handleBackToList = () => {
     if (setSelectedBuildingId) setSelectedBuildingId(null);
@@ -402,6 +554,18 @@ export function AppHeader() {
               </span>
             </button>
 
+            {/* Support Button */}
+            <button
+              onClick={() => setShowSupportModal(true)}
+              className="flex items-center justify-center px-2 md:px-3 py-2 h-9 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
+              title={translate("contactSupport", "Contactar soporte")}
+            >
+              <HelpCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm hidden md:inline whitespace-nowrap ml-2">
+                {translate("support", "Soporte")}
+              </span>
+            </button>
+
             {/* Notifications Button */}
             <div className="relative" ref={notificationsRef}>
               <button
@@ -494,11 +658,10 @@ export function AppHeader() {
                             )} ${lang.name}`
                           );
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm ${
-                          language === lang.code
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-gray-700"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm ${language === lang.code
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-700"
+                          }`}
                       >
                         <span className="text-lg">{lang.flag}</span>
                         <span>{lang.name}</span>
@@ -517,13 +680,12 @@ export function AppHeader() {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center justify-center gap-2 px-2 md:px-3 py-2 h-9 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-all"
+                  className="flex items-center justify-center w-9 h-9 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+                  title={user.email || translate("userMenu", "Menú de usuario")}
                 >
-                  <User className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                  <span className="text-gray-700 hidden lg:inline whitespace-nowrap truncate max-w-[150px]">
-                    {user.email || translate("userArkia", "Usuario ARKIA")}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-gray-400 hidden md:inline flex-shrink-0" />
+                  <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {user.email?.[0]?.toUpperCase() || user.fullName?.[0]?.toUpperCase() || "U"}
+                  </div>
                 </button>
 
                 {/* User Dropdown */}
@@ -546,26 +708,30 @@ export function AppHeader() {
                       </div>
                     </div>
                     <div className="p-2">
-                      <button
-                        onClick={() => {
-                          toast.info(translate("profile", "Mi perfil"));
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
-                      >
-                        <UserCircle className="w-4 h-4" />
-                        <span>{translate("profile", "Mi perfil")}</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          toast.info(translate("settings", "Configuración"));
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>{translate("settings", "Configuración")}</span>
-                      </button>
+                      <Link to={`/configuration`}>
+                        <button
+                          onClick={() => {
+                            toast.info(translate("settings", "Configuración"));
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>{translate("settings", "Configuración")}</span>
+                        </button>
+                      </Link>
+                      <Link to={`/users?role=permisos`}>
+                        <button
+                          onClick={() => {
+                            toast.info(translate("profile", "Mi perfil"));
+                            setShowUserMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-sm text-gray-700"
+                        >
+                          <Shield className="w-4 h-4" />
+                          <span>{translate("profile and Roles", "Permisos y Roles")}</span>
+                        </button>
+                      </Link>
                     </div>
                     <div className="p-2 border-t border-gray-200">
                       <button
@@ -581,33 +747,6 @@ export function AppHeader() {
               </div>
             )}
 
-            {/* Navigation Arrows */}
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={goBack}
-                disabled={!canGoBack}
-                className={`p-1.5 rounded ${
-                  canGoBack
-                    ? "hover:bg-gray-100"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
-                title={translate("back", "Volver")}
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              <button
-                onClick={goForward}
-                disabled={!canGoForward}
-                className={`p-1.5 rounded ${
-                  canGoForward
-                    ? "hover:bg-gray-100"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
-                title={translate("forward", "Avanzar")}
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -616,27 +755,52 @@ export function AppHeader() {
       <div className="px-3 md:px-6 py-2.5 md:py-1.5 bg-gray-50 border-t border-gray-200 overflow-x-auto scrollbar-hide">
         <div className="flex items-center gap-2 text-xs md:text-sm whitespace-nowrap min-w-max">
           <button
-            onClick={handleBackToList}
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            onClick={() => navigate("/dashboard")}
+            className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
           >
             ARKIA
           </button>
-          <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-          <button
-            onClick={handleBackToList}
-            className="text-gray-600 hover:text-blue-600 transition-colors"
-          >
-            {translate("assetsList", "Listado de activos")}
-          </button>
 
-          {viewMode === "detail" && selectedBuildingId && (
-            <>
-              <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
-              <span className="text-gray-900">
-                {selectedBuildingName || selectedBuildingId}
-              </span>
-            </>
-          )}
+          {pathSegments
+            .map((segment, originalIndex) => {
+              const label = getBreadcrumbLabel(segment);
+              return { segment, originalIndex, label };
+            })
+            .filter((item, index, array) => {
+              // Omitir si la etiqueta es igual a la anterior (evita duplicados consecutivos)
+              const prevItem = index > 0 ? array[index - 1] : null;
+              if (prevItem && item.label === prevItem.label) {
+                return false;
+              }
+              return true;
+            })
+            .map(({ segment, originalIndex, label }, filteredIndex, filteredArray) => {
+              const isLast = filteredIndex === filteredArray.length - 1;
+              const route = getBreadcrumbRoute(segment, originalIndex, pathSegments);
+              const isClickable = route !== null && !isLast;
+
+              return (
+                <Fragment key={`${segment}-${originalIndex}`}>
+                  <ChevronRightIcon className="w-3 md:w-4 h-3 md:h-4 text-gray-400 flex-shrink-0" />
+                  {isLast ? (
+                    <span className="text-gray-900 font-medium leading-tight">
+                      {label}
+                    </span>
+                  ) : isClickable ? (
+                    <button
+                      onClick={() => navigate(route)}
+                      className="text-gray-600 hover:text-blue-600 transition-colors leading-tight"
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <span className="text-gray-600 leading-tight cursor-default">
+                      {label}
+                    </span>
+                  )}
+                </Fragment>
+              );
+            })}
         </div>
       </div>
 
@@ -650,6 +814,13 @@ export function AppHeader() {
       <AIAssistant
         isOpen={showAIAssistant}
         onClose={() => setShowAIAssistant(false)}
+      />
+
+      {/* Support Contact Modal */}
+      <SupportContactModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        context={`App - ${location.pathname}`}
       />
     </header>
   );

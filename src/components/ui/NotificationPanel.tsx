@@ -202,7 +202,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = () => {
               <div
                 key={notification.id}
                 onClick={() => handleMarkAsRead(notification)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleMarkAsRead(notification)}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") &&
+                  handleMarkAsRead(notification)
+                }
                 role="button"
                 tabIndex={0}
                 className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${

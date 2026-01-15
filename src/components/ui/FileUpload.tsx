@@ -48,11 +48,31 @@ const FileUpload: React.FC<FileUploadProps> = ({
         if (type.endsWith('/*')) {
           return file.type.startsWith(type.replace('/*', '/'));
         }
-        return file.type === type;
+        // Comparación exacta
+        if (file.type === type) return true;
+        // También validar por extensión como fallback
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        if (!fileExt) return false;
+        // Mapeo de extensiones comunes a tipos MIME
+        const extToMime: Record<string, string[]> = {
+          'pdf': ['application/pdf', 'application/x-pdf'],
+          'doc': ['application/msword'],
+          'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+          'xls': ['application/vnd.ms-excel'],
+          'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          'ppt': ['application/vnd.ms-powerpoint'],
+          'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+          'jpg': ['image/jpeg'],
+          'jpeg': ['image/jpeg'],
+          'png': ['image/png'],
+          'txt': ['text/plain']
+        };
+        const validMimesForExt = extToMime[fileExt] || [];
+        return validMimesForExt.includes(type);
       });
 
       if (!isValidType) {
-        errorMsg = `Tipo de archivo no válido: ${file.type}`;
+        errorMsg = `Tipo de archivo no válido: ${file.type || 'desconocido'} (${file.name})`;
         continue;
       }
 
@@ -119,7 +139,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           transition-colors duration-200
           ${isDragOver 
             ? 'border-blue-300 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400'
+            : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
           }
           ${error ? 'border-red-300 bg-red-50' : ''}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -168,7 +188,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
         ref={fileInputRef}
         type="file"
         className="hidden"
-        accept={acceptedTypes.join(',')}
+        accept={acceptedTypes.map(type => {
+          // Convertir tipos MIME a extensiones para el atributo accept
+          if (type === 'application/pdf') return '.pdf';
+          if (type === 'application/msword') return '.doc';
+          if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return '.docx';
+          if (type === 'application/vnd.ms-excel') return '.xls';
+          if (type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return '.xlsx';
+          if (type === 'application/vnd.ms-powerpoint') return '.ppt';
+          if (type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return '.pptx';
+          if (type === 'image/jpeg') return '.jpg,.jpeg';
+          if (type === 'image/png') return '.png';
+          if (type === 'text/plain') return '.txt';
+          return type;
+        }).join(',')}
         multiple={multiple}
         onChange={handleInputChange}
         disabled={disabled}

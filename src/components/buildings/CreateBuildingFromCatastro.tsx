@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Search, AlertCircle, Loader2, Hash, MapPin, Navigation } from 'lucide-react';
 import { CatastroApiService, type Provincia, type Municipio, type Via, type CatastroBuildingData } from '../../services/catastroApi';
 import type { BuildingStep1Data } from './CreateBuildingWizard';
+import { SupportContactModal } from '../SupportContactModal';
 
 interface CreateBuildingFromCatastroProps {
   onDataLoaded: (data: BuildingStep1Data, coordinates?: { lat: number; lng: number }) => void;
@@ -20,6 +21,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   const [searchMethod, setSearchMethod] = useState<SearchMethod>('rc');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // Estados para búsqueda por RC
   const [rc, setRc] = useState('');
@@ -294,25 +296,25 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       </div>
 
       {/* Selector de método */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {t('buildingWizard.searchMethod', 'Método de búsqueda')}
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-2">
           <button
             type="button"
             onClick={() => {
               setSearchMethod('rc');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'rc'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <Hash className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
+            <Hash className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
           </button>
           <button
             type="button"
@@ -320,14 +322,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
               setSearchMethod('address');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'address'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
           </button>
           <button
             type="button"
@@ -335,14 +337,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
               setSearchMethod('coordinates');
               setError(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 md:py-2 rounded-lg border shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               searchMethod === 'coordinates'
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
             }`}
           >
-            <Navigation className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
+            <Navigation className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
           </button>
         </div>
       </div>
@@ -628,6 +630,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   const isTip = line.includes('💡') || line.includes('Consejo');
                   const isList = line.trim().startsWith('•');
                   const isSubtitle = line.includes(':') && !line.includes('•') && !isTip;
+                  const hasSupportLink = line.includes('Contactar con soporte') || line.includes('contactar con soporte');
                   
                   if (isTip) {
                     return (
@@ -641,6 +644,30 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                     return (
                       <p key={index} className="font-semibold text-red-900 mt-2 first:mt-0">
                         {line}
+                      </p>
+                    );
+                  }
+                  
+                  if (hasSupportLink) {
+                    // Dividir la línea para separar el texto del enlace
+                    const parts = line.split(/(Contactar con soporte|contactar con soporte)/i);
+                    return (
+                      <p key={index} className="ml-4 text-red-700">
+                        {parts.map((part, partIndex) => {
+                          if (part.match(/Contactar con soporte/i)) {
+                            return (
+                              <button
+                                key={partIndex}
+                                type="button"
+                                onClick={() => setIsSupportModalOpen(true)}
+                                className="text-blue-600 hover:text-blue-700 underline font-medium"
+                              >
+                                {part}
+                              </button>
+                            );
+                          }
+                          return <span key={partIndex}>{part}</span>;
+                        })}
                       </p>
                     );
                   }
@@ -700,14 +727,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       </form>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-8 mt-8 border-top border-t border-gray-200">
+      <div className="flex flex-col sm:flex-row gap-3 pt-6">
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {t('common.cancel', 'Cancelar')}
+          {t('common.back', 'Volver')}
         </button>
 
         <button
@@ -860,6 +887,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           </div>
         </div>
       )}
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        initialSubject={t('buildings.catastroError', 'Problema al buscar edificio en Catastro')}
+        context={`Create Building from Catastro - ${window.location.href} - Search Method: ${searchMethod}`}
+      />
     </div>
   );
 };

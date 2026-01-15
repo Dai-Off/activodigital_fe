@@ -38,12 +38,12 @@ export function BuildingActivity() {
       "GENERAR INFORMES": 4,
       "PROGRAMAR EVENTOS": 5,
       ALERTAS: 6,
-      "ACTUALIZAR LIBRE DEL EDIFICIO": 7,
+      "ACTUALIZAR LIBRO DEL EDIFICIO": 7,
       "APROBAR PRESUPUESTO": 8,
       "ACTUALIZAR DATOS FINANCIEROS": 9,
       "COMPLETAR INSPECCION ELECTRICA": 10,
       CREAR: 11,
-      ELIMINAR: 0,
+      ELIMINAR: 12,
       APROBAR: 0,
       RECHAZAR: 0,
     };
@@ -72,6 +72,9 @@ export function BuildingActivity() {
       9: "bg-blue-600",
       10: "bg-purple-600",
       11: "bg-green-600",
+      12: "bg-red-600",
+      13: "bg-gray-600",
+      14: "bg-red-600",
     };
 
     date = formatofechaCorta(date);

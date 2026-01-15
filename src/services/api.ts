@@ -30,7 +30,7 @@ const detectBackendAvailability = async (url: string): Promise<boolean> => {
   }
 };
 
-const getApiBaseUrl = async (): Promise<string> => {
+export const getApiBaseUrl = async (): Promise<string> => {
   const isLocalhost =
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';

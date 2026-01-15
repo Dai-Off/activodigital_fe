@@ -3,6 +3,7 @@ import { SidebarDashboard } from "./SidebarDashboard";
 import { SidebarAssets } from "./SidebarAssets";
 import SidebarUsers from "./SidebarUsers";
 import SidebarEvents from "./SideberEvents";
+import SidebarConfiguration from "./SidebarConfiguration";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -19,14 +20,17 @@ export function SecondaryNav() {
     assets: <SidebarAssets />,
     edificio: <SidebarAssets />, // Mostrar lista de activos también en rutas de edificio
     users: <SidebarUsers />,
-    events: <SidebarEvents />
+    configuration: <SidebarConfiguration />,
+    events: <SidebarEvents />,
   };
 
   // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent
   const isBuildingRoute =
     currentPath.startsWith("/building/") ||
     currentPath.startsWith("/digital-book") ||
-    currentPath.startsWith("/cfo-intake");
+    currentPath.startsWith("/cfo-intake") ||
+    currentPath.startsWith("/cfo-due-diligence") ||
+    currentPath.startsWith("/cfo-simulation");
 
   const componentToShow = isBuildingRoute ? (
     <SidebarAssets />
@@ -43,8 +47,9 @@ export function SecondaryNav() {
   }
 
   // Para otros componentes (como DashboardComponent), usar el contenedor del SecondaryNav
+  // Oculto completamente en mobile (solo visible desde lg en adelante)
   return (
-    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 md:w-48 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="hidden lg:block fixed lg:left-16 top-[88px] lg:w-64 h-[calc(100vh-88px)] bg-white border-r border-gray-200 overflow-y-auto shadow-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <nav className="py-4">{componentToShow}</nav>
     </div>
   );

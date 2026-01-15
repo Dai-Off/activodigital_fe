@@ -6,7 +6,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useLayoutEffect } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -18,7 +18,6 @@ import { SkeletonSidebarBuildings } from "../ui/LoadingSystem";
 
 export function SidebarAssets() {
   const {
-    activeSection,
     setActiveSection,
     setActiveTab,
     setViewMode,
@@ -57,6 +56,53 @@ export function SidebarAssets() {
       setExpandedBuildings((prev) => [...prev, selectedBuildingId]);
     }
   }, [selectedBuildingId, expandedBuildings]);
+
+  const { pathname } = useLocation();
+
+  // Sincronizar activeSection y selectedBuildingId con la ruta actual
+  // Usamos useLayoutEffect para que se ejecute de forma síncrona antes del render
+  useLayoutEffect(() => {
+    // Detectar rutas de edificios
+    const buildingRouteMatch = pathname.match(
+      /^\/building\/([^/]+)(?:\/(.+))?$/
+    );
+    if (buildingRouteMatch) {
+      const buildingId = buildingRouteMatch[1];
+      const subRoute = buildingRouteMatch[2];
+
+      // Determinar qué activeSection debería ser según la ruta
+      let expectedSection = "";
+      if (subRoute) {
+        if (subRoute === "gestion") {
+          expectedSection = "gestion";
+        } else if (subRoute === "analysis-general") {
+          expectedSection = "analisis";
+        } else if (subRoute === "general-view") {
+          expectedSection = "general-view";
+        } else if (subRoute.startsWith("general-view/")) {
+          // Si estamos en una sub-vista como financiero, seguros, etc.
+          // Extraemos la parte después de general-view/ (ej: financial, insurance)
+          const subPart = subRoute.split("/")[1];
+          expectedSection = subPart;
+        }
+      } else {
+        expectedSection = "todos";
+      }
+
+      // FORZAR la actualización del estado basándose SOLO en la ruta
+      // No verificamos el estado actual para evitar problemas de sincronización
+      if (expectedSection) {
+        // Actualizar el estado basándonos SOLO en la ruta
+        setActiveSection(expectedSection);
+        setActiveTab(expectedSection);
+        setViewMode("detail");
+      }
+
+      // Establecer selectedBuildingId
+      setSelectedBuildingId(buildingId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]); // Solo dependemos de pathname para evitar loops
 
   // Obtener lista única de ciudades para el filtro
   const cities = useMemo(() => {
@@ -104,7 +150,6 @@ export function SidebarAssets() {
     );
   };
 
-  const { pathname } = useLocation();
   const menuItems = [
     {
       id: "assetslist",
@@ -279,26 +324,7 @@ export function SidebarAssets() {
                   {isExpanded && (
                     <div className="ml-4 mt-3 space-y-1.5 pl-3 border-l-2 border-gray-200">
                       {/* Vista General */}
-                      <button
-                        onClick={() => {
-                          setSelectedBuildingId(building.id);
-                          setActiveSection("todos");
-                          setActiveTab("todos");
-                          setViewMode("detail");
-                          navigate(`/building/${building.id}`);
-                        }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "todos"
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
-                      >
-                        <Circle className="w-1.5 h-1.5 fill-current" />
-                        <span className="leading-relaxed">
-                          {t("generalView", "Vista General")}
-                        </span>
-                      </button>
+
                       <button
                         onClick={() => {
                           setSelectedBuildingId(building.id);
@@ -308,15 +334,16 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/general-view`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "general-view"
+                          pathname.startsWith(
+                            `/building/${building.id}/general-view`
+                          )
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("generalView", "Vista General") + " nueva"}
+                          {t("generalView", "Vista General")}
                         </span>
                       </button>
 
@@ -330,8 +357,8 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/analysis-general`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          selectedBuildingId === building.id &&
-                          activeSection === "analisis"
+                          pathname ===
+                          `/building/${building.id}/analysis-general`
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
@@ -339,6 +366,27 @@ export function SidebarAssets() {
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
                           {t("generalAnalysis", "Análisis general")}
+                        </span>
+                      </button>
+
+                      {/* Gestión */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("gestion");
+                          setActiveTab("gestion");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/gestion`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname === `/building/${building.id}/gestion`
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("gestion", "Gestión")}
                         </span>
                       </button>
                     </div>

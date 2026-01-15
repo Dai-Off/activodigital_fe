@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 
 import {
   signupRequest,
-  fetchMe,
   validateInvitation,
   signupWithInvitation,
   setup2FA,
@@ -14,6 +13,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { FormLoader, useLoadingState } from "./ui/LoadingSystem";
 import QRCode from "react-qr-code";
+import { SupportContactModal } from "./SupportContactModal";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -46,6 +46,7 @@ export default function Register() {
   const [tempUserId, setTempUserId] = useState("");
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [tempPassword, setTempPassword] = useState(""); // Guardar password temporalmente para login después del setup
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // Verificar y precargar datos por invitación
   useEffect(() => {
@@ -198,22 +199,12 @@ export default function Register() {
               "Login en contexto completado, obteniendo info del usuario..."
             );
 
-            // Obtener información del usuario
-            const me = await fetchMe();
-            const roleName = me?.role?.name || "tecnico";
-
-            console.log("Usuario obtenido, rol:", roleName);
-
             // Esperar un momento para asegurar que todo esté listo
             await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Redirigir según rol
+            // Redirigir al dashboard
             console.log("Redirigiendo...");
-            if (roleName === "cfo") {
-              navigate("/cfo-dashboard");
-            } else {
-              navigate("/assets");
-            }
+            navigate("/dashboard");
           } else {
             console.error(
               "verify2FALogin no devolvió access_token:",
@@ -433,6 +424,17 @@ export default function Register() {
               {t("login", "Inicia sesión")}
             </Link>
           </p>
+          <p className="mt-2 text-xs text-center text-gray-500">
+            {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+            <button
+              type="button"
+              onClick={() => setIsSupportModalOpen(true)}
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
+              {t("contactSupport", "contacta a soporte")}
+            </button>
+            .
+          </p>
         </div>
 
         {/* Modal de Setup 2FA */}
@@ -627,16 +629,28 @@ export default function Register() {
                 </div>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
-                  {t(
-                    "qrProblemsHelp",
-                    "¿Problemas? Usa la app oficial o contacta a soporte."
-                  )}
+                  {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsSupportModalOpen(true)}
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
+                    {t("contactSupport", "contacta a soporte")}
+                  </button>
+                  .
                 </p>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      <SupportContactModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialCategory="technical"
+        context={`Register page - ${window.location.href}`}
+      />
     </div>
   );
 }

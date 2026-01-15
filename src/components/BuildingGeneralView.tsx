@@ -1,35 +1,259 @@
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useToast } from "~/contexts/ToastContext";
+import { BuildingsApiService, type Building } from "~/services/buildingsApi";
+import { getBookByBuilding, type DigitalBook } from "~/services/digitalbook";
+import {
+  calculateESGScore,
+  getESGScore,
+  type ESGResponse,
+} from "~/services/esg";
+import { FinancialSnapshotsService } from "~/services/financialSnapshots";
 import {
   ArrowUpRight,
   Bell,
   Book,
   Building2,
   Calendar,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Droplet,
   Euro,
   Eye,
-  FileCheck,
   FileText,
   Flame,
   Hash,
   House,
   Image,
-  Lightbulb,
   MapPin,
   Scale,
   Shield,
   Target,
+  Trash,
   Trash2,
   TrendingUp,
   TriangleAlert,
   Wrench,
   Zap,
 } from "lucide-react";
-import { Chevron } from "react-day-picker";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
 
 export function BuildingGeneralView() {
+  // Hooks de navegación y notificaciones
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { showError } = useToast();
+
+  // Estado para datos del edificio
+  const [loading, setLoading] = useState(true);
+  const [building, setBuilding] = useState<Building | null>(null);
+  const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
+  const [_esgData, setEsgData] = useState<ESGResponse | null>(null);
+  const [_esgLoading, setEsgLoading] = useState(false);
+  const [_hasFinancialData, setHasFinancialData] = useState<boolean | null>(
+    null
+  );
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [displayedImageSrc, setDisplayedImageSrc] = useState<string>("/image.png");
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
+  const buildingImages = useMemo(() => {
+    const fallback = "/image.png";
+    const urls =
+      building?.images
+        ?.map((img) => img?.url)
+        .filter((u): u is string => Boolean(u && u.trim() !== "")) ?? [];
+
+    // Dedup manteniendo orden
+    const unique = Array.from(new Set(urls));
+    return unique.length ? unique : [fallback];
+  }, [building?.images]);
+
+  useEffect(() => {
+    // Resetear carrusel al cambiar de edificio / imágenes
+    setCurrentImageIndex(0);
+    setDisplayedImageSrc(buildingImages[0] || "/image.png");
+    setIsImageLoading(false);
+  }, [id, buildingImages.length]);
+
+  // Pre-cargar la imagen objetivo y evitar “pantalla en blanco” al cambiar
+  useEffect(() => {
+    const targetSrc = buildingImages[currentImageIndex] || "/image.png";
+
+    // Si ya se está mostrando, no hacer nada
+    if (targetSrc === displayedImageSrc) return;
+
+    let cancelled = false;
+    setIsImageLoading(true);
+
+    // Ojo: en este componente `Image` es un ícono (lucide), por eso usamos un elemento <img> para pre-cargar.
+    const img = document.createElement("img");
+    img.onload = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc(targetSrc);
+      setIsImageLoading(false);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc("/image.png");
+      setIsImageLoading(false);
+    };
+    img.src = targetSrc;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildingImages, currentImageIndex, displayedImageSrc]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + buildingImages.length) % buildingImages.length
+    );
+  };
+
+  // Función para cargar datos ESG - Ready to use when needed
+  /*
+  const loadESGData = async () => {
+    const buildingId = building?.id || id;
+    if (!buildingId) return;
+
+    setEsgLoading(true);
+    try {
+      const esgResponse = await calculateESGScore(buildingId);
+      setEsgData(esgResponse);
+    } catch (error) {
+      console.error("Error cargando ESG:", error);
+      try {
+        const savedESG = await getESGScore(buildingId);
+        setEsgData(savedESG);
+      } catch {
+        setEsgData(null);
+      }
+    } finally {
+      setEsgLoading(false);
+    }
+  };
+  */
+
+  // Función para crear libro digital
+  const handleCreateDigitalBook = async () => {
+    if (!building?.id) return;
+
+    try {
+      const { getOrCreateBookForBuilding } = await import(
+        "~/services/digitalbook"
+      );
+      const createdBook = await getOrCreateBookForBuilding(building.id);
+      setDigitalBook(createdBook);
+      navigate(`/digital-book/hub/${building.id}`, {
+        state: {
+          buildingId: building.id,
+          buildingName: building.name,
+          isNewBook: true,
+        },
+      });
+    } catch (error) {
+      showError("Error al crear el libro del edificio");
+    }
+  };
+
+  // Función para ver libro digital
+  const handleViewDigitalBook = () => {
+    if (!building?.id) return;
+    navigate(`/digital-book/hub/${building.id}`, {
+      state: {
+        buildingId: building.id,
+        buildingName: building.name,
+        isNewBook: false,
+      },
+    });
+  };
+
+  // Función para navegar a datos financieros - Ready to use when needed
+  /*
+  const handleFinancialData = () => {
+    if (!building?.id) return;
+    if (hasFinancialData) {
+      navigate(`/cfo-due-diligence/${building.id}`);
+    } else {
+      navigate(`/cfo-intake/${building.id}`);
+    }
+  };
+  */
+
+  // Cargar datos del edificio al montar
+  useEffect(() => {
+    const loadBuilding = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        const buildingData = await BuildingsApiService.getBuildingById(id);
+        setBuilding(buildingData);
+
+        // Cargar libro digital si existe
+        try {
+          const book = await getBookByBuilding(id);
+          setDigitalBook(book);
+        } catch (e) {
+          setDigitalBook(null);
+        }
+
+        // Cargar datos financieros
+        try {
+          const snapshots =
+            await FinancialSnapshotsService.getFinancialSnapshots(
+              buildingData.id
+            );
+          setHasFinancialData(snapshots && snapshots.length > 0);
+        } catch (error) {
+          console.error("Error cargando datos financieros:", error);
+          setHasFinancialData(false);
+        }
+
+        // Cargar datos ESG
+        setEsgLoading(true);
+        try {
+          const esgResponse = await calculateESGScore(buildingData.id);
+          setEsgData(esgResponse);
+        } catch (error) {
+          console.error("Error cargando ESG:", error);
+          try {
+            const savedESG = await getESGScore(buildingData.id);
+            setEsgData(savedESG);
+          } catch {
+            setEsgData(null);
+          }
+        } finally {
+          setEsgLoading(false);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        showError(
+          "Error al cargar edificio",
+          "No se pudo cargar la información del edificio"
+        );
+        navigate("/assets");
+        setLoading(false);
+      }
+    };
+
+    loadBuilding();
+  }, [id, navigate, showError]);
+
+  // Mostrar skeleton mientras carga
+  if (loading) {
+    return <BuildingGeneralViewLoading />;
+  }
+
+  // Datos para el gráfico (mantener hardcodeados)
   interface ChartData {
     name: string;
     value: number;
@@ -50,41 +274,87 @@ export function BuildingGeneralView() {
   const COLORS = data.map((d) => d.color);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto mt-2 pr-1">
-        <div className="grid grid-cols-12 gap-2">
-          <div className="col-span-5 space-y-2">
+    <div className="flex-1 overflow-y-auto mt-2 pr-1">
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div className="bg-white rounded-lg p-2 shadow-sm">
+              {/* Nombre del edificio */}
+              <div className="mb-3 pb-2.5 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 leading-tight">
+                  {building?.name || "Edificio"}
+                </h2>
+                {building?.address && (
+                  <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{building.address}</span>
+                  </p>
+                )}
+              </div>
+              
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Image className="w-3.5 h-3.5 text-gray-600" />
-                <h3 className="text-xs">Imágenes del Edificio</h3>
+                <h3 className="text-sm">Imágenes del Edificio</h3>
               </div>
               <div className="relative w-full h-[140px] bg-gray-100 rounded overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1758113107218-6fbb090db3ff?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaG9wcGluZyUyMG1hbGwlMjBleHRlcmlvcnxlbnwxfHx8fDE3NjI3MjAxMjR8MA&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080"
-                  alt="Plaza Shopping"
+                  key={`${building?.id || "building"}-img-${currentImageIndex}-${buildingImages[currentImageIndex]?.substring(0, 30)}`}
+                  src={displayedImageSrc}
+                  alt={`${building?.name || "Edificio"} - Imagen ${
+                    currentImageIndex + 1
+                  }`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    // fallback si falla una URL firmada
+                    (e.currentTarget as HTMLImageElement).src = "/image.png";
+                  }}
                 />
-                <button className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <Chevron className=" w-3.5 h-3.5" />
-                </button>
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/55 text-white text-xs shadow-sm">
+                      <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+                      <span>Cargando imagen…</span>
+                    </div>
+                  </div>
+                )}
+
+                {buildingImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevImage}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextImage}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen siguiente"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+
                 <div className="absolute bottom-1 right-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs">
-                  1 / 2
+                  {currentImageIndex + 1} / {buildingImages.length}
                 </div>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-blue-600 rounded"></div>
-                <h3 className="text-xs text-black">Información General</h3>
+                <div className="w-1 h-3.5 bg-[#1e3a8a] rounded"></div>
+                <h3 className="text-sm text-black">Información General</h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div
                   data-slot="card"
-                  className="bg-card border-gray-200 text-card-foreground flex flex-col gap-6 rounded-xl border p-3"
+                  className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
                     Información General
@@ -106,13 +376,13 @@ export function BuildingGeneralView() {
                 </div>
                 <div
                   data-slot="card"
-                  className="bg-card border-gray-200 text-card-foreground flex flex-col gap-6 rounded-xl border p-3"
+                  className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
                     Eficiencia Energética
                   </h4>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded flex items-center justify-center text-white text-sm bg-orange-500">
+                    <div className="w-10 h-10 rounded flex items-center justify-center text-white bg-orange-500">
                       D
                     </div>
                     <div>
@@ -123,13 +393,13 @@ export function BuildingGeneralView() {
                 </div>
                 <div
                   data-slot="card"
-                  className="bg-card border-gray-200 text-card-foreground flex flex-col gap-6 rounded-xl border p-3"
+                  className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
                     Ocupación del Activo
                   </h4>
                   <div className="mb-2">
-                    <span className="text-xl text-gray-900">89%</span>
+                    <span className="text-2xl text-gray-900">89%</span>
                     <span className="text-xs text-gray-500 ml-1.5">
                       ocupado
                     </span>
@@ -143,400 +413,257 @@ export function BuildingGeneralView() {
                 </div>
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-orange-600 rounded"></div>
-                <h3 className="text-xs text-black">Estado Técnico</h3>
-              </div>
-              <div className="space-y-1.5">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded p-2 text-white shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="p-1 bg-white/10 rounded">
-                        <Book className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
-                        <p className="text-xs text-blue-100">
-                          100% completado • 08/11/2024
-                        </p>
-                      </div>
-                    </div>
-                    <button className="bg-white text-blue-600 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs">
-                      <Eye className="w-3 h-3" />
-                      Ver Libro
-                    </button>
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded p-2 text-white shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="p-1 bg-white/10 rounded">
-                        <Shield className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs mb-0.5">
-                          Certificados Energéticos
-                        </h4>
-                        <p className="text-xs text-blue-100">
-                          2 certificados • 2 vigentes
-                        </p>
-                      </div>
-                    </div>
-                    <button className="bg-white text-blue-600 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs">
-                      <Eye className="w-3 h-3" />
-                      Ver Certificados
-                    </button>
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg p-2 shadow-sm">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Wrench className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-xs">Plan de Mantenimiento</h3>
-                  </div>
-                  <div className="h-[120px] mb-1.5">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={data}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%" // Centro X
-                          cy="50%" // Centro Y
-                          innerRadius={innerRadius} // Radio interior (para crear el agujero)
-                          outerRadius={outerRadius} // Radio exterior
-                          fill="#8884d8" // Color de relleno por defecto
-                          paddingAngle={0} // Sin padding entre sectores
-                          stroke="#fff" // Borde blanco como en tu SVG
-                          // startAngle={90} // Puedes ajustar el ángulo de inicio si es necesario
-                          // endAngle={-270} // Puedes ajustar el ángulo final si es necesario
-                        >
-                          {data.map((_, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={COLORS[index % COLORS.length]}
-                              // Si quieres manejar el tabindex como en tu SVG
-                              tabIndex={-1}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: "rgb(16, 185, 129)" }}
-                      ></div>
-                      <span className="text-gray-700">Completado: 40%</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: "rgb(59, 130, 246)" }}
-                      ></div>
-                      <span className="text-gray-700">En curso: 25%</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: "rgb(245, 158, 11)" }}
-                      ></div>
-                      <span className="text-gray-700">Programado: 20%</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: " rgb(239, 68, 68)" }}
-                      ></div>
-                      <span className="text-gray-700">Atrasado: 15%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="w-1 h-3.5 bg-slate-700 rounded"></div>
+              <h3 className="text-sm text-black">Identificación del Activo</h3>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-indigo-600 rounded"></div>
-                <h3 className="text-xs text-black">Ubicación</h3>
-              </div>
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="space-y-1.5">
-                  <div className="flex items-start gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-900">
-                        Carretera de Miraflores, Colmenar Viejo
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Colmenar Viejo, Madrid
-                      </p>
-                    </div>
-                  </div>
-                  <div className="h-[80px] bg-gray-100 rounded flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <MapPin className="w-5 h-5 mx-auto mb-0.5 text-gray-400" />
-                      <p className="text-xs">Vista del mapa</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-blue-600 rounded"></div>
-                <h3 className="text-xs text-black">Calendario de Acciones</h3>
-              </div>
-              <div className="bg-white rounded-lg p-2 shadow-sm">
+            <div className="grid grid-cols-2 gap-2 flex-1">
+              <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                    <Calendar className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <h3 className="text-xs text-gray-900">Próximas Acciones</h3>
+                  <Hash className="w-3.5 h-3.5 text-gray-600" />
+                  <h3 className="text-sm">Identificadores</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 mb-2">
-                  <div className="p-1.5 bg-red-50 border border-red-200 rounded">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <TriangleAlert className="w-3 h-3 text-red-600" />
-                      <p className="text-xs text-red-900">Urgentes</p>
-                    </div>
-                    <p className="text-xs text-red-700">1</p>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <label className="text-xs text-gray-500">ID Inmueble</label>
+                    <p className="text-xs text-gray-900"></p>
                   </div>
-                  <div className="p-1.5 bg-blue-50 border border-blue-200 rounded">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Clock className="w-3 h-3 text-blue-600" />
-                      <p className="text-xs text-blue-900">Este Mes</p>
-                    </div>
-                    <p className="text-xs text-blue-700">12</p>
+                  <div>
+                    <label className="text-xs text-gray-500">Portfolio</label>
+                    <p className="text-xs text-gray-900"></p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Gestor</label>
+                    <p className="text-xs text-gray-900">ARKIA Capital</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">
+                      Referencia Catastral
+                    </label>
+                    <p
+                      className="text-xs text-gray-900 truncate"
+                      title="1234567890"
+                    >
+                      1234567890
+                    </p>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-700 mb-1">
-                    Acciones Prioritarias:
-                  </p>
-                  <div className="flex items-center justify-between p-1.5 rounded text-xs bg-orange-50 border border-orange-200">
-                    <span className="text-gray-700 truncate flex-1 flex items-center gap-0.5">
-                      Contrato Local 101
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-gray-600" />
+                  <h3 className="text-sm">Inmueble</h3>
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <label className="text-xs text-gray-500">Dominio</label>
+                    <p className="text-xs text-gray-900">Propiedad Plena</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">
+                      Referencia Catastral
+                    </label>
+                    <p
+                      className="text-xs text-gray-900 truncate"
+                      title="Carretera de Miraflores"
+                    >
+                      Carretera de Miraflores
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Superficie</label>
+                    <p className="text-xs text-gray-900">2.450 m²</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-gray-600" />
+                  <h3 className="text-sm">Tipo y Características</h3>
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <label className="text-xs text-gray-500">Tipo</label>
+                    <p className="text-xs text-gray-900">Comercial</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">
+                      Uso Comercial
+                    </label>
+                    <p className="text-xs text-gray-900">Mixto</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Sub-tipo</label>
+                    <p className="text-xs text-gray-900"></p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Unidades</label>
+                    <p className="text-xs text-gray-900">30</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Target className="w-3.5 h-3.5 text-gray-600" />
+                  <h3 className="text-sm">Estrategia</h3>
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <label className="text-xs text-gray-500">Estrategia</label>
+                    <p className="text-xs text-gray-900">Valor añadido</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">
+                      Valor Añadido
+                    </label>
+                    <p className="text-xs text-gray-900">Rehabilitación</p>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Estado</label>
+                    <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs"></span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500">Cliente</label>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700">
+                      Pendiente
                     </span>
-                    <span className="ml-1.5 text-orange-700">17d</span>
-                  </div>
-                </div>
-                <button className="w-full mt-2 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors">
-                  Ver Calendario Completo
-                </button>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-red-600 rounded"></div>
-                <h3 className="text-xs text-black">Seguimiento y Alertas</h3>
-              </div>
-              <div className="space-y-1.5">
-                <div className="bg-white rounded-lg p-2 shadow-sm">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Clock className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-xs">Actividad Reciente</h3>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-green-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">CEE renovado</p>
-                        <p className="text-xs text-gray-500">hace 2 días</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-blue-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">
-                          Mantenimiento HVAC completado
-                        </p>
-                        <p className="text-xs text-gray-500">hace una semana</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-orange-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">
-                          Inspección de ascensor programada
-                        </p>
-                        <p className="text-xs text-gray-500">en 3 días</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg p-2 shadow-sm">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Bell className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-xs">Próximas Alertas</h3>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-red-50 text-red-600">
-                      <TriangleAlert className="w-3 h-3 flex-shrink-0" />
-                      <p className="text-xs text-gray-900">
-                        Revisión de ascensor vence en 15 días
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-yellow-50 text-yellow-600">
-                      <Clock className="w-3 h-3 flex-shrink-0" />
-                      <p className="text-xs text-gray-900">
-                        Mantenimiento RITE trimestral
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-purple-600 rounded"></div>
-                <h3 className="text-xs text-black">
-                  Recomendaciones Inteligentes
-                </h3>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-2 border border-purple-100">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Lightbulb className="w-3.5 h-3.5 text-purple-600" />
-                  <h3 className="text-xs text-purple-900">
-                    Recomendaciones IA
-                  </h3>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-start gap-1">
-                    <div className="w-1 h-1 rounded-full bg-purple-400 mt-1 flex-shrink-0"></div>
-                    <p className="text-xs text-gray-700">
-                      Consumo 15% bajo media de edificios comerciales en Madrid
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-1">
-                    <div className="w-1 h-1 rounded-full bg-purple-400 mt-1 flex-shrink-0"></div>
-                    <p className="text-xs text-gray-700">
-                      Posibilidad de calificación A+ con mejoras en aislamiento
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-1">
-                    <div className="w-1 h-1 rounded-full bg-purple-400 mt-1 flex-shrink-0"></div>
-                    <p className="text-xs text-gray-700">
-                      15% tareas vencidas - priorizar revisión HVAC
-                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="col-span-7 space-y-2">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-slate-700 rounded"></div>
-                <h3 className="text-xs text-black">
-                  Identificación del Activo
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                <div className="bg-white rounded-lg shadow-sm p-2">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Hash className="w-3.5 h-3.5 text-grays-600" />
-                    <h3 className="text-xs">Identificadores</h3>
-                  </div>
-                  <div className="space-y-1">
-                    <div>
-                      <label className="text-xs text-gray-500">
-                        ID Inmueble
-                      </label>
-                      <p className="text-xs text-gray-900"></p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="w-1 h-3.5 bg-orange-600 rounded"></div>
+              <h3 className="text-sm text-black">Estado Técnico</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] rounded p-2 text-white shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1 bg-white/10 rounded">
+                      <Book className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500">Portfolio</label>
-                      <p className="text-xs text-gray-900"></p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">
-                        Referencia Catastral
-                      </label>
-                      <p
-                        className="text-xs text-gray-900 truncate"
-                        title="1234567890"
-                      >
-                        1234567890
+                      <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
+                      <p className="text-xs text-blue-100">
+                        0% completado • 0 documentos
                       </p>
                     </div>
                   </div>
+                  <button
+                    onClick={
+                      digitalBook
+                        ? handleViewDigitalBook
+                        : handleCreateDigitalBook
+                    }
+                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                  >
+                    <Eye className="w-3 h-3" />
+                    {digitalBook ? "Ver Libro" : "Crear Libro"}
+                  </button>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-2">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-xs">Dirección</h3>
+              </div>
+              <div className="bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] rounded p-2 text-white shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="p-1 bg-white/10 rounded">
+                      <Shield className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs mb-0.5">Datos financieros</h4>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs text-gray-900">
-                      Carretera de Miraflores
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Colmenar Viejo, Madrid
-                    </p>
-                    <p className="text-xs text-gray-500">28780, España</p>
-                  </div>
+                  <button
+                    onClick={() => navigate(`/cfo-intake/${id}`)}
+                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                  >
+                    <Eye className="w-3 h-3" />
+                    Cargar Datos Financieros
+                  </button>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-2">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-xs">Tipo de Edificio</h3>
-                  </div>
-                  <div className="space-y-1">
-                    <div>
-                      <label className="text-xs text-gray-500">Tipo</label>
-                      <p className="text-xs text-gray-900">Comercial</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Sub-tipo</label>
-                      <p className="text-xs text-gray-900"></p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Unidades</label>
-                      <p className="text-xs text-gray-900">30</p>
-                    </div>
-                  </div>
+              </div>
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Wrench className="w-3.5 h-3.5 text-gray-600" />
+                  <h3 className="text-sm">Plan de Mantenimiento</h3>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-2">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Target className="w-3.5 h-3.5" />
-                    <h3 className="text-xs">Estrategia</h3>
+                <div className="h-[120px] mb-1.5">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={data}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={innerRadius} // Radio interior (para crear el agujero)
+                        outerRadius={outerRadius} // Radio exterior
+                        fill="#8884d8"
+                        paddingAngle={0}
+                        stroke="#fff"
+                      >
+                        {data.map((_, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-sm">
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: "rgb(16, 185, 129)" }}
+                    ></div>
+                    <span className="text-gray-700">Completado: 40%</span>
                   </div>
-                  <div className="space-y-1">
-                    <div>
-                      <label className="text-xs text-gray-500">
-                        Estrategia
-                      </label>
-                      <p className="text-xs text-gray-900">Valor añadido</p>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Estado</label>
-                      <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs"></span>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500">Cliente</label>
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700">
-                        Pendiente
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: "rgb(59, 130, 246)" }}
+                    ></div>
+                    <span className="text-gray-700">En curso: 25%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: "rgb(245, 158, 11)" }}
+                    ></div>
+                    <span className="text-gray-700">Programado: 20%</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: "rgb(239, 68, 68)" }}
+                    ></div>
+                    <span className="text-gray-700">Atrasado: 15%</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-emerald-600 rounded"></div>
-                <h3 className="text-xs text-black">Costes Mensuales</h3>
-              </div>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="w-1 h-3.5 bg-emerald-600 rounded"></div>
+              <h3 className="text-sm text-black">Costes Mensuales</h3>
+            </div>
+            <div className="flex-1">
               <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="grid grid-cols-6 gap-1.5 mb-2">
+                <div className="grid grid-cols-6 gap-1.5 mb-1.5">
                   <div className="p-1.5 border border-blue-200 bg-blue-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Zap className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">Electricidad</p>
                     </div>
-                    <p className="text-xs text-blue-700">€1850</p>
+                    <p className="text-sm text-blue-700">€1850</p>
                     <p className="text-xs text-blue-600">Edificio</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
@@ -544,7 +671,7 @@ export function BuildingGeneralView() {
                       <Droplet className="w-3 h-3 text-cyan-600" />
                       <p className="text-xs text-cyan-900">Agua</p>
                     </div>
-                    <p className="text-xs text-cyan-700">€1005</p>
+                    <p className="text-sm text-cyan-700">€1005</p>
                     <p className="text-xs text-cyan-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
@@ -552,7 +679,7 @@ export function BuildingGeneralView() {
                       <Flame className="w-3 h-3 text-orange-600" />
                       <p className="text-xs text-orange-900">Gas</p>
                     </div>
-                    <p className="text-xs text-orange-700">€95</p>
+                    <p className="text-sm text-orange-700">€95</p>
                     <p className="text-xs text-orange-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
@@ -560,57 +687,57 @@ export function BuildingGeneralView() {
                       <FileText className="w-3 h-3 text-purple-600" />
                       <p className="text-xs text-purple-900">IBI</p>
                     </div>
-                    <p className="text-xs text-purple-700">€562</p>
+                    <p className="text-sm text-purple-700">€562</p>
                     <p className="text-xs text-purple-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
-                      <Trash2 className="w-3 h-3 text-amber-600" />
+                      <Trash className="w-3 h-3 text-amber-600" />
                       <p className="text-xs text-amber-900">Basuras</p>
                     </div>
-                    <p className="text-xs text-amber-700">€107</p>
+                    <p className="text-sm text-amber-700">€107</p>
                     <p className="text-xs text-amber-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
-                      <Euro className="w-3 h-3 text-green-600" />
+                      <Euro className="w-3 h-3 text-green-700" />
                       <p className="text-xs text-green-900">Total</p>
                     </div>
-                    <p className="text-xs text-green-800">€3619</p>
+                    <p className="text-sm text-green-800">€3619</p>
                     <p className="text-xs text-green-700">€43.428/año</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2 bg-purple-50 border border-purple-200 rounded">
-                    <div className="flex items-center gap-1 mb-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="p-1.5 bg-purple-50 border border-purple-200 rounded">
+                    <div className="flex items-center gap-0.5 mb-1">
+                      <Building2 className="w-2.5 h-2.5 text-purple-600" />
                       <p className="text-xs text-purple-900">
                         Contadores Comunitarios
                       </p>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-blue-600" />
+                          <Zap className="w-2.5 h-2.5 text-blue-600" />
                           <span className="text-gray-700">Electricidad</span>
                         </div>
                         <span className="text-gray-900">€1850</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Droplet className="w-3 h-3 text-cyan-600" />
+                          <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
                         <span className="text-gray-900">€420</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Flame className="w-3 h-3 text-orange-600" />
+                          <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
                         <span className="text-gray-900">€0</span>
                       </div>
-                      <div className="pt-1 mt-1 border-t border-purple-300 flex items-center justify-between">
+                      <div className="pt-0.5 mt-0.5 border-t border-purple-300 flex items-center justify-between">
                         <span className="text-xs text-purple-900">
                           Subtotal
                         </span>
@@ -618,41 +745,41 @@ export function BuildingGeneralView() {
                       </div>
                     </div>
                   </div>
-                  <div className="p-2 bg-indigo-50 border border-indigo-200 rounded">
-                    <div className="flex items-center gap-1 mb-1.5">
-                      <House className="w-3.5 h-3.5 text-indigo-600" />
+                  <div className="p-1.5 bg-indigo-50 border border-indigo-200 rounded">
+                    <div className="flex items-center gap-0.5 mb-1">
+                      <House className="w-2.5 h-2.5 text-indigo-600" />
                       <p className="text-xs text-indigo-900">Costes Unidades</p>
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Droplet className="w-3 h-3 text-cyan-600" />
+                          <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
                         <span className="text-gray-900">€585</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Flame className="w-3 h-3 text-orange-600" />
+                          <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
                         <span className="text-gray-900">€95</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <FileText className="w-3 h-3 text-purple-600" />
+                          <FileText className="w-2.5 h-2.5 text-purple-600" />
                           <span className="text-gray-700">IBI</span>
                         </div>
                         <span className="text-gray-900">€562</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
-                          <Trash2 className="w-3 h-3 text-amber-600" />
+                          <Trash2 className="w-2.5 h-2.5 text-amber-600" />
                           <span className="text-gray-700">Basuras</span>
                         </div>
                         <span className="text-gray-900">€107</span>
                       </div>
-                      <div className="pt-1 mt-1 border-t border-indigo-300 flex items-center justify-between">
+                      <div className="pt-0.5 mt-0.5 border-t border-indigo-300 flex items-center justify-between">
                         <span className="text-xs text-indigo-900">
                           Subtotal
                         </span>
@@ -663,18 +790,207 @@ export function BuildingGeneralView() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="w-1 h-3.5 bg-teal-600 rounded"></div>
+              <h3 className="text-sm text-black">Auditoría</h3>
+            </div>
+            <div className="space-y-2">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
+                <div className="flex items-center gap-1 mb-1">
+                  <div className="p-1 bg-purple-100 rounded">
+                    <Scale className="w-3 h-3 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm">Auditoría Regulatoria</h3>
+                    <p className="text-xs text-gray-500">Directiva EPBD 2030</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                  <div className="bg-gray-50 rounded p-1">
+                    <div className="text-xs text-gray-600">
+                      Calificación Actual
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">D</span>
+                      <span className="text-xs text-gray-500">
+                        85.42 kWh/m²·año
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 rounded p-1">
+                    <div className="text-xs text-blue-700">Objetivo</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-blue-600">D</span>
+                      <span className="text-xs text-blue-600">65 kWh/m²</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-0.5 text-xs">
+                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                        <span className="text-gray-600 text-xs">Consumo</span>
+                      </div>
+                      <span className="text-xs text-orange-600">+20.4</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1">
+                      <div
+                        className="h-1 rounded-full bg-orange-500"
+                        style={{ width: "76.0946%" }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-0.5 text-xs">
+                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                      </div>
+                      <span className="text-xs text-orange-600">+4.7</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1">
+                      <div
+                        className="h-1 rounded-full bg-orange-500"
+                        style={{ width: "71.6846%" }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-1 pt-1 border-t border-gray-200">
+                  <div className="text-xs text-gray-600 space-y-0.5">
+                    <div>• EPBD IV (2024/1275)</div>
+                    <div>• RD 390/2021</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
+                <div className="flex items-center gap-1 mb-1">
+                  <div className="p-1 bg-orange-100 rounded">
+                    <Wrench className="w-3.5 h-3.5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm">Auditoría Técnica</h3>
+                    <p className="text-xs text-gray-500">Libro del Edificio</p>
+                  </div>
+                </div>
+                <div className="bg-blue-50 rounded p-1.5 mb-1.5">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="flex items-center gap-1">
+                      <FileText className="w-2.5 h-2.5 text-[#1e3a8a]" />
+                      <span className="text-xs text-gray-700">Completado</span>
+                    </div>
+                    <span className="text-xs text-[#1e3a8a]">100%</span>
+                  </div>
+                  <div className="w-full bg-white rounded-full h-1">
+                    <div
+                      className="bg-[#1e3a8a] h-1 rounded-full"
+                      style={{ width: "100%" }}
+                    ></div>
+                  </div>
+                  <div className="mt-0.5 text-xs text-gray-600">8/8 tareas</div>
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="text-xs text-gray-700">Mejoras:</div>
+                  <div className="bg-orange-50 rounded p-1">
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-2.5 h-2.5 text-orange-600" />
+                      <span className="text-xs text-orange-900">
+                        Envolvente: -18 kWh/m²
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 rounded p-1">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="w-2.5 h-2.5 text-orange-600" />
+                      <span className="text-xs text-orange-900">
+                        HVAC: -12 kWh/m²
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-1 border-t border-gray-200 bg-blue-50 rounded p-1 mt-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-blue-600">-58 kWh/m²</span>
+                    <span className="text-green-600">€450k inv.</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
+                <div className="flex items-center gap-1 mb-1">
+                  <div className="p-1 bg-green-100 rounded">
+                    <Euro className="w-3 h-3 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm">Auditoría Financiera</h3>
+                    <p className="text-xs text-gray-500">ROI Valoración</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                  <div className="border-l-2 border-blue-500 pl-1">
+                    <div className="text-xs text-gray-600">
+                      Valor del Activo
+                    </div>
+                    <div className="text-xs">€8.50M</div>
+                    <div className="text-xs text-gray-500">1574 €/m²</div>
+                  </div>
+                  <div className="border-l-2 border-green-500 bg-green-50 pl-1">
+                    <div className="text-xs text-green-700">ROI Actual</div>
+                    <div className="text-xs text-green-600">8.00%</div>
+                    <div className="text-xs text-green-600">Anual</div>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded p-1.5 mb-1.5 flex-1">
+                  <div className="text-xs text-gray-700 mb-1 flex items-center gap-0.5">
+                    <TrendingUp className="w-2.5 h-2.5 text-green-600" />
+                    <span>Post-mejora:</span>
+                  </div>
+                  <div className="space-y-0.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Inversión:</span>
+                      <span className="text-orange-600">€473k</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Revalorización:</span>
+                      <span className="text-green-600">+12%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Valor Futuro:</span>
+                      <span className="text-green-700">€9.52M</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#1e3a8a] text-white rounded p-1.5">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <div className="text-xs">Ganancia Neta</div>
+
+                    <ArrowUpRight className="w-2.5 h-2.5" />
+                  </div>
+                  <div className="text-base">€548k</div>
+                  <div className="flex justify-between text-xs mt-0.5 opacity-90">
+                    <span>ROI: 216%</span>
+                    <span>6.5 años</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <div className="w-1 h-3.5 bg-green-600 rounded"></div>
-                <h3 className="text-xs text-black">Rentas</h3>
+                <h3 className="text-sm text-black">Rentas</h3>
               </div>
               <div
                 data-slot="card"
-                className="bg-card text-card-foreground flex flex-col gap-6 rounded-xl border border-gray-200 p-2"
+                className="bg-white text-card-foreground rounded-lg shadow-sm p-2"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <Euro className="w-4 h-4 text-green-600" />
+                    <Euro className="w-3.5 h-3.5 text-green-600" />
                     <h3 className="text-xs">Rentas</h3>
                   </div>
                   <button
@@ -722,195 +1038,104 @@ export function BuildingGeneralView() {
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="w-1 h-3.5 bg-teal-600 rounded"></div>
-                <h3 className="text-xs text-black">Auditoría</h3>
+                <div className="w-1 h-3.5 bg-[#1e3a8a] rounded"></div>
+                <h3 className="text-sm text-black">Calendario de Acciones</h3>
               </div>
-              <div className="space-y-1.5">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="p-1 bg-purple-100 rounded">
-                      <Scale className="w-3 h-3 text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs">Auditoría Regulatoria</h3>
-                      <p className="text-xs text-gray-500">
-                        Directiva EPBD 2030
-                      </p>
-                    </div>
+              <div className="bg-white rounded-lg p-2 shadow-sm">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-6 h-6 bg-gradient-to-br from-[#1e3a8a] to-[#1e40af] rounded flex items-center justify-center">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
-                    <div className="bg-gray-50 rounded p-1">
-                      <div className="text-xs text-gray-600">
-                        Calificación Actual
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs">D</span>
-                        <span className="text-xs text-gray-500">
-                          85.42 kWh/m²·año
-                        </span>
-                      </div>
+                  <h3 className="text-sm text-gray-900">Próximas Acciones</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 mb-2">
+                  <div className="p-1.5 bg-red-50 border border-red-200 rounded">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <TriangleAlert className="w-3 h-3 text-red-600" />
+                      <p className="text-xs text-red-900">Urgentes</p>
                     </div>
-                    <div className="bg-blue-50 rounded p-1">
-                      <div className="text-xs text-blue-700">Objetivo</div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-blue-600">D</span>
-                        <span className="text-xs text-blue-600">65 kWh/m²</span>
-                      </div>
-                    </div>
+                    <p className="text-xs text-red-700">1</p>
                   </div>
-                  <div className="space-y-1.5 flex-1">
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <div className="flex items-center gap-0.5 text-xs">
-                          <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
-                          <span className="text-gray-600 text-xs">Consumo</span>
-                        </div>
-                        <span className="text-xs text-orange-600">+20.4</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div
-                          className="h-1 rounded-full bg-orange-500"
-                          style={{ width: "76.0946%" }}
-                        ></div>
-                      </div>
+                  <div className="p-1.5 bg-blue-50 border border-blue-200 rounded">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <Clock className="w-3 h-3 text-blue-600" />
+                      <p className="text-xs text-blue-900">Este Mes</p>
                     </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <div className="flex items-center gap-0.5 text-xs">
-                          <TriangleAlert className="w-3.5 h-3.5 text-orange-600" />
-                          <span className="text-gray-600 text-xs">
-                            Emisiones
-                          </span>
-                        </div>
-                        <span className="text-xs text-orange-600">+4.7</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1">
-                        <div
-                          className="h-1 rounded-full bg-orange-500"
-                          style={{ width: "71.6846%" }}
-                        ></div>
-                      </div>
-                    </div>
+                    <p className="text-xs text-blue-700">12</p>
                   </div>
-                  <div className="mt-1 pt-1 border-t border-gray-200">
-                    <div className="text-xs text-gray-600 space-y-0.5">
-                      <div>• EPBD IV (2024/1275)</div>
-                      <div>• RD 390/2021</div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-700 mb-1">
+                    Acciones Prioritarias:
+                  </p>
+                  <div className="flex items-center justify-between p-1.5 rounded text-xs bg-orange-50 border border-orange-200">
+                    <span className="text-gray-700 truncate flex-1 flex items-center gap-0.5">
+                      Contrato Local 101
+                    </span>
+                    <span className="ml-1.5 text-orange-700">5d</span>
+                  </div>
+                </div>
+                <button className="w-full mt-2 px-2 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-xs rounded transition-colors">
+                  Ver Calendario Completo
+                </button>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <div className="w-1 h-3.5 bg-red-600 rounded"></div>
+                <h3 className="text-sm text-black">Seguimiento y Alertas</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Clock className="w-3.5 h-3.5 text-gray-600" />
+                    <h3 className="text-sm">Actividad Reciente</h3>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-start gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-green-500"></div>
+                      <div>
+                        <p className="text-xs text-gray-900">CEE renovado</p>
+                        <p className="text-xs text-gray-500">hace 2 días</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-blue-500"></div>
+                      <div>
+                        <p className="text-xs text-gray-900">
+                          Mantenimiento HVAC completado
+                        </p>
+                        <p className="text-xs text-gray-500">hace una semana</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-orange-500"></div>
+                      <div>
+                        <p className="text-xs text-gray-900">
+                          Inspección de ascensor programada
+                        </p>
+                        <p className="text-xs text-gray-500">en 3 días</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="p-1 bg-orange-100 rounded">
-                      <Wrench className="w-3 h-3 text-orange-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs">Auditoría Técnica</h3>
-                      <p className="text-xs text-gray-500">
-                        Libro del Edificio
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Bell className="w-3.5 h-3.5 text-gray-600" />
+                    <h3 className="text-sm">Próximas Alertas</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-red-50 text-red-600">
+                      <TriangleAlert className="w-3 h-3 flex-shrink-0" />
+                      <p className="text-xs text-gray-900">
+                        Revisión de ascensor vence en 15 días
                       </p>
                     </div>
-                  </div>
-                  <div className="bg-blue-50 rounded p-1.5 mb-1.5">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <div className="flex items-center gap-1">
-                        <FileCheck className="w-3 h-3 text-blue-600" />
-                        <span className="text-xs text-gray-700">
-                          Completado
-                        </span>
-                      </div>
-                      <span className="text-xs text-blue-700">100%</span>
-                    </div>
-                    <div className="w-full bg-white rounded-full h-1">
-                      <div
-                        className="bg-blue-600 h-1 rounded-full"
-                        style={{ width: "100%" }}
-                      ></div>
-                    </div>
-                    <div className="mt-0.5 text-xs text-gray-600">
-                      8/8 tareas
-                    </div>
-                  </div>
-                  <div className="space-y-1 flex-1">
-                    <div className="text-xs text-gray-700">Mejoras:</div>
-                    <div className="bg-orange-50 rounded p-1">
-                      <div className="flex items-center gap-1">
-                        <Zap className="w-2.5 h-2.5 text-orange-600" />
-                        <span className="text-xs text-orange-900">
-                          Envolvente: -18 kWh/m²
-                        </span>
-                      </div>
-                    </div>
-                    <div className="bg-orange-50 rounded p-1">
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="w-2.5 h-2.5 text-orange-600" />
-                        <span className="text-xs text-orange-900">
-                          HVAC: -12 kWh/m²
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-1 border-t border-gray-200 bg-blue-50 rounded p-1 mt-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-blue-600">-58 kWh/m²</span>
-                      <span className="text-green-600">€450k inv.</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
-                  <div className="flex items-center gap-1 mb-1">
-                    <div className="p-1 bg-green-100 rounded">
-                      <Euro className="w-3 h-3 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs">Auditoría Financiera</h3>
-                      <p className="text-xs text-gray-500">ROI Valoración</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
-                    <div className="border-l-2 border-blue-500 pl-1">
-                      <div className="text-xs text-gray-600">
-                        Valor del Activo
-                      </div>
-                      <div className="text-xs">€8.50M</div>
-                      <div className="text-xs text-gray-500">1574 €/m²</div>
-                    </div>
-                    <div className="border-l-2 border-green-500 bg-green-50 pl-1">
-                      <div className="text-xs text-green-700">ROI Actual</div>
-                      <div className="text-xs text-green-600">8.00%</div>
-                      <div className="text-xs text-green-600">Anual</div>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded p-1.5 mb-1.5 flex-1">
-                    <div className="text-xs text-gray-700 mb-1 flex items-center gap-0.5">
-                      <TrendingUp className="w-2.5 h-2.5 text-blue-600" />
-                      <span>Post-mejora:</span>
-                    </div>
-                    <div className="space-y-0.5 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Inversión:</span>
-                        <span className="text-orange-600">€473k</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Revalorización:</span>
-                        <span className="text-green-600">+12%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Valor Futuro:</span>
-                        <span className="text-green-700">€9.52M</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-blue-600 text-white rounded p-1.5">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <div className="text-xs">Ganancia Neta</div>
-
-                      <ArrowUpRight className="w-2.5 h-2.5" />
-                    </div>
-                    <div className="text-sm">€548k</div>
-                    <div className="flex justify-between text-xs mt-0.5 opacity-90">
-                      <span>ROI: 216%</span>
-                      <span>6.5 años</span>
+                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-yellow-50 text-yellow-600">
+                      <Clock className="w-3 h-3 flex-shrink-0" />
+                      <p className="text-xs text-gray-900">
+                        Mantenimiento RITE trimestral
+                      </p>
                     </div>
                   </div>
                 </div>
