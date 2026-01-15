@@ -214,77 +214,11 @@ export function AssetsMain() {
               <p className="text-xs md:text-sm text-gray-500">{stats.totalAssets} edificios</p>
             </div>
           </div>
-          <div>
-            <h2 className="text-lg md:text-xl lg:text-2xl">Gestión de Edificios</h2>
-            <p className="text-xs md:text-sm text-gray-500">{stats.totalAssets} edificios</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-        >
-          + Crear Edificio
-        </button>
-      </div>
-
-      {/* Modal de selección de método */}
-      <CreateBuildingMethodSelection
-        isOpen={isCreateModalOpen}
-        onSelectMethod={(method) => {
-          setIsCreateModalOpen(false);
-          navigate("/building/create", { state: { method } });
-        }}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Total Edificios</p>
-          {/* TODO: stats.totalAssets acá*/}
-          {/* <p className="text-2xl text-blue-600">{stats.totalAssets}</p> */}
-          <p className="text-2xl text-blue-600">{buildings.length ?? 0}</p>
-        </div>
-        <div className="p-4 bg-green-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Cumplimiento Promedio</p>
-          <p className="text-2xl text-green-600">{complianceAverage}%</p>
-        </div>
-        <div className="p-4 bg-purple-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Libros Completos</p>
-          <p className="text-2xl text-purple-600">{stats.completedBooks}</p>
-        </div>
-        <div className="p-4 bg-orange-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Superficie Total</p>
-          <p className="text-2xl text-orange-600">{totalSurface} m²</p>
-        </div>
-      </div>
-
-      <div className="space-y-4 mb-6">
-        <div className="flex flex-col gap-2">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, dirección..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="text-xs text-gray-500">{stats.totalAssets} de {stats.totalAssets} edificios</div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <select className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="name">Nombre</option>
-            <option value="surface">Superficie</option>
-            <option value="year">Año</option>
-            <option value="energyClass">Clase Energética</option>
-            <option value="compliance">Cumplimiento</option>
-            <option value="occupancy">Ocupación</option>
-          </select>
-          <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-            A-Z
-          </button>
-          <button className="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50 border-gray-300">
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Filtros</span>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          >
+            + Crear Edificio
           </button>
         </div>
 
