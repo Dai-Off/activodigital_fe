@@ -35,9 +35,7 @@ export function MainPanel() {
     fetchUserNotifications,
     refreshUnreadCount,
     UnreadNotifications,
-    unreadNotifications,
     notifications,
-    unreadCount,
   } = useNotifications();
   const [buildingNames, setBuildingNames] = useState<Record<string, string>>(
     {}
@@ -63,10 +61,10 @@ export function MainPanel() {
 
   useEffect(() => {
     const fetchBuildingNames = async () => {
-      if (!unreadNotifications || unreadNotifications.length === 0) return;
+      if (!notifications || notifications.length === 0) return;
 
       const uniqueIds = [
-        ...new Set(unreadNotifications.map((n) => n.buildingId)),
+        ...new Set(notifications.map((n) => n.buildingId)),
       ];
 
       const idsToFetch = uniqueIds.filter((id) => !buildingNames[id]);
@@ -95,7 +93,7 @@ export function MainPanel() {
     };
 
     fetchBuildingNames();
-  }, [unreadNotifications]);
+  }, [notifications]);
 
   if (loading) {
     return <MainPanelLoading />;
@@ -115,7 +113,9 @@ export function MainPanel() {
     return;
   }
 
-  let urgentCount = notifications.filter((not) => not.priority > 2);
+  const urgentCount = notifications.filter((not) => not.priority > 2);
+  const upcomingCount = notifications.filter((not) => not.priority === 2);
+  const totalAlerts = urgentCount.length + upcomingCount.length;
   /* Componentes anidados */
   function PendingAlerts({
     text,
@@ -280,10 +280,12 @@ export function MainPanel() {
                 {t("Total Buildings", "Total Edificios")}
               </p>
               <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
-              <div className="flex items-center gap-0.5 text-xs text-green-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+2 este mes</span>
-              </div>
+              {stats.assetsGrowth > 0 && (
+                <div className="flex items-center gap-0.5 text-xs text-green-600">
+                  <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
+                  <span>+{stats.assetsGrowth} este mes</span>
+                </div>
+              )}
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
               <Building2 className="w-5 h-5 text-blue-600"></Building2>
@@ -297,10 +299,12 @@ export function MainPanel() {
                 {t("Compliance", "Cumplimiento")}
               </p>
               <p className="text-2xl mb-0.5">{stats.completionPercentage}%</p>
-              <div className="flex items-center gap-0.5 text-xs text-green-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>+5% vs. anterior</span>
-              </div>
+              {stats.complianceGrowth > 0 && (
+                <div className="flex items-center gap-0.5 text-xs text-green-600">
+                  <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
+                  <span>+{stats.complianceGrowth}% vs. anterior</span>
+                </div>
+              )}
             </div>
             <div className="p-2 bg-green-50 rounded-lg">
               <CircleCheckBig className="w-5 h-5 text-green-600"></CircleCheckBig>
@@ -313,11 +317,13 @@ export function MainPanel() {
               <p className="text-xs text-gray-500 mb-0.5">
                 {t("Pending Alerts", "Alertas Pendientes")}
               </p>
-              <p className="text-2xl mb-0.5">{unreadCount}</p>
-              <div className="flex items-center gap-0.5 text-xs text-red-600">
-                <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                <span>{urgentCount.length} urgentes</span>
-              </div>
+              <p className="text-2xl mb-0.5">{totalAlerts}</p>
+              {urgentCount.length > 0 && (
+                <div className="flex items-center gap-0.5 text-xs text-red-600">
+                  <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
+                  <span>{urgentCount.length} urgentes</span>
+                </div>
+              )}
             </div>
             <div className="p-2 bg-orange-50 rounded-lg">
               <TriangleAlert className="w-5 h-5 text-orange-600"></TriangleAlert>
@@ -333,9 +339,11 @@ export function MainPanel() {
               <p className="text-2xl mb-0.5">
                 {stats.completedBooks} / {stats.totalAssets}
               </p>
-              <div className="flex items-center gap-0.5 text-xs text-blue-600">
-                <span>{stats.completionPercentage}% completado</span>
-              </div>
+              {stats.completionPercentage > 0 && (
+                <div className="flex items-center gap-0.5 text-xs text-blue-600">
+                  <span>{stats.completionPercentage}% completado</span>
+                </div>
+              )}
             </div>
             <div className="p-2 bg-purple-50 rounded-lg">
               <FileText className="w-5 h-5 text-purple-600"></FileText>
@@ -412,7 +420,9 @@ export function MainPanel() {
                   <Users className="w-4 h-4 opacity-80"></Users>
                   <span className="text-xs">Ocupación Media</span>
                 </div>
-                <span className="text-sm">-</span>
+                <span className="text-sm">
+                  {`${stats.averageOccupancy ?? 0}%`}
+                </span>
               </div>
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
@@ -428,7 +438,7 @@ export function MainPanel() {
                   <Calendar className="w-4 h-4 opacity-80"></Calendar>
                   <span className="text-xs">Próximos eventos</span>
                 </div>
-                <span className="text-sm">-</span>
+                <span className="text-sm">{stats.nextEventsCount || 0}</span>
               </div>
             </div>
           </div>
