@@ -404,9 +404,9 @@ export function AssetsMain() {
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>Edificio</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                {/* <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>ID</span>
-                </th>
+                </th> */}
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>Tipo</span>
                 </th>
@@ -479,9 +479,9 @@ export function AssetsMain() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
+                      {/* <td className="py-3 px-4 text-sm text-gray-700">
                         {building.id}
-                      </td>
+                      </td> */}
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {building.typology === "residential"
                           ? "Residencial"
