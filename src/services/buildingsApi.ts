@@ -57,7 +57,7 @@ export interface CreateBuildingPayload {
   squareMeters?: number; // Superficie en metros cuadrados
 }
 
-export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> {}
+export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> { }
 
 export interface TechnicianAssignmentPayload {
   buildingId: string;
@@ -135,6 +135,21 @@ export interface DashboardStats {
 
   // ESG
   averageESGScore: number | null;
+
+  // Nuevas métricas
+  averageOccupancy: number | null;
+  nextEventsCount: number;
+  topPerformingBuildings: {
+    id: string;
+    name: string;
+    type: string;
+    percentage: number;
+  }[];
+
+  // Métricas de crecimiento
+  assetsGrowth: number;
+  complianceGrowth: number;
+  alertsGrowth: number;
 }
 
 // Respuesta de la API

@@ -22,6 +22,37 @@ export function AssetsMain() {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  const filteredBuildings = buildings.filter((building) => {
+    const query = searchQuery.toLowerCase();
+    if (!query) return true;
+
+    switch (searchField) {
+      case "name":
+        return building.name.toLowerCase().includes(query);
+      case "address":
+        return building.address && building.address.toLowerCase().includes(query);
+      case "typology":
+        return building.typology.toLowerCase().includes(query);
+      case "year":
+        return building.constructionYear?.toString().includes(query);
+      case "surface":
+        return building.squareMeters?.toString().includes(query);
+      default:
+        return building.name.toLowerCase().includes(query) ||
+          (building.address && building.address.toLowerCase().includes(query));
+    }
+  });
+
+  const sortedBuildings = [...filteredBuildings].sort((a, b) => {
+    const nameA = a.name.toLowerCase();
+    const nameB = b.name.toLowerCase();
+    if (sortOrder === "asc") return nameA.localeCompare(nameB);
+    return nameB.localeCompare(nameA);
+  });
 
   useEffect(() => {
     Promise.all([
@@ -173,10 +204,15 @@ export function AssetsMain() {
   return (
     <div className="h-full flex flex-col gap-3">
       <div className="bg-white rounded-xl p-3 md:p-4 lg:p-6 shadow-sm flex-shrink-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="p-2 md:p-3 bg-blue-100 rounded-lg">
-            <Building2 className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-blue-100 rounded-lg">
+              <Building2 className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl lg:text-2xl">Gestión de Edificios</h2>
+              <p className="text-xs md:text-sm text-gray-500">{stats.totalAssets} edificios</p>
+            </div>
           </div>
           <div>
             <h2 className="text-lg md:text-xl lg:text-2xl">Gestión de Edificios</h2>
@@ -251,18 +287,87 @@ export function AssetsMain() {
             <span>Filtros</span>
           </button>
         </div>
-      </div>
+
+        {/* Modal de selección de método */}
+        <CreateBuildingMethodSelection
+          isOpen={isCreateModalOpen}
+          onSelectMethod={(method) => {
+            setIsCreateModalOpen(false);
+            navigate("/building/create", { state: { method } });
+          }}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Total Edificios</p>
+            <p className="text-2xl text-blue-600">{stats.totalAssets}</p>
+          </div>
+          <div className="p-4 bg-green-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Cumplimiento Promedio</p>
+            <p className="text-2xl text-green-600">{complianceAverage}%</p>
+          </div>
+          <div className="p-4 bg-purple-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Libros Completos</p>
+            <p className="text-2xl text-purple-600">{stats.completedBooks}</p>
+          </div>
+          <div className="p-4 bg-orange-50 rounded-lg">
+            <p className="text-sm text-gray-600 mb-1">Superficie Total</p>
+            <p className="text-2xl text-orange-600">{totalSurface} m²</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex-1 relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, dirección..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="text-xs text-gray-500">{filteredBuildings.length} de {stats.totalAssets} edificios</div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={searchField}
+              onChange={(e) => setSearchField(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="name">Nombre</option>
+              <option value="address">Dirección</option>
+              <option value="surface">Superficie</option>
+              <option value="year">Año</option>
+              <option value="typology">Tipo</option>
+              <option value="energyClass">Clase Energética</option>
+              <option value="compliance">Cumplimiento</option>
+              <option value="occupancy">Ocupación</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 min-w-[60px]"
+            >
+              {sortOrder === "asc" ? "A-Z" : "Z-A"}
+            </button>
+            <button className="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50 border-gray-300">
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Filtros</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Vista Mobile - Cards */}
       <div className="lg:hidden flex-1 overflow-auto pr-1">
         <div className="space-y-3">
-          {buildings.length === 0 ? (
+          {sortedBuildings.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">
-              No hay edificios disponibles
+              {searchQuery ? "No se encontraron resultados" : "No hay edificios disponibles"}
             </div>
           ) : (
-            buildings.map((building) => {
+            sortedBuildings.map((building) => {
 
               const getComplianceColor = (percentage: number) => {
                 if (percentage >= 80) return "bg-green-500";
@@ -310,8 +415,8 @@ export function AssetsMain() {
                             {building.typology === "residential"
                               ? "Residencial"
                               : building.typology === "commercial"
-                              ? "Comercial"
-                              : "Mixto"}
+                                ? "Comercial"
+                                : "Mixto"}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
@@ -389,14 +494,14 @@ export function AssetsMain() {
               </tr>
             </thead>
             <tbody>
-              {buildings.length === 0 ? (
+              {sortedBuildings.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-gray-500">
-                    No hay edificios disponibles
+                    {searchQuery ? "No se encontraron resultados" : "No hay edificios disponibles"}
                   </td>
                 </tr>
               ) : (
-                buildings.map((building) => {
+                sortedBuildings.map((building) => {
 
                   const getComplianceColor = (percentage: number) => {
                     if (percentage >= 80) return "bg-green-500";
@@ -447,8 +552,8 @@ export function AssetsMain() {
                         {building.typology === "residential"
                           ? "Residencial"
                           : building.typology === "commercial"
-                          ? "Comercial"
-                          : "Mixto"}
+                            ? "Comercial"
+                            : "Mixto"}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900">
                         {building.squareMeters
