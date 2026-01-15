@@ -204,7 +204,9 @@ export function AssetsMain() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
         <div className="p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-gray-600 mb-1">Total Edificios</p>
-          <p className="text-2xl text-blue-600">{stats.totalAssets}</p>
+          {/* TODO: stats.totalAssets acá*/}
+          {/* <p className="text-2xl text-blue-600">{stats.totalAssets}</p> */}
+          <p className="text-2xl text-blue-600">{buildings.length ?? 0}</p>
         </div>
         <div className="p-4 bg-green-50 rounded-lg">
           <p className="text-sm text-gray-600 mb-1">Cumplimiento Promedio</p>
@@ -363,9 +365,9 @@ export function AssetsMain() {
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>Edificio</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                {/* <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>ID</span>
-                </th>
+                </th> */}
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>Tipo</span>
                 </th>
@@ -438,9 +440,9 @@ export function AssetsMain() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
+                      {/* <td className="py-3 px-4 text-sm text-gray-700">
                         {building.id}
-                      </td>
+                      </td> */}
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {building.typology === "residential"
                           ? "Residencial"
