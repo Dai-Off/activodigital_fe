@@ -162,7 +162,10 @@ function NewLayoutContent() {
     // Si estamos en una ruta específica que necesita su propio componente, usar Outlet
     if (
       location.pathname.startsWith("/digital-book") ||
-      location.pathname.startsWith("/cfo-") ||
+      location.pathname.startsWith("/cfo-intake") ||
+      location.pathname.startsWith("/cfo-due-diligence") ||
+      location.pathname.startsWith("/cfo-simulation") ||
+      location.pathname.startsWith("/cfo-dashboard") ||
       location.pathname.startsWith("/users") ||
       location.pathname.startsWith("/events") ||
       location.pathname.startsWith("/buildings/crear") ||
@@ -181,11 +184,6 @@ function NewLayoutContent() {
       return <Outlet />;
     }
 
-    // Si estamos en /cfo-dashboard, usar lógica específica
-    if (location.pathname === "/cfo-dashboard") {
-      // Mantener lógica específica para CFO si es necesario
-      return <Outlet />;
-    }
 
     // Por defecto, usar Outlet para todas las rutas (incluyendo /assets)
     // Esto permite que el router maneje qué componente renderizar
@@ -201,10 +199,12 @@ function NewLayoutContent() {
     location.pathname.startsWith("/building/") ||
     location.pathname.startsWith("/digital-book") ||
     location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/configuration") ||
     location.pathname.startsWith("/events") ||
     location.pathname.startsWith("/cfo-intake") ||
     location.pathname.startsWith("/cfo-due-diligence") ||
     location.pathname.startsWith("/cfo-simulation") ||
+    location.pathname.startsWith("/cfo-dashboard") ||
     location.pathname === "/assets";
 
   const showSecondaryNav =
@@ -259,6 +259,13 @@ function NewLayoutContent() {
               px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
               max-w-[1920px] mx-auto
+            `
+                : location.pathname === "/expired" || location.pathname.startsWith("/expired/")
+                ? `
+              px-2 md:px-4 lg:px-6
+              py-6 md:py-8
+              max-w-none
+              pt-[140px] md:pt-[104px]
             `
                 : `
               px-3 md:px-6 lg:px-8 xl:px-12

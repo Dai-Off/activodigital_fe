@@ -119,7 +119,6 @@ export function BuildingGeneralView() {
       (prev) => (prev - 1 + buildingImages.length) % buildingImages.length
     );
   };
-  const [_currentImageIndex, _setCurrentImageIndex] = useState(0);
 
   // Función para cargar datos ESG - Ready to use when needed
   /*
@@ -367,15 +366,45 @@ export function BuildingGeneralView() {
                   alt={`${building?.name || "Edificio"} - Imagen ${currentImageIndex + 1
                     }`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    // fallback si falla una URL firmada
+                    (e.currentTarget as HTMLImageElement).src = "/image.png";
+                  }}
                 />
-                <button className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[1px]">
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/55 text-white text-xs shadow-sm">
+                      <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+                      <span>Cargando imagen…</span>
+                    </div>
+                  </div>
+                )}
+
+                {buildingImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevImage}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextImage}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors"
+                      aria-label="Imagen siguiente"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
+
                 <div className="absolute bottom-1 right-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-xs">
-                  1 / 2
+                  {currentImageIndex + 1} / {buildingImages.length}
                 </div>
               </div>
             </div>

@@ -129,6 +129,11 @@ export function Sidebar() {
       label: t ? t("settings", "Configuración") : "Configuración",
       route: "/dashboard", // Placeholder route
     },
+    {
+      id: "expired",
+      icon: Folder,
+      label: t ? t("archive", "Archivo") : "Archivo",
+    },
   ];
 
   const handleModuleChange = (moduleId: string, route?: string) => {
@@ -176,6 +181,12 @@ export function Sidebar() {
         if (setViewMode) setViewMode("list");
         navigate("/green-financial");
         break;
+      case "expired":
+        if (setActiveSection) setActiveSection("dashboard");
+        if (setActiveTab) setActiveTab("dashboard");
+        if (setViewMode) setViewMode("list");
+        navigate("/expired");
+        break;
       case "reports":
         if (setActiveSection) setActiveSection("activity");
         if (setActiveTab) setActiveTab("activity");
@@ -186,7 +197,7 @@ export function Sidebar() {
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
-        navigate("/assets");
+        navigate("/gestion");
         break;
       case "archive":
         if (setActiveSection) setActiveSection("dashboard");
@@ -198,7 +209,7 @@ export function Sidebar() {
         if (setActiveSection) setActiveSection("dashboard");
         if (setActiveTab) setActiveTab("dashboard");
         if (setViewMode) setViewMode("list");
-        navigate("/dashboard");
+        navigate("/configuration");
         break;
       default:
         if (setActiveSection) setActiveSection("dashboard");

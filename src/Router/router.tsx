@@ -17,7 +17,6 @@ import RegisterWithInvitation from "../components/RegisterWithInvitation";
 import AcceptAssignment from "../components/AcceptAssignment";
 import InvitationHandler from "../components/InvitationHandler";
 import Landing from "../components/Landing";
-import CFOAssetsList from "../components/CFOAssetsList";
 // import BuildingDetail from "../components/BuildingDetail"; // Ya no se usa, pero se mantiene por si acaso
 import BuildingAnalysisGeneral from "../components/BuildingAnalysisGeneral";
 import CFOIntakeForm from "../components/cfo/CFOIntakeForm";
@@ -61,6 +60,8 @@ import { BuildingCalendar } from "~/components/BuildingCalendar";
 import { BuildingGestion } from "~/components/BuildingGestion";
 import { GeneralGestion } from "~/components/GeneralGestion";
 import { Events } from "~/components/Events";
+import Expired from "~/components/Expired";
+import Configuration from "~/components/Configuration";
 
 // Componente para redirigir /building/:id a /building/:id/general-view
 const NavigateToGeneralView = () => {
@@ -186,6 +187,16 @@ export const AppRouter = () => {
           }
         ></Route>
         <Route
+          path="/configuration"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Configuration />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        ></Route>
+        <Route
           path="/events"
           element={
             <ProtectedRoute>
@@ -232,11 +243,21 @@ export const AppRouter = () => {
           <Route path="financial-twin" element={<FinancialTwin />}></Route>
         </Route>
         <Route
+          path="/expired"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Expired />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/cfo-dashboard"
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <CFOAssetsList />
+                <Navigate to="/dashboard" replace />
               </ErrorBoundary>
             </ProtectedRoute>
           }
