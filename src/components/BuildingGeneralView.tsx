@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "~/contexts/ToastContext";
 import { BuildingsApiService, type Building } from "~/services/buildingsApi";
@@ -9,6 +9,8 @@ import {
   type ESGResponse,
 } from "~/services/esg";
 import { FinancialSnapshotsService } from "~/services/financialSnapshots";
+import { CalendarApiService } from "~/services/calendar";
+import { type BuildingEvent } from "~/types/calendar";
 import {
   ArrowUpRight,
   Bell,
@@ -55,6 +57,68 @@ export function BuildingGeneralView() {
   const [_hasFinancialData, setHasFinancialData] = useState<boolean | null>(
     null
   );
+  const [events, setEvents] = useState<BuildingEvent[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [displayedImageSrc, setDisplayedImageSrc] = useState<string>("/image.png");
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
+  const buildingImages = useMemo(() => {
+    const fallback = "/image.png";
+    const urls =
+      building?.images
+        ?.map((img) => img?.url)
+        .filter((u): u is string => Boolean(u && u.trim() !== "")) ?? [];
+
+    // Dedup manteniendo orden
+    const unique = Array.from(new Set(urls));
+    return unique.length ? unique : [fallback];
+  }, [building?.images]);
+
+  useEffect(() => {
+    // Resetear carrusel al cambiar de edificio / imágenes
+    setCurrentImageIndex(0);
+    setDisplayedImageSrc(buildingImages[0] || "/image.png");
+    setIsImageLoading(false);
+  }, [id, buildingImages.length]);
+
+  // Pre-cargar la imagen objetivo y evitar “pantalla en blanco” al cambiar
+  useEffect(() => {
+    const targetSrc = buildingImages[currentImageIndex] || "/image.png";
+
+    // Si ya se está mostrando, no hacer nada
+    if (targetSrc === displayedImageSrc) return;
+
+    let cancelled = false;
+    setIsImageLoading(true);
+
+    // Ojo: en este componente `Image` es un ícono (lucide), por eso usamos un elemento <img> para pre-cargar.
+    const img = document.createElement("img");
+    img.onload = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc(targetSrc);
+      setIsImageLoading(false);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setDisplayedImageSrc("/image.png");
+      setIsImageLoading(false);
+    };
+    img.src = targetSrc;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [buildingImages, currentImageIndex, displayedImageSrc]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex(
+      (prev) => (prev - 1 + buildingImages.length) % buildingImages.length
+    );
+  };
   const [_currentImageIndex, _setCurrentImageIndex] = useState(0);
 
   // Función para cargar datos ESG - Ready to use when needed
@@ -188,6 +252,62 @@ export function BuildingGeneralView() {
     loadBuilding();
   }, [id, navigate, showError]);
 
+  // Cargar eventos del edificio
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (!id) return;
+      try {
+        const calendarApi = new CalendarApiService();
+        const response = await calendarApi.getBuildingEvents(id);
+        setEvents(response.data || []);
+      } catch (error) {
+        console.error("Error cargando eventos:", error);
+        setEvents([]);
+      }
+    };
+
+    loadEvents();
+  }, [id]);
+
+  // Cálculos para el calendario de acciones
+  const calendarStats = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const urgent = events.filter((e) => e.priority === "urgent").length;
+    const thisMonth = events.filter((e) => {
+      const eventDate = new Date(e.eventDate);
+      return (
+        eventDate.getMonth() === currentMonth &&
+        eventDate.getFullYear() === currentYear
+      );
+    }).length;
+
+    // Obtener la acción prioritaria (más urgente y más próxima)
+    const priorityAction = [...events]
+      .filter((e) => e.status !== "completed" && e.status !== "cancelled")
+      .sort((a, b) => {
+        // Primero por prioridad
+        const priorityScore: Record<string, number> = {
+          urgent: 4,
+          high: 3,
+          normal: 2,
+          low: 1,
+        };
+        const scoreDiff =
+          (priorityScore[b.priority] || 0) - (priorityScore[a.priority] || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+
+        // Luego por fecha próxima
+        return (
+          new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+        );
+      })[0];
+
+    return { urgent, thisMonth, priorityAction };
+  }, [events]);
+
   // Mostrar skeleton mientras carga
   if (loading) {
     return <BuildingGeneralViewLoading />;
@@ -202,11 +322,15 @@ export function BuildingGeneralView() {
   }
 
   const data: ChartData[] = [
-    { name: "Sector A", value: 400, color: "#10b981" }, // Verde
-    { name: "Sector B", value: 300, color: "#3b82f6" }, // Azul
-    { name: "Sector C", value: 200, color: "#f59e0b" }, // Amarillo/Ámbar
-    { name: "Sector D", value: 100, color: "#ef4444" }, // Rojo
+    { name: "Sector A", value: 0, color: "#10b981" }, // Verde
+    { name: "Sector B", value: 0, color: "#3b82f6" }, // Azul
+    { name: "Sector C", value: 0, color: "#f59e0b" }, // Amarillo/Ámbar
+    { name: "Sector D", value: 0, color: "#ef4444" }, // Rojo
   ];
+
+  // Datos para cuando no hay datos (un círculo gris)
+  const emptyData = [{ name: "Sin datos", value: 1, color: "#e5e7eb" }];
+  const chartData = data.some(d => d.value > 0) ? data : emptyData;
 
   const innerRadius = 30; // 30px
   const outerRadius = 50; // 50px
@@ -219,14 +343,29 @@ export function BuildingGeneralView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="space-y-3">
             <div className="bg-white rounded-lg p-2 shadow-sm">
+              {/* Nombre del edificio */}
+              <div className="mb-3 pb-2.5 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 leading-tight">
+                  {building?.name || "Edificio"}
+                </h2>
+                {building?.address && (
+                  <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{building.address}</span>
+                  </p>
+                )}
+              </div>
+
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Image className="w-3.5 h-3.5 text-gray-600" />
                 <h3 className="text-sm">Imágenes del Edificio</h3>
               </div>
               <div className="relative w-full h-[140px] bg-gray-100 rounded overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1758113107218-6fbb090db3ff?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaG9wcGluZyUyMG1hbGwlMjBleHRlcmlvcnxlbnwxfHx8fDE3NjI3MjAxMjR8MA&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080"
-                  alt="Plaza Shopping"
+                  key={`${building?.id || "building"}-img-${currentImageIndex}-${buildingImages[currentImageIndex]?.substring(0, 30)}`}
+                  src={displayedImageSrc}
+                  alt={`${building?.name || "Edificio"} - Imagen ${currentImageIndex + 1
+                    }`}
                   className="w-full h-full object-cover"
                 />
                 <button className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-colors">
@@ -482,15 +621,22 @@ export function BuildingGeneralView() {
                 </div>
               </div>
               <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-gray-600" />
-                  <h3 className="text-sm">Plan de Mantenimiento</h3>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-gray-600" />
+                    <h3 className="text-sm">Plan de Mantenimiento</h3>
+                  </div>
+                  {chartData === emptyData && (
+                    <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                      Sin datos disponibles
+                    </span>
+                  )}
                 </div>
                 <div className="h-[120px] mb-1.5">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={data}
+                        data={chartData}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -517,28 +663,28 @@ export function BuildingGeneralView() {
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(16, 185, 129)" }}
                     ></div>
-                    <span className="text-gray-700">Completado: 40%</span>
+                    <span className="text-gray-700">Completado: 0%</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(59, 130, 246)" }}
                     ></div>
-                    <span className="text-gray-700">En curso: 25%</span>
+                    <span className="text-gray-700">En curso: 0%</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(245, 158, 11)" }}
                     ></div>
-                    <span className="text-gray-700">Programado: 20%</span>
+                    <span className="text-gray-700">Programado: 0%</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(239, 68, 68)" }}
                     ></div>
-                    <span className="text-gray-700">Atrasado: 15%</span>
+                    <span className="text-gray-700">Atrasado: 0%</span>
                   </div>
                 </div>
               </div>
@@ -551,7 +697,7 @@ export function BuildingGeneralView() {
             </div>
             <div className="flex-1">
               <div className="bg-white rounded-lg p-2 shadow-sm">
-                <div className="grid grid-cols-6 gap-1.5 mb-1.5">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-1.5 mb-1.5">
                   <div className="p-1.5 border border-blue-200 bg-blue-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Zap className="w-3 h-3 text-blue-600" />
@@ -948,28 +1094,48 @@ export function BuildingGeneralView() {
                       <TriangleAlert className="w-3 h-3 text-red-600" />
                       <p className="text-xs text-red-900">Urgentes</p>
                     </div>
-                    <p className="text-xs text-red-700">1</p>
+                    <p className="text-xs text-red-700">{calendarStats.urgent}</p>
                   </div>
                   <div className="p-1.5 bg-blue-50 border border-blue-200 rounded">
                     <div className="flex items-center gap-1 mb-0.5">
                       <Clock className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">Este Mes</p>
                     </div>
-                    <p className="text-xs text-blue-700">12</p>
+                    <p className="text-xs text-blue-700">{calendarStats.thisMonth}</p>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-700 mb-1">
                     Acciones Prioritarias:
                   </p>
-                  <div className="flex items-center justify-between p-1.5 rounded text-xs bg-orange-50 border border-orange-200">
-                    <span className="text-gray-700 truncate flex-1 flex items-center gap-0.5">
-                      Contrato Local 101
-                    </span>
-                    <span className="ml-1.5 text-orange-700">5d</span>
-                  </div>
+                  {calendarStats.priorityAction ? (
+                    <div className="flex items-center justify-between p-1.5 rounded text-xs bg-orange-50 border border-orange-200">
+                      <span className="text-gray-700 truncate flex-1 flex items-center gap-0.5">
+                        {calendarStats.priorityAction.title}
+                      </span>
+                      <span className="ml-1.5 text-orange-700">
+                        {(() => {
+                          const diff =
+                            new Date(
+                              calendarStats.priorityAction.eventDate
+                            ).getTime() - new Date().getTime();
+                          const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                          if (days < 0) return "Vencido";
+                          if (days === 0) return "Hoy";
+                          return `${days}d`;
+                        })()}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-1.5 rounded text-xs bg-gray-50 border border-gray-100 text-gray-500 text-center">
+                      No hay acciones pendientes
+                    </div>
+                  )}
                 </div>
-                <button className="w-full mt-2 px-2 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-xs rounded transition-colors">
+                <button
+                  onClick={() => navigate(`/building/${id}/general-view/calendar`)}
+                  className="w-full mt-2 px-2 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-xs rounded transition-colors"
+                >
                   Ver Calendario Completo
                 </button>
               </div>
