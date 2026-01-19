@@ -551,7 +551,7 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
                       <p className="text-xs text-blue-100">
-                        0% completado • 0 documentos
+                        {digitalBook?.completedPercentage || 0}% completado • {digitalBook?.progress || 0} documentos
                       </p>
                     </div>
                   </div>
