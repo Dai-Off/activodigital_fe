@@ -52,10 +52,15 @@ export function SidebarAssets() {
 
   // Auto-expandir el edificio seleccionado
   useEffect(() => {
-    if (selectedBuildingId && !expandedBuildings.includes(selectedBuildingId)) {
-      setExpandedBuildings((prev) => [...prev, selectedBuildingId]);
+    if (selectedBuildingId) {
+      setExpandedBuildings((prev) => {
+        if (!prev.includes(selectedBuildingId)) {
+          return [...prev, selectedBuildingId];
+        }
+        return prev;
+      });
     }
-  }, [selectedBuildingId, expandedBuildings]);
+  }, [selectedBuildingId]);
 
   const { pathname } = useLocation();
 
@@ -84,6 +89,9 @@ export function SidebarAssets() {
           // Extraemos la parte después de general-view/ (ej: financial, insurance)
           const subPart = subRoute.split("/")[1];
           expectedSection = subPart;
+        } else if (subRoute === "unidades" || subRoute.startsWith("unidades/")) {
+          // Lista de unidades o detalle de una unidad
+          expectedSection = "unidades";
         }
       } else {
         expectedSection = "todos";
@@ -155,7 +163,7 @@ export function SidebarAssets() {
       id: "assetslist",
       label: "Listado de activos",
       Icon: House,
-      route: "/assets/list",
+      route: "/assets",
     },
     {
       id: "unitslist",
@@ -172,11 +180,10 @@ export function SidebarAssets() {
         <div className="px-3 mb-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${
-              hasActiveFilters || showFilters
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
-            }`}
+            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${hasActiveFilters || showFilters
+              ? "bg-blue-50 text-blue-700 border border-blue-200"
+              : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span className="flex-1 text-left">{t("filters2", "Filtros")}</span>
@@ -252,11 +259,10 @@ export function SidebarAssets() {
 
           const buttonClasses = `
               w-full px-3 py-3 rounded-md flex items-center gap-3 text-sm transition-colors
-              ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-gray-700 hover:bg-gray-50"
-              }
+              ${isActive
+              ? "bg-blue-600 text-white shadow-md"
+              : "text-gray-700 hover:bg-gray-50"
+            }
             `;
 
           return (
@@ -277,9 +283,8 @@ export function SidebarAssets() {
               >
                 {/* El color del ícono también cambia */}
                 <item.Icon
-                  className={`w-4 h-4 ${
-                    isActive ? "text-white" : "text-gray-00"
-                  }`}
+                  className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-00"
+                    }`}
                 />
                 <span className="flex-1 text-left leading-relaxed">
                   {item.label}
@@ -303,16 +308,14 @@ export function SidebarAssets() {
                   {/* Edificio principal */}
                   <button
                     onClick={() => toggleBuildingExpansion(building.id)}
-                    className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${
-                      isSelected
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
+                    className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${isSelected
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50"
+                      }`}
                   >
                     <ChevronRight
-                      className={`w-3.5 h-3.5 transition-transform ${
-                        isExpanded ? "rotate-90" : ""
-                      }`}
+                      className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-90" : ""
+                        }`}
                     />
                     <Building2 className="w-4 h-4" />
                     <span className="flex-1 text-left truncate leading-relaxed">
@@ -333,13 +336,12 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/general-view`);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          pathname.startsWith(
-                            `/building/${building.id}/general-view`
-                          )
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname.startsWith(
+                          `/building/${building.id}/general-view`
+                        )
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
@@ -356,12 +358,11 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/analysis-general`);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          pathname ===
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname ===
                           `/building/${building.id}/analysis-general`
-                            ? "text-blue-600 bg-blue-50 font-medium"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                        }`}
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
@@ -378,15 +379,35 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/gestion`);
                         }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname === `/building/${building.id}/gestion`
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("gestion", "Gestión")}
+                        </span>
+                      </button>
+
+                      {/* Unidades */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("unidades");
+                          setActiveTab("unidades");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/unidades`);
+                        }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          pathname === `/building/${building.id}/gestion`
+                          pathname.startsWith(`/building/${building.id}/unidades`)
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("gestion", "Gestión")}
+                          {t("units", "Unidades")}
                         </span>
                       </button>
                     </div>
