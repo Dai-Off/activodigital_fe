@@ -692,28 +692,28 @@ export function BuildingGeneralView() {
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(16, 185, 129)" }}
                     ></div>
-                    <span className="text-gray-700">Completado: 0%</span>
+                    <span className="text-gray-700">Completado: -</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(59, 130, 246)" }}
                     ></div>
-                    <span className="text-gray-700">En curso: 0%</span>
+                    <span className="text-gray-700">En curso: -</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(245, 158, 11)" }}
                     ></div>
-                    <span className="text-gray-700">Programado: 0%</span>
+                    <span className="text-gray-700">Programado: -</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(239, 68, 68)" }}
                     ></div>
-                    <span className="text-gray-700">Atrasado: 0%</span>
+                    <span className="text-gray-700">Atrasado: -</span>
                   </div>
                 </div>
               </div>
