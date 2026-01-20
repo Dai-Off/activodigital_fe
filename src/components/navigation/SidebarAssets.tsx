@@ -389,6 +389,27 @@ export function SidebarAssets() {
                           {t("gestion", "Gestión")}
                         </span>
                       </button>
+
+                      {/* Unidades */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("unidades");
+                          setActiveTab("unidades");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/unidades`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname === `/building/${building.id}/unidades`
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("units", "Unidades")}
+                        </span>
+                      </button>
                     </div>
                   )}
                 </div>

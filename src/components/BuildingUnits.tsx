@@ -1,72 +1,95 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { House, User, MapPin, Calendar, Search, SlidersHorizontal, Eye, Plus, X, ArrowUp, ArrowDown, ArrowUpDown, Building2, FilterX, AlertTriangle } from "lucide-react";
 
 import { BuildingsApiService, type Building } from "../services/buildingsApi";
-import { SkeletonBase, SkeletonText } from "./ui/LoadingSystem";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
-import { Button } from "./ui/button";
+import { UnitsApiService } from "../services/unitsApi";
+import { useToast } from "../contexts/ToastContext";
+import { SkeletonText, SkeletonUnitsTable } from "./ui/LoadingSystem";
 import { Badge } from "./ui/badge";
 
-type UnitStatus = "occupied" | "available" | "renovation";
-
-interface UnitCard {
+interface Unit {
   id: string;
   name: string;
-  typology: string;
-  status: UnitStatus;
-  tenant?: string;
+  description: string;
+  type: string;
   area: number;
-  rent?: number;
+  tenant: string | null;
+  monthlyRent: number | null;
+  status: "occupied" | "available" | "maintenance";
+  expirationDate: string | null;
+  expiresSoon?: boolean;
 }
 
-const mockUnits: UnitCard[] = [
-  {
-    id: "A1",
-    name: "Vivienda 1A",
-    typology: "Residencial · 3 habitaciones",
-    status: "occupied",
-    tenant: "Familia Gómez",
-    area: 98,
-    rent: 1250,
-  },
-  {
-    id: "3B",
-    name: "Oficina 3B",
-    typology: "Oficina · Planta abierta",
-    status: "occupied",
-    tenant: "WorkHub Partners",
-    area: 132,
-    rent: 1850,
-  },
-  {
-    id: "PB-02",
-    name: "Local PB-02",
-    typology: "Retail de proximidad",
-    status: "available",
-    area: 110,
-  },
-];
-
-const STATUS_STYLES: Record<UnitStatus, string> = {
-  occupied: "border-green-200 bg-green-50 text-green-700",
-  available: "border-blue-200 bg-blue-50 text-blue-700",
-  renovation: "border-amber-200 bg-amber-50 text-amber-700",
-};
+interface BuildingUnitFromApi {
+  id: string;
+  buildingId: string;
+  name: string | null;
+  identifier?: string | null;
+  floor?: string | null;
+  areaM2?: number | null;
+  useType?: string | null;
+  status?: string | null;
+  rent?: number | null;
+  tenant?: string | null;
+  rooms?: number | null;
+  baths?: number | null;
+  rawData?: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function BuildingUnits() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-
+  const location = useLocation();
+  const { showSuccess, showError } = useToast();
   const [building, setBuilding] = useState<Building | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<Unit["status"][]>([]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<"name" | "type" | "area" | "tenant" | "rent" | "status" | "expiration" | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [unitToDelete, setUnitToDelete] = useState<Unit | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Mapear BuildingUnit del backend a Unit del frontend
+  const mapApiUnitToUnit = (apiUnit: BuildingUnitFromApi): Unit => {
+    // Mapear status del backend al formato del frontend
+    let status: "occupied" | "available" | "maintenance" = "available";
+    if (apiUnit.status) {
+      const statusLower = apiUnit.status.toLowerCase();
+      if (statusLower === "ocupada" || statusLower === "occupied") {
+        status = "occupied";
+      } else if (statusLower === "mantenimiento" || statusLower === "maintenance") {
+        status = "maintenance";
+      }
+    }
+
+    // Construir descripción desde floor y identifier
+    const descriptionParts: string[] = [];
+    if (apiUnit.floor) descriptionParts.push(`Planta ${apiUnit.floor}`);
+    if (apiUnit.identifier) descriptionParts.push(apiUnit.identifier);
+    const description = descriptionParts.join(" - ") || "";
+
+    return {
+      id: apiUnit.id,
+      name: apiUnit.name || apiUnit.identifier || "Sin nombre",
+      description,
+      type: apiUnit.useType || "N/A",
+      area: apiUnit.areaM2 || 0,
+      tenant: apiUnit.tenant || null,
+      monthlyRent: apiUnit.rent || null,
+      status,
+      expirationDate: null, // El backend no tiene este campo por ahora
+      expiresSoon: false,
+    };
+  };
 
   useEffect(() => {
     const loadBuilding = async () => {
@@ -84,391 +107,726 @@ export default function BuildingUnits() {
     loadBuilding();
   }, [id]);
 
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(i18n.language === "es" ? "es-ES" : "en-US", {
-        style: "currency",
-        currency: "EUR",
-        maximumFractionDigits: 0,
-      }),
-    [i18n.language]
-  );
+  useEffect(() => {
+    const loadUnits = async () => {
+      if (!id) return;
+      setUnitsLoading(true);
+      try {
+        const apiUnits = (await UnitsApiService.listUnits(id)) || [];
+        const mappedUnits = apiUnits.map(mapApiUnitToUnit);
+        setUnits(mappedUnits);
+      } catch (error) {
+        console.error("Error cargando unidades:", error);
+        setUnits([]);
+      } finally {
+        setUnitsLoading(false);
+      }
+    };
 
-  const units = mockUnits;
-  const totalUnits = building?.numUnits ?? units.length;
-  const occupiedUnits = units.filter(
-    (unit) => unit.status === "occupied"
-  ).length;
-  const availableUnits = units.filter(
-    (unit) => unit.status === "available"
-  ).length;
-  const renovationUnits = units.filter(
-    (unit) => unit.status === "renovation"
-  ).length;
-  const activeUnits =
-    totalUnits > 0 ? occupiedUnits : units.length ? occupiedUnits : 0;
-  const occupancyRate =
-    totalUnits > 0
-      ? Math.round((occupiedUnits / totalUnits) * 100)
-      : units.length > 0
-      ? Math.round((occupiedUnits / units.length) * 100)
-      : 0;
+    loadUnits();
+  }, [id, location.key]); // Recargar cuando cambia la ruta (incluyendo navegación de vuelta)
 
-  const rentUnits = units.filter((unit) => typeof unit.rent === "number");
-  const averageRent =
-    rentUnits.length > 0
-      ? Math.round(
-          rentUnits.reduce((acc, unit) => acc + (unit.rent ?? 0), 0) /
-            rentUnits.length
-        )
-      : null;
+  // Obtener tipos únicos de unidades para el filtro
+  const uniqueTypes = useMemo(() => {
+    const types = new Set<string>();
+    units.forEach((unit) => {
+      if (unit.type && unit.type !== "N/A") {
+        types.add(unit.type);
+      }
+    });
+    return Array.from(types).sort();
+  }, [units]);
 
-  const statusLabels: Record<UnitStatus, string> = {
-    occupied: t("building.unitsStatus.occupied", { defaultValue: "Ocupada" }),
-    available: t("building.unitsStatus.available", {
-      defaultValue: "Disponible",
-    }),
-    renovation: t("building.unitsStatus.renovation", {
-      defaultValue: "En renovación",
-    }),
+  // Filtrar y ordenar unidades según búsqueda, filtros y ordenamiento
+  const filteredUnits = useMemo(() => {
+    let result = units;
+
+    // Aplicar búsqueda
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      result = result.filter((unit) => {
+        const nameMatch = unit.name.toLowerCase().includes(searchLower);
+        const descriptionMatch = unit.description.toLowerCase().includes(searchLower);
+        const tenantMatch = unit.tenant?.toLowerCase().includes(searchLower) || false;
+        return nameMatch || descriptionMatch || tenantMatch;
+      });
+    }
+
+    // Aplicar filtro de estado
+    if (statusFilter.length > 0) {
+      result = result.filter((unit) => statusFilter.includes(unit.status));
+    }
+
+    // Aplicar filtro de tipo
+    if (typeFilter.length > 0) {
+      result = result.filter((unit) => typeFilter.includes(unit.type));
+    }
+
+    // Aplicar ordenamiento
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortField) {
+          case "name":
+            aValue = a.name.toLowerCase();
+            bValue = b.name.toLowerCase();
+            break;
+          case "type":
+            aValue = a.type.toLowerCase();
+            bValue = b.type.toLowerCase();
+            break;
+          case "area":
+            aValue = a.area;
+            bValue = b.area;
+            break;
+          case "tenant":
+            aValue = a.tenant?.toLowerCase() || "";
+            bValue = b.tenant?.toLowerCase() || "";
+            break;
+          case "rent":
+            aValue = a.monthlyRent ?? 0;
+            bValue = b.monthlyRent ?? 0;
+            break;
+          case "status":
+            // Ordenar por estado: occupied > maintenance > available
+            const statusOrder = { occupied: 0, maintenance: 1, available: 2 };
+            aValue = statusOrder[a.status];
+            bValue = statusOrder[b.status];
+            break;
+          case "expiration":
+            aValue = a.expirationDate ? new Date(a.expirationDate).getTime() : 0;
+            bValue = b.expirationDate ? new Date(b.expirationDate).getTime() : 0;
+            break;
+          default:
+            return 0;
+        }
+
+        // Comparación
+        if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [units, searchTerm, statusFilter, typeFilter, sortField, sortOrder]);
+
+  // Valores calculados para las estadísticas (usando todas las unidades, no las filtradas)
+  const totalUnits = units.length;
+  const occupiedUnits = units.filter((u) => u.status === "occupied").length;
+  const availableUnits = units.filter((u) => u.status === "available").length;
+  const maintenanceUnits = units.filter((u) => u.status === "maintenance").length;
+  const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+  const totalMonthlyIncome = units
+    .filter((u) => u.monthlyRent !== null)
+    .reduce((sum, u) => sum + (u.monthlyRent || 0), 0);
+
+  // Contar filtros activos
+  const activeFiltersCount = statusFilter.length + typeFilter.length;
+
+  // Handlers para filtros
+  const handleStatusFilterToggle = (status: Unit["status"]) => {
+    setStatusFilter((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
   };
 
-  if (!building && !loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {t("building.unitsNotFoundTitle", {
-              defaultValue: "No se pudo cargar el edificio",
-            })}
-          </h2>
-          <p className="text-gray-600">
-            {t("building.unitsNotFoundDescription", {
-              defaultValue:
-                "Vuelve al detalle del edificio e inténtalo de nuevo.",
-            })}
-          </p>
-          <Button onClick={() => navigate("/assets")} variant="outline">
-            {t("building.unitsBackToAssets", {
-              defaultValue: "Volver a activos",
-            })}
-          </Button>
-        </div>
-      </div>
+  const handleTypeFilterToggle = (type: string) => {
+    setTypeFilter((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
-  }
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter([]);
+    setTypeFilter([]);
+    setSearchTerm("");
+    setSortField(null);
+    setSortOrder("asc");
+  };
+
+  const handleRequestDeleteUnit = (unit: Unit) => {
+    setUnitToDelete(unit);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteUnit = async () => {
+    if (!id || !unitToDelete) return;
+
+    setIsDeleting(unitToDelete.id);
+    try {
+      await UnitsApiService.deleteUnit(id, unitToDelete.id);
+      setUnits((prev) => prev.filter((u) => u.id !== unitToDelete.id));
+      setIsDeleteModalOpen(false);
+      setUnitToDelete(null);
+      showSuccess("Unidad eliminada", "La unidad se ha eliminado correctamente");
+    } catch (error) {
+      console.error("Error eliminando unidad:", error);
+      showError("Error al eliminar", "No se pudo eliminar la unidad. Inténtalo de nuevo.");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const handleCancelDeleteUnit = () => {
+    if (isDeleting) return;
+    setIsDeleteModalOpen(false);
+    setUnitToDelete(null);
+  };
+
+  // Handler para cambiar ordenamiento
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      // Si ya está ordenando por este campo, cambiar dirección
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Si es un campo nuevo, ordenar ascendente
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  // Función para obtener el icono de ordenamiento
+  const getSortIcon = (field: typeof sortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />;
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
+    );
+  };
 
   return (
-    <div className="p-6 sm:p-8 space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {loading ? (
-          <>
-            <div className="flex-1">
-              <SkeletonText lines={1} widths={["w-64"]} className="mb-2" />
-              <SkeletonText lines={1} widths={["w-96"]} />
+    <div className="h-full flex flex-col gap-3">
+      {/* Header con estadísticas */}
+      <div className="bg-white rounded-xl p-3 md:p-4 lg:p-6 shadow-sm flex-shrink-0">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-purple-100 rounded-lg">
+              <House className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
             </div>
-            <SkeletonBase className="h-10 w-32 rounded-md" />
-          </>
-        ) : (
-          <>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {t("building.unitsPageTitle", {
-                  defaultValue: "Unidades del activo",
-                })}{" "}
-                · {building?.name}
-              </h1>
-              <p className="text-sm text-gray-600">
-                {t("building.unitsPageSubtitle", {
-                  defaultValue:
-                    "Listado de unidades registradas para este edificio.",
-                })}
+          {loading ? (
+            <>
+                  <SkeletonText lines={1} widths={["w-48"]} className="mb-1" />
+                  <SkeletonText lines={1} widths={["w-32"]} />
+            </>
+          ) : (
+            <>
+                  <h2 className="text-gray-900 mb-1 text-base md:text-lg lg:text-xl">
+                    <span className="hidden sm:inline">Unidades de </span>
+                    {building?.name || "Plaza Shopping"}
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    <span className="hidden sm:inline">Gestión completa de las </span>
+                    {totalUnits} unidades
+                    <span className="hidden sm:inline"> del edificio</span>
+                  </p>
+            </>
+          )}
+            </div>
+          </div>
+        </div>
+
+        {/* Grid de estadísticas */}
+        {loading || unitsLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
+              {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-4 bg-gray-50 rounded-xl">
+                  <SkeletonText lines={1} widths={["w-20"]} className="mb-2" />
+                <SkeletonText lines={1} widths={["w-12"]} className="mb-1" />
+                <SkeletonText lines={1} widths={["w-16"]} />
+                </div>
+              ))}
+            </div>
+          ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
+            {/* Total Unidades */}
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-gray-600">Total Unidades</p>
+                <House className="w-4 h-4 text-blue-600" />
+              </div>
+              <p className="text-2xl text-blue-600 mb-1">{totalUnits}</p>
+            </div>
+
+            {/* Ocupadas */}
+            <div className="p-4 bg-green-50 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-gray-600">Ocupadas</p>
+                <User className="w-4 h-4 text-green-600" />
+              </div>
+              <p className="text-2xl text-green-600 mb-1">{occupiedUnits}</p>
+                <p className="text-xs text-gray-500">
+                {occupancyRate}% ocupación
+                </p>
+              </div>
+
+            {/* Disponibles */}
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-gray-600">Disponibles</p>
+                <MapPin className="w-4 h-4 text-blue-600" />
+              </div>
+              <p className="text-2xl text-blue-600 mb-1">{availableUnits}</p>
+            </div>
+
+            {/* En Mantenimiento */}
+            <div className="p-4 bg-orange-50 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-gray-600">En Mantenimiento</p>
+                <Calendar className="w-4 h-4 text-orange-600" />
+              </div>
+              <p className="text-2xl text-orange-600 mb-1">
+                {maintenanceUnits}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => building && navigate(`/building/${building.id}/general-view`)}
-              >
-                {t("building.unitsBackToDetail", {
-                  defaultValue: "Volver al detalle",
-                })}
-              </Button>
             </div>
+          )}
+      </div>
+
+      {/* Sección de búsqueda y filtros */}
+      <div className="bg-white rounded-xl p-6 shadow-sm flex-shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 items-center mb-4">
+          <div className="flex-1 relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar por número, nombre o inquilino..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 text-sm text-gray-900 placeholder:text-gray-400 transition-colors outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
+            />
+          </div>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-4 py-2 border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:text-gray-900 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 flex-1 sm:flex-none ${
+                activeFiltersCount > 0 ? "bg-blue-50 border-blue-300 text-blue-700" : ""
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 flex-1 sm:flex-none"
+              onClick={() => {
+                if (id) {
+                  navigate(`/building/${id}/unidades/create`);
+                }
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Crear Unidad
+            </button>
+                    </div>
+                  </div>
+
+        {/* Panel de filtros expandible */}
+        {showFilters && (
+          <div className="pt-4 mt-4 border-t border-gray-200 animate-in fade-in duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Filtro por estado */}
+              <div>
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                  Estado
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: "occupied" as const, label: "Ocupado" },
+                    { value: "available" as const, label: "Disponible" },
+                    { value: "maintenance" as const, label: "En Mantenimiento" },
+                  ].map((status) => (
+                    <button
+                      key={status.value}
+                      onClick={() => handleStatusFilterToggle(status.value)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        statusFilter.includes(status.value)
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
+                      }`}
+                    >
+                      {status.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtro por tipo */}
+              {uniqueTypes.length > 0 && (
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                    Tipo
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueTypes.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleTypeFilterToggle(type)}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                          typeFilter.includes(type)
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+                </div>
+
+            {/* Botón limpiar filtros */}
+            {(activeFiltersCount > 0 || searchTerm.trim()) && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleClearFilters}
+                  className="inline-flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Limpiar filtros
+                </button>
+                  </div>
+            )}
+                  </div>
+        )}
+                  </div>
+
+      {/* Tabla de unidades */}
+      <div className="bg-white rounded-xl p-6 shadow-sm flex-1 overflow-hidden">
+        {unitsLoading ? (
+          <SkeletonUnitsTable rows={5} />
+        ) : (
+          <>
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-50">
+                  <tr className="border-b border-gray-200">
+                    {/* Unidad */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Unidad</span>
+                        <button
+                          onClick={() => handleSort("name")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por nombre"
+                        >
+                          {getSortIcon("name")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Tipo */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Tipo</span>
+                        <button
+                          onClick={() => handleSort("type")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por tipo"
+                        >
+                          {getSortIcon("type")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Superficie */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Superficie</span>
+                        <button
+                          onClick={() => handleSort("area")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por superficie"
+                        >
+                          {getSortIcon("area")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Inquilino */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Inquilino</span>
+                        <button
+                          onClick={() => handleSort("tenant")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por inquilino"
+                        >
+                          {getSortIcon("tenant")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Renta */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Renta</span>
+                        <button
+                          onClick={() => handleSort("rent")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por renta"
+                        >
+                          {getSortIcon("rent")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Estado */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Estado</span>
+                        <button
+                          onClick={() => handleSort("status")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por estado"
+                        >
+                          {getSortIcon("status")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Vencimiento */}
+                    <th className="text-left py-3 px-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span>Vencimiento</span>
+                        <button
+                          onClick={() => handleSort("expiration")}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors opacity-60 hover:opacity-100"
+                          title="Ordenar por vencimiento"
+                        >
+                          {getSortIcon("expiration")}
+                        </button>
+                      </div>
+                    </th>
+                    {/* Acciones */}
+                    <th className="text-right py-3 px-4 text-sm text-gray-600">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUnits.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-12">
+                        {units.length === 0 ? (
+                          // Estado vacío cuando no hay unidades
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                              <Building2 className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">
+                              No hay unidades disponibles
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 max-w-md text-center">
+                              Comienza creando tu primera unidad para gestionar todas las unidades del edificio de forma organizada.
+                            </p>
+                            <button
+                              onClick={() => {
+                                if (id) {
+                                  navigate(`/building/${id}/unidades/create`);
+                                }
+                              }}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Crear Primera Unidad
+                            </button>
+                          </div>
+                        ) : (
+                          // Estado vacío cuando hay filtros aplicados
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                              <FilterX className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">
+                              No se encontraron unidades
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 max-w-md text-center">
+                              No hay unidades que coincidan con los filtros aplicados. Intenta ajustar los filtros o la búsqueda.
+                            </p>
+                            <button
+                              onClick={handleClearFilters}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm"
+                            >
+                              <X className="w-4 h-4" />
+                              Limpiar Filtros
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUnits.map((unit) => (
+                      <tr
+                        key={unit.id}
+                        className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                      >
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="text-sm text-gray-900">{unit.name}</p>
+                            <p className="text-xs text-gray-500">{unit.description}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600">{unit.type}</td>
+                        <td className="py-3 px-4 text-sm text-gray-900">{unit.area} m²</td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {unit.tenant || "-"}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-900">
+                          {unit.monthlyRent ? `${unit.monthlyRent.toLocaleString()}€/mes` : "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            className={
+                              unit.status === "occupied"
+                                ? "bg-green-100 text-green-700 hover:bg-green-100 border-transparent"
+                                : unit.status === "available"
+                                ? "bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent"
+                                : "bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent"
+                            }
+                          >
+                            {unit.status === "occupied"
+                              ? "Ocupado"
+                              : unit.status === "available"
+                              ? "Disponible"
+                              : "En Mantenimiento"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            {unit.expirationDate ? (
+                              <>
+                                <span
+                                  className={`text-sm ${
+                                    unit.expiresSoon ? "text-orange-600" : "text-gray-600"
+                                  }`}
+                                >
+                                  {unit.expirationDate}
+                                </span>
+                                {unit.expiresSoon && (
+                                  <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent text-xs">
+                                    Expira pronto
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Implementar navegación/edición de unidad
+                              }}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Ver
+                            </button>
+                            <button
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRequestDeleteUnit(unit);
+                              }}
+                              disabled={isDeleting === unit.id}
+                            >
+                              {isDeleting === unit.id ? (
+                                <span className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <X className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {filteredUnits.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+                <span>
+                  Mostrando {filteredUnits.length} de {totalUnits} unidades
+                  {(activeFiltersCount > 0 || searchTerm.trim()) && (
+                    <span className="text-gray-400 ml-1">
+                      (filtradas)
+                    </span>
+                  )}
+                </span>
+                <span>
+                  Ingresos totales:{" "}
+                  <strong className="text-gray-900">
+                    {totalMonthlyIncome.toLocaleString()}€/mes
+                  </strong>
+                </span>
+              </div>
+            )}
           </>
         )}
-      </div>
-      <Card>
-        <CardHeader className="space-y-1">
-          {loading ? (
-            <>
-              <SkeletonText lines={1} widths={["w-32"]} className="mb-2" />
-              <SkeletonText lines={1} widths={["w-64"]} />
-            </>
-          ) : (
-            <>
-              <CardTitle className="text-lg text-gray-900">
-                {t("building.unitsSummaryTitle", {
-                  defaultValue: "Resumen rápido",
-                })}
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
-                {t("building.unitsSummaryDescription", {
-                  defaultValue:
-                    "Instantánea del parque de unidades vinculadas al activo.",
-                })}
-              </CardDescription>
-            </>
-          )}
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-lg border border-gray-200 bg-white p-4"
-                >
-                  <SkeletonText lines={1} widths={["w-20"]} className="mb-2" />
-                  <SkeletonText lines={1} widths={["w-16"]} className="mb-2" />
-                  <SkeletonText lines={1} widths={["w-32"]} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.unitsSummaryOccupancy", {
-                    defaultValue: "Ocupación",
-                  })}
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-gray-900">
-                  {totalUnits > 0 ? `${occupancyRate}%` : "—"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {t("building.unitsSummaryOccupancyHint", {
-                    defaultValue:
-                      "{{occupied}} de {{total}} unidades en operación",
-                    occupied: activeUnits,
-                    total: totalUnits || units.length,
-                  })}
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.unitsSummaryMix", {
-                    defaultValue: "Mix de unidades",
-                  })}
-                </p>
-                <p className="mt-2 text-lg font-semibold text-gray-900">
-                  {occupiedUnits}{" "}
-                  {t("building.unitsSummaryOccupied", {
-                    defaultValue: "ocupadas",
-                  })}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {availableUnits}{" "}
-                  {t("building.unitsSummaryAvailable", {
-                    defaultValue: "disponibles",
-                  })}{" "}
-                  · {renovationUnits}{" "}
-                  {t("building.unitsSummaryRenovation", {
-                    defaultValue: "en obra",
-                  })}
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.unitsSummaryAverageArea", {
-                    defaultValue: "Superficie media",
-                  })}
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-gray-900">
-                  {units.length > 0
-                    ? `${Math.round(
-                        units.reduce((acc, unit) => acc + unit.area, 0) /
-                          units.length
-                      )} m²`
-                    : "—"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {t("building.unitsSummaryAverageAreaHint", {
-                    defaultValue: "Calculado sobre unidades activas",
-                  })}
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.unitsSummaryAvgRent", {
-                    defaultValue: "Renta media",
-                  })}
-                </p>
-                <p className="mt-2 text-2xl font-semibold text-gray-900">
-                  {averageRent ? currencyFormatter.format(averageRent) : "—"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {t("building.unitsSummaryAvgRentHint", {
-                    defaultValue: "Solo contratos vigentes",
-                  })}
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          {loading ? (
-            <div className="space-y-1 flex-1">
-              <SkeletonText lines={1} widths={["w-48"]} className="mb-2" />
-              <SkeletonText lines={1} widths={["w-64"]} />
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <CardTitle className="text-lg text-gray-900">
-                {t("building.unitsListTitle", {
-                  defaultValue: "Unidades destacadas",
-                })}
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
-                {t("building.unitsListDescription", {
-                  defaultValue:
-                    "Ejemplo de cómo visualizaremos cada unidad cuando esté disponible la gestión completa.",
-                })}
-              </CardDescription>
-            </div>
-          )}
-          {!loading && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              className="cursor-not-allowed"
-            >
-              {t("building.unitsManageSoon", {
-                defaultValue: "Añadir unidad (próximamente)",
-              })}
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          {loading ? (
-            <>
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex-1">
-                      <SkeletonText
-                        lines={1}
-                        widths={["w-16"]}
-                        className="mb-2"
-                      />
-                      <SkeletonText
-                        lines={1}
-                        widths={["w-32"]}
-                        className="mb-2"
-                      />
-                      <SkeletonText lines={1} widths={["w-24"]} />
-                    </div>
-                    <SkeletonBase className="w-20 h-6 rounded-full" />
-                  </div>
-                  <div className="space-y-2">
-                    <SkeletonText lines={3} widths={["w-full"]} />
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            units.map((unit) => (
-              <div
-                key={unit.id}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">
-                      #{unit.id}
-                    </p>
-                    <h3 className="mt-1 text-base font-semibold text-gray-900">
-                      {unit.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">{unit.typology}</p>
-                  </div>
-                  <Badge className={STATUS_STYLES[unit.status]}>
-                    {statusLabels[unit.status]}
-                  </Badge>
-                </div>
-
-                <dl className="mt-4 space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <dt className="text-gray-500">
-                      {t("building.unitsAreaLabel", {
-                        defaultValue: "Superficie",
-                      })}
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {unit.area} m²
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-gray-500">
-                      {t("building.unitsTenantLabel", {
-                        defaultValue: "Inquilino",
-                      })}
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {unit.tenant ??
-                        t("building.unitsNoTenant", {
-                          defaultValue: "Sin asignar",
-                        })}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-gray-500">
-                      {t("building.unitsRentLabel", {
-                        defaultValue: "Renta mensual",
-                      })}
-                    </dt>
-                    <dd className="font-medium text-gray-900">
-                      {unit.rent ? currencyFormatter.format(unit.rent) : "—"}
-                    </dd>
-                  </div>
-                </dl>
-
-                {unit.status === "available" && (
-                  <p className="mt-3 text-xs text-blue-600">
-                    {t("building.unitsAvailableHint", {
-                      defaultValue:
-                        "Ideal para nuevo inquilino. Puedes preparar material comercial desde la ficha.",
-                    })}
-                  </p>
-                )}
-                {unit.status === "renovation" && (
-                  <p className="mt-3 text-xs text-amber-600">
-                    {t("building.unitsRenovationHint", {
-                      defaultValue:
-                        "En fase de mejora. El cronograma de obra se mostrará aquí.",
-                    })}
-                  </p>
-                )}
-              </div>
-            ))
-          )}
-        </CardContent>
-        <div className="border-t border-gray-100 px-6 py-4">
-          <p className="text-xs text-gray-500">
-            {t("building.unitsCardsComingSoon", {
-              defaultValue:
-                "Muy pronto podrás buscar, agregar y sincronizar unidades reales directamente con tus sistemas de gestión.",
-            })}
-          </p>
         </div>
-      </Card>
+
+      {/* Modal de confirmación de eliminación de unidad */}
+      {isDeleteModalOpen && unitToDelete && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={handleCancelDeleteUnit}
+            onKeyDown={(e) => e.key === "Escape" && handleCancelDeleteUnit()}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
+          />
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative z-10">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-red-100 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirmar eliminación
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  ¿Estás seguro de que deseas eliminar la unidad{" "}
+                  <span className="font-semibold">{unitToDelete.name}</span>? Esta acción no se puede deshacer.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleCancelDeleteUnit}
+                    disabled={Boolean(isDeleting)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmDeleteUnit}
+                    disabled={Boolean(isDeleting)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                        <span>Eliminando...</span>
+                      </>
+                    ) : (
+                      <span>Eliminar unidad</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

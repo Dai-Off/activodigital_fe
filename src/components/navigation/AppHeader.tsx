@@ -230,6 +230,8 @@ export function AppHeader() {
         return translate("gestion", "Gestión");
       case "analysis-general":
         return translate("generalAnalysis", "Análisis General");
+      case "unidades":
+        return translate("units", "Unidades");
       case "hub":
         return translate("digitalBook", "Libro Digital");
       case "digital-book":

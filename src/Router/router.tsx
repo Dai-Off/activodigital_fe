@@ -27,6 +27,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 // Nuevos componentes para edificios y libro del edificio
 import CreateBuildingWizard from "../components/buildings/CreateBuildingWizard";
+import CreateUnitWizard from "../components/units/CreateUnitWizard";
 import DigitalBookHub from "../components/digitalbook/DigitalBookHub";
 import SectionEditor from "../components/digitalbook/SectionEditor";
 import TermsAndConditions from "../components/TermsAndConditions";
@@ -282,7 +283,7 @@ export const AppRouter = () => {
         {/* Subrutas Edificios */}
 
         <Route
-          path="/building/:id/units"
+          path="/building/:id/unidades"
           element={
             <ProtectedRoute>
               <BuildingUnits />
@@ -411,6 +412,16 @@ export const AppRouter = () => {
         element={
           <ProtectedRoute>
             <CreateBuildingWizard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/building/:id/unidades/create"
+        element={
+          <ProtectedRoute>
+            <ErrorBoundary>
+              <CreateUnitWizard />
+            </ErrorBoundary>
           </ProtectedRoute>
         }
       />
