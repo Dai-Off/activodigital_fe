@@ -28,6 +28,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 // Nuevos componentes para edificios y libro del edificio
 import CreateBuildingWizard from "../components/buildings/CreateBuildingWizard";
 import CreateUnitWizard from "../components/units/CreateUnitWizard";
+import { UnitDetail } from "../components/units/UnitDetail";
 import DigitalBookHub from "../components/digitalbook/DigitalBookHub";
 import SectionEditor from "../components/digitalbook/SectionEditor";
 import TermsAndConditions from "../components/TermsAndConditions";
@@ -48,6 +49,7 @@ import { OpportunityRadar } from "~/components/dashboard/GreenFinancial/Opportun
 import FinancialTwin from "~/components/dashboard/GreenFinancial/FinancialTwin";
 import { Assets } from "~/components/dashboard/Assets/Assets";
 import { AssetsListDashboard } from "~/components/dashboard/Assets/AssetsListsDashboard";
+import { UnitsListDashboard } from "~/components/dashboard/Assets/UnitsListDashboard";
 import { BuildingGeneralView } from "~/components/BuildingGeneralView";
 import { GeneralView } from "~/components/GeneralView";
 import { BuildingCertificates } from "~/components/BuildingCertificates";
@@ -229,6 +231,7 @@ export const AppRouter = () => {
         >
           <Route index element={<AssetsMain />} />
           <Route path="list" element={<AssetsListDashboard />} />
+          <Route path="units" element={<UnitsListDashboard />} />
         </Route>
         <Route
           path="/green-financial"
@@ -287,6 +290,14 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <BuildingUnits />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/unidades/:unitId"
+          element={
+            <ProtectedRoute>
+              <UnitDetail />
             </ProtectedRoute>
           }
         />

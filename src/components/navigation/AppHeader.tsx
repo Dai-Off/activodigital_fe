@@ -19,6 +19,7 @@ import {
   BuildingsApiService,
   type Building,
 } from "../../services/buildingsApi";
+import { UnitsApiService } from "../../services/unitsApi";
 import { toast } from "sonner";
 import { MobileNav } from "./MobileNav";
 import { AIAssistant } from "../AIAssistant";
@@ -181,6 +182,11 @@ export function AppHeader() {
     }
   };
 
+  const isUnitDetailRoute = useMemo(
+    () => /^\/building\/[^/]+\/unidades\/[^/]+$/.test(location.pathname),
+    [location.pathname]
+  );
+
   // Función para obtener la etiqueta traducida de un segmento de ruta
   const getBreadcrumbLabel = (segment: string) => {
     if (segment === selectedBuildingId && selectedBuildingName) {
@@ -237,10 +243,6 @@ export function AppHeader() {
       case "digital-book":
         return translate("digitalBook", "Libro Digital");
       default:
-        // Si es un UUID, mostrar el nombre del edificio si está disponible
-        if (isUUID(segment) && selectedBuildingName) {
-          return selectedBuildingName;
-        }
         return (
           segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
         );
@@ -259,6 +261,7 @@ export function AppHeader() {
   const [selectedBuildingName, setSelectedBuildingName] = useState<
     string | null
   >(null);
+  const [selectedUnitName, setSelectedUnitName] = useState<string | null>(null);
 
   const translatorRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -304,6 +307,29 @@ export function AppHeader() {
       setSelectedBuildingName(null);
     }
   }, [selectedBuildingId, viewMode]);
+
+  // Cargar nombre de la unidad cuando estamos en detalle de unidad
+  useEffect(() => {
+    const match = location.pathname.match(
+      /^\/building\/([^/]+)\/unidades\/([^/]+)$/
+    );
+    if (!match) {
+      setSelectedUnitName(null);
+      return;
+    }
+
+    const buildingId = match[1];
+    const unitId = match[2];
+
+    UnitsApiService.listUnits(buildingId)
+      .then((units) => {
+        const unit = (units || []).find((u) => u.id === unitId);
+        setSelectedUnitName(unit?.name || null);
+      })
+      .catch(() => {
+        setSelectedUnitName(null);
+      });
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -765,7 +791,12 @@ export function AppHeader() {
 
           {pathSegments
             .map((segment, originalIndex) => {
-              const label = getBreadcrumbLabel(segment);
+              // Si es la última parte de una ruta de detalle de unidad y tenemos nombre de unidad, usarlo
+              const isLastSegment =
+                originalIndex === pathSegments.length - 1 && isUnitDetailRoute;
+              const label = isLastSegment && selectedUnitName
+                ? selectedUnitName
+                : getBreadcrumbLabel(segment);
               return { segment, originalIndex, label };
             })
             .filter((item, index, array) => {

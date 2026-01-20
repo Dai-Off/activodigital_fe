@@ -89,6 +89,9 @@ export function SidebarAssets() {
           // Extraemos la parte después de general-view/ (ej: financial, insurance)
           const subPart = subRoute.split("/")[1];
           expectedSection = subPart;
+        } else if (subRoute === "unidades" || subRoute.startsWith("unidades/")) {
+          // Lista de unidades o detalle de una unidad
+          expectedSection = "unidades";
         }
       } else {
         expectedSection = "todos";
@@ -160,7 +163,7 @@ export function SidebarAssets() {
       id: "assetslist",
       label: "Listado de activos",
       Icon: House,
-      route: "/assets/list",
+      route: "/assets",
     },
     {
       id: "unitslist",
@@ -397,7 +400,7 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/unidades`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          pathname === `/building/${building.id}/unidades`
+                          pathname.startsWith(`/building/${building.id}/unidades`)
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}

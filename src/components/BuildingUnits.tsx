@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { House, User, MapPin, Calendar, Search, SlidersHorizontal, Eye, Plus, X, ArrowUp, ArrowDown, ArrowUpDown, Building2, FilterX, AlertTriangle } from "lucide-react";
+import { House, User, MapPin, Calendar, Search, SlidersHorizontal, Pencil, Plus, X, ArrowUp, ArrowDown, ArrowUpDown, Building2, FilterX, AlertTriangle, Trash2 } from "lucide-react";
 
 import { BuildingsApiService, type Building } from "../services/buildingsApi";
 import { UnitsApiService } from "../services/unitsApi";
@@ -57,6 +57,14 @@ export default function BuildingUnits() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [unitToDelete, setUnitToDelete] = useState<Unit | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [unitToEdit, setUnitToEdit] = useState<Unit | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    tenant: "",
+    monthlyRent: "",
+    expirationDate: "",
+  });
 
   // Mapear BuildingUnit del backend a Unit del frontend
   const mapApiUnitToUnit = (apiUnit: BuildingUnitFromApi): Unit => {
@@ -77,6 +85,21 @@ export default function BuildingUnits() {
     if (apiUnit.identifier) descriptionParts.push(apiUnit.identifier);
     const description = descriptionParts.join(" - ") || "";
 
+    // Calcular si expira pronto (dentro de 30 días)
+    let expiresSoon = false;
+    if (apiUnit.rawData?.expirationDate) {
+      try {
+        const expirationDate = new Date(apiUnit.rawData.expirationDate);
+        const today = new Date();
+        const daysUntilExpiration = Math.ceil(
+          (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        expiresSoon = daysUntilExpiration > 0 && daysUntilExpiration <= 30;
+      } catch (error) {
+        console.error("Error parsing expiration date:", error);
+      }
+    }
+
     return {
       id: apiUnit.id,
       name: apiUnit.name || apiUnit.identifier || "Sin nombre",
@@ -86,8 +109,8 @@ export default function BuildingUnits() {
       tenant: apiUnit.tenant || null,
       monthlyRent: apiUnit.rent || null,
       status,
-      expirationDate: null, // El backend no tiene este campo por ahora
-      expiresSoon: false,
+      expirationDate: apiUnit.rawData?.expirationDate || null,
+      expiresSoon,
     };
   };
 
@@ -274,6 +297,92 @@ export default function BuildingUnits() {
     if (isDeleting) return;
     setIsDeleteModalOpen(false);
     setUnitToDelete(null);
+  };
+
+  const handleEditUnit = (unit: Unit) => {
+    setUnitToEdit(unit);
+    
+    // Convertir fecha al formato YYYY-MM-DD para el input de tipo date
+    let formattedDate = "";
+    if (unit.expirationDate) {
+      try {
+        const date = new Date(unit.expirationDate);
+        if (!isNaN(date.getTime())) {
+          formattedDate = date.toISOString().split("T")[0];
+        }
+      } catch (error) {
+        console.error("Error parsing expiration date:", error);
+      }
+    }
+    
+    setEditFormData({
+      tenant: unit.tenant || "",
+      monthlyRent: unit.monthlyRent?.toString() || "",
+      expirationDate: formattedDate,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleCancelEditUnit = () => {
+    setIsEditModalOpen(false);
+    setUnitToEdit(null);
+    setEditFormData({
+      tenant: "",
+      monthlyRent: "",
+      expirationDate: "",
+    });
+  };
+
+  const handleSaveEditUnit = async () => {
+    if (!id || !unitToEdit) return;
+
+    setIsSaving(true);
+    try {
+      // Buscar la unidad original en el backend para obtener todos los campos
+      const apiUnits = await UnitsApiService.listUnits(id);
+      const originalUnit = apiUnits?.find((u) => u.id === unitToEdit.id);
+      
+      if (!originalUnit) {
+        showError("Error al editar", "No se encontró la unidad original.");
+        return;
+      }
+
+      // Preparar los datos actualizados
+      const updatedUnit = {
+        id: originalUnit.id,
+        name: originalUnit.name || unitToEdit.name,
+        identifier: originalUnit.identifier || null,
+        floor: originalUnit.floor || null,
+        areaM2: originalUnit.areaM2 || unitToEdit.area,
+        useType: originalUnit.useType || unitToEdit.type,
+        status: originalUnit.status || (unitToEdit.status === "occupied" ? "ocupada" : unitToEdit.status === "maintenance" ? "mantenimiento" : "disponible"),
+        rent: editFormData.monthlyRent ? parseFloat(editFormData.monthlyRent) : null,
+        tenant: editFormData.tenant || null,
+        rooms: originalUnit.rooms || null,
+        baths: originalUnit.baths || null,
+        rawData: {
+          ...originalUnit.rawData,
+          expirationDate: editFormData.expirationDate || null,
+        },
+      };
+
+      await UnitsApiService.upsertUnits(id, [updatedUnit]);
+      
+      // Recargar las unidades
+      const updatedUnits = await UnitsApiService.listUnits(id);
+      if (updatedUnits) {
+        setUnits(updatedUnits.map(mapApiUnitToUnit));
+      }
+      
+      setIsEditModalOpen(false);
+      setUnitToEdit(null);
+      showSuccess("Unidad actualizada", "Los datos de la unidad se han actualizado correctamente");
+    } catch (error) {
+      console.error("Error actualizando unidad:", error);
+      showError("Error al actualizar", "No se pudo actualizar la unidad. Inténtalo de nuevo.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handler para cambiar ordenamiento
@@ -665,6 +774,11 @@ export default function BuildingUnits() {
                       <tr
                         key={unit.id}
                         className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                        onClick={() => {
+                          if (id) {
+                            navigate(`/building/${id}/unidades/${unit.id}`);
+                          }
+                        }}
                       >
                         <td className="py-3 px-4">
                           <div>
@@ -703,10 +817,21 @@ export default function BuildingUnits() {
                               <>
                                 <span
                                   className={`text-sm ${
-                                    unit.expiresSoon ? "text-orange-600" : "text-gray-600"
+                                    unit.expiresSoon ? "text-orange-600 font-medium" : "text-gray-600"
                                   }`}
                                 >
-                                  {unit.expirationDate}
+                                  {(() => {
+                                    try {
+                                      const date = new Date(unit.expirationDate);
+                                      return date.toLocaleDateString("es-ES", {
+                                        day: "2-digit",
+                                        month: "2-digit",
+                                        year: "numeric",
+                                      });
+                                    } catch {
+                                      return unit.expirationDate;
+                                    }
+                                  })()}
                                 </span>
                                 {unit.expiresSoon && (
                                   <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-transparent text-xs">
@@ -720,29 +845,30 @@ export default function BuildingUnits() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1">
                             <button
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // TODO: Implementar navegación/edición de unidad
+                                handleEditUnit(unit);
                               }}
+                              title="Editar unidad"
                             >
-                              <Eye className="w-3.5 h-3.5" />
-                              Ver
+                              <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              className="inline-flex items-center justify-center px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              className="inline-flex items-center justify-center px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRequestDeleteUnit(unit);
                               }}
                               disabled={isDeleting === unit.id}
+                              title="Eliminar unidad"
                             >
                               {isDeleting === unit.id ? (
                                 <span className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
                               ) : (
-                                <X className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               )}
                             </button>
                           </div>
@@ -823,6 +949,104 @@ export default function BuildingUnits() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de edición de unidad */}
+      {isEditModalOpen && unitToEdit && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={handleCancelEditUnit}
+            onKeyDown={(e) => e.key === "Escape" && handleCancelEditUnit()}
+            role="button"
+            tabIndex={0}
+            aria-label="Cerrar modal"
+          />
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative z-10">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Pencil className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Editar unidad
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {unitToEdit.name}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Inquilino */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Inquilino
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.tenant}
+                  onChange={(e) => setEditFormData({ ...editFormData, tenant: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Nombre del inquilino"
+                />
+              </div>
+
+              {/* Renta mensual */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Renta mensual (€)
+                </label>
+                <input
+                  type="number"
+                  value={editFormData.monthlyRent}
+                  onChange={(e) => setEditFormData({ ...editFormData, monthlyRent: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              {/* Fecha de vencimiento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Fecha de vencimiento
+                </label>
+                <input
+                  type="date"
+                  value={editFormData.expirationDate}
+                  onChange={(e) => setEditFormData({ ...editFormData, expirationDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={handleCancelEditUnit}
+                disabled={isSaving}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEditUnit}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <span>Guardar cambios</span>
+                )}
+              </button>
             </div>
           </div>
         </div>
