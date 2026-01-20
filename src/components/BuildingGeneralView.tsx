@@ -800,28 +800,28 @@ export function BuildingGeneralView() {
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(16, 185, 129)" }}
                     ></div>
-                    <span className="text-gray-700">Completado: {events.filter(e => e.category === 'maintenance' && e.status === 'completed').length}</span>
+                    <span className="text-gray-700">Completado: {events.filter(e => e.category === 'maintenance' && e.status === 'completed').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(59, 130, 246)" }}
                     ></div>
-                    <span className="text-gray-700">En curso: {events.filter(e => e.category === 'maintenance' && e.status === 'in_progress').length}</span>
+                    <span className="text-gray-700">En curso: {events.filter(e => e.category === 'maintenance' && e.status === 'in_progress').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(245, 158, 11)" }}
                     ></div>
-                    <span className="text-gray-700">Programado: {events.filter(e => e.category === 'maintenance' && e.status === 'pending').length}</span>
+                    <span className="text-gray-700">Programado: {events.filter(e => e.category === 'maintenance' && e.status === 'pending').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(239, 68, 68)" }}
                     ></div>
-                    <span className="text-gray-700">Atrasado: {events.filter(e => e.category === 'maintenance' && e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length}</span>
+                    <span className="text-gray-700">Atrasado: {events.filter(e => e.category === 'maintenance' && e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -840,7 +840,7 @@ export function BuildingGeneralView() {
                       <Zap className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">Electricidad</p>
                     </div>
-                    <p className="text-sm text-blue-700">€{monthlyCosts?.byService['electricity'] || "0"}</p>
+                    <p className="text-sm text-blue-700">€{monthlyCosts?.byService['electricity'] || "-"}</p>
                     <p className="text-xs text-blue-600">Edificio</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
@@ -848,7 +848,7 @@ export function BuildingGeneralView() {
                       <Droplet className="w-3 h-3 text-cyan-600" />
                       <p className="text-xs text-cyan-900">Agua</p>
                     </div>
-                    <p className="text-sm text-cyan-700">€{monthlyCosts?.byService['water'] || "0"}</p>
+                    <p className="text-sm text-cyan-700">€{monthlyCosts?.byService['water'] || "-"}</p>
                     <p className="text-xs text-cyan-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
@@ -856,7 +856,7 @@ export function BuildingGeneralView() {
                       <Flame className="w-3 h-3 text-orange-600" />
                       <p className="text-xs text-orange-900">Gas</p>
                     </div>
-                    <p className="text-sm text-orange-700">€{monthlyCosts?.byService['gas'] || "0"}</p>
+                    <p className="text-sm text-orange-700">€{monthlyCosts?.byService['gas'] || "-"}</p>
                     <p className="text-xs text-orange-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
@@ -864,7 +864,7 @@ export function BuildingGeneralView() {
                       <FileText className="w-3 h-3 text-purple-600" />
                       <p className="text-xs text-purple-900">IBI</p>
                     </div>
-                    <p className="text-sm text-purple-700">€{monthlyCosts?.byService['ibi'] || "0"}</p>
+                    <p className="text-sm text-purple-700">€{monthlyCosts?.byService['ibi'] || "-"}</p>
                     <p className="text-xs text-purple-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
@@ -872,7 +872,7 @@ export function BuildingGeneralView() {
                       <Trash className="w-3 h-3 text-amber-600" />
                       <p className="text-xs text-amber-900">Basuras</p>
                     </div>
-                    <p className="text-sm text-amber-700">€{monthlyCosts?.byService['waste'] || "0"}</p>
+                    <p className="text-sm text-amber-700">€{monthlyCosts?.byService['waste'] || "-"}</p>
                     <p className="text-xs text-amber-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
@@ -880,8 +880,8 @@ export function BuildingGeneralView() {
                       <Euro className="w-3 h-3 text-green-700" />
                       <p className="text-xs text-green-900">Total</p>
                     </div>
-                    <p className="text-sm text-green-800">€{monthlyCosts?.total || "0"}</p>
-                    <p className="text-xs text-green-700">€{(monthlyCosts?.total || 0) * 12}/año</p>
+                    <p className="text-sm text-green-800">€{monthlyCosts?.total || "-"}</p>
+                    <p className="text-xs text-green-700">{monthlyCosts?.total ? `€${monthlyCosts.total * 12}/año` : "-"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -898,27 +898,27 @@ export function BuildingGeneralView() {
                           <Zap className="w-2.5 h-2.5 text-blue-600" />
                           <span className="text-gray-700">Electricidad</span>
                         </div>
-                        <span className="text-gray-900">€1850</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€420</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€0</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="pt-0.5 mt-0.5 border-t border-purple-300 flex items-center justify-between">
                         <span className="text-xs text-purple-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-purple-800">€2270</span>
+                        <span className="text-xs text-purple-800">€-</span>
                       </div>
                     </div>
                   </div>
@@ -933,34 +933,34 @@ export function BuildingGeneralView() {
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€585</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€95</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <FileText className="w-2.5 h-2.5 text-purple-600" />
                           <span className="text-gray-700">IBI</span>
                         </div>
-                        <span className="text-gray-900">€562</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Trash2 className="w-2.5 h-2.5 text-amber-600" />
                           <span className="text-gray-700">Basuras</span>
                         </div>
-                        <span className="text-gray-900">€107</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="pt-0.5 mt-0.5 border-t border-indigo-300 flex items-center justify-between">
                         <span className="text-xs text-indigo-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-indigo-800">€1349</span>
+                        <span className="text-xs text-indigo-800">€-</span>
                       </div>
                     </div>
                   </div>
@@ -992,17 +992,17 @@ export function BuildingGeneralView() {
                       Calificación Actual
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs">D</span>
+                      <span className="text-xs">{_esgData?.status === 'complete' ? _esgData.data.label : "-"}</span>
                       <span className="text-xs text-gray-500">
-                        85.42 kWh/m²·año
+                        -
                       </span>
                     </div>
                   </div>
                   <div className="bg-blue-50 rounded p-1">
                     <div className="text-xs text-blue-700">Objetivo</div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-blue-600">D</span>
-                      <span className="text-xs text-blue-600">65 kWh/m²</span>
+                      <span className="text-xs text-blue-600">-</span>
+                      <span className="text-xs text-blue-600">-</span>
                     </div>
                   </div>
                 </div>
@@ -1010,29 +1010,30 @@ export function BuildingGeneralView() {
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
-                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                        <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
                         <span className="text-gray-600 text-xs">Consumo</span>
                       </div>
-                      <span className="text-xs text-orange-600">+20.4</span>
+                      <span className="text-xs text-gray-400">-</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1">
                       <div
-                        className="h-1 rounded-full bg-orange-500"
-                        style={{ width: "76.0946%" }}
+                        className="h-1 rounded-full bg-gray-300"
+                        style={{ width: "0%" }}
                       ></div>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
-                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                        <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
+                        <span className="text-gray-600 text-xs">Emisiones</span>
                       </div>
-                      <span className="text-xs text-orange-600">+4.7</span>
+                      <span className="text-xs text-gray-400">-</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1">
                       <div
-                        className="h-1 rounded-full bg-orange-500"
-                        style={{ width: "71.6846%" }}
+                        className="h-1 rounded-full bg-gray-300"
+                        style={{ width: "0%" }}
                       ></div>
                     </div>
                   </div>
@@ -1060,15 +1061,15 @@ export function BuildingGeneralView() {
                       <FileText className="w-2.5 h-2.5 text-[#1e3a8a]" />
                       <span className="text-xs text-gray-700">Completado</span>
                     </div>
-                    <span className="text-xs text-[#1e3a8a]">100%</span>
+                    <span className="text-xs text-[#1e3a8a]">{digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}%</span>
                   </div>
                   <div className="w-full bg-white rounded-full h-1">
                     <div
                       className="bg-[#1e3a8a] h-1 rounded-full"
-                      style={{ width: "100%" }}
+                      style={{ width: digitalBook ? `${((digitalBook.progress || 0) / 8) * 100}%` : '0%' }}
                     ></div>
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-600">8/8 tareas</div>
+                  <div className="mt-0.5 text-xs text-gray-600">{digitalBook?.sections?.filter(s => s.complete).length || 0}/8 tareas</div>
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="text-xs text-gray-700">Mejoras:</div>
@@ -1076,7 +1077,7 @@ export function BuildingGeneralView() {
                     <div className="flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5 text-orange-600" />
                       <span className="text-xs text-orange-900">
-                        Envolvente: -18 kWh/m²
+                        Envolvente: -
                       </span>
                     </div>
                   </div>
@@ -1084,15 +1085,15 @@ export function BuildingGeneralView() {
                     <div className="flex items-center gap-1">
                       <TrendingUp className="w-2.5 h-2.5 text-orange-600" />
                       <span className="text-xs text-orange-900">
-                        HVAC: -12 kWh/m²
+                        HVAC: -
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="pt-1 border-t border-gray-200 bg-blue-50 rounded p-1 mt-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-blue-600">-58 kWh/m²</span>
-                    <span className="text-green-600">€450k inv.</span>
+                    <span className="text-blue-600">-</span>
+                    <span className="text-green-600">-</span>
                   </div>
                 </div>
               </div>
@@ -1196,8 +1197,8 @@ export function BuildingGeneralView() {
                       {new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                     </p>
                     <div className="flex items-baseline gap-1.5">
-                      <p className="text-xs text-green-600">€{rentStats.total}</p>
-                      <p className="text-xs text-gray-500">/ €{rentStats.potential}</p>
+                      <p className="text-xs text-green-600">{rentStats.total > 0 ? `€${rentStats.total}` : "-"}</p>
+                      <p className="text-xs text-gray-500">/ {rentStats.potential > 0 ? `€${rentStats.potential}` : "-"}</p>
                     </div>
                     <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
                       <div
@@ -1206,20 +1207,20 @@ export function BuildingGeneralView() {
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {rentStats.potential > 0 ? Math.round((rentStats.total / rentStats.potential) * 100) : 0}% cobrado
+                      {rentStats.potential > 0 ? `${Math.round((rentStats.total / rentStats.potential) * 100)}% cobrado` : "-"}
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-1.5">
                     <div className="text-center p-1.5 bg-green-50 rounded">
-                      <p className="text-xs text-green-600">{rentStats.paid}</p>
+                      <p className="text-xs text-green-600">{rentStats.paid || "-"}</p>
                       <p className="text-xs text-gray-600">Pagadas</p>
                     </div>
                     <div className="text-center p-1.5 bg-amber-50 rounded">
-                      <p className="text-xs text-amber-600">{rentStats.pending}</p>
+                      <p className="text-xs text-amber-600">{rentStats.pending || "-"}</p>
                       <p className="text-xs text-gray-600">Pendientes</p>
                     </div>
                     <div className="text-center p-1.5 bg-red-50 rounded">
-                      <p className="text-xs text-red-600">{rentStats.delayed}</p>
+                      <p className="text-xs text-red-600">{rentStats.delayed || "-"}</p>
                       <p className="text-xs text-gray-600">Retrasadas</p>
                     </div>
                   </div>
@@ -1314,9 +1315,9 @@ export function BuildingGeneralView() {
                       </div>
                     ))}
                     {events.filter(e => e.status === 'completed').length === 0 && (
-                      <p className="text-[10px] text-gray-400 text-center py-2 italic">
-                        Sin actividad reciente registrada.
-                      </p>
+                      <div className="py-4 text-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                        <p className="text-xs text-gray-500">Sin actividad reciente registrada.</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1338,9 +1339,9 @@ export function BuildingGeneralView() {
                       );
                     })}
                     {expiredDocs.length === 0 && events.filter(e => e.status !== 'completed' && e.priority === 'urgent').length === 0 && (
-                      <div className="text-center py-4">
-                        <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-1 opacity-20" />
-                        <p className="text-[10px] text-gray-400 italic">No hay alertas urgentes pendientes.</p>
+                      <div className="text-center py-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                        <CheckCircle className="w-5 h-5 text-green-500/50 mx-auto mb-1" />
+                        <p className="text-xs text-gray-500">No hay alertas urgentes pendientes.</p>
                       </div>
                     )}
                   </div>
