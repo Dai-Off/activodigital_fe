@@ -21,6 +21,20 @@ export const sectionIdToApiType: Record<string, string> = {
   attachments: 'annex_documents',
 };
 
+export const calculateCompletionPercentage = (sections: DigitalBookSection[]): number => {
+  try {
+    if (!sections || sections.length === 0) return 0;
+
+    const completedCount = sections.filter((section: DigitalBookSection) => section.complete === true).length;
+    const percentage = (completedCount / sections.length) * 100;
+
+    return Math.round(percentage);
+  } catch (error) {
+    console.error("Error al calcular el porcentaje de completitud:", error);
+    return 0;
+  }
+};
+
 // Conjunto de tipos válidos de la API (detección directa)
 const API_TYPES = new Set([
   'general_data',
@@ -56,9 +70,11 @@ export type DigitalBook = {
   source: 'manual' | 'pdf';
   status: 'draft' | 'in_progress' | 'complete';
   progress: number; // 0-8
+  completedPercentage?: number;
   sections: DigitalBookSection[];
   createdAt: string;
   updatedAt: string;
+  userId?: string;
 };
 
 type ApiEnvelope<T> = { data: T };
