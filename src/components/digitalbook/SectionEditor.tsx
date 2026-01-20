@@ -475,6 +475,7 @@ const SectionEditor: React.FC = () => {
                   
                   {field.type === 'textarea' ? (
                     <textarea
+                      name={field.name}
                       disabled={!canEdit}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -484,6 +485,7 @@ const SectionEditor: React.FC = () => {
                     />
                   ) : field.type === 'select' ? (
                     <select
+                      name={field.name}
                       disabled={!canEdit}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
@@ -509,6 +511,7 @@ const SectionEditor: React.FC = () => {
                     </select>
                   ) : (
                     <input
+                      name={field.name}
                       disabled={!canEdit}
                       type={field.type || 'text'}
                       value={formData[field.name] || ''}
