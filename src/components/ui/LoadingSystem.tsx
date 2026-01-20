@@ -621,3 +621,85 @@ export const SkeletonEvents = () => {
     </div>
   );
 };
+
+// Skeleton para fila de tabla de unidades
+export const SkeletonUnitsTableRow: React.FC = () => (
+  <tr className="border-b border-gray-100">
+    {/* Unidad */}
+    <td className="py-3 px-4">
+      <div>
+        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1.5" />
+        <div className="h-3 w-24 bg-gray-100 rounded animate-pulse" />
+      </div>
+    </td>
+    {/* Tipo */}
+    <td className="py-3 px-4">
+      <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+    </td>
+    {/* Superficie */}
+    <td className="py-3 px-4">
+      <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+    </td>
+    {/* Inquilino */}
+    <td className="py-3 px-4">
+      <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+    </td>
+    {/* Renta */}
+    <td className="py-3 px-4">
+      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+    </td>
+    {/* Estado */}
+    <td className="py-3 px-4">
+      <div className="h-6 w-24 rounded-full bg-gray-200 animate-pulse" />
+    </td>
+    {/* Vencimiento */}
+    <td className="py-3 px-4">
+      <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+    </td>
+    {/* Acciones */}
+    <td className="py-3 px-4 text-right">
+      <div className="h-7 w-16 rounded-lg bg-gray-200 animate-pulse ml-auto" />
+    </td>
+  </tr>
+);
+
+// Skeleton para tabla completa de unidades
+export const SkeletonUnitsTable: React.FC<{ rows?: number }> = ({ rows = 5 }) => (
+  <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <table className="w-full min-w-[800px]">
+      <thead className="bg-gray-50">
+        <tr className="border-b border-gray-200">
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-left py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+          </th>
+          <th className="text-right py-3 px-4 text-sm text-gray-600">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse ml-auto" />
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: rows }).map((_, index) => (
+          <SkeletonUnitsTableRow key={index} />
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
