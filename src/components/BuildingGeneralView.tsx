@@ -11,6 +11,7 @@ import {
 import { FinancialSnapshotsService } from "~/services/financialSnapshots";
 import { CalendarApiService } from "~/services/calendar";
 import { type BuildingEvent } from "~/types/calendar";
+import { EnergyCertificatesService } from "~/services/energyCertificates";
 import {
   ArrowUpRight,
   Bell,
@@ -61,6 +62,11 @@ export function BuildingGeneralView() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [displayedImageSrc, setDisplayedImageSrc] = useState<string>("/image.png");
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [energyEfficiencyData, setEnergyEfficiencyData] = useState<{
+    rating: string;
+    consumption: number;
+    source: 'invoice' | 'certificate' | null;
+  } | null>(null);
 
   const buildingImages = useMemo(() => {
     const fallback = "/image.png";
@@ -250,6 +256,68 @@ export function BuildingGeneralView() {
 
     loadBuilding();
   }, [id, navigate, showError]);
+
+  // Cargar datos de eficiencia energética
+  useEffect(() => {
+    const loadEnergyEfficiency = async () => {
+      if (!id || !building) {
+        setEnergyEfficiencyData({
+          rating: "—",
+          consumption: 0,
+          source: null,
+        });
+        return;
+      }
+
+      try {
+        const certificatesData = await EnergyCertificatesService.getByBuilding(id);
+        const certificates = certificatesData.certificates || [];
+        
+        if (certificates.length > 0) {
+          // Usar el certificado más reciente
+          const latestCertificate = certificates.sort((a, b) => 
+            new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+          )[0];
+
+          const consumptionValue = latestCertificate.primaryEnergyKwhPerM2Year;
+          const consumption = typeof consumptionValue === 'number' 
+            ? consumptionValue 
+            : parseFloat(String(consumptionValue || '0'));
+
+          if (isNaN(consumption)) {
+            setEnergyEfficiencyData({
+              rating: "—",
+              consumption: 0,
+              source: null,
+            });
+            return;
+          }
+
+          setEnergyEfficiencyData({
+            rating: latestCertificate.rating,
+            consumption: consumption,
+            source: "certificate",
+          });
+          return;
+        }
+
+        // Si no hay certificado, mostrar guion
+        setEnergyEfficiencyData({
+          rating: "—",
+          consumption: 0,
+          source: null,
+        });
+      } catch {
+        setEnergyEfficiencyData({
+          rating: "—",
+          consumption: 0,
+          source: null,
+        });
+      }
+    };
+
+    loadEnergyEfficiency();
+  }, [id, building]);
 
   // Cargar eventos del edificio
   useEffect(() => {
@@ -444,11 +512,24 @@ export function BuildingGeneralView() {
                     Eficiencia Energética
                   </h4>
                   <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded flex items-center justify-center text-white bg-orange-500">
-                      D
+                    <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${
+                      energyEfficiencyData?.rating === "A" ? "bg-green-600" :
+                      energyEfficiencyData?.rating === "B" ? "bg-green-500" :
+                      energyEfficiencyData?.rating === "C" ? "bg-yellow-500" :
+                      energyEfficiencyData?.rating === "D" ? "bg-orange-500" :
+                      energyEfficiencyData?.rating === "E" ? "bg-orange-600" :
+                      energyEfficiencyData?.rating === "F" ? "bg-red-500" :
+                      energyEfficiencyData?.rating === "G" ? "bg-red-600" :
+                      "bg-gray-400"
+                    }`}>
+                      {energyEfficiencyData?.rating || "—"}
                     </div>
                     <div>
-                      <p className="text-sm text-gray-900">85.42 kWh/m²·año</p>
+                      <p className="text-sm text-gray-900">
+                        {energyEfficiencyData?.consumption && energyEfficiencyData.consumption > 0
+                          ? `${energyEfficiencyData.consumption.toFixed(2)} kWh/m²·año`
+                          : "—"}
+                      </p>
                       <p className="text-xs text-gray-500">kWh/m²·año</p>
                     </div>
                   </div>
@@ -613,7 +694,7 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
                       <p className="text-xs text-blue-100">
-                        0% completado • 0 documentos
+                        {digitalBook?.completedPercentage || 0}% completado • {digitalBook?.progress || 0} documentos
                       </p>
                     </div>
                   </div>

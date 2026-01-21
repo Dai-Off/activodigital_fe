@@ -25,6 +25,7 @@ export interface Building {
   squareMeters?: number; // Superficie en metros cuadrados
   createdAt: string;
   updatedAt: string;
+  porcentBook?: number;
 }
 
 export interface BuildingImage {

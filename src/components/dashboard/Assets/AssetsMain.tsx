@@ -4,6 +4,7 @@ import {
   SlidersHorizontal,
   Check,
   MapPin,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -443,7 +444,11 @@ export function AssetsMain() {
                     return "bg-red-500";
                   };
 
-                  const compliancePercentage = 100;
+                  const compliancePercentage = building.porcentBook || 0;
+
+                  const status = compliancePercentage === 100 
+                    ? { label: 'Completo', icon: Check, color: 'bg-green-100 text-green-700' }
+                    : { label: 'Incompleto', icon: X, color: 'bg-red-100 text-red-700' };
 
                   return (
                     <tr
@@ -501,9 +506,8 @@ export function AssetsMain() {
                         <span className="text-sm text-gray-400">-</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                          <Check className="w-3 h-3" />
-                          Completo
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${status.color}`}>
+                          <status.icon className="w-3 h-3" /> {status.label}
                         </span>
                       </td>
                       <td className="py-3 px-4">
