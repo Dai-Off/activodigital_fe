@@ -621,7 +621,7 @@ export function BuildingGeneralView() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      Referencia Catastral
+                      Dirección
                     </label>
                     <p
                       className="text-xs text-gray-900 truncate"
