@@ -12,9 +12,15 @@ import { FinancialSnapshotsService } from "~/services/financialSnapshots";
 import { CalendarApiService } from "~/services/calendar";
 import { type BuildingEvent } from "~/types/calendar";
 import { EnergyCertificatesService } from "~/services/energyCertificates";
+import { FinancialAnalysisService } from "~/services/financialAnalysisService";
+import { type FinancialAnalysis } from "~/types/financialAnalysis";
+import { getExpiredList, type ExpiredDocument } from "~/services/expiredApi";
+import { UnitsApiService, type BuildingUnit } from "~/services/unitsApi";
+import { ServiceInvoicesService, type MonthlyServiceCosts } from "~/services/serviceInvoices";
 import {
   ArrowUpRight,
   Bell,
+  CheckCircle,
   Book,
   Building2,
   Calendar,
@@ -59,6 +65,10 @@ export function BuildingGeneralView() {
     null
   );
   const [events, setEvents] = useState<BuildingEvent[]>([]);
+  const [financialAnalysis, setFinancialAnalysis] = useState<FinancialAnalysis | null>(null);
+  const [expiredDocs, setExpiredDocs] = useState<ExpiredDocument[]>([]);
+  const [units, setUnits] = useState<BuildingUnit[]>([]);
+  const [monthlyCosts, setMonthlyCosts] = useState<MonthlyServiceCosts | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [displayedImageSrc, setDisplayedImageSrc] = useState<string>("/image.png");
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -214,16 +224,38 @@ export function BuildingGeneralView() {
           setDigitalBook(null);
         }
 
-        // Cargar datos financieros
+        // Cargar datos financieros y análisis
         try {
           const snapshots =
             await FinancialSnapshotsService.getFinancialSnapshots(
               buildingData.id
             );
-          setHasFinancialData(snapshots && snapshots.length > 0);
+          const hasData = snapshots && snapshots.length > 0;
+          setHasFinancialData(hasData);
+
+          if (hasData) {
+            const analysis = await FinancialAnalysisService.analyzeBuilding(
+              buildingData.id,
+              buildingData.name,
+              snapshots[0],
+              buildingData.price || 0
+            );
+            setFinancialAnalysis(analysis);
+          }
         } catch (error) {
           console.error("Error cargando datos financieros:", error);
           setHasFinancialData(false);
+        }
+
+        // Cargar documentos vencidos (alertas)
+        try {
+          const expiredResponse = await getExpiredList({
+            building_id: id,
+            limit: 5,
+          });
+          setExpiredDocs(expiredResponse.items || []);
+        } catch (error) {
+          console.error("Error cargando documentos vencidos:", error);
         }
 
         // Cargar datos ESG
@@ -241,6 +273,27 @@ export function BuildingGeneralView() {
           }
         } finally {
           setEsgLoading(false);
+        }
+
+        // Cargar unidades
+        try {
+          const unitsData = await UnitsApiService.listUnits(buildingData.id);
+          setUnits(unitsData || []);
+        } catch (error) {
+          console.error("Error cargando unidades:", error);
+        }
+
+        // Cargar costes mensuales (mes actual)
+        try {
+          const now = new Date();
+          const costs = await ServiceInvoicesService.getMonthlyCostsForBuilding(
+            buildingData.id,
+            now.getFullYear(),
+            now.getMonth() + 1
+          );
+          setMonthlyCosts(costs);
+        } catch (error) {
+          console.error("Error cargando costes mensuales:", error);
         }
 
         setLoading(false);
@@ -375,29 +428,70 @@ export function BuildingGeneralView() {
     return { urgent, thisMonth, priorityAction };
   }, [events]);
 
+  
+
+  // Calculate derived metrics
+  const occupancyStats = useMemo(() => {
+    if (!units.length) return { percentage: 0, occupied: 0, total: 0 };
+    const occupied = units.filter(u => u.status === 'occupied' || u.tenant).length;
+    return {
+      percentage: Math.round((occupied / units.length) * 100),
+      occupied,
+      total: units.length
+    };
+  }, [units]);
+
+  const rentStats = useMemo(() => {
+    if (!units.length) return { total: 0, potential: 0, paid: 0, pending: 0, delayed: 0 };
+    const total = units.reduce((acc, u) => acc + (u.rent || 0), 0);
+    // Mocking invoice status for now as we don't have that data
+    return {
+      total: 0, // collected
+      potential: total,
+      paid: 0,
+      pending: 0,
+      delayed: 0
+    };
+  }, [units]);
+
+  // Datos para el gráfico (dinámicos según eventos)
+  const chartData = useMemo(() => {
+    // Si no hay eventos, devolvemos skeleton de "Sin datos"
+    const emptyData = [{ name: "Sin datos", value: 1, color: "#e5e7eb" }];
+    
+    if (!events.length) return emptyData;
+    
+    const maintenanceEvents = events.filter(e => e.category === 'maintenance');
+    if (!maintenanceEvents.length) return emptyData;
+
+    const completed = maintenanceEvents.filter(e => e.status === 'completed').length;
+    const inProgress = maintenanceEvents.filter(e => e.status === 'in_progress').length;
+    const scheduled = maintenanceEvents.filter(e => e.status === 'pending').length;
+    
+    // Atrasado: scheduled in past
+    const delayed = maintenanceEvents.filter(e => e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length;
+
+    const result = [
+      { name: "Completado", value: completed, color: "#10b981" },
+      { name: "En curso", value: inProgress, color: "#3b82f6" },
+      { name: "Programado", value: scheduled, color: "#f59e0b" },
+      { name: "Atrasado", value: delayed, color: "#ef4444" },
+    ].filter(d => d.value > 0);
+
+    return result.length > 0 ? result : emptyData;
+  }, [events]);
+
+  const data = chartData; // Alias para compatibilidad con código existente
+
   // Mostrar skeleton mientras carga
   if (loading) {
     return <BuildingGeneralViewLoading />;
   }
 
-  // Datos para el gráfico (mantener hardcodeados)
-  interface ChartData {
-    name: string;
-    value: number;
-    color: string;
-    [key: string]: any;
-  }
-
-  const data: ChartData[] = [
-    { name: "Sector A", value: 0, color: "#10b981" }, // Verde
-    { name: "Sector B", value: 0, color: "#3b82f6" }, // Azul
-    { name: "Sector C", value: 0, color: "#f59e0b" }, // Amarillo/Ámbar
-    { name: "Sector D", value: 0, color: "#ef4444" }, // Rojo
-  ];
 
   // Datos para cuando no hay datos (un círculo gris)
   const emptyData = [{ name: "Sin datos", value: 1, color: "#e5e7eb" }];
-  const chartData = data.some(d => d.value > 0) ? data : emptyData;
+  // const chartData = data.some(d => d.value > 0) ? data : emptyData; // Ya calculado arriba
 
   const innerRadius = 30; // 30px
   const outerRadius = 50; // 50px
@@ -492,15 +586,17 @@ export function BuildingGeneralView() {
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">Año</span>
-                      <span className="text-sm text-gray-900">1990</span>
+                      <span className="text-sm text-gray-900">{building?.constructionYear || "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">Plantas</span>
-                      <span className="text-sm text-gray-900">5</span>
+                      <span className="text-sm text-gray-900">{building?.numFloors || "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">Tipo</span>
-                      <span className="text-sm text-gray-900">Comercial</span>
+                      <span className="text-sm text-gray-900">
+                        {building ? (building.typology === 'residential' ? 'Residencial' : building.typology === 'mixed' ? 'Mixto' : 'Comercial') : "-"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -542,15 +638,15 @@ export function BuildingGeneralView() {
                     Ocupación del Activo
                   </h4>
                   <div className="mb-2">
-                    <span className="text-2xl text-gray-900">89%</span>
+                    <span className="text-2xl text-gray-900">{occupancyStats.percentage}%</span>
                     <span className="text-xs text-gray-500 ml-1.5">
-                      ocupado
+                      ocupado ({occupancyStats.occupied}/{occupancyStats.total})
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div
                       className="bg-gradient-to-r from-green-500 to-green-600 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: "89%" }}
+                      style={{ width: `${occupancyStats.percentage}%` }}
                     ></div>
                   </div>
                 </div>
@@ -571,7 +667,7 @@ export function BuildingGeneralView() {
                 <div className="space-y-1.5 flex-1">
                   <div>
                     <label className="text-xs text-gray-500">ID Inmueble</label>
-                    <p className="text-xs text-gray-900"></p>
+                    <p className="text-xs text-gray-900">{building?.id || "-"}</p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Portfolio</label>
@@ -579,7 +675,7 @@ export function BuildingGeneralView() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Gestor</label>
-                    <p className="text-xs text-gray-900">ARKIA Capital</p>
+                    <p className="text-xs text-gray-900">{building?.technicianEmail || "-"}</p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
@@ -587,9 +683,9 @@ export function BuildingGeneralView() {
                     </label>
                     <p
                       className="text-xs text-gray-900 truncate"
-                      title="1234567890"
+                      title={building?.cadastralReference || "-"}
                     >
-                      1234567890
+                      {building?.cadastralReference || "-"}
                     </p>
                   </div>
                 </div>
@@ -606,18 +702,20 @@ export function BuildingGeneralView() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      Referencia Catastral
+                      Dirección
                     </label>
                     <p
                       className="text-xs text-gray-900 truncate"
-                      title="Carretera de Miraflores"
+                      title={building?.address || "-"}
                     >
-                      Carretera de Miraflores
+                      {building?.address || "-"}
                     </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Superficie</label>
-                    <p className="text-xs text-gray-900">2.450 m²</p>
+                    <p className="text-xs text-gray-900">
+                      {building?.squareMeters ? `${building.squareMeters.toLocaleString()} m²` : "-"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -629,13 +727,17 @@ export function BuildingGeneralView() {
                 <div className="space-y-1.5 flex-1">
                   <div>
                     <label className="text-xs text-gray-500">Tipo</label>
-                    <p className="text-xs text-gray-900">Comercial</p>
+                    <p className="text-xs text-gray-900">
+                      {building ? (building.typology === 'residential' ? 'Residencial' : building.typology === 'mixed' ? 'Mixto' : 'Comercial') : "-"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
                       Uso Comercial
                     </label>
-                    <p className="text-xs text-gray-900">Mixto</p>
+                    <p className="text-xs text-gray-900">
+                      {building?.typology === 'commercial' ? 'Comercial' : building?.typology === 'mixed' ? 'Mixto' : '-'}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Sub-tipo</label>
@@ -643,7 +745,7 @@ export function BuildingGeneralView() {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Unidades</label>
-                    <p className="text-xs text-gray-900">30</p>
+                    <p className="text-xs text-gray-900">{building?.numUnits || "-"}</p>
                   </div>
                 </div>
               </div>
@@ -655,17 +757,23 @@ export function BuildingGeneralView() {
                 <div className="space-y-1.5 flex-1">
                   <div>
                     <label className="text-xs text-gray-500">Estrategia</label>
-                    <p className="text-xs text-gray-900">Valor añadido</p>
+                    <p className="text-xs text-gray-900">
+                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? 'Valor añadido' : financialAnalysis.recommendation.type === 'mantener' ? 'Core' : 'Venta') : "-"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      Valor Añadido
+                      Concepto
                     </label>
-                    <p className="text-xs text-gray-900">Rehabilitación</p>
+                    <p className="text-xs text-gray-900">
+                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? 'Rehabilitación' : financialAnalysis.recommendation.type === 'mantener' ? 'Mantenimiento' : 'Desinversión') : "-"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Estado</label>
-                    <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs"></span>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${building ? (building.status === 'with_book' ? 'bg-green-100 text-green-700' : building.status === 'ready_book' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700') : 'bg-gray-100 text-gray-700'}`}>
+                      {building ? (building.status === 'with_book' ? 'Con libro' : building.status === 'ready_book' ? 'Listo' : 'Borrador') : "-"}
+                    </span>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">Cliente</label>
@@ -694,7 +802,7 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
                       <p className="text-xs text-blue-100">
-                        {digitalBook?.completedPercentage || 0}% completado • {digitalBook?.progress || 0} documentos
+                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% completado • {digitalBook?.sections?.filter(s => s.complete).length || 0} secciones
                       </p>
                     </div>
                   </div>
@@ -773,28 +881,28 @@ export function BuildingGeneralView() {
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(16, 185, 129)" }}
                     ></div>
-                    <span className="text-gray-700">Completado: 0%</span>
+                    <span className="text-gray-700">Completado: {events.filter(e => e.category === 'maintenance' && e.status === 'completed').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(59, 130, 246)" }}
                     ></div>
-                    <span className="text-gray-700">En curso: 0%</span>
+                    <span className="text-gray-700">En curso: {events.filter(e => e.category === 'maintenance' && e.status === 'in_progress').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(245, 158, 11)" }}
                     ></div>
-                    <span className="text-gray-700">Programado: 0%</span>
+                    <span className="text-gray-700">Programado: {events.filter(e => e.category === 'maintenance' && e.status === 'pending').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(239, 68, 68)" }}
                     ></div>
-                    <span className="text-gray-700">Atrasado: 0%</span>
+                    <span className="text-gray-700">Atrasado: {events.filter(e => e.category === 'maintenance' && e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -813,7 +921,7 @@ export function BuildingGeneralView() {
                       <Zap className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">Electricidad</p>
                     </div>
-                    <p className="text-sm text-blue-700">€1850</p>
+                    <p className="text-sm text-blue-700">€{monthlyCosts?.byService['electricity'] || "-"}</p>
                     <p className="text-xs text-blue-600">Edificio</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
@@ -821,7 +929,7 @@ export function BuildingGeneralView() {
                       <Droplet className="w-3 h-3 text-cyan-600" />
                       <p className="text-xs text-cyan-900">Agua</p>
                     </div>
-                    <p className="text-sm text-cyan-700">€1005</p>
+                    <p className="text-sm text-cyan-700">€{monthlyCosts?.byService['water'] || "-"}</p>
                     <p className="text-xs text-cyan-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
@@ -829,7 +937,7 @@ export function BuildingGeneralView() {
                       <Flame className="w-3 h-3 text-orange-600" />
                       <p className="text-xs text-orange-900">Gas</p>
                     </div>
-                    <p className="text-sm text-orange-700">€95</p>
+                    <p className="text-sm text-orange-700">€{monthlyCosts?.byService['gas'] || "-"}</p>
                     <p className="text-xs text-orange-600">Total</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
@@ -837,7 +945,7 @@ export function BuildingGeneralView() {
                       <FileText className="w-3 h-3 text-purple-600" />
                       <p className="text-xs text-purple-900">IBI</p>
                     </div>
-                    <p className="text-sm text-purple-700">€562</p>
+                    <p className="text-sm text-purple-700">€{monthlyCosts?.byService['ibi'] || "-"}</p>
                     <p className="text-xs text-purple-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
@@ -845,7 +953,7 @@ export function BuildingGeneralView() {
                       <Trash className="w-3 h-3 text-amber-600" />
                       <p className="text-xs text-amber-900">Basuras</p>
                     </div>
-                    <p className="text-sm text-amber-700">€107</p>
+                    <p className="text-sm text-amber-700">€{monthlyCosts?.byService['waste'] || "-"}</p>
                     <p className="text-xs text-amber-600">Unidades</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
@@ -853,8 +961,8 @@ export function BuildingGeneralView() {
                       <Euro className="w-3 h-3 text-green-700" />
                       <p className="text-xs text-green-900">Total</p>
                     </div>
-                    <p className="text-sm text-green-800">€3619</p>
-                    <p className="text-xs text-green-700">€43.428/año</p>
+                    <p className="text-sm text-green-800">€{monthlyCosts?.total || "-"}</p>
+                    <p className="text-xs text-green-700">{monthlyCosts?.total ? `€${monthlyCosts.total * 12}/año` : "-"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -871,27 +979,27 @@ export function BuildingGeneralView() {
                           <Zap className="w-2.5 h-2.5 text-blue-600" />
                           <span className="text-gray-700">Electricidad</span>
                         </div>
-                        <span className="text-gray-900">€1850</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€420</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€0</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="pt-0.5 mt-0.5 border-t border-purple-300 flex items-center justify-between">
                         <span className="text-xs text-purple-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-purple-800">€2270</span>
+                        <span className="text-xs text-purple-800">€-</span>
                       </div>
                     </div>
                   </div>
@@ -906,34 +1014,34 @@ export function BuildingGeneralView() {
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
                           <span className="text-gray-700">Agua</span>
                         </div>
-                        <span className="text-gray-900">€585</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
                           <span className="text-gray-700">Gas</span>
                         </div>
-                        <span className="text-gray-900">€95</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <FileText className="w-2.5 h-2.5 text-purple-600" />
                           <span className="text-gray-700">IBI</span>
                         </div>
-                        <span className="text-gray-900">€562</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Trash2 className="w-2.5 h-2.5 text-amber-600" />
                           <span className="text-gray-700">Basuras</span>
                         </div>
-                        <span className="text-gray-900">€107</span>
+                        <span className="text-gray-900">€-</span>
                       </div>
                       <div className="pt-0.5 mt-0.5 border-t border-indigo-300 flex items-center justify-between">
                         <span className="text-xs text-indigo-900">
                           Subtotal
                         </span>
-                        <span className="text-xs text-indigo-800">€1349</span>
+                        <span className="text-xs text-indigo-800">€-</span>
                       </div>
                     </div>
                   </div>
@@ -965,17 +1073,17 @@ export function BuildingGeneralView() {
                       Calificación Actual
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs">D</span>
+                      <span className="text-xs">{_esgData?.status === 'complete' ? _esgData.data.label : "-"}</span>
                       <span className="text-xs text-gray-500">
-                        85.42 kWh/m²·año
+                        -
                       </span>
                     </div>
                   </div>
                   <div className="bg-blue-50 rounded p-1">
                     <div className="text-xs text-blue-700">Objetivo</div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-blue-600">D</span>
-                      <span className="text-xs text-blue-600">65 kWh/m²</span>
+                      <span className="text-xs text-blue-600">-</span>
+                      <span className="text-xs text-blue-600">-</span>
                     </div>
                   </div>
                 </div>
@@ -983,29 +1091,30 @@ export function BuildingGeneralView() {
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
-                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                        <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
                         <span className="text-gray-600 text-xs">Consumo</span>
                       </div>
-                      <span className="text-xs text-orange-600">+20.4</span>
+                      <span className="text-xs text-gray-400">-</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1">
                       <div
-                        className="h-1 rounded-full bg-orange-500"
-                        style={{ width: "76.0946%" }}
+                        className="h-1 rounded-full bg-gray-300"
+                        style={{ width: "0%" }}
                       ></div>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
-                        <TriangleAlert className="w-2.5 h-2.5 text-orange-600" />
+                        <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
+                        <span className="text-gray-600 text-xs">Emisiones</span>
                       </div>
-                      <span className="text-xs text-orange-600">+4.7</span>
+                      <span className="text-xs text-gray-400">-</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1">
                       <div
-                        className="h-1 rounded-full bg-orange-500"
-                        style={{ width: "71.6846%" }}
+                        className="h-1 rounded-full bg-gray-300"
+                        style={{ width: "0%" }}
                       ></div>
                     </div>
                   </div>
@@ -1033,15 +1142,15 @@ export function BuildingGeneralView() {
                       <FileText className="w-2.5 h-2.5 text-[#1e3a8a]" />
                       <span className="text-xs text-gray-700">Completado</span>
                     </div>
-                    <span className="text-xs text-[#1e3a8a]">100%</span>
+                    <span className="text-xs text-[#1e3a8a]">{digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}%</span>
                   </div>
                   <div className="w-full bg-white rounded-full h-1">
                     <div
                       className="bg-[#1e3a8a] h-1 rounded-full"
-                      style={{ width: "100%" }}
+                      style={{ width: digitalBook ? `${((digitalBook.progress || 0) / 8) * 100}%` : '0%' }}
                     ></div>
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-600">8/8 tareas</div>
+                  <div className="mt-0.5 text-xs text-gray-600">{digitalBook?.sections?.filter(s => s.complete).length || 0}/8 tareas</div>
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="text-xs text-gray-700">Mejoras:</div>
@@ -1049,7 +1158,7 @@ export function BuildingGeneralView() {
                     <div className="flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5 text-orange-600" />
                       <span className="text-xs text-orange-900">
-                        Envolvente: -18 kWh/m²
+                        Envolvente: -
                       </span>
                     </div>
                   </div>
@@ -1057,15 +1166,15 @@ export function BuildingGeneralView() {
                     <div className="flex items-center gap-1">
                       <TrendingUp className="w-2.5 h-2.5 text-orange-600" />
                       <span className="text-xs text-orange-900">
-                        HVAC: -12 kWh/m²
+                        HVAC: -
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="pt-1 border-t border-gray-200 bg-blue-50 rounded p-1 mt-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-blue-600">-58 kWh/m²</span>
-                    <span className="text-green-600">€450k inv.</span>
+                    <span className="text-blue-600">-</span>
+                    <span className="text-green-600">-</span>
                   </div>
                 </div>
               </div>
@@ -1084,12 +1193,18 @@ export function BuildingGeneralView() {
                     <div className="text-xs text-gray-600">
                       Valor del Activo
                     </div>
-                    <div className="text-xs">€8.50M</div>
-                    <div className="text-xs text-gray-500">1574 €/m²</div>
+                    <div className="text-xs">
+                      {financialAnalysis?.metrics.marketValue ? `€${(financialAnalysis.metrics.marketValue / 1000000).toFixed(2)}M` : "-"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {building?.price && building?.squareMeters ? `${Math.round(building.price / building.squareMeters)} €/m²` : "-"}
+                    </div>
                   </div>
                   <div className="border-l-2 border-green-500 bg-green-50 pl-1">
                     <div className="text-xs text-green-700">ROI Actual</div>
-                    <div className="text-xs text-green-600">8.00%</div>
+                    <div className="text-xs text-green-600">
+                      {financialAnalysis?.metrics.roi ? `${financialAnalysis.metrics.roi.toFixed(2)}%` : "-"}
+                    </div>
                     <div className="text-xs text-green-600">Anual</div>
                   </div>
                 </div>
@@ -1101,28 +1216,35 @@ export function BuildingGeneralView() {
                   <div className="space-y-0.5 text-xs">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Inversión:</span>
-                      <span className="text-orange-600">€473k</span>
+                      <span className="text-orange-600">
+                        {financialAnalysis?.recommendation.financialImpact.investmentRequired ? `€${Math.round(financialAnalysis.recommendation.financialImpact.investmentRequired / 1000)}k` : "-"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Revalorización:</span>
-                      <span className="text-green-600">+12%</span>
+                      <span className="text-green-600">
+                        {financialAnalysis?.metrics.valueGap ? `+${financialAnalysis.metrics.valueGap.toFixed(1)}%` : "-"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor Futuro:</span>
-                      <span className="text-green-700">€9.52M</span>
+                      <span className="text-green-700">
+                         {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="bg-[#1e3a8a] text-white rounded p-1.5">
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="text-xs">Ganancia Neta</div>
-
                     <ArrowUpRight className="w-2.5 h-2.5" />
                   </div>
-                  <div className="text-base">€548k</div>
+                  <div className="text-base">
+                    {financialAnalysis?.recommendation.financialImpact.expectedReturn ? `€${Math.round(financialAnalysis.recommendation.financialImpact.expectedReturn / 1000)}k` : "-"}
+                  </div>
                   <div className="flex justify-between text-xs mt-0.5 opacity-90">
-                    <span>ROI: 216%</span>
-                    <span>6.5 años</span>
+                    <span>ROI: {financialAnalysis?.recommendation.financialImpact.irr ? `${Math.round(financialAnalysis.recommendation.financialImpact.irr)}%` : "-"}</span>
+                    <span>{financialAnalysis?.recommendation.financialImpact.paybackPeriod ? `${(financialAnalysis.recommendation.financialImpact.paybackPeriod / 12).toFixed(1)} años` : "-"}</span>
                   </div>
                 </div>
               </div>
@@ -1153,33 +1275,33 @@ export function BuildingGeneralView() {
                 <div className="space-y-2">
                   <div>
                     <p className="text-xs text-gray-500 mb-0.5">
-                      Diciembre 2024
+                      {new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
                     </p>
                     <div className="flex items-baseline gap-1.5">
-                      <p className="text-xs text-green-600">€5550</p>
-                      <p className="text-xs text-gray-500">/ €7400</p>
+                      <p className="text-xs text-green-600">{rentStats.total > 0 ? `€${rentStats.total}` : "-"}</p>
+                      <p className="text-xs text-gray-500">/ {rentStats.potential > 0 ? `€${rentStats.potential}` : "-"}</p>
                     </div>
                     <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
                       <div
                         className="bg-green-600 h-1.5 rounded-full transition-all"
-                        style={{ width: "75%" }}
+                        style={{ width: rentStats.potential > 0 ? `${(rentStats.total / rentStats.potential) * 100}%` : '0%' }}
                       ></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      75.0% cobrado
+                      {rentStats.potential > 0 ? `${Math.round((rentStats.total / rentStats.potential) * 100)}% cobrado` : "-"}
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-1.5">
                     <div className="text-center p-1.5 bg-green-50 rounded">
-                      <p className="text-xs text-green-600">6</p>
+                      <p className="text-xs text-green-600">{rentStats.paid || "-"}</p>
                       <p className="text-xs text-gray-600">Pagadas</p>
                     </div>
                     <div className="text-center p-1.5 bg-amber-50 rounded">
-                      <p className="text-xs text-amber-600">1</p>
+                      <p className="text-xs text-amber-600">{rentStats.pending || "-"}</p>
                       <p className="text-xs text-gray-600">Pendientes</p>
                     </div>
                     <div className="text-center p-1.5 bg-red-50 rounded">
-                      <p className="text-xs text-red-600">1</p>
+                      <p className="text-xs text-red-600">{rentStats.delayed || "-"}</p>
                       <p className="text-xs text-gray-600">Retrasadas</p>
                     </div>
                   </div>
@@ -1262,31 +1384,22 @@ export function BuildingGeneralView() {
                     <h3 className="text-sm">Actividad Reciente</h3>
                   </div>
                   <div className="space-y-1.5">
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-green-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">CEE renovado</p>
-                        <p className="text-xs text-gray-500">hace 2 días</p>
+                    {events.filter(e => e.status === 'completed').slice(-3).reverse().map(event => (
+                      <div key={event.id} className="flex items-start gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-green-500"></div>
+                        <div>
+                          <p className="text-xs text-gray-900">{event.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(event.eventDate).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-blue-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">
-                          Mantenimiento HVAC completado
-                        </p>
-                        <p className="text-xs text-gray-500">hace una semana</p>
+                    ))}
+                    {events.filter(e => e.status === 'completed').length === 0 && (
+                      <div className="py-4 text-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                        <p className="text-xs text-gray-500">Sin actividad reciente registrada.</p>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full mt-0.5 flex-shrink-0 bg-orange-500"></div>
-                      <div>
-                        <p className="text-xs text-gray-900">
-                          Inspección de ascensor programada
-                        </p>
-                        <p className="text-xs text-gray-500">en 3 días</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-2 shadow-sm">
@@ -1295,18 +1408,23 @@ export function BuildingGeneralView() {
                     <h3 className="text-sm">Próximas Alertas</h3>
                   </div>
                   <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-red-50 text-red-600">
-                      <TriangleAlert className="w-3 h-3 flex-shrink-0" />
-                      <p className="text-xs text-gray-900">
-                        Revisión de ascensor vence en 15 días
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 p-1.5 rounded bg-yellow-50 text-yellow-600">
-                      <Clock className="w-3 h-3 flex-shrink-0" />
-                      <p className="text-xs text-gray-900">
-                        Mantenimiento RITE trimestral
-                      </p>
-                    </div>
+                    {[...expiredDocs, ...events.filter(e => e.status !== 'completed' && e.priority === 'urgent')].slice(0, 4).map((item) => {
+                      const isDoc = 'tipo_documento' in item;
+                      return (
+                        <div key={isDoc ? `doc-${item.id}` : `event-${item.id}`} className="flex items-center gap-1.5 p-1.5 rounded bg-red-50 text-red-600">
+                          <TriangleAlert className="w-3 h-3 flex-shrink-0" />
+                          <p className="text-xs text-gray-900">
+                            {isDoc ? `${item.tipo_documento} vencido (${item.contenido_extraido.vigencia || 'Sin fecha'})` : `${item.title} (Urgente)`}
+                          </p>
+                        </div>
+                      );
+                    })}
+                    {expiredDocs.length === 0 && events.filter(e => e.status !== 'completed' && e.priority === 'urgent').length === 0 && (
+                      <div className="text-center py-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                        <CheckCircle className="w-5 h-5 text-green-500/50 mx-auto mb-1" />
+                        <p className="text-xs text-gray-500">No hay alertas urgentes pendientes.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
