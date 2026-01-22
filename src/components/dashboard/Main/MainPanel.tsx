@@ -170,41 +170,6 @@ export function MainPanel() {
     );
   }
 
-  function PerformanceBuilding({
-    name,
-    type,
-    percentage,
-  }: {
-    name: string;
-    type: string;
-    percentage: number;
-  }) {
-    let BarColor = "bg-green-500";
-    if (percentage < 80 && percentage > 60) {
-      BarColor = "bg-amber-500";
-    } else if (percentage <= 60) {
-      BarColor = "bg-red-500";
-    }
-    return (
-      <div>
-        <div className="flex justify-between items-center mb-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs">{name}</span>
-            <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
-              {type}
-            </span>
-          </div>
-          <span className="text-xs">{percentage}%</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
-          <div
-            className={`${BarColor} h-2 rounded-full transition-all duration-500`}
-            style={{ width: `${percentage}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  }
 
   function getActivityNumber(activity: string) {
     const ActionsValues = {
@@ -384,23 +349,7 @@ export function MainPanel() {
               })}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex flex-col">
-            <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-              <h3 className="text-sm">Rendimiento por Edificio</h3>
-              <button className="text-xs text-blue-600 hover:text-blue-700 transition-colors">
-                Ver todas
-              </button>
-            </div>
-            <div className="p-3 overflow-y-auto" style={{ maxHeight: "320px" }}>
-              <div className="space-y-3">
-                <PerformanceBuilding
-                  name="Plaza Shopping"
-                  type="Comercial"
-                  percentage={79}
-                />
-              </div>
-            </div>
-          </div>
+          
         </div>
         <div className="flex flex-col gap-3 min-h-0">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm p-3 text-white flex-shrink-0">
