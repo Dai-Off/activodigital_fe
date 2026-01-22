@@ -8,8 +8,6 @@ import {
   User,
   Wrench,
   Activity,
-  Plus,
-  Upload,
   Building2,
   TrendingUp,
   Receipt,
@@ -20,6 +18,7 @@ import { BuildingsApiService, type Building } from "../../services/buildingsApi"
 import { UnitsApiService, type BuildingUnit } from "../../services/unitsApi";
 import { SkeletonText, LightSkeleton } from "../ui/LoadingSystem";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { UnitGestion } from "./UnitGestion";
 
 export const UnitDetail: React.FC = () => {
   const { id: buildingId, unitId } = useParams<{
@@ -489,191 +488,23 @@ export const UnitDetail: React.FC = () => {
           )}
         </TabsContent>
 
-        {/* Pestañas restantes vacías por ahora */}
+        {/* Pestaña de Gestión */}
         <TabsContent
           value="gestion"
           className="flex-1 mt-3 outline-none"
         >
-          {loading ? (
-            <div className="flex flex-col gap-3">
-              <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
-                <SkeletonText
-                  lines={2}
-                  widths={["w-48", "w-64"]}
-                  className="mb-4"
-                />
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <LightSkeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
-                <SkeletonText
-                  lines={1}
-                  widths={["w-32"]}
-                  className="mb-3"
-                />
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <LightSkeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm flex-1 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-gray-200 flex-shrink-0">
-                  <SkeletonText
-                    lines={1}
-                    widths={["w-40"]}
-                  />
-                </div>
-                <div className="flex-1 p-4 space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <SkeletonText
-                      key={i}
-                      lines={1}
-                      widths={["w-full"]}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+          {buildingId && unitId ? (
+            <UnitGestion
+              buildingId={buildingId}
+              unitId={unitId}
+              building={building}
+              unit={unit}
+            />
           ) : (
-            <div className="flex flex-col gap-3">
-              {/* Encabezado gestión diaria */}
-              <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-base md:text-lg mb-1 text-gray-900">
-                      Gestión diaria de la unidad
-                    </h2>
-                    <p className="text-xs text-gray-500 truncate">
-                      {building && unit
-                        ? `${building.name} - ${unit.name || unit.identifier || "Unidad"}`
-                        : "Sin información de unidad"}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md font-medium transition-all border bg-white text-gray-700 hover:bg-gray-50 h-9 px-2 sm:px-3 text-xs cursor-not-allowed opacity-60 flex-1 sm:flex-none"
-                      disabled
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span className="hidden sm:inline">Nueva categoría</span>
-                      <span className="sm:hidden">Categoría</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-md font-medium transition-all bg-blue-600 hover:bg-blue-700 text-white h-9 px-2 sm:px-3 text-xs cursor-not-allowed opacity-60 flex-1 sm:flex-none"
-                      disabled
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span className="hidden sm:inline">Subir documento</span>
-                      <span className="sm:hidden">Subir</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Métricas de documentos (placeholders 0 hasta tener datos reales) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">
-                      Total documentos
-                    </p>
-                    <p className="text-blue-600 text-sm">0</p>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">Activos</p>
-                    <p className="text-green-600 text-sm">0</p>
-                  </div>
-                  <div className="p-3 bg-yellow-50 rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">Pendientes</p>
-                    <p className="text-yellow-600 text-sm">0</p>
-                  </div>
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <p className="text-xs text-gray-600 mb-1">Por vencer</p>
-                    <p className="text-purple-600 text-sm">0</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Categorías */}
-              <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
-                <h3 className="text-sm mb-3">Categorías</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {[
-                    {
-                      label: "Financiero",
-                      color: "bg-blue-100",
-                      Icon: Euro,
-                    },
-                    {
-                      label: "Arrendamiento",
-                      color: "bg-green-100",
-                      Icon: FileText,
-                    },
-                    {
-                      label: "Mantenimiento",
-                      color: "bg-orange-100",
-                      Icon: Wrench,
-                    },
-                    {
-                      label: "Certificaciones",
-                      color: "bg-purple-100",
-                      Icon: FileText,
-                    },
-                    {
-                      label: "Comunicaciones",
-                      color: "bg-pink-100",
-                      Icon: Building2,
-                    },
-                  ].map(({ label, color, Icon }) => (
-                    <div key={label} className="relative group">
-                      <button
-                        type="button"
-                        className="w-full p-3 rounded-lg border-2 transition-all text-left border-gray-200 hover:border-gray-300 bg-white"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className={`p-2 rounded-lg ${color}`}>
-                            <Icon className="w-5 h-5 text-gray-700" />
-                          </div>
-                        </div>
-                        <p className="text-xs mb-1">{label}</p>
-                        <p className="text-xs text-gray-500">
-                          Sin documentos todavía
-                        </p>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Lista de documentos de la unidad */}
-              <div className="bg-white rounded-lg shadow-sm flex-1 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-gray-200 flex-shrink-0 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      Documentos de la unidad
-                    </p>
-                    <p className="text-xs text-gray-500">0 documentos</p>
-                  </div>
-                </div>
-                <div className="flex-1 flex items-center justify-center p-6">
-                  <div className="text-center max-w-md">
-                    <p className="text-sm font-medium text-gray-900 mb-1">
-                      Aún no hay documentos asociados a esta unidad
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Podrás gestionar aquí contratos, facturas, certificaciones y
-                      otra documentación relevante en cuanto se suban archivos
-                      desde el módulo de gestión.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <p className="text-sm text-gray-500">
+                No se pudo identificar el edificio o la unidad
+              </p>
             </div>
           )}
         </TabsContent>
