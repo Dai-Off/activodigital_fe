@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Users as UsersIcon, UserPlus, Filter, Search, Shield } from "lucide-react";
+import { Users as UsersIcon, UserPlus, Filter, Search, Shield, Trash, Pencil } from "lucide-react";
 import { createUser, deleteUser, editUser, getAllUsers, getRoles, type Role } from "~/services/users";
 import { t } from "i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -31,7 +31,7 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<Boolean | null>(null);
 
   const modalRef = useRef<VenUsuarioRefMethods>(null);
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
 
   const [sortColumn, setSortColumn] = useState<'name' | 'role' | 'activity'>('name');
@@ -118,7 +118,15 @@ export default function App() {
 
   const handleDelete = async (userId: string) => {
     try {
-      await deleteUser(userId);
+      const response = await deleteUser(userId);
+      if (response?.ok) {
+        setUsers(prev => {
+          return (prev ?? []).filter(user => user.id !== userId);
+        });
+
+        showSuccess('Usuario eliminado correctamente.');
+      }
+      return response;
     } catch (err) {
       let errorMsg = 'Puedes reportar este fallo a nuestro equipo.';
       if (err instanceof Error) {
@@ -127,8 +135,6 @@ export default function App() {
         errorMsg = err;
       }
       showError('¡Ups! Ocurrió algo.', errorMsg)
-    } finally {
-      reloadData()
     }
   };
 
@@ -402,11 +408,11 @@ export default function App() {
                       <thead className="bg-gray-50 sticky top-0">
                         <tr className="border-b border-gray-200">
                           <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Name', "Nombre")}</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Rol</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Email</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Estado</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Última actividad</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Acciones</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Role', "Rol")}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Email', "Email")}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Status', "Estado")}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('LastActivity', "Última actividad")}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Actions', "Acciones")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -445,7 +451,7 @@ export default function App() {
                               <td className="py-2 px-3">
                                 <span className="text-xs text-gray-500">{howTimeWas(u.updatedAt)}</span>
                               </td>
-                              <td className="py-2 px-3">
+                              <td className="py-2 px-3 flex gap-2">
                                 <button
                                   className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
                                   onClick={(e) => {
@@ -459,7 +465,16 @@ export default function App() {
                                     });
                                   }}
                                 >
-                                  Editar
+                                  <Pencil className="w-4 h-4 text-blue-600" />
+                                </button>
+                                <button
+                                  className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(u.id);
+                                  }}
+                                >
+                                  <Trash className="w-4 h-4 text-red-600" />
                                 </button>
                               </td>
                             </tr>
@@ -495,21 +510,32 @@ export default function App() {
                                 <p className="text-xs text-gray-600 truncate max-w-[200px]">{u.email}</p>
                               </div>
                             </div>
-                            <button
-                              className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser({
-                                  id: u.id,
-                                  fullName: u.fullName,
-                                  email: u.email,
-                                  role: typeof u.role === "string" ? u.role : u.role?.name,
-                                  status: u.status
-                                });
-                              }}
-                            >
-                              Editar
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditUser({
+                                    id: u.id,
+                                    fullName: u.fullName,
+                                    email: u.email,
+                                    role: typeof u.role === "string" ? u.role : u.role?.name,
+                                    status: u.status
+                                  });
+                                }}
+                              >
+                                <Pencil className="w-4 h-4 text-blue-600" />
+                              </button>
+                              <button
+                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(u.id);
+                                }}
+                              >
+                                <Trash className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
                           </div>
                           <div className="mt-2 flex justify-between items-center">
                             <span className="text-xs text-gray-700">

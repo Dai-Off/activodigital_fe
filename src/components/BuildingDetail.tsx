@@ -1983,7 +1983,7 @@ const BuildingDetail: React.FC = () => {
           {/* Actividad reciente */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
             <h3 className="text-sm mb-4">
-              {t("recentActivity", "Actividad reciente")}
+              {t("recent Activity", "Actividad Reciente")}
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">

@@ -20,7 +20,7 @@ export interface VenUsuarioRefMethods {
 
 interface VenUsuarioProps {
   onSave: (values: UserFormData) => Promise<void> | void;
-  onDelete?: (userId: string) => Promise<void> | void;
+  onDelete?: (userId: string) => Promise<Response | any> | void;
   roles: Role[];
 }
 
@@ -86,10 +86,12 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
 
     const handleDelete = async () => {
       if (onDelete && form.id) {
-        await onDelete(form.id);
-        setVisible(false);
+        const response = await onDelete(form.id);
+        if (response?.ok) {
+          setVisible(false);
+        }
       }
-    };
+    };  
 
     if (!visible) return null;
     return (

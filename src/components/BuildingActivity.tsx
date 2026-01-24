@@ -3,20 +3,24 @@ import { getTrazability, type trazabilityList } from "~/services/trazability";
 import { formatofechaCorta } from "~/utils/fechas";
 import { timeAgo } from "~/utils/timeAgo";
 import { BuildingActivityLoading } from "./ui/dashboardLoading";
+import { useParams } from "react-router-dom";
 
 export function BuildingActivity() {
-  const [activity, setAtivity] = useState<trazabilityList[] | undefined>([]);
+  const [activity, setActivity] = useState<trazabilityList[] | undefined>([]);
   const [loading, setLoading] = useState(true);
 
+  const { id } = useParams<any>();
+
   useEffect(() => {
-    getTrazability()
-      .then((data) => setAtivity(data.data))
+    if (!id) return;
+    getTrazability(id)
+      .then((data) => setActivity(data.data))
       .catch((error) => {
         console.error("Error al cargar la actividad reciente:", error);
-        setAtivity(undefined);
+        setActivity(undefined);
       })
       .finally(() => setLoading(false));
-  }, [getTrazability]);
+  }, [id]);
 
   if (loading) {
     return <BuildingActivityLoading />;
@@ -44,8 +48,9 @@ export function BuildingActivity() {
       "COMPLETAR INSPECCION ELECTRICA": 10,
       CREAR: 11,
       ELIMINAR: 12,
-      APROBAR: 0,
-      RECHAZAR: 0,
+      CARGA: 13,
+      APROBAR: 14,
+      RECHAZAR: 15,
     };
 
     return ActionsValues[activity as keyof typeof ActionsValues] || 0;
@@ -73,8 +78,9 @@ export function BuildingActivity() {
       10: "bg-purple-600",
       11: "bg-green-600",
       12: "bg-red-600",
-      13: "bg-gray-600",
-      14: "bg-red-600",
+      13: "bg-yellow-600",
+      14: "bg-gray-600",
+      15: "bg-red-600",
     };
 
     date = formatofechaCorta(date);
@@ -97,7 +103,7 @@ export function BuildingActivity() {
       <div className="h-full flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="bg-white rounded-lg p-3 shadow-sm h-full">
-            <h2 className="text-sm mb-3">Actividad reciente</h2>
+            <h2 className="text-sm mb-3">Actividad Reciente</h2>
             <div className="space-y-2">
               {activity.map((act) => {
                 return (
