@@ -170,6 +170,55 @@ export async function uploadGestionDocument(
 }
 
 /**
+ * Cuenta todos los documentos de gestión de un edificio
+ * @param buildingId - ID del edificio
+ * @returns Número total de documentos
+ */
+export async function countBuildingDocuments(buildingId: string): Promise<number> {
+  try {
+    const supabase = getSupabaseClient();
+    let totalCount = 0;
+
+    // 1. Obtenemos las carpetas (categorías) dentro del edificio
+    const { data: categories, error: catError } = await supabase.storage
+      .from('building-documents')
+      .list(buildingId);
+
+    if (catError || !categories) {
+      console.error('Error al obtener categorías para conteo:', catError);
+      return 0;
+    }
+
+    // 2. Recorremos cada categoría para contar sus archivos
+    for (const cat of categories) {
+      // Si el nombre tiene punto, es un archivo suelto en la raíz (poco común en tu estructura)
+      // Si no tiene punto, es una carpeta de categoría
+      const isFolder = !cat.name.includes('.');
+      
+      if (isFolder) {
+        const { data: files } = await supabase.storage
+          .from('building-documents')
+          .list(`${buildingId}/${cat.name}`);
+
+        if (files) {
+          // Filtramos para contar solo archivos (los que tienen extensión)
+          const fileCount = files.filter(f => f.name.includes('.')).length;
+          totalCount += fileCount;
+        }
+      } else {
+        // Es un archivo en la raíz del buildingId
+        totalCount++;
+      }
+    }
+
+    return totalCount;
+  } catch (error) {
+    console.error('Error inesperado contando documentos:', error);
+    return 0;
+  }
+}
+
+/**
  * Lista todos los documentos de gestión de un edificio
  * @param buildingId - ID del edificio
  * @param category - Categoría opcional para filtrar
