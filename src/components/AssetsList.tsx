@@ -261,6 +261,9 @@ export default function AssetsList() {
     sortOrder: "asc",
     statusFilter: [],
     energyClassFilter: [],
+    typologyFilter: [],
+    occupationFilter: [],
+    complianceFilter: [],
   });
 
   useEffect(() => {
@@ -374,15 +377,65 @@ export default function AssetsList() {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    // Filtro de búsqueda por texto
+    // Filtro de búsqueda por texto (Soporta etiquetas localizadas)
     if (searchFilters.searchTerm) {
       const term = searchFilters.searchTerm.toLowerCase();
-      result = result.filter(
-        (building) =>
+      result = result.filter((building) => {
+        // 1. Campos básicos
+        const matchesBasic =
           building.name.toLowerCase().includes(term) ||
           building.address.toLowerCase().includes(term) ||
-          building.cadastralReference?.toLowerCase().includes(term)
-      );
+          building.cadastralReference?.toLowerCase().includes(term);
+        if (matchesBasic) return true;
+
+        // 2. Tipología (Localizada ES/EN)
+        const typologies = {
+          residential: { es: "residencial", en: "residential" },
+          commercial: { es: "comercial", en: "commercial" },
+          mixed: { es: "mixto", en: "mixed" },
+        };
+        const typ = typologies[building.typology] as { es: string; en: string };
+        if (typ && (typ.es.includes(term) || typ.en.includes(term))) return true;
+
+        // 3. Ocupación (Simulado para que el buscador responda a los términos)
+        const occupation = { es: "operativo", en: "operational" };
+        if (occupation.es.includes(term) || occupation.en.includes(term))
+          return true;
+
+        // 4. Clase Energética (Búsqueda exacta de letra A-G)
+        const certs = energyCertificates.filter(
+          (c) => c.buildingId === building.id
+        );
+        const rating =
+          certs.length > 0 ? getLatestRating(certs).toLowerCase().trim() : "";
+        if (rating === term) return true;
+
+        // 5. Cumplimiento (Basado en ESG Label)
+        const esg = esgScores.get(building.id);
+        const esgLabel =
+          esg?.status === "complete" && esg.data?.label
+            ? esg.data.label.toLowerCase()
+            : "";
+        
+        const complianceTerms = {
+          high: { es: "alto", en: "high" },
+          medium: { es: "medio", en: "medium" },
+          low: { es: "bajo", en: "low" },
+        };
+
+        let complianceLevel = "";
+        if (["a", "b"].includes(esgLabel)) complianceLevel = "high";
+        else if (["c", "d"].includes(esgLabel)) complianceLevel = "medium";
+        else if (["e", "f", "g"].includes(esgLabel)) complianceLevel = "low";
+
+        if (complianceLevel) {
+          const ct =
+            complianceTerms[complianceLevel as keyof typeof complianceTerms];
+          if (ct.es.includes(term) || ct.en.includes(term)) return true;
+        }
+
+        return false;
+      });
     }
 
     // Filtro por estado
@@ -403,6 +456,7 @@ export default function AssetsList() {
     }
 
     // Filtro por clase energética
+    // Filtro por clase energética
     if (searchFilters.energyClassFilter.length > 0) {
       result = result.filter((building) => {
         const certs = energyCertificates.filter(
@@ -410,7 +464,47 @@ export default function AssetsList() {
         );
         if (certs.length === 0) return false;
         const rating = getLatestRating(certs);
-        return searchFilters.energyClassFilter.includes(rating);
+        return searchFilters.energyClassFilter.includes(rating.trim());
+      });
+    }
+
+    // Filtro por Tipología
+    if (searchFilters.typologyFilter.length > 0) {
+      result = result.filter((building) =>
+        searchFilters.typologyFilter.includes(building.typology)
+      );
+    }
+
+    // Filtro por Ocupación (Simulado con "Operativo" ya que está hardcoded en la vista)
+    if (searchFilters.occupationFilter.length > 0) {
+      result = result.filter((_building) => {
+        // Asumimos que todos son "operativos" por ahora, como en la vista
+        if (searchFilters.occupationFilter.includes("operative")) return true;
+        return false;
+      });
+    }
+
+    // Filtro por Cumplimiento (Estimación basada en ESG Label)
+    if (searchFilters.complianceFilter.length > 0) {
+      result = result.filter((building) => {
+        const esg = esgScores.get(building.id);
+        const label =
+          esg?.status === "complete" && esg.data?.label ? esg.data.label : "Z";
+        const high = ["A", "B"];
+        const medium = ["C", "D"];
+        const low = ["E", "F", "G"];
+
+        if (searchFilters.complianceFilter.includes("high") && high.includes(label))
+          return true;
+        if (
+          searchFilters.complianceFilter.includes("medium") &&
+          medium.includes(label)
+        )
+          return true;
+        if (searchFilters.complianceFilter.includes("low") && low.includes(label))
+          return true;
+
+        return false;
       });
     }
 
