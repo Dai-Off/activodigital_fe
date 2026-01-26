@@ -170,7 +170,7 @@ export class BuildingsApiService {
       isArray: Array.isArray(response),
       hasData: !!response.data,
       buildingsCount: buildings.length,
-      buildings: buildings.map(b => ({ id: b.id, name: b.name, owner_id: b.ownerId }))
+      buildings: buildings.map((b: Building) => ({ id: b.id, name: b.name, owner_id: b.ownerId }))
     });
     return buildings;
   }

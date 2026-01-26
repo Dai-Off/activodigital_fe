@@ -30,6 +30,7 @@ interface BuildingSummaryData {
   technicianEmail: string;
   cfoEmail: string;
   propietarioEmail: string;
+  cadastralReference?: string;
 
   // Financial
   squareMeters: string;
