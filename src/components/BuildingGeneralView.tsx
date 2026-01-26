@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
+import { countBuildingDocuments } from "~/services/gestionDocuments";
 
 export function BuildingGeneralView() {
   // Hooks de navegación y notificaciones
@@ -89,6 +90,14 @@ export function BuildingGeneralView() {
     const unique = Array.from(new Set(urls));
     return unique.length ? unique : [fallback];
   }, [building?.images]);
+
+  const [docCount, setDocCount] = useState(0);
+
+  useEffect(() => {
+    if (id) {
+      countBuildingDocuments(id).then(setDocCount);
+    }
+  }, [id]);
 
   useEffect(() => {
     // Resetear carrusel al cambiar de edificio / imágenes
@@ -325,16 +334,16 @@ export function BuildingGeneralView() {
       try {
         const certificatesData = await EnergyCertificatesService.getByBuilding(id);
         const certificates = certificatesData.certificates || [];
-        
+
         if (certificates.length > 0) {
           // Usar el certificado más reciente
-          const latestCertificate = certificates.sort((a, b) => 
+          const latestCertificate = certificates.sort((a, b) =>
             new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
           )[0];
 
           const consumptionValue = latestCertificate.primaryEnergyKwhPerM2Year;
-          const consumption = typeof consumptionValue === 'number' 
-            ? consumptionValue 
+          const consumption = typeof consumptionValue === 'number'
+            ? consumptionValue
             : parseFloat(String(consumptionValue || '0'));
 
           if (isNaN(consumption)) {
@@ -428,7 +437,7 @@ export function BuildingGeneralView() {
     return { urgent, thisMonth, priorityAction };
   }, [events]);
 
-  
+
 
   // Calculate derived metrics
   const occupancyStats = useMemo(() => {
@@ -458,16 +467,16 @@ export function BuildingGeneralView() {
   const chartData = useMemo(() => {
     // Si no hay eventos, devolvemos skeleton de "Sin datos"
     const emptyData = [{ name: "Sin datos", value: 1, color: "#e5e7eb" }];
-    
+
     if (!events.length) return emptyData;
-    
+
     const maintenanceEvents = events.filter(e => e.category === 'maintenance');
     if (!maintenanceEvents.length) return emptyData;
 
     const completed = maintenanceEvents.filter(e => e.status === 'completed').length;
     const inProgress = maintenanceEvents.filter(e => e.status === 'in_progress').length;
     const scheduled = maintenanceEvents.filter(e => e.status === 'pending').length;
-    
+
     // Atrasado: scheduled in past
     const delayed = maintenanceEvents.filter(e => e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length;
 
@@ -608,16 +617,15 @@ export function BuildingGeneralView() {
                     Eficiencia Energética
                   </h4>
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${
-                      energyEfficiencyData?.rating === "A" ? "bg-green-600" :
-                      energyEfficiencyData?.rating === "B" ? "bg-green-500" :
-                      energyEfficiencyData?.rating === "C" ? "bg-yellow-500" :
-                      energyEfficiencyData?.rating === "D" ? "bg-orange-500" :
-                      energyEfficiencyData?.rating === "E" ? "bg-orange-600" :
-                      energyEfficiencyData?.rating === "F" ? "bg-red-500" :
-                      energyEfficiencyData?.rating === "G" ? "bg-red-600" :
-                      "bg-gray-400"
-                    }`}>
+                    <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${energyEfficiencyData?.rating === "A" ? "bg-green-600" :
+                        energyEfficiencyData?.rating === "B" ? "bg-green-500" :
+                          energyEfficiencyData?.rating === "C" ? "bg-yellow-500" :
+                            energyEfficiencyData?.rating === "D" ? "bg-orange-500" :
+                              energyEfficiencyData?.rating === "E" ? "bg-orange-600" :
+                                energyEfficiencyData?.rating === "F" ? "bg-red-500" :
+                                  energyEfficiencyData?.rating === "G" ? "bg-red-600" :
+                                    "bg-gray-400"
+                      }`}>
                       {energyEfficiencyData?.rating || "—"}
                     </div>
                     <div>
@@ -802,7 +810,7 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
                       <p className="text-xs text-blue-100">
-                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% completado • {digitalBook?.sections?.filter(s => s.complete).length || 0} secciones
+                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% completado • {docCount} documentos
                       </p>
                     </div>
                   </div>
@@ -1229,7 +1237,7 @@ export function BuildingGeneralView() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor Futuro:</span>
                       <span className="text-green-700">
-                         {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
+                        {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
                       </span>
                     </div>
                   </div>

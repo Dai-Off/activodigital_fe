@@ -446,6 +446,11 @@ export function BuildingGestion() {
     amount_eur: 0,
     units: null as number | null,
     notes: '',
+    provider: '',
+    invoice_number: '',
+    period_start: '',
+    period_end: '',
+    expiration_date: '',
   });
 
   // Cargar categorías personalizadas al montar el componente
@@ -642,6 +647,11 @@ export function BuildingGestion() {
         notes: serviceInvoiceData.notes || null,
         document_url: uploadedDocumentUrl,
         document_filename: documentFilename,
+        provider: serviceInvoiceData.provider || null,
+        invoice_number: serviceInvoiceData.invoice_number || null,
+        period_start: serviceInvoiceData.period_start || null,
+        period_end: serviceInvoiceData.period_end || null,
+        expiration_date: serviceInvoiceData.expiration_date || null,
       });
 
       showSuccess("Factura creada", "La factura de servicio se ha registrado correctamente");
@@ -661,6 +671,11 @@ export function BuildingGestion() {
         amount_eur: 0,
         units: null,
         notes: '',
+        provider: '',
+        invoice_number: '',
+        period_start: '',
+        period_end: '',
+        expiration_date: '',
       });
     } catch (error: any) {
       console.error("Error creando factura de servicio:", error);
@@ -686,6 +701,11 @@ export function BuildingGestion() {
       amount_eur: 0,
       units: null,
       notes: '',
+      provider: '',
+      invoice_number: '',
+      period_start: '',
+      period_end: '',
+      expiration_date: '',
     });
     showSuccess("Documento subido", "El documento se ha subido correctamente");
   };
@@ -1325,11 +1345,11 @@ export function BuildingGestion() {
 
       {/* Modal de factura de servicio */}
       <Dialog open={isServiceInvoiceModalOpen} onOpenChange={setIsServiceInvoiceModalOpen}>
-        <DialogContent className="max-w-md shadow-xl bg-white !bg-white">
+        <DialogContent className="max-w-md shadow-xl bg-white flex flex-col max-h-[90vh]">
           <DialogHeader className="!bg-white">
             <DialogTitle className="mb-3">Registrar Factura de Servicio</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 !bg-white">
+          <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
               <p className="text-xs text-blue-800">
                 ℹ️ El documento PDF ya ha sido subido. Completa los datos para registrar la factura en el sistema.
@@ -1410,6 +1430,86 @@ export function BuildingGestion() {
 
             <div className="!bg-white">
               <label className="block text-sm text-gray-700 mb-1">
+                Proveedor (opcional)
+              </label>
+              <Input
+                type="text"
+                value={serviceInvoiceData.provider || ''}
+                onChange={(e) => setServiceInvoiceData({
+                  ...serviceInvoiceData,
+                  provider: e.target.value
+                })}
+                placeholder="Proveedor"
+                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+              />
+            </div>
+
+            <div className="!bg-white">
+              <label className="block text-sm text-gray-700 mb-1">
+                Número de Factura (opcional)
+              </label>
+              <Input
+                type="text"
+                value={serviceInvoiceData.invoice_number || ''}
+                onChange={(e) => setServiceInvoiceData({
+                  ...serviceInvoiceData,
+                  invoice_number: e.target.value
+                })}
+                placeholder="Número de Factura"
+                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+              />
+            </div>
+
+            <div className="!bg-white">
+              <label className="block text-sm text-gray-700 mb-1">
+                Periodo de inicio <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="date"
+                value={serviceInvoiceData.period_start || ''}
+                onChange={(e) => setServiceInvoiceData({
+                  ...serviceInvoiceData,
+                  period_start: e.target.value
+                })}
+                placeholder="Fecha de inicio"
+                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+              />
+            </div>
+
+            <div className="!bg-white">
+              <label className="block text-sm text-gray-700 mb-1">
+                Periodo de fin <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="date"
+                value={serviceInvoiceData.period_end || ''}
+                onChange={(e) => setServiceInvoiceData({
+                  ...serviceInvoiceData,
+                  period_end: e.target.value
+                })}
+                placeholder="Fecha de fin"
+                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+              />
+            </div>
+
+            <div className="!bg-white">
+              <label className="block text-sm text-gray-700 mb-1">
+                Fecha de vencimiento <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="date"
+                value={serviceInvoiceData.expiration_date || ''}
+                onChange={(e) => setServiceInvoiceData({
+                  ...serviceInvoiceData,
+                  expiration_date: e.target.value
+                })}
+                placeholder="Fecha de vencimiento"
+                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+              />
+            </div>
+
+            <div className="!bg-white">
+              <label className="block text-sm text-gray-700 mb-1">
                 Notas (opcional)
               </label>
               <textarea
@@ -1435,7 +1535,7 @@ export function BuildingGestion() {
             <Button
               onClick={handleCreateServiceInvoice}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm"
-              disabled={!serviceInvoiceData.amount_eur || serviceInvoiceData.amount_eur <= 0}
+              disabled={!serviceInvoiceData.amount_eur || serviceInvoiceData.amount_eur <= 0 || !serviceInvoiceData.period_start || !serviceInvoiceData.period_end || !serviceInvoiceData.expiration_date || !serviceInvoiceData.invoice_date}
             >
               Registrar Factura
             </Button>

@@ -20,6 +20,7 @@ export interface ServiceInvoice {
   created_at?: string;
   updated_at?: string;
   created_by?: string;
+  expiration_date?: string | null;
 }
 
 export interface CreateServiceInvoiceRequest

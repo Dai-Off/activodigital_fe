@@ -16,14 +16,12 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState<Role[]>([]);
   const [activeMenuItem, setActiveMenuItem] = useState<String | null>("todos");
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get('role');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const role = params.get('role');
-    if (role) {
-      setActiveMenuItem(role);
-    }
-  }, []);
+    if (role) setActiveMenuItem(role)
+  }, [role]);
 
   useEffect(() => {
     Promise.all([getRoles()])
