@@ -165,7 +165,14 @@ export class BuildingsApiService {
   static async getAllBuildings(): Promise<Building[]> {
     const response = await apiFetch("/edificios", { method: "GET" });
     // La API puede devolver directamente el array o wrapped en { data: [...] }
-    return Array.isArray(response) ? response : response.data || [];
+    const buildings = Array.isArray(response) ? response : response.data || [];
+    console.log(`[BuildingsApiService.getAllBuildings] Respuesta del backend:`, {
+      isArray: Array.isArray(response),
+      hasData: !!response.data,
+      buildingsCount: buildings.length,
+      buildings: buildings.map(b => ({ id: b.id, name: b.name, owner_id: b.ownerId }))
+    });
+    return buildings;
   }
 
   // Obtener un edificio específico

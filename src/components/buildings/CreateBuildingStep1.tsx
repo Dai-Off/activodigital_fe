@@ -82,17 +82,6 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       }
     }
 
-    if (!formData.units) {
-      newErrors.units = t('buildings.validation.unitsRequired', 'El número de unidades es obligatorio');
-    } else {
-      const units = Number.parseInt(formData.units, 10);
-      if (Number.isNaN(units) || units < 1 || units > 1000) {
-        newErrors.units = t(
-          'buildings.validation.validUnits',
-          'Ingresa un número válido de unidades (1-1000)'
-        );
-      }
-    }
 
     if (formData.price?.trim()) {
       const price = Number.parseFloat(formData.price);
@@ -228,6 +217,29 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
 
+        {/* Cadastral Reference */}
+        <div>
+          <label htmlFor="cadastralReference" className="block text-sm font-medium text-gray-700 mb-2">
+            {t('buildings.fields.cadastralReference', 'Referencia Catastral')}
+          </label>
+          <input
+            id="cadastralReference"
+            type="text"
+            value={formData.cadastralReference || ''}
+            onChange={e => handleInputChange('cadastralReference', e.target.value)}
+            placeholder={t('buildings.placeholders.cadastralReference', 'Ej.: 1234567VK1234A0001WX')}
+            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.cadastralReference ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.cadastralReference && (
+            <p className="mt-1 text-sm text-red-600">{errors.cadastralReference}</p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            {t('buildings.helpers.cadastralReference', 'Opcional. Identificador único del inmueble en el catastro.')}
+          </p>
+        </div>
+
         {/* Construction year */}
         <div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
@@ -274,45 +286,24 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
           {errors.typology && <p className="mt-1 text-sm text-red-600">{errors.typology}</p>}
         </div>
 
-        {/* Floors & Units */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.numFloors', 'Número de plantas')} *
-            </label>
-            <input
-              id="floors"
-              type="number"
-              value={formData.floors}
-              onChange={e => handleInputChange('floors', e.target.value)}
-              placeholder="5"
-              min={1}
-              max={100}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.floors ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.floors && <p className="mt-1 text-sm text-red-600">{errors.floors}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="units" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.numUnits', 'Número de unidades')} *
-            </label>
-            <input
-              id="units"
-              type="number"
-              value={formData.units}
-              onChange={e => handleInputChange('units', e.target.value)}
-              placeholder="20"
-              min={1}
-              max={1000}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.units ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.units && <p className="mt-1 text-sm text-red-600">{errors.units}</p>}
-          </div>
+        {/* Floors */}
+        <div>
+          <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
+            {t('buildings.fields.numFloors', 'Número de plantas')} *
+          </label>
+          <input
+            id="floors"
+            type="number"
+            value={formData.floors}
+            onChange={e => handleInputChange('floors', e.target.value)}
+            placeholder="5"
+            min={1}
+            max={100}
+            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.floors ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.floors && <p className="mt-1 text-sm text-red-600">{errors.floors}</p>}
         </div>
 
         {/* Price & Surface */}

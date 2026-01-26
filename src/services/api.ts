@@ -193,16 +193,38 @@ export async function apiFetch(
     const msgFromBody =
       (isJson && payload && (payload.message || payload.error)) || response.statusText || 'Request failed';
     
-    // Si es un error 401 (Unauthorized), limpiar token y redirigir al login
+    // Si es un error 401 (Unauthorized), verificar si es un problema de autenticación del usuario
+    // o un error de la API externa (como Catastro)
     if (response.status === 401) {
-      // Limpiar tokens
+      // Verificar si el error viene de una API externa (como Catastro)
+      // Las APIs externas pueden devolver 401, pero no significa que el usuario esté deslogueado
+      const isExternalApiError = path.includes('/CatastroApi/') || 
+                                 path.includes('/PVGISApi/') || 
+                                 path.includes('/MITECOApi/');
+      
+      if (isExternalApiError) {
+        // Es un error de API externa, no limpiar tokens ni redirigir
+        // Simplemente lanzar el error para que el componente lo maneje
+        throw new HttpError(
+          typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody),
+          response.status,
+          payload
+        );
+      }
+      
+      // Es un error de autenticación del usuario, limpiar tokens y redirigir
       localStorage.removeItem('access_token');
       sessionStorage.removeItem('access_token');
       
-      // Redirigir al login solo si no estamos ya en la página de login
-      if (!window.location.pathname.includes('/login') && 
-          !window.location.pathname.includes('/register') &&
-          !window.location.pathname.includes('/auth/')) {
+      // Redirigir al login solo si no estamos ya en la página de login/register/auth
+      // Y solo si estamos en una ruta protegida (no en rutas públicas)
+      const isPublicRoute = window.location.pathname === '/' || 
+                            window.location.pathname.includes('/terms') ||
+                            window.location.pathname.includes('/login') ||
+                            window.location.pathname.includes('/register') ||
+                            window.location.pathname.includes('/auth/');
+      
+      if (!isPublicRoute) {
         // Guardar la ruta actual para redirigir después del login
         const currentPath = window.location.pathname + window.location.search;
         window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
