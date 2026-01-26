@@ -10,7 +10,7 @@ import {
   MinusCircle,
 } from "lucide-react";
 import { BuildingCarousel } from "../components/BuildingCarousel";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreateBuildingMethodSelection from "./buildings/CreateBuildingMethodSelection";
@@ -224,8 +224,10 @@ function PaginationBar({
 export default function AssetsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
@@ -284,7 +286,8 @@ export default function AssetsList() {
 
         if (!mounted) return;
 
-        setBuildings(buildingsData);
+        console.log(`[AssetsList] Edificios cargados: ${buildingsData?.length || 0}`, buildingsData);
+        setBuildings(buildingsData || []);
         setDashboardStats(statsData);
 
         // Cargar certificados, libros digitales y ESG para todos los edificios en paralelo
@@ -360,21 +363,33 @@ export default function AssetsList() {
   }, [
     user,
     authLoading,
+    location.pathname, // Recargar cuando cambia la ruta (ej: volver desde crear edificio)
+    refreshKey, // Recargar cuando se fuerza refresh desde navegación
     startLoading,
     stopLoading,
     startStatsLoading,
     stopStatsLoading,
   ]);
 
+  // Escuchar cambios en location.state para forzar recarga
+  useEffect(() => {
+    if (location.state && (location.state as any).refresh) {
+      setRefreshKey((prev) => prev + 1);
+      // Limpiar el state para evitar recargas infinitas
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
+
 
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
+    console.log(`[AssetsList] Aplicando filtros - Total edificios: ${buildings.length}`, buildings.map(b => ({ id: b.id, name: b.name })));
     let result = [...buildings];
 
     // Ordenar por fecha de creación descendente (más recientes primero)
     result.sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
     // Filtro de búsqueda por texto (Soporta etiquetas localizadas)
@@ -561,6 +576,7 @@ export default function AssetsList() {
       return searchFilters.sortOrder === "asc" ? comparison : -comparison;
     });
 
+    console.log(`[AssetsList] Después de filtros - Resultado: ${result.length} edificios`);
     return result;
   }, [buildings, searchFilters, digitalBooks, energyCertificates, esgScores]);
 
@@ -854,6 +870,18 @@ export default function AssetsList() {
           </h3>
           {loading ? (
             <SkeletonBuildingList />
+          ) : buildings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">
+                {t("noBuildings", { defaultValue: "No hay edificios registrados" })}
+              </p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {t("createFirstBuilding", { defaultValue: "Crear primer edificio" })}
+              </button>
+            </div>
           ) : paginated.length > 0 ? (
             <div className="flex flex-col gap-6">
               {paginated.map((building, index) => {
