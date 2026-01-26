@@ -1185,7 +1185,7 @@ export function BuildingGestion() {
                 maxSizeInMB={10}
                 label="Subir documento"
                 description={selectedFile ? selectedFile.name : "Arrastra o haz clic para seleccionar"}
-                disabled={isUploading}
+                disabled={isUploading || !selectedCategory}
               />
               {selectedFile && (
                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">

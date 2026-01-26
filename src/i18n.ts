@@ -44,6 +44,18 @@ const resources = {
       generalView: 'Vista General',
       backToDashboard: 'Volver al dashboard',
       
+      // Filtros Checkbox
+      bookStatus: 'Estado del Libro',
+      energyRating: 'Calificación Energética',
+      occupation: 'Ocupación',
+      compliance: 'Cumplimiento',
+      vacant: 'Vacío',
+      high: 'Alto',
+      medium: 'Medio',
+      low: 'Bajo',
+      inRemodeling: 'En remodelación',
+      operational: 'Operativo',
+      
       // Mensajes
       errorLoadingStats: 'Error al cargar estadísticas',
       languageChangedTo: 'Idioma cambiado a',
@@ -97,6 +109,18 @@ const resources = {
       clearFilters: 'Clear filters',
       generalView: 'General View',
       backToDashboard: 'Back to dashboard',
+      
+      // Checkbox Filters
+      bookStatus: 'Book Status',
+      energyRating: 'Energy Rating',
+      occupation: 'Occupation',
+      compliance: 'Compliance',
+      vacant: 'Vacant',
+      high: 'High',
+      medium: 'Medium',
+      low: 'Low',
+      inRemodeling: 'Under remodeling',
+      operational: 'Operational',
       
       // Messages
       errorLoadingStats: 'Error loading statistics',

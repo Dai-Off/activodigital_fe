@@ -108,6 +108,12 @@ export function SidebarAssets() {
 
       // Establecer selectedBuildingId
       setSelectedBuildingId(buildingId);
+    } else if (pathname === "/assets" || pathname === "/assets/units") {
+      // Si estamos en el listado general, limpiar la selección del edificio
+      setSelectedBuildingId(null);
+      setViewMode("list");
+      setActiveSection(pathname === "/assets" ? "assetslist" : "unitslist");
+      setActiveTab(pathname === "/assets" ? "assetslist" : "unitslist");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Solo dependemos de pathname para evitar loops
