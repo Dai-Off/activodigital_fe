@@ -2,7 +2,6 @@ import React, { useState, useImperativeHandle, forwardRef } from "react";
 import type { Role } from "~/services/users";
 import { useIsMobile } from "../ui/use-mobile";
 import { Trash2Icon } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useTranslations } from "../i18n/useTranslations";
 
 export interface UserFormData {
@@ -36,7 +35,6 @@ const VenUsuario = forwardRef<VenUsuarioRefMethods, VenUsuarioProps>(
       role: "",
       status: true,
     });
-    const { t } = useTranslation()
     const [isEdit, setIsEdit] = useState(false);
     const [errors, setErrors] = useState<
       Partial<Record<keyof UserFormData, string>>
