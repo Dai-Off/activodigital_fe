@@ -429,7 +429,7 @@ export const UnitDetail: React.FC = () => {
 
                 {/* Actividad reciente */}
                 <div className="bg-white rounded-lg shadow-sm p-4">
-                  <h3 className="text-sm mb-3">Actividad reciente</h3>
+                  <h3 className="text-sm mb-3">Actividad Reciente</h3>
                   <div className="space-y-2 text-xs">
                     {/* Placeholders por ahora */}
                     {[
