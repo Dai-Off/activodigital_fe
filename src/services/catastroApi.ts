@@ -139,7 +139,11 @@ export class CatastroApiService {
     try {
       const response = await apiFetch('/CatastroApi/provincias');
       return Array.isArray(response) ? response : [];
-    } catch (error) {
+    } catch (error: any) {
+      // Manejar error 403 específicamente
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener las provincias: ${message}`);
     }
@@ -153,7 +157,10 @@ export class CatastroApiService {
       const params = new URLSearchParams({ provincia });
       const response = await apiFetch(`/CatastroApi/municipios?${params.toString()}`);
       return Array.isArray(response) ? response : [];
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener los municipios: ${message}`);
     }
@@ -175,7 +182,10 @@ export class CatastroApiService {
       
       const response = await apiFetch(`/CatastroApi/vias?${params.toString()}`);
       return Array.isArray(response) ? response : [];
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener las vías: ${message}`);
     }
@@ -208,7 +218,23 @@ export class CatastroApiService {
       
       try {
         response = await apiFetch(`/CatastroApi/inmuebleRc?${params.toString()}`) as CatastroApiResponse;
-      } catch (fetchError) {
+      } catch (fetchError: any) {
+        // Manejar error 403 específicamente primero
+        if (fetchError?.status === 403) {
+          throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+        }
+        
+        // Si el error 500 viene de la API externa de Catastro (tiene source o details específicos)
+        if (fetchError?.status === 500) {
+          const errorBody = fetchError?.body || {};
+          // Verificar si el error viene de la API externa de Catastro
+          if (errorBody.source === 'catastro_external_api' || 
+              errorBody.details?.includes('Error de autenticación con la API de Catastro') ||
+              errorBody.error?.includes('Error HTTP: 403')) {
+            throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+          }
+        }
+        
         // Capturar errores de red o de la API
         const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
         
@@ -216,15 +242,21 @@ export class CatastroApiService {
           throw new Error('No se pudo conectar con el servicio de catastro. Esto puede deberse a:\n\n• Problemas con tu conexión a internet\n• El servicio de catastro está temporalmente no disponible\n\nPor favor, verifica tu conexión e inténtalo de nuevo en unos momentos.');
         }
         
-        if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+        if (errorMessage.includes('404') || errorMessage.includes('Not Found') || fetchError?.status === 404) {
           throw new Error(`No se encontró ningún edificio con el código catastral "${trimmedRc}".\n\nPosibles causas:\n• El código catastral es incorrecto o tiene un error\n• El inmueble no está registrado en el catastro\n• El código corresponde a otro tipo de bien (terreno, etc.)\n\n💡 Consejo: Verifica que el código esté completo y sin espacios. El código catastral suele encontrarse en escrituras, recibos del IBI o certificados catastrales.`);
         }
         
-        if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+        if (errorMessage.includes('400') || errorMessage.includes('Bad Request') || fetchError?.status === 400) {
           throw new Error(`El código catastral "${trimmedRc}" no es válido.\n\nPor favor, verifica:\n• Que el código tenga entre 14 y 20 caracteres\n• Que no contenga espacios ni símbolos especiales\n• Que hayas copiado el código completo desde el documento original`);
         }
         
-        if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+        if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error') || fetchError?.status === 500) {
+          // Verificar si el error viene de la API externa de Catastro
+          const errorBody = fetchError?.body || {};
+          if (errorBody.source === 'catastro_external_api' || 
+              errorBody.details?.includes('Error de autenticación con la API de Catastro')) {
+            throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+          }
           throw new Error('El servicio de catastro está experimentando problemas técnicos en este momento. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste, puedes intentar buscar el edificio por dirección o coordenadas.');
         }
         
@@ -353,7 +385,12 @@ export class CatastroApiService {
       const direccionCompleta = `${tipoVia ? tipoVia + ' ' : ''}${nombreVia}, ${numero}${escalera ? ', Esc. ' + escalera : ''}${planta ? ', Pl. ' + planta : ''}${puerta ? ', Puerta ' + puerta : ''}`;
       
       throw new Error(`No se encontró ningún inmueble en la dirección: ${direccionCompleta}\n\nPosibles causas:\n• La dirección no está registrada correctamente en el catastro\n• El número de calle es incorrecto o no existe\n• Los datos de escalera, planta o puerta no coinciden\n• El inmueble corresponde a un terreno u otro tipo de bien\n\n💡 Consejo: Intenta buscar sin especificar escalera, planta o puerta, o verifica la dirección en documentos oficiales. También puedes buscar por código catastral si lo conoces.`);
-    } catch (error) {
+    } catch (error: any) {
+      // Manejar error 403 específicamente primero
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
+      
       // Si ya es un Error con mensaje descriptivo, relanzarlo
       if (error instanceof Error) {
         const message = error.message;
@@ -415,7 +452,12 @@ export class CatastroApiService {
       }
       
       throw new Error(`No se encontró ningún inmueble en las coordenadas especificadas (X: ${coordX}, Y: ${coordY}).\n\nPosibles causas:\n• Las coordenadas no corresponden a un edificio registrado en el catastro\n• Las coordenadas corresponden a un terreno u otro tipo de bien inmueble\n• Las coordenadas están en un sistema de referencia diferente\n• El punto está fuera de la zona de cobertura del catastro\n\n💡 Consejo: Verifica que las coordenadas sean correctas y estén en el sistema de referencia adecuado. También puedes intentar buscar por dirección si la conoces.`);
-    } catch (error) {
+    } catch (error: any) {
+      // Manejar error 403 específicamente primero
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
+      
       // Si ya es un Error con mensaje descriptivo, relanzarlo
       if (error instanceof Error) {
         const message = error.message;
@@ -639,10 +681,20 @@ export class CatastroApiService {
       }
     }
 
+    // Extraer referencia catastral - asegurar que siempre se extraiga si está disponible
+    let cadastralReference: string | undefined;
+    if (inmueble.rc) {
+      cadastralReference = inmueble.rc.trim();
+    } else if (inmueble.referenciaCatastral?.referenciaCatastral) {
+      cadastralReference = inmueble.referenciaCatastral.referenciaCatastral.trim();
+    }
+    // Solo asignar si tiene valor (no string vacío después del trim)
+    cadastralReference = cadastralReference && cadastralReference.length > 0 ? cadastralReference : undefined;
+
     return {
       name,
       address,
-      cadastralReference: inmueble.rc || inmueble.referenciaCatastral?.referenciaCatastral,
+      cadastralReference,
       constructionYear,
       typology,
       numFloors,

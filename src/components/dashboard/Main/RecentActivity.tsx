@@ -12,6 +12,7 @@ import {
   LucideTriangleAlert,
   LucideUsers,
   LucideX,
+  Power,
   TriangleAlert,
   Zap,
 } from "lucide-react";
@@ -67,8 +68,9 @@ export function RecentActivity() {
       'COMPLETAR INSPECCION ELECTRICA': 10,
       CREAR: 11,
       ELIMINAR: 12,
-      APROBAR: 0,
-      RECHAZAR: 0,
+      CARGA: 13,
+      APROBAR: 14,
+      RECHAZAR: 15,
     }
 
     return ActionsValues[activity as keyof typeof ActionsValues] || 0;
@@ -214,11 +216,16 @@ export function RecentActivity() {
         </div>
       ),
       13: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-100">
+          <Power className="w-4 h-4 text-yellow-600"></Power>
+        </div>
+      ),
+      14: (
         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
           <LucideCircleCheckBig className="w-4 h-4 text-gray-600"></LucideCircleCheckBig>
         </div>
       ),
-      14: (
+      15: (
         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
           <LucideX className="w-4 h-4 text-red-600"></LucideX>
         </div>

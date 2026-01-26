@@ -30,6 +30,7 @@ interface BuildingSummaryData {
   technicianEmail: string;
   cfoEmail: string;
   propietarioEmail: string;
+  cadastralReference?: string;
 
   // Financial
   squareMeters: string;
@@ -229,10 +230,6 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   value={buildingData.floors}
                 />
                 <Row
-                  label={t('buildings.fields.numUnits', 'Número de unidades')}
-                  value={buildingData.units}
-                />
-                <Row
                   label={t('buildings.fields.assetPrice', 'Precio del activo')}
                   value={priceText}
                 />
@@ -262,6 +259,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <Row
                   label={t('buildings.fields.surface', 'Superficie')}
                   value={surfaceText}
+                />
+                <Row
+                  label={t('buildings.fields.cadastralReference', 'Referencia Catastral')}
+                  value={buildingData.cadastralReference || t('common.notProvided', 'No proporcionada')}
                 />
 
                 <div className="py-2">

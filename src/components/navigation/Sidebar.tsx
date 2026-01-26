@@ -127,7 +127,7 @@ export function Sidebar() {
       id: "settings",
       icon: Settings,
       label: t ? t("settings", "Configuración") : "Configuración",
-      route: "/dashboard", // Placeholder route
+      route: "/configuration", // Placeholder route
     },
     {
       id: "expired",

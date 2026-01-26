@@ -29,7 +29,7 @@ export async function editUser(id: string, data: UserFormData) {
   });
 }
 
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string): Promise<Response> {
   return apiFetch(`/users/delete/${id}`, {
     method: 'DELETE',
   });

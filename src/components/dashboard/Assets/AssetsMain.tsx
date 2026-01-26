@@ -15,12 +15,15 @@ import {
   type DashboardStats,
   type Building,
 } from "~/services/buildingsApi";
+import { EnergyCertificatesService, type PersistedEnergyCertificate } from "~/services/energyCertificates";
+import { getLatestRating, getCEEColor } from "~/utils/energyCalculations";
 
 export function AssetsMain() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [energyCertificates, setEnergyCertificates] = useState<PersistedEnergyCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,8 +31,48 @@ export function AssetsMain() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const filteredBuildings = buildings.filter((building) => {
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
+
+    const getBuildingTypologyLower = (typ: string) => {
+      const t = (typ || "").toLowerCase();
+      const labels: Record<string, string[]> = {
+        residential: ["residential", "residencial", "residencia", "vivienda"],
+        commercial: ["commercial", "comercial", "local", "negocio"],
+        mixed: ["mixed", "mixto", "oficina", "despacho"]
+      };
+      return labels[t] || [t];
+    };
+
+    const isComplianceMatch = (perc: number, q: string) => {
+      const p = perc || 0;
+      const pStr = p.toString();
+
+      // Text labels (partial search)
+      const textLabels = p === 100
+        ? ["completo", "complete", "terminado"]
+        : ["incompleto", "incomplete", "pendiente", "en curso"];
+
+      if (textLabels.some(l => l.includes(q))) return true;
+
+      // For numbers, use exact match or starts with
+      return pStr === q || pStr.startsWith(q);
+    };
+
+    const getBuildingRating = (buildingId: string) => {
+      const certs = energyCertificates.filter(c => c.buildingId === buildingId);
+      if (certs.length === 0) return "-";
+      return getLatestRating(certs);
+    };
+
+    const currentRating = getBuildingRating(building.id);
+    const typLabels = getBuildingTypologyLower(building.typology);
+    const matchesTyp = typLabels.some(l => l.includes(query));
+    const matchesCompliance = isComplianceMatch(building.porcentBook || 0, query);
+    const matchesBasic =
+      building.name.toLowerCase().includes(query) ||
+      (building.address && building.address.toLowerCase().includes(query)) ||
+      (building.cadastralReference && building.cadastralReference.toLowerCase().includes(query));
 
     switch (searchField) {
       case "name":
@@ -37,14 +80,19 @@ export function AssetsMain() {
       case "address":
         return building.address && building.address.toLowerCase().includes(query);
       case "typology":
-        return building.typology.toLowerCase().includes(query);
+        return matchesTyp;
       case "year":
         return building.constructionYear?.toString().includes(query);
       case "surface":
         return building.squareMeters?.toString().includes(query);
+      case "compliance":
+        return matchesCompliance;
+      case "energyClass":
+        return currentRating.toLowerCase().includes(query);
+      case "occupancy":
+        return "operativo".includes(query) || "operational".includes(query) || "ocupado".includes(query);
       default:
-        return building.name.toLowerCase().includes(query) ||
-          (building.address && building.address.toLowerCase().includes(query));
+        return matchesBasic || matchesTyp || matchesCompliance || currentRating.toLowerCase().includes(query);
     }
   });
 
@@ -59,14 +107,18 @@ export function AssetsMain() {
     Promise.all([
       BuildingsApiService.getDashboardStats(),
       BuildingsApiService.getAllBuildings(),
+      EnergyCertificatesService.getAll(),
     ])
-      .then(([statsData, buildingsData]) => {
+      .then(([statsData, buildingsData, certsData]) => {
         setStats(statsData);
         setBuildings(buildingsData);
+        setEnergyCertificates(certsData);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Error loading buildings:", err);
         setStats(null);
         setBuildings([]);
+        setEnergyCertificates([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -310,8 +362,9 @@ export function AssetsMain() {
                 return "bg-red-500";
               };
 
-              // Calcular cumplimiento (placeholder - ajustar según datos reales)
-              const compliancePercentage = 100; // Esto debería venir de los datos del edificio
+              const compliancePercentage = building.porcentBook || 0;
+              const certs = energyCertificates.filter(c => c.buildingId === building.id);
+              const currentRating = certs.length > 0 ? getLatestRating(certs) : "-";
 
               return (
                 <div
@@ -356,7 +409,9 @@ export function AssetsMain() {
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-gray-500">Clase:</span>
-                          <span className="text-gray-400">-</span>
+                          <span className={`${currentRating !== "-" ? getCEEColor(currentRating) + " text-white px-1.5 rounded text-[10px] font-bold" : "text-gray-400"}`}>
+                            {currentRating}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-gray-500">Superficie:</span>
@@ -395,35 +450,32 @@ export function AssetsMain() {
 
       {/* Vista Desktop - Tabla */}
       <div className="hidden lg:block flex-1 overflow-auto pr-1">
-        <div className="bg-white w-fit rounded-xl p-6 shadow-sm">
-          <table className="w-full">
+        <div className="bg-white w-full rounded-xl p-6 shadow-sm">
+          <table className="w-full table-auto">
             <thead className="bg-gray-50">
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-24">
                   <span>Imagen</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 min-w-[250px]">
                   <span>Edificio</span>
                 </th>
-                {/* <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>ID</span>
-                </th> */}
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-32">
                   <span>Tipo</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-32">
                   <span>Superficie</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-24">
                   <span>Año</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-center py-3 px-4 text-sm text-gray-600 w-32">
                   <span>Certificado</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-32">
                   <span>Libro</span>
                 </th>
-                <th className="text-left py-3 px-4 text-sm text-gray-600">
+                <th className="text-left py-3 px-4 text-sm text-gray-600 w-48">
                   <span>Cumplimiento</span>
                 </th>
               </tr>
@@ -445,6 +497,8 @@ export function AssetsMain() {
                   };
 
                   const compliancePercentage = building.porcentBook || 0;
+                  const certs = energyCertificates.filter(c => c.buildingId === building.id);
+                  const currentRating = certs.length > 0 ? getLatestRating(certs) : "-";
 
                   const status = compliancePercentage === 100 
                     ? { label: 'Completo', icon: Check, color: 'bg-green-100 text-green-700' }
@@ -503,7 +557,15 @@ export function AssetsMain() {
                         {building.constructionYear || "-"}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm text-gray-400">-</span>
+                        <div className="flex justify-center">
+                          {currentRating !== "-" ? (
+                            <div className={`w-7 h-7 rounded flex items-center justify-center text-white text-xs font-bold ${getCEEColor(currentRating)}`}>
+                              {currentRating}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">-</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${status.color}`}>

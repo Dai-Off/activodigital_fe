@@ -125,7 +125,7 @@ export function MainPanel() {
   }: {
     text: string;
     nameBuilding: string;
-    date: string;
+    date: string | null;
     value: number;
   }) {
     const values: any = {
@@ -145,7 +145,7 @@ export function MainPanel() {
         color: "bg-yellow-600",
       },
     };
-    date = getTimeRemaining(date);
+    const dateRemaining = getTimeRemaining(date);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
@@ -156,7 +156,7 @@ export function MainPanel() {
             <div className="flex-1">
               <p className="text-xs mb-0.5">{text}</p>
               <p className="text-xs text-gray-600">
-                {nameBuilding} - {date}
+                {nameBuilding} - {dateRemaining}
               </p>
             </div>
             <span
@@ -184,9 +184,10 @@ export function MainPanel() {
       "ACTUALIZAR DATOS FINANCIEROS": 9,
       "COMPLETAR INSPECCION ELECTRICA": 10,
       CREAR: 11,
-      ELIMINAR: 0,
-      APROBAR: 0,
-      RECHAZAR: 0,
+      ELIMINAR: 12,
+      CARGA: 13,
+      APROBAR: 14,
+      RECHAZAR: 15,
     };
 
     return ActionsValues[activity as keyof typeof ActionsValues] || 0;
@@ -215,6 +216,10 @@ export function MainPanel() {
       9: "bg-blue-600",
       10: "bg-purple-600",
       11: "bg-green-600",
+      12: "bg-red-600",
+      13: "bg-yellow-600",
+      14: "bg-gray-600",
+      15: "bg-red-600",
     };
 
     date = formatofechaCorta(date);

@@ -45,15 +45,19 @@ import {
   TriangleAlert,
   Wrench,
   Zap,
+  Edit2,
+  Save,
+  X,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
+import { countBuildingDocuments } from "~/services/gestionDocuments";
 
 export function BuildingGeneralView() {
   // Hooks de navegación y notificaciones
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
 
   // Estado para datos del edificio
   const [loading, setLoading] = useState(true);
@@ -77,6 +81,9 @@ export function BuildingGeneralView() {
     consumption: number;
     source: 'invoice' | 'certificate' | null;
   } | null>(null);
+  const [isEditingCadastralRef, setIsEditingCadastralRef] = useState(false);
+  const [tempCadastralRef, setTempCadastralRef] = useState("");
+  const [isSavingCadastralRef, setIsSavingCadastralRef] = useState(false);
 
   const buildingImages = useMemo(() => {
     const fallback = "/image.png";
@@ -90,32 +97,54 @@ export function BuildingGeneralView() {
     return unique.length ? unique : [fallback];
   }, [building?.images]);
 
+  const [docCount, setDocCount] = useState(0);
+
+  useEffect(() => {
+    if (id) {
+      countBuildingDocuments(id).then(setDocCount);
+    }
+  }, [id]);
+
   useEffect(() => {
     // Resetear carrusel al cambiar de edificio / imágenes
     setCurrentImageIndex(0);
-    setDisplayedImageSrc(buildingImages[0] || "/image.png");
+    const firstImage = buildingImages[0] || "/image.png";
+    setDisplayedImageSrc(firstImage);
     setIsImageLoading(false);
-  }, [id, buildingImages.length]);
+  }, [id, buildingImages]);
 
-  // Pre-cargar la imagen objetivo y evitar “pantalla en blanco” al cambiar
+  // Pre-cargar la imagen objetivo y evitar "pantalla en blanco" al cambiar
   useEffect(() => {
     const targetSrc = buildingImages[currentImageIndex] || "/image.png";
 
     // Si ya se está mostrando, no hacer nada
-    if (targetSrc === displayedImageSrc) return;
+    if (targetSrc === displayedImageSrc) {
+      setIsImageLoading(false);
+      return;
+    }
 
     let cancelled = false;
     setIsImageLoading(true);
+
+    // Timeout de seguridad para evitar spinner infinito (10 segundos)
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        setDisplayedImageSrc("/image.png");
+        setIsImageLoading(false);
+      }
+    }, 10000);
 
     // Ojo: en este componente `Image` es un ícono (lucide), por eso usamos un elemento <img> para pre-cargar.
     const img = document.createElement("img");
     img.onload = () => {
       if (cancelled) return;
+      clearTimeout(timeoutId);
       setDisplayedImageSrc(targetSrc);
       setIsImageLoading(false);
     };
     img.onerror = () => {
       if (cancelled) return;
+      clearTimeout(timeoutId);
       setDisplayedImageSrc("/image.png");
       setIsImageLoading(false);
     };
@@ -123,8 +152,9 @@ export function BuildingGeneralView() {
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [buildingImages, currentImageIndex, displayedImageSrc]);
+  }, [buildingImages, currentImageIndex]); // Removido displayedImageSrc de dependencias para evitar loop
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
@@ -216,84 +246,99 @@ export function BuildingGeneralView() {
         const buildingData = await BuildingsApiService.getBuildingById(id);
         setBuilding(buildingData);
 
-        // Cargar libro digital si existe
-        try {
-          const book = await getBookByBuilding(id);
-          setDigitalBook(book);
-        } catch (e) {
+        // Paralelizar todas las llamadas independientes para mejorar rendimiento
+        const [
+          bookResult,
+          snapshotsResult,
+          expiredResult,
+          esgResult,
+          unitsResult,
+          costsResult,
+        ] = await Promise.allSettled([
+          // Libro digital
+          getBookByBuilding(id).catch(() => null),
+          
+          // Datos financieros
+          FinancialSnapshotsService.getFinancialSnapshots(buildingData.id),
+          
+          // Documentos vencidos
+          getExpiredList({ building_id: id, limit: 5 }),
+          
+          // Datos ESG
+          calculateESGScore(buildingData.id).catch(async () => {
+            try {
+              return await getESGScore(buildingData.id);
+            } catch {
+              return null;
+            }
+          }),
+          
+          // Unidades
+          UnitsApiService.listUnits(buildingData.id),
+          
+          // Costes mensuales
+          (async () => {
+            const now = new Date();
+            return ServiceInvoicesService.getMonthlyCostsForBuilding(
+              buildingData.id,
+              now.getFullYear(),
+              now.getMonth() + 1
+            );
+          })(),
+        ]);
+
+        // Procesar resultados del libro digital
+        if (bookResult.status === "fulfilled" && bookResult.value) {
+          setDigitalBook(bookResult.value);
+        } else {
           setDigitalBook(null);
         }
 
-        // Cargar datos financieros y análisis
-        try {
-          const snapshots =
-            await FinancialSnapshotsService.getFinancialSnapshots(
-              buildingData.id
-            );
+        // Procesar resultados financieros
+        if (snapshotsResult.status === "fulfilled") {
+          const snapshots = snapshotsResult.value;
           const hasData = snapshots && snapshots.length > 0;
           setHasFinancialData(hasData);
 
           if (hasData) {
-            const analysis = await FinancialAnalysisService.analyzeBuilding(
-              buildingData.id,
-              buildingData.name,
-              snapshots[0],
-              buildingData.price || 0
-            );
-            setFinancialAnalysis(analysis);
+            try {
+              const analysis = await FinancialAnalysisService.analyzeBuilding(
+                buildingData.id,
+                buildingData.name,
+                snapshots[0],
+                buildingData.price || 0
+              );
+              setFinancialAnalysis(analysis);
+            } catch (error) {
+              console.error("Error analizando datos financieros:", error);
+            }
           }
-        } catch (error) {
-          console.error("Error cargando datos financieros:", error);
+        } else {
           setHasFinancialData(false);
         }
 
-        // Cargar documentos vencidos (alertas)
-        try {
-          const expiredResponse = await getExpiredList({
-            building_id: id,
-            limit: 5,
-          });
-          setExpiredDocs(expiredResponse.items || []);
-        } catch (error) {
-          console.error("Error cargando documentos vencidos:", error);
+        // Procesar documentos vencidos
+        if (expiredResult.status === "fulfilled") {
+          setExpiredDocs(expiredResult.value.items || []);
         }
 
-        // Cargar datos ESG
+        // Procesar datos ESG
         setEsgLoading(true);
-        try {
-          const esgResponse = await calculateESGScore(buildingData.id);
-          setEsgData(esgResponse);
-        } catch (error) {
-          console.error("Error cargando ESG:", error);
-          try {
-            const savedESG = await getESGScore(buildingData.id);
-            setEsgData(savedESG);
-          } catch {
-            setEsgData(null);
-          }
-        } finally {
-          setEsgLoading(false);
+        if (esgResult.status === "fulfilled" && esgResult.value) {
+          setEsgData(esgResult.value);
+        } else {
+          setEsgData(null);
+        }
+        setEsgLoading(false);
+
+        // Procesar unidades
+        if (unitsResult.status === "fulfilled") {
+          setUnits(unitsResult.value || []);
         }
 
-        // Cargar unidades
-        try {
-          const unitsData = await UnitsApiService.listUnits(buildingData.id);
-          setUnits(unitsData || []);
-        } catch (error) {
-          console.error("Error cargando unidades:", error);
-        }
-
-        // Cargar costes mensuales (mes actual)
-        try {
-          const now = new Date();
-          const costs = await ServiceInvoicesService.getMonthlyCostsForBuilding(
-            buildingData.id,
-            now.getFullYear(),
-            now.getMonth() + 1
-          );
-          setMonthlyCosts(costs);
-        } catch (error) {
-          console.error("Error cargando costes mensuales:", error);
+        // Procesar costes mensuales
+        if (costsResult.status === "fulfilled") {
+          setMonthlyCosts(costsResult.value);
         }
 
         setLoading(false);
@@ -325,16 +370,16 @@ export function BuildingGeneralView() {
       try {
         const certificatesData = await EnergyCertificatesService.getByBuilding(id);
         const certificates = certificatesData.certificates || [];
-        
+
         if (certificates.length > 0) {
           // Usar el certificado más reciente
-          const latestCertificate = certificates.sort((a, b) => 
+          const latestCertificate = certificates.sort((a, b) =>
             new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
           )[0];
 
           const consumptionValue = latestCertificate.primaryEnergyKwhPerM2Year;
-          const consumption = typeof consumptionValue === 'number' 
-            ? consumptionValue 
+          const consumption = typeof consumptionValue === 'number'
+            ? consumptionValue
             : parseFloat(String(consumptionValue || '0'));
 
           if (isNaN(consumption)) {
@@ -389,6 +434,38 @@ export function BuildingGeneralView() {
     loadEvents();
   }, [id]);
 
+  // Función para guardar la referencia catastral
+  const handleSaveCadastralRef = async () => {
+    if (!building?.id) return;
+
+    setIsSavingCadastralRef(true);
+    try {
+      const updatedBuilding = await BuildingsApiService.updateBuilding(building.id, {
+        cadastralReference: tempCadastralRef.trim() || undefined,
+      });
+      setBuilding(updatedBuilding);
+      setIsEditingCadastralRef(false);
+      showSuccess("Referencia catastral actualizada correctamente");
+    } catch (error) {
+      showError("Error al actualizar la referencia catastral");
+    } finally {
+      setIsSavingCadastralRef(false);
+    }
+  };
+
+  // Función para cancelar edición
+  const handleCancelEditCadastralRef = () => {
+    setTempCadastralRef(building?.cadastralReference || "");
+    setIsEditingCadastralRef(false);
+  };
+
+  // Inicializar el valor temporal cuando se entra en modo edición
+  useEffect(() => {
+    if (isEditingCadastralRef) {
+      setTempCadastralRef(building?.cadastralReference || "");
+    }
+  }, [isEditingCadastralRef, building?.cadastralReference]);
+
   // Cálculos para el calendario de acciones
   const calendarStats = useMemo(() => {
     const now = new Date();
@@ -428,15 +505,21 @@ export function BuildingGeneralView() {
     return { urgent, thisMonth, priorityAction };
   }, [events]);
 
-  
 
-  // Calculate derived metrics
+
+  // Calculate derived metrics - Lógica unificada con BuildingUnits y UnitsListDashboard
+  // Una unidad está ocupada SOLO si su status es "ocupada" o "occupied" (case-insensitive)
   const occupancyStats = useMemo(() => {
     if (!units.length) return { percentage: 0, occupied: 0, total: 0 };
-    const occupied = units.filter(u => u.status === 'occupied' || u.tenant).length;
+    
+    const occupiedCount = units.filter((unit) => {
+      const statusStr = (unit.status || "").toLowerCase().trim();
+      return statusStr === "ocupada" || statusStr === "occupied";
+    }).length;
+    
     return {
-      percentage: Math.round((occupied / units.length) * 100),
-      occupied,
+      percentage: Math.round((occupiedCount / units.length) * 100),
+      occupied: occupiedCount,
       total: units.length
     };
   }, [units]);
@@ -458,16 +541,16 @@ export function BuildingGeneralView() {
   const chartData = useMemo(() => {
     // Si no hay eventos, devolvemos skeleton de "Sin datos"
     const emptyData = [{ name: "Sin datos", value: 1, color: "#e5e7eb" }];
-    
+
     if (!events.length) return emptyData;
-    
+
     const maintenanceEvents = events.filter(e => e.category === 'maintenance');
     if (!maintenanceEvents.length) return emptyData;
 
     const completed = maintenanceEvents.filter(e => e.status === 'completed').length;
     const inProgress = maintenanceEvents.filter(e => e.status === 'in_progress').length;
     const scheduled = maintenanceEvents.filter(e => e.status === 'pending').length;
-    
+
     // Atrasado: scheduled in past
     const delayed = maintenanceEvents.filter(e => e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length;
 
@@ -608,16 +691,15 @@ export function BuildingGeneralView() {
                     Eficiencia Energética
                   </h4>
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${
-                      energyEfficiencyData?.rating === "A" ? "bg-green-600" :
-                      energyEfficiencyData?.rating === "B" ? "bg-green-500" :
-                      energyEfficiencyData?.rating === "C" ? "bg-yellow-500" :
-                      energyEfficiencyData?.rating === "D" ? "bg-orange-500" :
-                      energyEfficiencyData?.rating === "E" ? "bg-orange-600" :
-                      energyEfficiencyData?.rating === "F" ? "bg-red-500" :
-                      energyEfficiencyData?.rating === "G" ? "bg-red-600" :
-                      "bg-gray-400"
-                    }`}>
+                    <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${energyEfficiencyData?.rating === "A" ? "bg-green-600" :
+                        energyEfficiencyData?.rating === "B" ? "bg-green-500" :
+                          energyEfficiencyData?.rating === "C" ? "bg-yellow-500" :
+                            energyEfficiencyData?.rating === "D" ? "bg-orange-500" :
+                              energyEfficiencyData?.rating === "E" ? "bg-orange-600" :
+                                energyEfficiencyData?.rating === "F" ? "bg-red-500" :
+                                  energyEfficiencyData?.rating === "G" ? "bg-red-600" :
+                                    "bg-gray-400"
+                      }`}>
                       {energyEfficiencyData?.rating || "—"}
                     </div>
                     <div>
@@ -637,18 +719,31 @@ export function BuildingGeneralView() {
                   <h4 className="text-xs text-gray-500 mb-2">
                     Ocupación del Activo
                   </h4>
-                  <div className="mb-2">
-                    <span className="text-2xl text-gray-900">{occupancyStats.percentage}%</span>
-                    <span className="text-xs text-gray-500 ml-1.5">
-                      ocupado ({occupancyStats.occupied}/{occupancyStats.total})
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div
-                      className="bg-gradient-to-r from-green-500 to-green-600 h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${occupancyStats.percentage}%` }}
-                    ></div>
-                  </div>
+                  {occupancyStats.total === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-3 text-center">
+                      <p className="text-xs text-gray-500 mb-1">
+                        No hay unidades registradas
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        Las unidades aparecerán aquí una vez que se carguen
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-2">
+                        <span className="text-2xl text-gray-900">{occupancyStats.percentage}%</span>
+                        <span className="text-xs text-gray-500 ml-1.5">
+                          ocupado ({occupancyStats.occupied}/{occupancyStats.total})
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: `${occupancyStats.percentage}%` }}
+                        ></div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -678,15 +773,60 @@ export function BuildingGeneralView() {
                     <p className="text-xs text-gray-900">{building?.technicianEmail || "-"}</p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">
-                      Referencia Catastral
-                    </label>
-                    <p
-                      className="text-xs text-gray-900 truncate"
-                      title={building?.cadastralReference || "-"}
-                    >
-                      {building?.cadastralReference || "-"}
-                    </p>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="text-xs text-gray-500">
+                        Referencia Catastral
+                      </label>
+                      {!isEditingCadastralRef && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingCadastralRef(true)}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+                          title="Editar referencia catastral"
+                        >
+                          <Edit2 className="w-3 h-3 text-gray-500" />
+                        </button>
+                      )}
+                    </div>
+                    {isEditingCadastralRef ? (
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          value={tempCadastralRef}
+                          onChange={(e) => setTempCadastralRef(e.target.value)}
+                          className="w-full text-xs text-gray-900 border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Ej: 1234567VK1234A0001WX"
+                          disabled={isSavingCadastralRef}
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={handleSaveCadastralRef}
+                            disabled={isSavingCadastralRef}
+                            className="p-0.5 hover:bg-green-100 rounded transition-colors disabled:opacity-50"
+                            title="Guardar"
+                          >
+                            <Save className="w-3 h-3 text-green-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditCadastralRef}
+                            disabled={isSavingCadastralRef}
+                            className="p-0.5 hover:bg-red-100 rounded transition-colors disabled:opacity-50"
+                            title="Cancelar"
+                          >
+                            <X className="w-3 h-3 text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p
+                        className="text-xs text-gray-900 truncate"
+                        title={building?.cadastralReference || "-"}
+                      >
+                        {building?.cadastralReference || "-"}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -802,7 +942,7 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">Libro del Edificio</h4>
                       <p className="text-xs text-blue-100">
-                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% completado • {digitalBook?.sections?.filter(s => s.complete).length || 0} secciones
+                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% completado • {docCount} documentos
                       </p>
                     </div>
                   </div>
@@ -1229,7 +1369,7 @@ export function BuildingGeneralView() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor Futuro:</span>
                       <span className="text-green-700">
-                         {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
+                        {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
                       </span>
                     </div>
                   </div>
