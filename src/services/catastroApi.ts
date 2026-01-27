@@ -9,13 +9,13 @@ export interface Provincia {
 }
 
 export interface Municipio {
-  codigo: string;
-  nombre: string;
+  codigoMunicipioIne: string;
+  nombreMunicipio: string;
 }
 
 export interface Via {
-  codigo: string;
-  nombre: string;
+  codigoVia: string;
+  nombreVia: string;
   tipoVia?: string;
 }
 
@@ -138,7 +138,8 @@ export class CatastroApiService {
   static async getProvinces(): Promise<Provincia[]> {
     try {
       const response = await apiFetch('/CatastroApi/provincias');
-      return Array.isArray(response) ? response : [];
+      console.log(response)
+      return Array.isArray(response.provincias) ? response.provincias : [];
     } catch (error: any) {
       // Manejar error 403 específicamente
       if (error?.status === 403) {
@@ -156,7 +157,7 @@ export class CatastroApiService {
     try {
       const params = new URLSearchParams({ provincia });
       const response = await apiFetch(`/CatastroApi/municipios?${params.toString()}`);
-      return Array.isArray(response) ? response : [];
+      return Array.isArray(response.municipios) ? response.municipios : [];
     } catch (error: any) {
       if (error?.status === 403) {
         throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
@@ -181,7 +182,7 @@ export class CatastroApiService {
       if (tipoVia) params.append('tipoVia', tipoVia);
       
       const response = await apiFetch(`/CatastroApi/vias?${params.toString()}`);
-      return Array.isArray(response) ? response : [];
+      return Array.isArray(response.vias) ? response.vias : [];
     } catch (error: any) {
       if (error?.status === 403) {
         throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
@@ -359,6 +360,7 @@ export class CatastroApiService {
     puerta?: string
   ): Promise<InmuebleResponse> {
     try {
+      console.log({provincia, municipio, nombreVia, tipoVia, numero, escalera, planta, puerta})
       const params = new URLSearchParams({
         provincia,
         municipio,
@@ -371,7 +373,7 @@ export class CatastroApiService {
       if (puerta) params.append('puerta', puerta);
 
       const response = await apiFetch(`/CatastroApi/inmuebleLoc?${params.toString()}`) as CatastroApiResponse;
-      
+      console.log(response)
       // La API devuelve un objeto con inmuebles array, tomar el primero
       if (response.inmuebles && response.inmuebles.length > 0) {
         const inmueble = response.inmuebles[0];
