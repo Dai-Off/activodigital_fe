@@ -152,7 +152,6 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           return;
         }
         const via = streets.find(v => v.codigoVia === selectedStreet);
-        console.log('Via encontrada:', via);
         inmueble = await CatastroApiService.getBuildingByAddress(
           selectedProvince,
           selectedMunicipality,

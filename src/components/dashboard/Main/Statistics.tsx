@@ -23,10 +23,7 @@ export function Statistics() {
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
-      .then((data) => {
-        console.log('[Statistics] Datos recibidos del backend:', data);
-        setStats(data);
-      })
+      .then(setStats)
       .catch((err) => {
         console.error('[Statistics] Error al cargar estadísticas:', err);
         setStats(null);

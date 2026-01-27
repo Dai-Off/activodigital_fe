@@ -138,7 +138,6 @@ export class CatastroApiService {
   static async getProvinces(): Promise<Provincia[]> {
     try {
       const response = await apiFetch('/CatastroApi/provincias');
-      console.log(response)
       return Array.isArray(response.provincias) ? response.provincias : [];
     } catch (error: any) {
       // Manejar error 403 específicamente
@@ -360,7 +359,6 @@ export class CatastroApiService {
     puerta?: string
   ): Promise<InmuebleResponse> {
     try {
-      console.log({provincia, municipio, nombreVia, tipoVia, numero, escalera, planta, puerta})
       const params = new URLSearchParams({
         provincia,
         municipio,
@@ -373,7 +371,6 @@ export class CatastroApiService {
       if (puerta) params.append('puerta', puerta);
 
       const response = await apiFetch(`/CatastroApi/inmuebleLoc?${params.toString()}`) as CatastroApiResponse;
-      console.log(response)
       // La API devuelve un objeto con inmuebles array, tomar el primero
       if (response.inmuebles && response.inmuebles.length > 0) {
         const inmueble = response.inmuebles[0];
