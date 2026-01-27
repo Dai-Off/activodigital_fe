@@ -23,8 +23,14 @@ export function Statistics() {
 
   useEffect(() => {
     BuildingsApiService.getDashboardStats()
-      .then(setStats)
-      .catch(() => setStats(null))
+      .then((data) => {
+        console.log('[Statistics] Datos recibidos del backend:', data);
+        setStats(data);
+      })
+      .catch((err) => {
+        console.error('[Statistics] Error al cargar estadísticas:', err);
+        setStats(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -75,7 +81,7 @@ export function Statistics() {
         <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white">
           <LucideTriangleAlert className="w-5 h-5 mb-1.5 opacity-80"></LucideTriangleAlert>
           <p className="text-xs opacity-90 mb-0.5">Alertas Activas</p>
-          <p className="text-2xl mb-0.5">0</p>
+          <p className="text-2xl mb-0.5">{stats.nextEventsCount}</p>
           <p className="text-xs opacity-75"></p>
         </div>
       </div>
@@ -83,66 +89,32 @@ export function Statistics() {
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <h3 className="text-sm mb-2">Distribución por Tipo</h3>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-24">
-                <p className="text-xs text-gray-700">Oficinas</p>
-              </div>
-              <div className="flex-1">
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className="bg-blue-500 h-4 rounded-full flex items-center px-2"
-                    style={{ width: "41.6667%" }}
-                  >
-                    <span className="text-xs text-white">5</span>
+            {[
+              { label: 'Residencial', value: stats.typologyDistribution.residential, color: 'bg-green-500' },
+              { label: 'Comercial', value: stats.typologyDistribution.commercial, color: 'bg-purple-500' },
+              { label: 'Mixto', value: stats.typologyDistribution.mixed, color: 'bg-orange-500' },
+            ].map((item) => {
+              const percentage = stats.totalAssets > 0 ? (item.value / stats.totalAssets) * 100 : 0;
+              return (
+                <div key={item.label} className="flex items-center gap-2">
+                  <div className="w-24">
+                    <p className="text-xs text-gray-700">{t(item.label.toLowerCase(), item.label)}</p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                      <div
+                        className={`${item.color} h-4 rounded-full flex items-center px-2 transition-all duration-500`}
+                        style={{ width: `${percentage}%` }}
+                      >
+                        {item.value > 0 && (
+                          <span className="text-xs text-white">{item.value}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-24">
-                <p className="text-xs text-gray-700">Residencial</p>
-              </div>
-              <div className="flex-1">
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className="bg-green-500 h-4 rounded-full flex items-center px-2"
-                    style={{ width: "33.3333%" }}
-                  >
-                    <span className="text-xs text-white">4</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-24">
-                <p className="text-xs text-gray-700">Comercial</p>
-              </div>
-              <div className="flex-1">
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className="bg-purple-500 h-4 rounded-full flex items-center px-2"
-                    style={{ width: "16.6667%" }}
-                  >
-                    <span className="text-xs text-white">2</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-24">
-                <p className="text-xs text-gray-700">Mixto</p>
-              </div>
-              <div className="flex-1">
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className="bg-orange-500 h-4 rounded-full flex items-center px-2"
-                    style={{ width: "8.33333%" }}
-                  >
-                    <span className="text-xs text-white">1</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
@@ -151,25 +123,44 @@ export function Statistics() {
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Superficie Total</span>
-                <span className="text-sm">125,450 m²</span>
+                <span className="text-sm">
+                  {stats.totalSurfaceArea > 0 
+                    ? `${new Intl.NumberFormat('es-ES').format(stats.totalSurfaceArea)} m²`
+                    : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Unidades Totales</span>
-                <span className="text-sm">200</span>
+                <span className="text-sm">
+                  {stats.totalAssets > 0 
+                    ? (stats.totalAssets * (stats.averageUnitsPerBuilding || 0))
+                    : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Tasa Ocupación</span>
-                <span className="text-sm">92%</span>
+                <span className="text-sm">
+                  {stats.averageOccupancy && stats.averageOccupancy > 0 ? `${stats.averageOccupancy}%` : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Valor Portfolio</span>
-                <span className="text-sm">€84.5M</span>
+                <span className="text-sm">
+                  {stats.totalValue > 0 
+                    ? new Intl.NumberFormat('es-ES', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        notation: 'compact',
+                        maximumFractionDigits: 1
+                      }).format(stats.totalValue)
+                    : '-'}
+                </span>
               </div>
             </div>
           </div>
@@ -194,7 +185,7 @@ export function Statistics() {
             <Clock className="w-4 h-4 text-blue-600"></Clock>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl">0</span>
+            <span className="text-2xl">{stats.nextEventsCount}</span>
             <span className="text-xs text-gray-500">Programados este mes</span>
           </div>
         </div>
