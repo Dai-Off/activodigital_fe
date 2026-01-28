@@ -58,6 +58,8 @@ import {
   SERVICE_TYPE_LABELS,
   getServiceTypeLabel 
 } from "~/services/serviceInvoices";
+import { extractInvoiceData, type InvoiceExtractorResponse } from "~/services/invoiceExtractor";
+import { Sparkles } from "lucide-react";
 
 // Tipo para categorías de documentos
 type DocumentCategory = {
@@ -440,9 +442,11 @@ export function BuildingGestion() {
   // Estado para modal de factura de servicio
   const [isServiceInvoiceModalOpen, setIsServiceInvoiceModalOpen] = useState(false);
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [invoiceStep, setInvoiceStep] = useState<'upload' | 'processing' | 'review'>('upload');
   const [serviceInvoiceData, setServiceInvoiceData] = useState({
     service_type: 'electricity' as ServiceType,
-    invoice_date: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
+    invoice_date: new Date().toISOString().split('T')[0],
     amount_eur: 0,
     units: null as number | null,
     notes: '',
@@ -451,6 +455,7 @@ export function BuildingGestion() {
     period_start: '',
     period_end: '',
     expiration_date: '',
+    is_overdue: false,
   });
 
   // Cargar categorías personalizadas al montar el componente
@@ -549,25 +554,47 @@ export function BuildingGestion() {
       );
 
       if (result.success && result.document) {
-        // Verificar si es una factura de servicio (categoría Financiero/Contable)
         const isFinancialCategory = selectedCategory === "financial" || 
           documentCategories.find(cat => cat.value === selectedCategory)?.label === "Financiero/Contable";
         
-        // Si es categoría financiera, preguntar si es una factura de servicio
-        if (isFinancialCategory && result.document.url) {
+        if (isFinancialCategory && result.document.url && selectedFile) {
           setUploadedDocumentUrl(result.document.url);
-          // Cerrar el modal de upload antes de abrir el de factura
           setIsUploadModalOpen(false);
-          setSelectedFile(null);
           setSelectedCategory("");
+          
           setIsServiceInvoiceModalOpen(true);
+          setInvoiceStep('processing');
+          setIsProcessingAI(true);
+          
+          try {
+            const aiResponse = await extractInvoiceData(selectedFile);
+            
+            setServiceInvoiceData({
+              service_type: aiResponse.service_type || 'electricity',
+              invoice_date: aiResponse.invoice_date || new Date().toISOString().split('T')[0],
+              amount_eur: aiResponse.amount_eur || 0,
+              units: aiResponse.units,
+              notes: aiResponse.notes || '',
+              provider: aiResponse.provider || '',
+              invoice_number: aiResponse.invoice_number || '',
+              period_start: aiResponse.period_start || '',
+              period_end: aiResponse.period_end || '',
+              expiration_date: aiResponse.expiration_date || '',
+              is_overdue: aiResponse.is_overdue || false,
+            });
+            
+            setInvoiceStep('review');
+          } catch (error) {
+            console.error("Error procesando factura con IA:", error);
+            showError("Advertencia", "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.");
+            setInvoiceStep('review');
+          } finally {
+            setIsProcessingAI(false);
+            setSelectedFile(null);
+          }
         } else {
           showSuccess("Documento subido", "El documento se ha subido correctamente");
-          
-          // Recargar documentos
           reloadDocuments();
-          
-          // Cerrar modal y resetear
           setIsUploadModalOpen(false);
           setSelectedFile(null);
           setSelectedCategory("");
@@ -652,15 +679,15 @@ export function BuildingGestion() {
         period_start: serviceInvoiceData.period_start || null,
         period_end: serviceInvoiceData.period_end || null,
         expiration_date: serviceInvoiceData.expiration_date || null,
+        is_overdue: serviceInvoiceData.is_overdue,
       });
 
       showSuccess("Factura creada", "La factura de servicio se ha registrado correctamente");
       
-      // Recargar documentos
       reloadDocuments();
       
-      // Cerrar modales y resetear
       setIsServiceInvoiceModalOpen(false);
+      setInvoiceStep('upload');
       setIsUploadModalOpen(false);
       setSelectedFile(null);
       setSelectedCategory("");
@@ -676,6 +703,7 @@ export function BuildingGestion() {
         period_start: '',
         period_end: '',
         expiration_date: '',
+        is_overdue: false,
       });
     } catch (error: any) {
       console.error("Error creando factura de servicio:", error);
@@ -689,7 +717,7 @@ export function BuildingGestion() {
   // Manejar cancelación de factura de servicio (solo cerrar modal, el PDF ya está subido)
   const handleCancelServiceInvoice = () => {
     setIsServiceInvoiceModalOpen(false);
-    // El documento ya está subido, así que recargamos y cerramos todo
+    setInvoiceStep('upload');
     reloadDocuments();
     setIsUploadModalOpen(false);
     setSelectedFile(null);
@@ -1347,14 +1375,28 @@ export function BuildingGestion() {
       <Dialog open={isServiceInvoiceModalOpen} onOpenChange={setIsServiceInvoiceModalOpen}>
         <DialogContent className="max-w-md shadow-xl bg-white flex flex-col max-h-[90vh]">
           <DialogHeader className="!bg-white">
-            <DialogTitle className="mb-3">Registrar Factura de Servicio</DialogTitle>
+            <DialogTitle className="mb-3">
+              {invoiceStep === 'processing' ? 'Procesando Factura' : 'Revisar Datos de Factura'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-              <p className="text-xs text-blue-800">
-                ℹ️ El documento PDF ya ha sido subido. Completa los datos para registrar la factura en el sistema.
+          
+          {invoiceStep === 'processing' ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="relative">
+                <Sparkles className="w-16 h-16 text-blue-600 animate-pulse" />
+              </div>
+              <p className="text-sm text-gray-600 text-center">
+                Extrayendo datos de la factura con IA...
               </p>
             </div>
+          ) : (
+            <>
+              <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                  <p className="text-xs text-blue-800">
+                    ℹ️ Revisa y ajusta los datos extraídos automáticamente de la factura
+                  </p>
+                </div>
 
             <div className="!bg-white">
               <label className="block text-sm text-gray-700 mb-1">
@@ -1540,6 +1582,8 @@ export function BuildingGestion() {
               Registrar Factura
             </Button>
           </DialogFooter>
+          </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
