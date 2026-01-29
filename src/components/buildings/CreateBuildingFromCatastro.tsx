@@ -98,9 +98,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     }
   }, [selectedProvince]);
 
-  // Cargar vías cuando se selecciona un municipio
+  // Cargar vías cuando se selecciona un municipio y se escribe algo
   useEffect(() => {
-    if (selectedProvince && selectedMunicipality) {
+    if (selectedProvince && selectedMunicipality && streetName.length >= 2 && streetType) {
       const loadStreets = async () => {
         try {
           const vias = await CatastroApiService.getStreets(
@@ -151,11 +151,11 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           setIsLoading(false);
           return;
         }
-        const via = streets.find(v => v.codigo === selectedStreet);
+        const via = streets.find(v => v.codigoVia === selectedStreet);
         inmueble = await CatastroApiService.getBuildingByAddress(
           selectedProvince,
           selectedMunicipality,
-          via?.nombre || '',
+          via?.nombreVia || '',
           via?.tipoVia || '',
           number,
           escalera || undefined,
@@ -436,8 +436,8 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 >
                   <option value="">{t('common.select', 'Seleccionar...')}</option>
                   {municipalities.map((m) => (
-                    <option key={m.codigo} value={m.codigo}>
-                      {m.nombre}
+                    <option key={m.nombreMunicipio} value={m.nombreMunicipio}>
+                      {m.nombreMunicipio}
                     </option>
                   ))}
                 </select>
@@ -499,9 +499,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 disabled={isLoading || !selectedMunicipality}
               >
                 <option value="">{t('common.select', 'Seleccionar...')}</option>
-                {streets.map((s) => (
-                  <option key={s.codigo} value={s.codigo}>
-                    {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombre}
+                {streets.map((s, idx) => (
+                  <option key={`${s.codigoVia}-${idx}`} value={s.codigoVia}>
+                    {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombreVia}
                   </option>
                 ))}
               </select>

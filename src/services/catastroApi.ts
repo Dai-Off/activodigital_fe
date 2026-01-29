@@ -9,13 +9,13 @@ export interface Provincia {
 }
 
 export interface Municipio {
-  codigo: string;
-  nombre: string;
+  codigoMunicipioIne: string;
+  nombreMunicipio: string;
 }
 
 export interface Via {
-  codigo: string;
-  nombre: string;
+  codigoVia: string;
+  nombreVia: string;
   tipoVia?: string;
 }
 
@@ -543,7 +543,6 @@ export class CatastroApiService {
       if (puerta) params.append('puerta', puerta);
 
       const response = await apiFetch(`/CatastroApi/inmuebleLoc?${params.toString()}`) as CatastroApiResponse;
-      
       // La API devuelve un objeto con inmuebles array, tomar el primero
       if (response.inmuebles && response.inmuebles.length > 0) {
         const inmueble = response.inmuebles[0];
