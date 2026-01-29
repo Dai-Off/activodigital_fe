@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { LucideActivity, LucideChartColumn, LucideHouse } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -7,19 +8,19 @@ export function SidebarDashboard() {
   const menuItems = [
     {
       id: "main",
-      label: "Panel Principal",
+      label: t("main"),
       Icon: LucideHouse,
       route: "/dashboard",
     },
     {
       id: "stats",
-      label: "Estadísticas",
+      label: t("statistics"),
       Icon: LucideChartColumn,
       route: "/dashboard/statistics",
     },
     {
       id: "activity",
-      label: "Actividad Reciente",
+      label: t("recentActivity"),
       Icon: LucideActivity,
       route: "/dashboard/activity",
     },

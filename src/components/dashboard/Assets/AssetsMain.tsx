@@ -211,15 +211,15 @@ export function AssetsMain() {
               <Building2 className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-lg md:text-xl lg:text-2xl">Gestión de Edificios</h2>
-              <p className="text-xs md:text-sm text-gray-500">{stats.totalAssets} edificios</p>
+              <h2 className="text-lg md:text-xl lg:text-2xl">{t("buildingManagement")}</h2>
+              <p className="text-xs md:text-sm text-gray-500">{stats.totalAssets} {t("buildings")}</p>
             </div>
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
           >
-            + Crear Edificio
+            + {t("createBuilding", "Crear Edificio")}
           </button>
         </div>
 
@@ -235,19 +235,19 @@ export function AssetsMain() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
           <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Total Edificios</p>
+            <p className="text-sm text-gray-600 mb-1">{t("totalBuildings")}</p>
             <p className="text-2xl text-blue-600">{stats.totalAssets}</p>
           </div>
           <div className="p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Cumplimiento Promedio</p>
+            <p className="text-sm text-gray-600 mb-1">{t("complianceAverage")}</p>
             <p className="text-2xl text-green-600">{complianceAverage}%</p>
           </div>
           <div className="p-4 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Libros Completos</p>
+            <p className="text-sm text-gray-600 mb-1">{t("completedBooks")}</p>
             <p className="text-2xl text-purple-600">{stats.completedBooks}</p>
           </div>
           <div className="p-4 bg-orange-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Superficie Total</p>
+            <p className="text-sm text-gray-600 mb-1">{t("totalSurfaceArea")}</p>
             <p className="text-2xl text-orange-600">{totalSurface} m²</p>
           </div>
         </div>
@@ -258,13 +258,13 @@ export function AssetsMain() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por nombre, dirección..."
+                placeholder={t("search")}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="text-xs text-gray-500">{filteredBuildings.length} de {stats.totalAssets} edificios</div>
+            <div className="text-xs text-gray-500">{filteredBuildings.length} {t("of")} {stats.totalAssets} {t("buildings")}</div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <select
@@ -272,14 +272,14 @@ export function AssetsMain() {
               onChange={(e) => setSearchField(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="name">Nombre</option>
-              <option value="address">Dirección</option>
-              <option value="surface">Superficie</option>
-              <option value="year">Año</option>
-              <option value="typology">Tipo</option>
-              <option value="energyClass">Clase Energética</option>
-              <option value="compliance">Cumplimiento</option>
-              <option value="occupancy">Ocupación</option>
+              <option value="name">{t("name")}</option>
+              <option value="address">{t("address")}</option>
+              <option value="surface">{t("surface")}</option>
+              <option value="year">{t("year")}</option>
+              <option value="typology">{t("typology")}</option>
+              <option value="energyClass">{t("energyClass")}</option>
+              <option value="compliance">{t("compliance")}</option>
+              <option value="occupancy">{t("occupancy")}</option>
             </select>
             <button
               onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
@@ -289,7 +289,7 @@ export function AssetsMain() {
             </button>
             <button className="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50 border-gray-300">
               <SlidersHorizontal className="w-4 h-4" />
-              <span>Filtros</span>
+              <span>{t("filters")}</span>
             </button>
           </div>
         </div>
@@ -345,21 +345,21 @@ export function AssetsMain() {
                       )}
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-500">Tipo:</span>
+                          <span className="text-gray-500">{t("type")}:</span>
                           <span className="font-medium truncate">
                             {building.typology === "residential"
-                              ? "Residencial"
+                              ? t("residential")
                               : building.typology === "commercial"
-                                ? "Comercial"
-                                : "Mixto"}
+                                ? t("commercial")
+                                : t("office")}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-500">Clase:</span>
+                          <span className="text-gray-500">{t("energyClass")}:</span>
                           <span className="text-gray-400">-</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="text-gray-500">Superficie:</span>
+                          <span className="text-gray-500">{t("surface")}:</span>
                           <span className="font-medium">
                             {building.squareMeters
                               ? `${building.squareMeters.toLocaleString()} m²`
@@ -400,31 +400,31 @@ export function AssetsMain() {
             <thead className="bg-gray-50">
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Imagen</span>
+                  <span>{t("image")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Edificio</span>
+                  <span>{t("building")}</span>
                 </th>
                 {/* <th className="text-left py-3 px-4 text-sm text-gray-600">
                   <span>ID</span>
                 </th> */}
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Tipo</span>
+                  <span>{t("typology")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Superficie</span>
+                  <span>{t("surface")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Año</span>
+                  <span>{t("year")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Certificado</span>
+                  <span>{t("certificate")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Libro</span>
+                  <span>{t("book")}</span>
                 </th>
                 <th className="text-left py-3 px-4 text-sm text-gray-600">
-                  <span>Cumplimiento</span>
+                  <span>{t("compliance")}</span>
                 </th>
               </tr>
             </thead>
@@ -432,7 +432,7 @@ export function AssetsMain() {
               {sortedBuildings.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-gray-500">
-                    {searchQuery ? "No se encontraron resultados" : "No hay edificios disponibles"}
+                    {searchQuery ? t("noResultsFound") : t("noBuildingsAvailable")}
                   </td>
                 </tr>
               ) : (
@@ -447,8 +447,8 @@ export function AssetsMain() {
                   const compliancePercentage = building.porcentBook || 0;
 
                   const status = compliancePercentage === 100 
-                    ? { label: 'Completo', icon: Check, color: 'bg-green-100 text-green-700' }
-                    : { label: 'Incompleto', icon: X, color: 'bg-red-100 text-red-700' };
+                    ? { label: t("completed"), icon: Check, color: 'bg-green-100 text-green-700' }
+                    : { label: t("incomplete"), icon: X, color: 'bg-red-100 text-red-700' };
 
                   return (
                     <tr
@@ -489,10 +489,10 @@ export function AssetsMain() {
                       </td> */}
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {building.typology === "residential"
-                          ? "Residencial"
+                          ? t("residential")
                           : building.typology === "commercial"
-                            ? "Comercial"
-                            : "Mixto"}
+                            ? t("commercial")
+                            : t("mixed")}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-900">
                         {building.squareMeters

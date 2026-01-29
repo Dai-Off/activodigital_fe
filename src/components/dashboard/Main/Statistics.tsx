@@ -56,36 +56,36 @@ export function Statistics() {
       <div className="grid grid-cols-4 gap-3 flex-shrink-0">
         <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white">
           <Building2 className="w-5 h-5 mb-1.5 opacity-80"></Building2>
-          <p className="text-xs opacity-90 mb-0.5">Total Edificios</p>
+          <p className="text-xs opacity-90 mb-0.5">{t("totalBuildings")}</p>
           <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
           <p className="text-xs opacity-75"></p>
         </div>
         <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg text-white">
           <LucideCircleCheckBig className="w-5 h-5 mb-1.5 opacity-80"></LucideCircleCheckBig>
-          <p className="text-xs opacity-90 mb-0.5">Cumplimiento</p>
+          <p className="text-xs opacity-90 mb-0.5">{t("compliance")}</p>
           <p className="text-2xl mb-0.5">0%</p>
-          <p className="text-xs opacity-75">Promedio general</p>
+          <p className="text-xs opacity-75">{t("generalAverage")}</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg text-white">
           <LucideFileText className="w-5 h-5 mb-1.5 opacity-80"></LucideFileText>
-          <p className="text-xs opacity-90 mb-0.5">Libros Completados</p>
+          <p className="text-xs opacity-90 mb-0.5">{t("completedBooks")}</p>
           <p className="text-2xl mb-0.5">{stats.completedBooks}</p>
-          <p className="text-xs opacity-75">de {stats.totalAssets} edificios</p>
+          <p className="text-xs opacity-75">{t("of")} {stats.totalAssets} {t("buildings")}</p>
         </div>
         <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white">
           <LucideTriangleAlert className="w-5 h-5 mb-1.5 opacity-80"></LucideTriangleAlert>
-          <p className="text-xs opacity-90 mb-0.5">Alertas Activas</p>
+          <p className="text-xs opacity-90 mb-0.5">{t("activeAlerts")}</p>
           <p className="text-2xl mb-0.5">0</p>
           <p className="text-xs opacity-75"></p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <h3 className="text-sm mb-2">Distribución por Tipo</h3>
+          <h3 className="text-sm mb-2">{t("distributionByType")}</h3>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-24">
-                <p className="text-xs text-gray-700">Oficinas</p>
+                <p className="text-xs text-gray-700">{t("offices")}</p>
               </div>
               <div className="flex-1">
                 <div className="w-full bg-gray-200 rounded-full h-4">
@@ -100,7 +100,7 @@ export function Statistics() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-24">
-                <p className="text-xs text-gray-700">Residencial</p>
+                <p className="text-xs text-gray-700">{t("residential")}</p>
               </div>
               <div className="flex-1">
                 <div className="w-full bg-gray-200 rounded-full h-4">
@@ -115,7 +115,7 @@ export function Statistics() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-24">
-                <p className="text-xs text-gray-700">Comercial</p>
+                <p className="text-xs text-gray-700">{t("commercial")}</p>
               </div>
               <div className="flex-1">
                 <div className="w-full bg-gray-200 rounded-full h-4">
@@ -130,7 +130,7 @@ export function Statistics() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-24">
-                <p className="text-xs text-gray-700">Mixto</p>
+                <p className="text-xs text-gray-700">{t("mixed")}</p>
               </div>
               <div className="flex-1">
                 <div className="w-full bg-gray-200 rounded-full h-4">
@@ -146,29 +146,29 @@ export function Statistics() {
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
-          <h3 className="text-sm mb-2">Métricas Clave</h3>
+          <h3 className="text-sm mb-2">{t("keyMetrics")}</h3>
           <div className="space-y-2">
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600">Superficie Total</span>
+                <span className="text-xs text-gray-600">{t("totalArea")}</span>
                 <span className="text-sm">125,450 m²</span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600">Unidades Totales</span>
+                <span className="text-xs text-gray-600">{t("totalUnits")}</span>
                 <span className="text-sm">200</span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600">Tasa Ocupación</span>
+                <span className="text-xs text-gray-600">{t("occupancyRate")}</span>
                 <span className="text-sm">92%</span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-600">Valor Portfolio</span>
+                <span className="text-xs text-gray-600">{t("portfolioValue")}</span>
                 <span className="text-sm">€84.5M</span>
               </div>
             </div>
@@ -178,29 +178,29 @@ export function Statistics() {
       <div className="grid grid-cols-3 gap-3 flex-shrink-0">
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm">Eficiencia Energética</h3>
+            <h3 className="text-sm">{t("energyEfficiency")}</h3>
             <Zap className="w-4 h-4 text-yellow-600"></Zap>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl">
               {stats.averageEnergyClass ? stats.averageEnergyClass : "-"}
             </span>
-            <span className="text-xs text-gray-500">Promedio de clase</span>
+            <span className="text-xs text-gray-500">{t("averageClass")}</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm">Mantenimientos</h3>
+            <h3 className="text-sm">{t("maintenance")}</h3>
             <Clock className="w-4 h-4 text-blue-600"></Clock>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl">0</span>
-            <span className="text-xs text-gray-500">Programados este mes</span>
+            <span className="text-xs text-gray-500">{t("scheduledThisMonth")}</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm">ROI Medio</h3>
+            <h3 className="text-sm">{t("averageROI")}</h3>
             <LucideTrendingUp className="w-4 h-4 text-green-600"></LucideTrendingUp>
           </div>
           <div className="flex items-baseline gap-2">
