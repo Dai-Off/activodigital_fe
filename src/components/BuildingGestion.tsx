@@ -56,7 +56,7 @@ import {
   getServiceTypeLabel
 } from "~/services/serviceInvoices";
 import { useLanguage } from "~/contexts/LanguageContext";
-import { extractInvoiceData, type InvoiceExtractorResponse } from "~/services/invoiceExtractor";
+import { extractInvoiceData } from "~/services/invoiceExtractor";
 import { Sparkles } from "lucide-react";
 
 // Tipo para categorías de documentos
@@ -682,64 +682,64 @@ export function BuildingGestion() {
 
         // Si es categoría financiera, preguntar si es una factura de servicio
         if (isFinancialCategory && result.document.url) {
-        const isFinancialCategory = selectedCategory === "financial" || 
-          documentCategories.find(cat => cat.value === selectedCategory)?.label === "Financiero/Contable";
-        
-        if (isFinancialCategory && result.document.url && selectedFile) {
-          setUploadedDocumentUrl(result.document.url);
-          setIsUploadModalOpen(false);
-          setSelectedCategory("");
+          const isFinancialCategory = selectedCategory === "financial" ||
+            documentCategories.find(cat => cat.value === selectedCategory)?.label === "Financiero/Contable";
 
-          setIsServiceInvoiceModalOpen(true);
-          setInvoiceStep("processing");
+          if (isFinancialCategory && result.document.url && selectedFile) {
+            setUploadedDocumentUrl(result.document.url);
+            setIsUploadModalOpen(false);
+            setSelectedCategory("");
 
-          try {
-            const aiResponse = await extractInvoiceData(selectedFile);
+            setIsServiceInvoiceModalOpen(true);
+            setInvoiceStep("processing");
 
-            setServiceInvoiceData({
-              service_type: aiResponse.service_type || "electricity",
-              invoice_date:
-                aiResponse.invoice_date ||
-                new Date().toISOString().split("T")[0],
-              amount_eur: aiResponse.amount_eur || 0,
-              units: aiResponse.units,
-              notes: aiResponse.notes || "",
-              provider: aiResponse.provider || "",
-              invoice_number: aiResponse.invoice_number || "",
-              period_start: aiResponse.period_start || "",
-              period_end: aiResponse.period_end || "",
-              expiration_date: aiResponse.expiration_date || "",
-              is_overdue: aiResponse.is_overdue || false,
-            });
+            try {
+              const aiResponse = await extractInvoiceData(selectedFile);
 
-            setInvoiceStep("review");
-          } catch (error) {
-            console.error("Error procesando factura con IA:", error);
-            showError(
-              "Advertencia",
-              "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.",
+              setServiceInvoiceData({
+                service_type: aiResponse.service_type || "electricity",
+                invoice_date:
+                  aiResponse.invoice_date ||
+                  new Date().toISOString().split("T")[0],
+                amount_eur: aiResponse.amount_eur || 0,
+                units: aiResponse.units,
+                notes: aiResponse.notes || "",
+                provider: aiResponse.provider || "",
+                invoice_number: aiResponse.invoice_number || "",
+                period_start: aiResponse.period_start || "",
+                period_end: aiResponse.period_end || "",
+                expiration_date: aiResponse.expiration_date || "",
+                is_overdue: aiResponse.is_overdue || false,
+              });
+
+              setInvoiceStep("review");
+            } catch (error) {
+              console.error("Error procesando factura con IA:", error);
+              showError(
+                "Advertencia",
+                "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.",
+              );
+              setInvoiceStep("review");
+            } finally {
+              setSelectedFile(null);
+            }
+          } else {
+            showSuccess(
+              "Documento subido",
+              "El documento se ha subido correctamente",
             );
-            setInvoiceStep("review");
-          } finally {
+            reloadDocuments();
+            setIsUploadModalOpen(false);
             setSelectedFile(null);
+            setSelectedCategory("");
           }
         } else {
-          showSuccess(
-            "Documento subido",
-            "El documento se ha subido correctamente",
+          showError(
+            "Error al subir",
+            result.error || "No se pudo subir el documento",
           );
-          reloadDocuments();
-          setIsUploadModalOpen(false);
-          setSelectedFile(null);
-          setSelectedCategory("");
         }
-      } else {
-        showError(
-          "Error al subir",
-          result.error || "No se pudo subir el documento",
-        );
       }
-    }
     } catch (error) {
       console.error("Error subiendo documento:", error);
       showError("Error", "Ocurrió un error inesperado al subir el documento");
@@ -754,7 +754,7 @@ export function BuildingGestion() {
     setSelectedCategory("");
   };
 
-  
+
 
   // Manejar creación de factura de servicio
   const isValidUuid = (value: string) =>
