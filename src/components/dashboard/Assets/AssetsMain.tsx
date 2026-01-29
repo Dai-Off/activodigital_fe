@@ -451,8 +451,8 @@ export function AssetsMain() {
       </div>
 
       {/* Vista Desktop - Tabla */}
-      <div className="hidden lg:block flex-1 overflow-auto pr-1">
-        <div className="bg-white w-full rounded-xl p-6 shadow-sm">
+      <div className="hidden lg:block flex-1 pr-1">
+        <div className="bg-white w-full rounded-xl overflow-auto p-6 border border-gray-200">
           <table className="w-full table-auto">
             <thead className="bg-gray-50">
               <tr className="border-b border-gray-200">
