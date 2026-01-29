@@ -237,47 +237,59 @@ function normalizeProvinces(raw: any[]): Provincia[] {
 function normalizeMunicipalities(raw: any[]): Municipio[] {
   if (!raw || raw.length === 0) return [];
   const first = raw[0];
-  if (first && typeof first === 'object' && 'codigo' in first && 'nombre' in first) {
+  // Si ya tiene el formato correcto, devolverlo directamente
+  if (first && typeof first === 'object' && 'codigoMunicipioIne' in first && 'nombreMunicipio' in first) {
     return raw as Municipio[];
   }
 
   return raw.map((item, index) => {
-    const codigo =
+    const codigoMunicipioIne =
       // Catastro devuelve municipios como { codigoMunicipioIne, nombreMunicipio, ... }
       // pero las APIs de búsqueda por dirección esperan el NOMBRE del municipio
-      // (?municipio=MADRID). Igual que con provincias, usamos siempre el
-      // nombre como "codigo" para los selects del frontend.
-      item?.nombreMunicipio ??
+      // (?municipio=MADRID). Para mantener compatibilidad, usamos el nombre como codigoMunicipioIne
+      // cuando no hay codigoMunicipioIne disponible.
       item?.codigoMunicipioIne ??
+      item?.codigoINE ??
       item?.codigo ??
       item?.code ??
       item?.id ??
-      item?.codigoINE ??
+      item?.nombreMunicipio ??
       String(index);
-    const nombre =
+    const nombreMunicipio =
       item?.nombreMunicipio ??
       item?.nombre ??
       item?.name ??
       item?.municipio ??
       item?.descripcion ??
       `Municipio ${index + 1}`;
-    return { codigo: String(codigo), nombre: String(nombre) };
+    return { codigoMunicipioIne: String(codigoMunicipioIne), nombreMunicipio: String(nombreMunicipio) };
   });
 }
 
 function normalizeStreets(raw: any[]): Via[] {
   if (!raw || raw.length === 0) return [];
   const first = raw[0];
-  if (first && typeof first === 'object' && 'codigo' in first && 'nombre' in first) {
+  // Si ya tiene el formato correcto, devolverlo directamente
+  if (first && typeof first === 'object' && 'codigoVia' in first && 'nombreVia' in first) {
     return raw as Via[];
   }
 
   return raw.map((item, index) => {
-    const codigo = item?.codigo ?? item?.code ?? item?.id ?? String(index);
-    const nombre =
-      item?.nombre ?? item?.name ?? item?.via ?? item?.descripcion ?? `Vía ${index + 1}`;
+    const codigoVia = 
+      item?.codigoVia ??
+      item?.codigo ?? 
+      item?.code ?? 
+      item?.id ?? 
+      String(index);
+    const nombreVia =
+      item?.nombreVia ??
+      item?.nombre ?? 
+      item?.name ?? 
+      item?.via ?? 
+      item?.descripcion ?? 
+      `Vía ${index + 1}`;
     const tipoVia = item?.tipoVia ?? item?.tipo ?? item?.sigla ?? undefined;
-    return { codigo: String(codigo), nombre: String(nombre), tipoVia };
+    return { codigoVia: String(codigoVia), nombreVia: String(nombreVia), tipoVia };
   });
 }
 

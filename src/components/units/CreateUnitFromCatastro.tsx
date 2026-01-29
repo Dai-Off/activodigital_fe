@@ -99,7 +99,7 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
 
   const buildAddressParams = (): CatastroAddressParams | null => {
     const province = provinces.find((p) => p.codigo === selectedProvince);
-    const municipality = municipalities.find((m) => m.codigo === selectedMunicipality);
+    const municipality = municipalities.find((m) => m.nombreMunicipio === selectedMunicipality);
 
     if (!province || !municipality || !siglaVia.trim() || !calle.trim() || !numero.trim()) {
       setError(
@@ -111,7 +111,7 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
 
     return {
       provincia: province.nombre,
-      municipio: municipality.nombre,
+      municipio: municipality.nombreMunicipio,
       siglaVia: siglaVia.trim(),
       calle: calle.trim(),
       numero: numero.trim(),
@@ -263,8 +263,8 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
                   : 'Selecciona un municipio'}
               </option>
               {municipalities.map((mun) => (
-                <option key={mun.codigo} value={mun.codigo}>
-                  {mun.nombre}
+                <option key={mun.codigoMunicipioIne} value={mun.nombreMunicipio}>
+                  {mun.nombreMunicipio}
                 </option>
               ))}
             </select>
