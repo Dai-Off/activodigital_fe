@@ -14,22 +14,46 @@ import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
   type DashboardStats,
+  type Building,
 } from "~/services/buildingsApi";
 
 export function Statistics() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    BuildingsApiService.getDashboardStats()
-      .then(setStats)
+    Promise.all([
+      BuildingsApiService.getDashboardStats(),
+      BuildingsApiService.getAllBuildings()
+    ])
+      .then(([statsData, buildingsData]) => {
+        setStats(statsData);
+        setBuildings(buildingsData);
+      })
       .catch((err) => {
-        console.error('[Statistics] Error al cargar estadísticas:', err);
+        console.error('[Statistics] Error al cargar:', err);
         setStats(null);
+        setBuildings([]);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const calculateTotalPortfolioValue = () => {
+    if (!buildings || buildings.length === 0) return '-';
+    
+    const total = buildings.reduce((acc, building) => acc + (building.price || 0), 0);
+    
+    if (total === 0) return '-';
+
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }).format(total);
+  };
 
   if (loading) {
     return <StatisticsLoading />;
@@ -149,14 +173,7 @@ export function Statistics() {
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">Valor Portfolio</span>
                 <span className="text-sm">
-                  {stats.totalValue > 0 
-                    ? new Intl.NumberFormat('es-ES', {
-                        style: 'currency',
-                        currency: 'EUR',
-                        notation: 'compact',
-                        maximumFractionDigits: 1
-                      }).format(stats.totalValue)
-                    : '-'}
+                  {calculateTotalPortfolioValue()}
                 </span>
               </div>
             </div>
