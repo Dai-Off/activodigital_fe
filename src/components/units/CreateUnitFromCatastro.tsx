@@ -1,13 +1,14 @@
 // src/components/units/CreateUnitFromCatastro.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, AlertCircle, Loader2, MapPin } from 'lucide-react';
 import { SupportContactModal } from '../SupportContactModal';
-import { UnitsApiService } from '../../services/unitsApi';
+import { CatastroApiService, type CatastroAddressParams, fetchCatastroUnitsXmlByAddress, type Municipio, type Provincia } from '../../services/catastroApi';
+import { parseCatastroUnitsFromXml, type FrontendUnit } from '../../utils/catastroUnits';
 
 interface CreateUnitFromCatastroProps {
-  onUnitsCreated: (units: any[]) => void;
+  onUnitsCreated: (units: FrontendUnit[]) => void;
   onCancel: () => void;
 }
 
@@ -20,7 +21,106 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const [cadastralCode, setCadastralCode] = useState('');
+
+  // Estado para selects dependientes (provincia → municipio)
+  const [provinces, setProvinces] = useState<Provincia[]>([]);
+  const [municipalities, setMunicipalities] = useState<Municipio[]>([]);
+
+  const [selectedProvince, setSelectedProvince] = useState<string>('');
+  const [selectedMunicipality, setSelectedMunicipality] = useState<string>('');
+
+  // Inputs manuales para tipo de vía (siglaVia) y nombre de calle
+  const [siglaVia, setSiglaVia] = useState<string>('');
+  const [calle, setCalle] = useState<string>('');
+
+  const [numero, setNumero] = useState('');
+  const [bloque, setBloque] = useState('');
+  const [escalera, setEscalera] = useState('');
+  const [planta, setPlanta] = useState('');
+  const [puerta, setPuerta] = useState('');
+
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingMunicipalities, setIsLoadingMunicipalities] = useState(false);
+
+  // Cargar provincias al montar el componente
+  useEffect(() => {
+    const loadProvinces = async () => {
+      setIsLoadingProvinces(true);
+      try {
+        const data = await CatastroApiService.getProvinces();
+        setProvinces(data);
+      } catch (err) {
+        console.error('Error cargando provincias de Catastro:', err);
+        setError(
+          'No se pudieron cargar las provincias desde Catastro. ' +
+            'Por favor, vuelve a intentarlo en unos minutos o contacta con soporte si el problema persiste.'
+        );
+      } finally {
+        setIsLoadingProvinces(false);
+      }
+    };
+
+    loadProvinces();
+  }, []);
+
+  const handleProvinceChange = async (value: string) => {
+    setSelectedProvince(value);
+    setSelectedMunicipality('');
+    setMunicipalities([]);
+    setSiglaVia('');
+    setCalle('');
+    setError(null);
+
+    if (!value) return;
+
+    setIsLoadingMunicipalities(true);
+    try {
+      const data = await CatastroApiService.getMunicipalities(value);
+      setMunicipalities(data);
+    } catch (err) {
+      console.error('Error cargando municipios de Catastro:', err);
+      setError(
+        'No se pudieron cargar los municipios para la provincia seleccionada. ' +
+          'Intenta seleccionar de nuevo la provincia o prueba más tarde.'
+      );
+    } finally {
+      setIsLoadingMunicipalities(false);
+    }
+  };
+
+  const handleMunicipalityChange = async (value: string) => {
+    setSelectedMunicipality(value);
+    setSiglaVia('');
+    setCalle('');
+    setError(null);
+
+    if (!selectedProvince || !value) return;
+  };
+
+  const buildAddressParams = (): CatastroAddressParams | null => {
+    const province = provinces.find((p) => p.codigo === selectedProvince);
+    const municipality = municipalities.find((m) => m.nombreMunicipio === selectedMunicipality);
+
+    if (!province || !municipality || !siglaVia.trim() || !calle.trim() || !numero.trim()) {
+      setError(
+        'La provincia, el municipio, el tipo de vía, el nombre de la calle y el número son obligatorios. ' +
+          'Por favor, revisa que todos esos campos estén correctamente rellenados.'
+      );
+      return null;
+    }
+
+    return {
+      provincia: province.nombre,
+      municipio: municipality.nombreMunicipio,
+      siglaVia: siglaVia.trim(),
+      calle: calle.trim(),
+      numero: numero.trim(),
+      bloque: bloque.trim() || undefined,
+      escalera: escalera.trim() || undefined,
+      planta: planta.trim() || undefined,
+      puerta: puerta.trim() || undefined,
+    };
+  };
 
   const handleSearch = async () => {
     if (!buildingId) {
@@ -28,22 +128,28 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
       return;
     }
 
+    const params = buildAddressParams();
+    if (!params) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const trimmedCode = cadastralCode.trim();
-      if (!trimmedCode) {
-        setError('El código catastral es obligatorio.\n\nPor favor, ingresa el código completo del edificio. Puedes encontrarlo en:\n• Escrituras de propiedad\n• Recibos del IBI (Impuesto de Bienes Inmuebles)\n• Certificados catastrales');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Llamar al endpoint del backend para importar unidades desde catastro
-      const units = await UnitsApiService.importFromCatastro(buildingId, trimmedCode);
-      
+      // Llamar al endpoint del backend para obtener el XML de unidades
+      const xml = await fetchCatastroUnitsXmlByAddress(params);
+      const units = parseCatastroUnitsFromXml(xml);
+
       if (!units || units.length === 0) {
-        setError('No se encontraron unidades en el catastro para el código ingresado.\n\nPosibles causas:\n• El código catastral no corresponde a un edificio con unidades registradas\n• El código es incorrecto o incompleto\n• El inmueble no tiene unidades constructivas en el catastro');
+        setError(
+          'No se encontraron unidades en Catastro para la dirección indicada.\n\n' +
+            'Posibles causas:\n' +
+            '• La dirección no está registrada correctamente en el catastro\n' +
+            '• El número de calle es incorrecto o no existe\n' +
+            '• Los datos de bloque, escalera, planta o puerta no coinciden\n' +
+            '• El inmueble no tiene unidades constructivas registradas'
+        );
         setIsLoading(false);
         return;
       }
@@ -51,7 +157,7 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
       // Llamar al callback con las unidades creadas
       onUnitsCreated(units);
     } catch (err: any) {
-      let errorMessage = 'No se pudo obtener la información desde catastro. Por favor, inténtalo de nuevo.';
+      let errorMessage = 'No se pudo obtener la información desde Catastro. Por favor, inténtalo de nuevo.';
       
       if (err instanceof Error) {
         const message = err.message;
@@ -71,17 +177,16 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
         }
       }
 
-      // Manejar errores HTTP específicos
-      if (err?.status === 400) {
-        errorMessage = 'El código catastral ingresado no es válido.\n\nPor favor, verifica:\n• Que el código tenga entre 14 y 20 caracteres\n• Que no contenga espacios ni símbolos especiales\n• Que hayas copiado el código completo';
-      } else if (err?.status === 404) {
-        errorMessage = 'No se encontró ningún inmueble con el código catastral ingresado.\n\nPosibles causas:\n• El código catastral es incorrecto o incompleto\n• El inmueble no está registrado en el catastro\n• El código corresponde a un terreno u otro tipo de bien\n\n💡 Consejo: Verifica el código en documentos oficiales como escrituras o recibos del IBI.';
-      } else if (err?.status === 500) {
-        errorMessage = 'El servicio de catastro está experimentando problemas técnicos en este momento.\n\nPor favor, inténtalo de nuevo en unos minutos.';
-      }
-      
-      if (errorMessage === 'No se pudo obtener la información desde catastro. Por favor, inténtalo de nuevo.') {
-        errorMessage = 'No se pudo obtener la información desde catastro con el código ingresado.\n\nTe sugerimos:\n• Verificar que el código esté completo y correcto\n• Contactar con soporte si el problema persiste';
+      if (
+        errorMessage ===
+        'No se pudo obtener la información desde Catastro. Por favor, inténtalo de nuevo.'
+      ) {
+        errorMessage =
+          'No se pudo obtener la información desde Catastro para la dirección indicada.\n\n' +
+          'Te sugerimos:\n' +
+          '• Verificar que la dirección esté completa y sea correcta\n' +
+          '• Probar sin especificar bloque, escalera, planta o puerta\n' +
+          '• Contactar con soporte si el problema persiste';
       }
       
       setError(errorMessage);
@@ -91,49 +196,188 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSearch();
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('unitWizard.loadFromCatastro', 'Cargar desde Catastro')}
-        </h1>
-        <p className="text-gray-600">
-          {t(
-            'unitWizard.loadFromCatastroDesc',
-            'Ingresa el código catastral del edificio para importar automáticamente todas sus unidades desde catastro'
-          )}
-        </p>
+        <div className="flex items-start gap-3">
+          <div className="mt-1 p-2 bg-blue-50 rounded-lg">
+            <MapPin className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {t('unitWizard.loadFromCatastro', 'Cargar desde Catastro')}
+            </h1>
+            <p className="text-gray-600">
+              {t(
+                'unitWizard.loadFromCatastroDesc',
+                'Selecciona la dirección del edificio para importar automáticamente sus unidades desde Catastro. Podrás revisarlas y ajustarlas antes de guardarlas.'
+              )}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Form */}
-      <form onSubmit={e => e.preventDefault()} className="space-y-6">
-        {/* Búsqueda por Código Catastral */}
-        <div>
-          <label htmlFor="cadastralCode" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('unitWizard.cadastralCode', 'Código Catastral')} *
-          </label>
-          <input
-            id="cadastralCode"
-            type="text"
-            value={cadastralCode}
-            onChange={(e) => {
-              setCadastralCode(e.target.value);
-              setError(null);
-            }}
-            onKeyPress={handleKeyPress}
-            placeholder={t('unitWizard.cadastralCodePlaceholder', 'Ej: 1249023VK4714G0001FH')}
-            className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              error ? 'border-red-300' : 'border-gray-300'
-            }`}
-            disabled={isLoading}
-          />
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+        {/* Selección de dirección */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Provincia */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Provincia *
+            </label>
+            <select
+              value={selectedProvince}
+              onChange={(e) => handleProvinceChange(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading || isLoadingProvinces}
+            >
+              <option value="">
+                {isLoadingProvinces ? 'Cargando provincias…' : 'Selecciona una provincia'}
+              </option>
+              {provinces.map((prov) => (
+                <option key={prov.codigo} value={prov.codigo}>
+                  {prov.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Municipio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Municipio *
+            </label>
+            <select
+              value={selectedMunicipality}
+              onChange={(e) => handleMunicipalityChange(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={!selectedProvince || isLoading || isLoadingMunicipalities}
+            >
+              <option value="">
+                {!selectedProvince
+                  ? 'Selecciona primero una provincia'
+                  : isLoadingMunicipalities
+                  ? 'Cargando municipios…'
+                  : 'Selecciona un municipio'}
+              </option>
+              {municipalities.map((mun) => (
+                <option key={mun.codigoMunicipioIne} value={mun.nombreMunicipio}>
+                  {mun.nombreMunicipio}
+                </option>
+              ))}
+            </select>
+          </div>
+
+        </div>
+
+        {/* Tipo de vía + Nombre de calle + Número */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de vía (sigla) *
+            </label>
+            <input
+              type="text"
+              value={siglaVia}
+              onChange={(e) => {
+                setSiglaVia(e.target.value.toUpperCase());
+                setError(null);
+              }}
+              placeholder="Ej.: CL, AV, PZ"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading || !selectedMunicipality}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nombre de la calle *
+            </label>
+            <input
+              type="text"
+              value={calle}
+              onChange={(e) => {
+                setCalle(e.target.value.toUpperCase());
+                setError(null);
+              }}
+              placeholder="Ej.: GOYA, ALCALA"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading || !selectedMunicipality}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Número *
+            </label>
+            <input
+              type="text"
+              value={numero}
+              onChange={(e) => {
+                setNumero(e.target.value);
+                setError(null);
+              }}
+              placeholder="Ej.: 10"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        {/* Datos opcionales: bloque/escalera/planta/puerta */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Bloque
+            </label>
+            <input
+              type="text"
+              value={bloque}
+              onChange={(e) => setBloque(e.target.value)}
+              placeholder="Ej.: 1"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Escalera
+            </label>
+            <input
+              type="text"
+              value={escalera}
+              onChange={(e) => setEscalera(e.target.value)}
+              placeholder="Ej.: A"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Planta
+            </label>
+            <input
+              type="text"
+              value={planta}
+              onChange={(e) => setPlanta(e.target.value)}
+              placeholder="Ej.: 1, 02, BJ"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Puerta
+            </label>
+            <input
+              type="text"
+              value={puerta}
+              onChange={(e) => setPuerta(e.target.value)}
+              placeholder="Ej.: A, B, 1"
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
         {error && (

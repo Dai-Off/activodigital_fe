@@ -12,6 +12,7 @@ import CreateUnitManual, { type UnitFormData } from "./CreateUnitManual";
 import { useToast } from "../../contexts/ToastContext";
 import { useLoadingState } from "../ui/LoadingSystem";
 import { UnitsApiService, type CreateBuildingUnitRequest } from "../../services/unitsApi";
+import type { FrontendUnit } from "../../utils/catastroUnits";
 
 // -------------------- Component --------------------
 const CreateUnitWizard: React.FC = () => {
@@ -27,23 +28,31 @@ const CreateUnitWizard: React.FC = () => {
   const [selectedMethod, setSelectedMethod] =
     useState<UnitCreationMethod | null>(null);
   const [manualData, setManualData] = useState<UnitFormData[]>([]);
+  const [catastroImportedData, setCatastroImportedData] = useState<UnitFormData[]>([]);
+  const [catastroUnits, setCatastroUnits] = useState<FrontendUnit[]>([]);
+  const [isReviewStep, setIsReviewStep] = useState(false);
 
   const handleMethodSelect = (method: UnitCreationMethod) => {
     setSelectedMethod(method);
   };
 
   const handleCancel = () => {
-    if (selectedMethod) {
-      setSelectedMethod(null);
-      setManualData([]);
-    } else {
+    if (!selectedMethod) {
       // Si no hay método seleccionado, volver a la lista de unidades
       if (buildingId) {
         navigate(`/building/${buildingId}/unidades`);
       } else {
         navigate("/assets/units");
       }
+      return;
     }
+
+    // Si estamos en algún paso del wizard, volver al selector inicial
+    setSelectedMethod(null);
+    setManualData([]);
+    setCatastroImportedData([]);
+    setCatastroUnits([]);
+    setIsReviewStep(false);
   };
 
   const handleManualNext = (data: UnitFormData[]) => {
@@ -52,24 +61,62 @@ const CreateUnitWizard: React.FC = () => {
     handleSubmitMultiple(data);
   };
 
-  const handleCatastroUnitsCreated = async (units: any[]) => {
+  const mapFrontendUnitToFormData = (unit: FrontendUnit): UnitFormData => {
+    return {
+      id: undefined,
+      name: unit.name,
+      typology: unit.useType || '',
+      area: unit.areaM2 != null ? String(unit.areaM2) : '',
+      floor: unit.floor || '',
+      door: unit.identifier || '',
+      tenant: '',
+      monthlyRent: '',
+      status: 'available',
+      expirationDate: '',
+    };
+  };
+
+  const handleCatastroUnitsCreated = async (units: FrontendUnit[]) => {
     if (!buildingId) {
-      showError(t('units.errors.noBuilding', 'No se ha especificado el edificio'));
+      showError(t("units.errors.noBuilding", "No se ha especificado el edificio"));
       return;
     }
 
     if (!units || units.length === 0) {
-      showError(t('units.errors.noUnitsCreated', 'No se crearon unidades desde catastro'));
+      showError(
+        t("units.errors.noUnitsCreated", "No se crearon unidades desde catastro")
+      );
       return;
     }
 
+    // Guardamos las unidades importadas y pasamos al paso de revisión
+    setCatastroUnits(units);
+    setIsReviewStep(true);
+
     const unitCount = units.length;
     showSuccess(
-      t('units.success.createdMultiple', `Se ${unitCount === 1 ? 'creó' : 'crearon'} ${unitCount} ${unitCount === 1 ? 'unidad' : 'unidades'} desde catastro exitosamente`)
+      t(
+        "units.success.loadedFromCatastro",
+        `Se ${unitCount === 1 ? "cargó" : "cargaron"} ${unitCount} ${
+          unitCount === 1 ? "unidad" : "unidades"
+        } desde Catastro. Revísalas, ajústalas si es necesario y pulsa "Continuar" para guardarlas.`
+      )
     );
-    
-    // Volver a la lista de unidades
-    navigate(`/building/${buildingId}/unidades`);
+  };
+
+  const handleStartManualFromCatastro = () => {
+    if (!catastroUnits.length) return;
+    const mapped = catastroUnits.map(mapFrontendUnitToFormData);
+    setCatastroImportedData(mapped);
+    setSelectedMethod("manual");
+    setIsReviewStep(false);
+  };
+
+  const handleDiscardCatastroImport = () => {
+    setCatastroUnits([]);
+    setCatastroImportedData([]);
+    setIsReviewStep(false);
+    setSelectedMethod(null);
   };
 
 
@@ -168,17 +215,113 @@ const CreateUnitWizard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {selectedMethod === 'manual' ? (
+        {selectedMethod === "manual" && (
           <CreateUnitManual
             onNext={handleManualNext}
             onCancel={handleCancel}
-            initialData={manualData.length > 0 ? manualData : undefined}
+            initialData={
+              catastroImportedData.length > 0
+                ? catastroImportedData
+                : manualData.length > 0
+                ? manualData
+                : undefined
+            }
           />
-        ) : (
+        )}
+
+        {selectedMethod === "catastro" && !isReviewStep && (
           <CreateUnitFromCatastro
             onUnitsCreated={handleCatastroUnitsCreated}
             onCancel={handleCancel}
           />
+        )}
+
+        {selectedMethod === "catastro" && isReviewStep && (
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Revisión de unidades importadas
+              </h1>
+              <p className="text-gray-600">
+                Hemos importado {catastroUnits.length} unidades desde Catastro para esta
+                dirección. Revisa que los datos básicos sean correctos antes de
+                continuar. Podrás editar el detalle en el siguiente paso.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Unidad
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Planta
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Puerta / Identificador
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Uso
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Superficie (m²)
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {catastroUnits.map((unit, index) => (
+                      <tr key={`${unit.identifier}-${index}`}>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          {unit.name}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-700">
+                          {unit.floor ?? "-"}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-700">
+                          {unit.identifier}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-700">
+                          {unit.useType ?? "-"}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-700">
+                          {unit.areaM2 != null ? `${unit.areaM2} m²` : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
+              <button
+                type="button"
+                onClick={handleDiscardCatastroImport}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
+              >
+                Descartar importación
+              </button>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewStep(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
+                >
+                  Volver a búsqueda
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartManualFromCatastro}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
+                >
+                  Editar unidades y continuar
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

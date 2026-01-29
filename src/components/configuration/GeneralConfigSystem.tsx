@@ -1,14 +1,16 @@
 import React, { useMemo } from 'react';
-import { t } from "i18next";
-import { 
-  Settings, 
-  Globe, 
-  Bell, 
-  Key, 
-  Database, 
+import {
+  Settings,
+  Globe,
+  Bell,
+  Key,
+  Database,
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { useLanguage } from '~/contexts/LanguageContext';
+import { useAuth } from '~/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ConfigItem {
   id: string;
@@ -21,42 +23,64 @@ interface ConfigItem {
 }
 
 const GeneralConfigSystem: React.FC = () => {
+
+  const { language, setLanguage, t } = useLanguage();
+  const { user } = useAuth();
+
+  const translate = (key: string, defaultValue?: string): string => {
+    return t ? t(key, defaultValue) : (defaultValue || key);
+  };
+
+  const languageOptions = [
+    { label: translate('spanish'), code: 'ES' as const },
+    { label: translate('english'), code: 'EN' as const },
+  ];
+
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCode = e.target.value as any;
+    if (setLanguage) {
+      setLanguage(selectedCode);
+    }
+  };
+
   const menuItems: ConfigItem[] = useMemo(() => [
-    { 
-      id: 'gen', 
-      title: 'General', 
-      description: t('Language, timezone and preferences', 'Idioma, zona horaria y preferencias'), 
-      icon: Globe, iconColor: 'text-blue-600', bgColor: 'bg-blue-100' 
+    {
+      id: 'generalConfig',
+      title: 'General',
+      description: translate('timezoneAndPreferences'),
+      icon: Globe, iconColor: 'text-blue-600', bgColor: 'bg-blue-100'
     },
-    { 
-      id: 'not', 
-      title: t('Notifications', 'Notificaciones'), 
-      description: t('Manage alerts and notices', 'Gestiona alertas y avisos'), 
-      icon: Bell, iconColor: 'text-orange-600', bgColor: 'bg-orange-100' 
+    {
+      id: 'notification',
+      title: translate('notifications'),
+      description: translate('manageAlertsAndNotices'),
+      icon: Bell, iconColor: 'text-orange-600', bgColor: 'bg-orange-100'
     },
-    { 
-      id: 'int', 
-      title: t('Integrations', 'Integraciones'), 
-      description: t('Connect with other tools', 'Conecta con otras herramientas'), 
-      icon: Globe, iconColor: 'text-purple-600', bgColor: 'bg-purple-100' 
+    {
+      id: 'intregration',
+      title: translate('integrations'),
+      description: translate('connectWithOtherTools'),
+      icon: Globe, iconColor: 'text-purple-600', bgColor: 'bg-purple-100'
     },
-    { 
-      id: 'sec', 
-      title: t('Security', 'Seguridad'), 
-      description: t('Passwords and authentication', 'Contraseñas y autenticación'), 
-      icon: Key, iconColor: 'text-red-600', bgColor: 'bg-red-100' 
+    {
+      id: 'security',
+      title: translate('security'),
+      description: translate('passwordsAndAuthentication'),
+      icon: Key, iconColor: 'text-red-600', bgColor: 'bg-red-100'
     },
-    { 
-      id: 'bak', 
-      title: t('Backup and Restoration', 'Backup y Restauración'), 
-      description: t('Backups and data recovery', 'Copias de seguridad y recuperación de datos'), 
-      icon: Database, iconColor: 'text-green-600', bgColor: 'bg-green-100', fullWidth: true 
+    {
+      id: 'BackUpAndRestauration',
+      title: translate('backupAndRestoration'),
+      description: translate('backupsAndDataRecovery'),
+      icon: Database, iconColor: 'text-green-600', bgColor: 'bg-green-100', fullWidth: true
     },
-  ], []);
+  ], [language, t]);
+
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-[1400px] mx-auto p-3 md:p-6 space-y-3 md:space-y-4 font-sans text-gray-900">
-      
+
       {/* Header Principal */}
       <header className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -65,10 +89,10 @@ const GeneralConfigSystem: React.FC = () => {
           </div>
           <div>
             <h2 className="text-sm md:text-base font-bold">
-              {t('System Configuration', 'Configuración del Sistema')}
+              {translate('systemConfiguration')}
             </h2>
             <p className="text-[10px] md:text-xs text-gray-500">
-              {t('General ARKIA settings', 'Ajustes generales de ARKIA')}
+              {translate('generalARKIAsettings')}
             </p>
           </div>
         </div>
@@ -77,7 +101,7 @@ const GeneralConfigSystem: React.FC = () => {
       {/* Grid de Navegación */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {menuItems.map((item) => (
-          <div key={item.id} className={`${item.fullWidth ? 'sm:col-span-2' : ''}`}>
+          <div key={item.id} className={`${item.fullWidth ? 'sm:col-span-2' : ''}`} onClick={() => navigate(`/configuration?view=${item.id}`)}  >
             <ConfigCard item={item} />
           </div>
         ))}
@@ -86,26 +110,38 @@ const GeneralConfigSystem: React.FC = () => {
       {/* Panel de Configuración Rápida */}
       <main className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4">
         <h3 className="text-sm md:text-base font-semibold mb-3 md:mb-4 pb-2 md:pb-3 border-b border-gray-200">
-          {t('Quick Setup', 'Configuración Rápida')}
+          {translate('quickSetup')}
         </h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="space-y-3">
             {/* Formulario de Preferencias */}
             <div className="p-3 md:p-4 border border-gray-200 rounded-lg">
-              <SectionTitle icon={Globe} iconColor="text-blue-600" title={t('General Preferences', 'Preferencias Generales')} />
+              <SectionTitle icon={Globe} iconColor="text-blue-600" title={translate('generalPreferences')} />
               <div className="space-y-2 mt-3">
-                <SelectInput 
-                  label={t('Language', 'Idioma')} 
-                  options={[t('Spanish', 'Español'), t('English', 'Inglés'), t('French', 'Francés')]} 
+                <div>
+                  <label className="text-[10px] md:text-xs text-gray-600 mb-1 block font-medium">
+                    {translate('language')}
+                  </label>
+                  <select
+                    value={language} // Vincula el valor al estado global
+                    onChange={handleLanguageChange} // Ejecuta el cambio global
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[10px] md:text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 transition-all"
+                  >
+                    {languageOptions.map(opt => (
+                      <option key={opt.code} value={opt.code}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <SelectInput
+                  label={translate('timezone')}
+                  options={['Europe/Madrid (GMT+1)', 'America/New_York (GMT-5)']}
                 />
-                <SelectInput 
-                  label={t('Timezone', 'Zona Horaria')} 
-                  options={['Europe/Madrid (GMT+1)', 'America/New_York (GMT-5)']} 
-                />
-                <SelectInput 
-                  label={t('Date Format', 'Formato de Fecha')} 
-                  options={['DD/MM/YYYY', 'YYYY-MM-DD']} 
+                <SelectInput
+                  label={translate('dateformat')}
+                  options={['DD/MM/YYYY', 'YYYY-MM-DD']}
                 />
               </div>
             </div>
@@ -114,12 +150,12 @@ const GeneralConfigSystem: React.FC = () => {
           <div className="space-y-3">
             {/* Info de Cuenta */}
             <div className="p-3 md:p-4 border border-gray-200 rounded-lg h-fit">
-              <SectionTitle icon={Users} iconColor="text-purple-600" title={t('Account Information', 'Información de la Cuenta')} />
+              <SectionTitle icon={Users} iconColor="text-purple-600" title={translate('accountInformation')} />
               <div className="space-y-1.5 mt-3">
-                <DataRow label={t('User', 'Usuario')} value="admin@arkia.com" />
-                <DataRow label={t('Plan', 'Plan')} value="Enterprise" valueClass="text-blue-600 font-semibold" />
-                <DataRow label={t('Licenses', 'Licencias')} value={t('50 active', '50 activas')} />
-                <DataRow label={t('Last access', 'Último acceso')} value="14/11/2025 09:15" />
+                <DataRow label={translate('user')} value={user?.email || 'No disponible'} />
+                <DataRow label={translate('plan')} value="Enterprise" valueClass="text-blue-600 font-semibold" />
+                <DataRow label={translate('licenses')} value={`50 ${translate('actives')}`} />
+                <DataRow label={translate('lastAccess')} value={translate('today')} />
               </div>
             </div>
 
@@ -127,9 +163,9 @@ const GeneralConfigSystem: React.FC = () => {
             <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg flex gap-3">
               <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-xs">
-                <p className="font-bold text-blue-900 mb-0.5">{t('Quick Access', 'Acceso Rápido')}</p>
+                <p className="font-bold text-blue-900 mb-0.5">{translate('quickAccess')}</p>
                 <p className="text-blue-700">
-                  {t('Use side navigation shortcuts to manage your instance.', 'Usa los atajos de navegación lateral para gestionar tu instancia.')}
+                  {translate('useSideNavigationShortcuts')}
                 </p>
               </div>
             </div>
