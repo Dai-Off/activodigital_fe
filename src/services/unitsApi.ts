@@ -67,14 +67,6 @@ export class UnitsApiService {
     return response?.data as BuildingUnit[] | undefined;
   }
 
-  static async importFromCatastro(buildingId: string, rc: string) {
-    const response = await apiFetch(`/edificios/${buildingId}/units/from-catastro`, {
-      method: "POST",
-      body: JSON.stringify({ rc }),
-    });
-    return response?.data as BuildingUnit[] | undefined;
-  }
-
   static async deleteUnit(buildingId: string, unitId: string) {
     await apiFetch(`/edificios/${buildingId}/units/${unitId}`, {
       method: "DELETE",
