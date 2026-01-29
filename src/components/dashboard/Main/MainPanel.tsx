@@ -130,17 +130,17 @@ export function MainPanel() {
   }) {
     const values: any = {
       3: {
-        name: "URGENTE",
+        name: t("urgent", "Urgente"),
         icon: <TriangleAlert className="w-4 h-4 text-red-600"></TriangleAlert>,
         color: "bg-red-600",
       },
       2: {
-        name: "PRÓXIMO",
+        name: t("upcoming", "Próximo"),
         icon: <Clock className="w-4 h-4 text-orange-600"></Clock>,
         color: "bg-orange-600",
       },
       1: {
-        name: "PENDIENTE",
+        name: t("pending", "Pendiente"),
         icon: <FileText className="w-4 h-4 text-yellow-600"></FileText>,
         color: "bg-yellow-600",
       },
@@ -247,13 +247,13 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("Total Buildings", "Total Edificios")}
+                {t("totalBuildings", "Total Edificios")}
               </p>
               <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
               {stats.assetsGrowth > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-green-600">
                   <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                  <span>+{stats.assetsGrowth} este mes</span>
+                  <span>+{stats.assetsGrowth} {t("thisMonth", "este mes")}</span>
                 </div>
               )}
             </div>
@@ -266,13 +266,13 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("Compliance", "Cumplimiento")}
+                {t("compliance", "Cumplimiento")}
               </p>
               <p className="text-2xl mb-0.5">{stats.completionPercentage}%</p>
               {stats.complianceGrowth > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-green-600">
                   <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                  <span>+{stats.complianceGrowth}% vs. anterior</span>
+                  <span>+{stats.complianceGrowth}% vs. {t("previous", "anterior")}</span>
                 </div>
               )}
             </div>
@@ -285,13 +285,13 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("Pending Alerts", "Alertas Pendientes")}
+                {t("pendingAlerts", "Alertas Pendientes")}
               </p>
               <p className="text-2xl mb-0.5">{totalAlerts}</p>
               {urgentCount.length > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-red-600">
                   <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                  <span>{urgentCount.length} urgentes</span>
+                  <span>{urgentCount.length} {t("urgents", "urgentes")}</span>
                 </div>
               )}
             </div>
@@ -304,14 +304,14 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("Completed Books", "Libros Completos")}
+                {t("completedBooks", "Libros Completos")}
               </p>
               <p className="text-2xl mb-0.5">
                 {stats.completedBooks} / {stats.totalAssets}
               </p>
               {stats.completionPercentage > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-blue-600">
-                  <span>{stats.completionPercentage}% completado</span>
+                  <span>{stats.completionPercentage}% {t("completed", "completado")}</span>
                 </div>
               )}
             </div>
@@ -327,7 +327,7 @@ export function MainPanel() {
         <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm">Alertas Urgentes</h3>
+              <h3 className="text-sm">{t("urgentAlerts", "Alertas Urgentes")}</h3>
               <button
                 onClick={() => {
                   setActiveModule("events");
@@ -335,7 +335,7 @@ export function MainPanel() {
                 }}
                 className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
               >
-                Ver todas
+                {t("viewAll", "Ver todas")}
               </button>
             </div>
             <div className="p-3 space-y-2">
@@ -358,12 +358,12 @@ export function MainPanel() {
         </div>
         <div className="flex flex-col gap-3 min-h-0">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm p-3 text-white flex-shrink-0">
-            <h3 className="text-sm mb-2 opacity-90">Resumen del Sistema</h3>
+            <h3 className="text-sm mb-2 opacity-90">{t("systemSummary", "Resumen del Sistema")}</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
                   <Zap className="w-4 h-4 opacity-80"></Zap>
-                  <span className="text-xs">Eficiencia Energética</span>
+                  <span className="text-xs">{t("energyEfficiency", "Eficiencia Energética")}</span>
                 </div>
                 <span className="text-sm">
                   {stats.averageEnergyClass ? stats.averageEnergyClass : "-"}
@@ -372,7 +372,7 @@ export function MainPanel() {
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
                   <Users className="w-4 h-4 opacity-80"></Users>
-                  <span className="text-xs">Ocupación Media</span>
+                  <span className="text-xs">{t("averageOccupancy", "Ocupación Media")}</span>
                 </div>
                 <span className="text-sm">
                   {`${stats.averageOccupancy ?? 0}%`}
@@ -381,7 +381,7 @@ export function MainPanel() {
               <div className="flex items-center justify-between pb-2 border-b border-blue-400/30">
                 <div className="flex items-center gap-1.5">
                   <FileText className="w-4 h-4 opacity-80"></FileText>
-                  <span className="text-xs">Docs. Pendientes</span>
+                  <span className="text-xs">{t("pendingBooks", "Docs. Pendientes")}</span>
                 </div>
                 <span className="text-sm">
                   {stats.pendingBooks ? stats.pendingBooks : "-"}
@@ -390,7 +390,7 @@ export function MainPanel() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 opacity-80"></Calendar>
-                  <span className="text-xs">Próximos eventos</span>
+                  <span className="text-xs">{t("nextEvents", "Próximos eventos")}</span>
                 </div>
                 <span className="text-sm">{stats.nextEventsCount || 0}</span>
               </div>
@@ -398,7 +398,7 @@ export function MainPanel() {
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0 max-h-80">
             <div className="px-3 py-2 border-b border-gray-100 flex-shrink-0">
-              <h3 className="text-sm">Actividad Reciente</h3>
+              <h3 className="text-sm">{t("recentActivity", "Actividad Reciente")}</h3>
             </div>
             <div className="p-3 flex-1 overflow-auto">
               <div className="space-y-3">
@@ -420,7 +420,7 @@ export function MainPanel() {
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-100">
-              <h3 className="text-sm">Acciones Rápidas</h3>
+              <h3 className="text-sm">{t("quickActions", "Acciones Rápidas")}</h3>
             </div>
             <div className="p-3 space-y-1.5">
               <button
@@ -431,7 +431,7 @@ export function MainPanel() {
               >
                 <div className="flex items-center gap-2">
                   <Building2 className="w-3.5 h-3.5 text-blue-600"></Building2>
-                  <span className="text-xs text-gray-900">Nuevo Edificio</span>
+                  <span className="text-xs text-gray-900">{t("new", "Nuevo")} {t("building", "Edificio")}</span>
                 </div>
 
                 <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors"></ArrowRight>
@@ -444,7 +444,7 @@ export function MainPanel() {
               >
                 <div className="flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5 text-blue-600"></FileText>
-                  <span className="text-xs text-gray-900">Generar Informe</span>
+                  <span className="text-xs text-gray-900">{t("generateReport", "Generar Informe")}</span>
                 </div>
                 <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors"></ArrowRight>
               </button>
@@ -457,7 +457,7 @@ export function MainPanel() {
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-blue-600"></Calendar>
                   <span className="text-xs text-gray-900">
-                    Programar Inspección
+                    {t("scheduleInspection", "Programar Inspección")}
                   </span>
                 </div>
                 <ArrowRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors"></ArrowRight>

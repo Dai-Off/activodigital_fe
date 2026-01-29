@@ -65,7 +65,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
               >
                 <UsersIcon className="w-4 h-4" />
                 <span className="flex-1 text-left truncate leading-relaxed">
-                  {t("all Users", "Todos los usuarios")}
+                  {t("allUsers")}
                 </span>
               </Button>
               {
@@ -85,8 +85,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
                     >
                       <UsersIcon className="w-4 h-4" />
                       <span className="flex-1 text-left truncate leading-relaxed">
-                        {role.name.charAt(0).toUpperCase() +
-                          role.name.slice(1).toLowerCase()}
+                        {t(role.name)}
                       </span>
                     </Button>
                   </div>
@@ -106,7 +105,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
               >
                 <UsersIcon className="w-4 h-4" />
                 <span className="flex-1 text-left truncate leading-relaxed">
-                  {t("Manage Permission", "Gestión de permisos")}
+                  {t("managePermission")}
                 </span>
               </Button>
             </>

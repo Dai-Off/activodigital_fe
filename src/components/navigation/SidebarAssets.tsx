@@ -167,13 +167,13 @@ export function SidebarAssets() {
   const menuItems = [
     {
       id: "assetslist",
-      label: "Listado de activos",
+      label: t("assetsglobalTitle", "Listado de activos"),
       Icon: House,
       route: "/assets",
     },
     {
       id: "unitslist",
-      label: "Listado de unidades",
+      label: t("unitsglobalTitle", "Listado de unidades"),
       Icon: House,
       route: "/assets/units",
     },
@@ -413,7 +413,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("units", "Unidades")}
+                          {t("units")}
                         </span>
                       </button>
                     </div>
