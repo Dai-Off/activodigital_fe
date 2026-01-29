@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLanguage } from "~/contexts/LanguageContext";
 import { useNavigation } from "~/contexts/NavigationContext";
+
 
 export function GeneralView() {
   interface MenuItem {
@@ -23,6 +25,7 @@ export function GeneralView() {
     route: string;
   }
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { setActiveSection, setActiveTab, setViewMode, setActiveModule } =
     useNavigation();
   const [DropdownMenu, setDropdownMenu] = useState<boolean>(false);
@@ -31,49 +34,49 @@ export function GeneralView() {
   const menuItems: MenuItem[] = [
     {
       id: "buildingGeneralView",
-      label: "Vista General",
+      label: t("generalView", "Vista General"),
       Icon: Building2,
       route: "/building/:id/general-view",
     },
     {
       id: "buildingFinancial",
-      label: "Financiero",
+      label: t("financial", "Financiero"),
       Icon: Wallet,
       route: "/building/:id/general-view/financial",
     },
     {
       id: "buildingInsurance",
-      label: "Seguros",
+      label: t("insurances", "Seguros"),
       Icon: Shield,
       route: "/building/:id/general-view/insurance",
     },
     {
       id: "buildingCalendar",
-      label: "Calendario de acciones",
+      label: t("calendarOfActions", "Calendario de acciones"),
       Icon: Calendar,
       route: "/building/:id/general-view/calendar",
     },
     {
       id: "buildingRent",
-      label: "Rentas",
+      label: t("rents", "Rentas"),
       Icon: Euro,
       route: "/building/:id/general-view/rent",
     },
     {
       id: "buildingEnergyEfficiency",
-      label: "Eficiencia Energética",
+      label: t("energyEfficiency", "Eficiencia Energética"),
       Icon: Zap,
       route: "/building/:id/general-view/energy-efficiency",
     },
     {
       id: "buildingCertificates",
-      label: "Certificados",
+      label: t("certificates", "Certificados"),
       Icon: FileText,
       route: "/building/:id/general-view/certificates",
     },
     {
       id: "buildingMaintenance",
-      label: "Mantenimiento",
+      label: t("maintenance", "Mantenimiento"),
       Icon: Wrench,
       route: "/building/:id/general-view/maintenance",
     },
@@ -176,7 +179,7 @@ export function GeneralView() {
           >
             <Activity className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm hidden sm:inline">
-              Actividad
+              {t("activity", "Actividad")}
             </span>
           </button>
           <button
@@ -192,7 +195,7 @@ export function GeneralView() {
           >
             <Leaf className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm hidden sm:inline">
-              Financiación Verde
+              {t("greenFinancial", "Financiación Verde")}
             </span>
           </button>
         </div>

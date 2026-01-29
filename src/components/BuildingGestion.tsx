@@ -52,28 +52,32 @@ import FileUpload from "./ui/FileUpload";
 import { uploadGestionDocument } from "~/services/gestionDocuments";
 import { useAuth } from "~/contexts/AuthContext";
 import { useToast } from "~/contexts/ToastContext";
-import { 
-  ServiceInvoicesService, 
-  type ServiceType, 
+import {
+  ServiceInvoicesService,
+  type ServiceType,
   SERVICE_TYPE_LABELS,
-  getServiceTypeLabel 
+  getServiceTypeLabel
 } from "~/services/serviceInvoices";
+import { useLanguage } from "~/contexts/LanguageContext";
 
 // Tipo para categorías de documentos
 type DocumentCategory = {
   value: string;
   label: string;
+  traduct: string;
   icon: typeof FileSpreadsheet;
   bgColor: string;
   iconColor: string;
   isCustom?: boolean; // Para distinguir categorías personalizadas
 };
 
+
 // Categorías base predefinidas
 const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "financial",
     label: "Financiero/Contable",
+    traduct: "financieroContable",
     icon: FileSpreadsheet,
     bgColor: "bg-blue-50",
     iconColor: "text-blue-600",
@@ -81,6 +85,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "contracts",
     label: "Contratos",
+    traduct: "contratos",
     icon: FileCheck,
     bgColor: "bg-green-50",
     iconColor: "text-green-600",
@@ -88,6 +93,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "maintenance",
     label: "Mantenimiento",
+    traduct: "mantenimiento",
     icon: Wrench,
     bgColor: "bg-orange-50",
     iconColor: "text-orange-600",
@@ -95,6 +101,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "public",
     label: "Administración Pública",
+    traduct: "administracionPublica",
     icon: BuildingIcon,
     bgColor: "bg-purple-50",
     iconColor: "text-purple-600",
@@ -102,6 +109,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "internal",
     label: "Gestión Interna",
+    traduct: "gestionInterna",
     icon: Users,
     bgColor: "bg-indigo-50",
     iconColor: "text-indigo-600",
@@ -109,6 +117,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "legal",
     label: "Jurídico/Legal",
+    traduct: "juridicoLegal",
     icon: Scale,
     bgColor: "bg-red-50",
     iconColor: "text-red-600",
@@ -116,6 +125,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "certificates",
     label: "Certificaciones",
+    traduct: "certificaciones",
     icon: Shield,
     bgColor: "bg-teal-50",
     iconColor: "text-teal-600",
@@ -123,6 +133,7 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     value: "technical",
     label: "Documentación Técnica",
+    traduct: "documentacionTecnica",
     icon: FileChartColumnIncreasing,
     bgColor: "bg-cyan-50",
     iconColor: "text-cyan-600",
@@ -243,11 +254,11 @@ const getStatusBadge = (status: Document["status"]) => {
 };
 
 // Componente para cada item de documento
-const DocumentItem = ({ 
-  document, 
+const DocumentItem = ({
+  document,
   onDownload,
   onDelete
-}: { 
+}: {
   document: Document;
   onDownload: (url: string, fileName: string) => void;
   onDelete: (document: Document) => void;
@@ -402,6 +413,7 @@ const DocumentsLoadingState = () => (
 );
 
 export function BuildingGestion() {
+  const { t } = useLanguage()
   const { id: buildingId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -427,16 +439,16 @@ export function BuildingGestion() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Estado para categorías (base + personalizadas)
   const [customCategories, setCustomCategories] = useState<DocumentCategory[]>([]);
   const [documentCategories, setDocumentCategories] = useState<DocumentCategory[]>(BASE_DOCUMENT_CATEGORIES);
-  
+
   // Estado para modal de crear categoría
   const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0]);
-  
+
   // Estado para modal de factura de servicio
   const [isServiceInvoiceModalOpen, setIsServiceInvoiceModalOpen] = useState(false);
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
@@ -550,9 +562,9 @@ export function BuildingGestion() {
 
       if (result.success && result.document) {
         // Verificar si es una factura de servicio (categoría Financiero/Contable)
-        const isFinancialCategory = selectedCategory === "financial" || 
+        const isFinancialCategory = selectedCategory === "financial" ||
           documentCategories.find(cat => cat.value === selectedCategory)?.label === "Financiero/Contable";
-        
+
         // Si es categoría financiera, preguntar si es una factura de servicio
         if (isFinancialCategory && result.document.url) {
           setUploadedDocumentUrl(result.document.url);
@@ -563,10 +575,10 @@ export function BuildingGestion() {
           setIsServiceInvoiceModalOpen(true);
         } else {
           showSuccess("Documento subido", "El documento se ha subido correctamente");
-          
+
           // Recargar documentos
           reloadDocuments();
-          
+
           // Cerrar modal y resetear
           setIsUploadModalOpen(false);
           setSelectedFile(null);
@@ -655,10 +667,10 @@ export function BuildingGestion() {
       });
 
       showSuccess("Factura creada", "La factura de servicio se ha registrado correctamente");
-      
+
       // Recargar documentos
       reloadDocuments();
-      
+
       // Cerrar modales y resetear
       setIsServiceInvoiceModalOpen(false);
       setIsUploadModalOpen(false);
@@ -680,7 +692,7 @@ export function BuildingGestion() {
     } catch (error: any) {
       console.error("Error creando factura de servicio:", error);
       showError(
-        "Error", 
+        "Error",
         error?.message || "Ocurrió un error al crear la factura de servicio"
       );
     }
@@ -744,10 +756,10 @@ export function BuildingGestion() {
 
       // El nombre del archivo en storage está en el ID después de buildingId_category_
       // Obtener el valor de la categoría desde el nombre de categoría
-      const categoryValue = deletingDocument.categoryValue || 
+      const categoryValue = deletingDocument.categoryValue ||
         documentCategories.find((cat: DocumentCategory) => cat.label === deletingDocument.category)?.value ||
         idParts[1];
-      
+
       // Necesitamos el nombre completo del archivo en storage
       // Buscar el documento en la lista para obtener el storageFileName
       const fullDocument = documents.find(d => d.id === deletingDocument.id);
@@ -766,7 +778,7 @@ export function BuildingGestion() {
 
       if (result.success) {
         showSuccess("Documento eliminado", "El documento se ha eliminado correctamente");
-        
+
         // Recargar documentos
         setDocumentsLoading(true);
         DocumentsApiService.getBuildingDocuments(buildingId)
@@ -851,10 +863,11 @@ export function BuildingGestion() {
 
     // Generar un valor único para la categoría
     const newValue = `custom_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
+
     const newCategory: DocumentCategory = {
       value: newValue,
       label: newCategoryName.trim(),
+      traduct: newCategoryName.trim(),
       icon: FileText, // Icono por defecto para categorías personalizadas
       bgColor: newCategoryColor.bgColor,
       iconColor: newCategoryColor.iconColor,
@@ -875,14 +888,15 @@ export function BuildingGestion() {
 
   // Generar mapeo dinámico de valores de categoría a nombres completos
   const CATEGORY_VALUE_TO_NAME: Record<string, string> = documentCategories.reduce((acc, cat) => {
-    acc[cat.value] = cat.label;
+    // Si usas traducción, envuelve cat.label en t()
+    acc[cat.value] = t(cat.label);
     return acc;
   }, {} as Record<string, string>);
 
   // Filtrar documentos según búsqueda, filtros y categoría seleccionada
   const filteredDocuments = documents.filter((doc) => {
     // Filtro por categoría
-    const matchesCategory = selectedCategoryFilter === null || 
+    const matchesCategory = selectedCategoryFilter === null ||
       doc.category === CATEGORY_VALUE_TO_NAME[selectedCategoryFilter];
 
     // Filtro por búsqueda
@@ -911,49 +925,49 @@ export function BuildingGestion() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex-shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h2 className="mb-1">Gestión del Activo</h2>
+                  <h2 className="mb-1">{t("gestionOfActivo")}</h2>
                   <p className="text-xs text-gray-500">
                     {building?.name || "Cargando nombre del edificio..."}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="text-xs"
                     onClick={() => setIsCreateCategoryModalOpen(true)}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Nueva Categoría
+                    {t("nuevaCategoria")}
                   </Button>
                   <Button
                     className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
                     onClick={() => setIsUploadModalOpen(true)}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Subir Documento
+                    {t("subirDocumento")}
                   </Button>
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-3 mt-4">
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Total Documentos</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("totalDocumentos")}</p>
                   <p className="text-blue-600">{stats.total}</p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Aprobados</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("aprobados")}</p>
                   <p className="text-green-600">{stats.aprobados}</p>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Activos</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("activos")}</p>
                   <p className="text-blue-600">{stats.activos}</p>
                 </div>
                 <div className="p-3 bg-yellow-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">Pendientes</p>
+                  <p className="text-xs text-gray-600 mb-1">{t("pendientes")}</p>
                   <p className="text-yellow-600">{stats.pendientes}</p>
                 </div>
                 <div className="p-3 bg-orange-50 rounded-lg">
                   <p className="text-xs text-gray-600 mb-1">
-                    Próximos a vencer
+                    {t("proximosVencer")}
                   </p>
                   <p className="text-orange-600">{stats.proximosVencer}</p>
                 </div>
@@ -962,7 +976,7 @@ export function BuildingGestion() {
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex-shrink-0">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm">Categorías de Documentos</h3>
+                <h3 className="text-sm">{t("categoriasDocumentos")}</h3>
                 {selectedCategoryFilter && (
                   <Button
                     variant="ghost"
@@ -970,7 +984,7 @@ export function BuildingGestion() {
                     className="text-xs h-6 px-2"
                     onClick={() => setSelectedCategoryFilter(null)}
                   >
-                    Ver todas
+                    {t("verTodas")}
                   </Button>
                 )}
               </div>
@@ -987,8 +1001,8 @@ export function BuildingGestion() {
                   const isCustom = category.isCustom || false;
 
                   return (
-                    <div 
-                      key={category.value} 
+                    <div
+                      key={category.value}
                       className="relative group"
                     >
                       {/* Botón de eliminar - posicionado absolutamente en la esquina superior derecha */}
@@ -999,18 +1013,17 @@ export function BuildingGestion() {
                             handleDeleteCategory(category.value, category.label);
                           }}
                           className="absolute -top-2 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white border border-gray-300 rounded-full p-1.5 shadow-sm hover:shadow-md hover:bg-red-50 hover:border-red-300 text-gray-400 hover:text-red-600"
-                          title="Eliminar categoría"
+                          title={t("eliminarCategoria")}
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      
-                      <div 
-                        className={`w-full p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${
-                          isSelected 
-                            ? `border-blue-500 bg-blue-50 ${category.bgColor}` 
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
+
+                      <div
+                        className={`w-full p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${isSelected
+                          ? `border-blue-500 bg-blue-50 ${category.bgColor}`
+                          : "border-gray-200 hover:border-gray-300"
+                          }`}
                         onClick={() => {
                           // Si ya está seleccionada, deseleccionar (mostrar todas)
                           if (isSelected) {
@@ -1028,17 +1041,16 @@ export function BuildingGestion() {
                             />
                           </div>
                           <ChevronRight
-                            className={`w-4 h-4 transition-transform ${
-                              isSelected ? "text-blue-600" : "text-gray-400"
-                            }`}
+                            className={`w-4 h-4 transition-transform ${isSelected ? "text-blue-600" : "text-gray-400"
+                              }`}
                             aria-hidden="true"
                           />
                         </div>
                         <p className={`text-xs mb-1 ${isSelected ? "font-semibold text-blue-900" : ""}`}>
-                          {category.label}
+                          {t(category.traduct)}
                         </p>
                         <p className={`text-xs ${isSelected ? "text-blue-700" : "text-gray-500"}`}>
-                          {categoryFileCount} archivo{categoryFileCount !== 1 ? "s" : ""}
+                          {categoryFileCount} {t("files")}{categoryFileCount !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>
@@ -1057,27 +1069,26 @@ export function BuildingGestion() {
                     />
                     <Input
                       type="text"
-                      placeholder="Buscar documentos..."
+                      placeholder={t("buscarDocumentos")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 text-xs focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                     />
                   </div>
                   <p className="text-xs text-gray-500">
-                    {filteredDocuments.length} de {stats.total} documentos
+                    {filteredDocuments.length} {t("of")} {stats.total} {t("documents")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs hover:bg-gray-50 ${
-                      showFilters
-                        ? "border-blue-500 bg-blue-50 text-blue-600"
-                        : "border-gray-300"
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs hover:bg-gray-50 ${showFilters
+                      ? "border-blue-500 bg-blue-50 text-blue-600"
+                      : "border-gray-300"
+                      }`}
                   >
                     <Funnel className="w-3 h-3" aria-hidden="true" />
-                    <span>Filtros</span>
+                    <span>{t("filters")}</span>
                   </button>
                 </div>
               </div>
@@ -1086,19 +1097,19 @@ export function BuildingGestion() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative z-10">
                       <label className="block text-xs text-gray-600 mb-2">
-                        Estado
+                        {t("status")}
                       </label>
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300 bg-white cursor-pointer"
                       >
-                        <option value="all">Todos</option>
-                        <option value="active">Activo</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="approved">Aprobado</option>
-                        <option value="expired">Expirado</option>
-                        <option value="expiring">Próximo a vencer</option>
+                        <option value="all">{t("all")}</option>
+                        <option value="active">{t("active")}</option>
+                        <option value="pending">{t("pending")}</option>
+                        <option value="approved">{t("approved")}</option>
+                        <option value="expired">{t("expired")}</option>
+                        <option value="expiring">{t("expiring")}</option>
                       </select>
                     </div>
                   </div>
@@ -1112,8 +1123,8 @@ export function BuildingGestion() {
             ) : filteredDocuments.length > 0 ? (
               <div className="space-y-2">
                 {filteredDocuments.map((document) => (
-                  <DocumentItem 
-                    key={document.id} 
+                  <DocumentItem
+                    key={document.id}
                     document={document}
                     onDownload={handleDownloadDocument}
                     onDelete={handleDeleteDocument}
@@ -1125,10 +1136,10 @@ export function BuildingGestion() {
                 <div className="flex flex-col items-center justify-center">
                   <Search className="w-12 h-12 text-gray-400 mb-4" />
                   <h3 className="text-sm font-medium text-gray-900 mb-2">
-                    No se encontraron documentos
+                    {t("noDocumentsFound")}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Intenta ajustar los filtros de búsqueda.
+                    {t("tryAdjustingFilters")}
                   </p>
                 </div>
               </div>
@@ -1144,12 +1155,12 @@ export function BuildingGestion() {
       <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
         <DialogContent className="max-w-md shadow-xl bg-white !bg-white">
           <DialogHeader className="!bg-white">
-            <DialogTitle className="mb-3">Subir Documento</DialogTitle>
+            <DialogTitle className="mb-3">{t("uploadDocument")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 !bg-white">
             <div className="!bg-white">
               <label className="block text-sm text-gray-700 mb-1">
-                Categoría
+                {t("category")}
               </label>
               <select
                 value={selectedCategory}
@@ -1165,7 +1176,7 @@ export function BuildingGestion() {
               </select>
             </div>
             <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">Archivo</label>
+              <label className="block text-sm text-gray-700 mb-1">{t("file")}</label>
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 acceptedTypes={[
@@ -1183,42 +1194,42 @@ export function BuildingGestion() {
                 multiple={false}
                 maxFiles={1}
                 maxSizeInMB={10}
-                label="Subir documento"
-                description={selectedFile ? selectedFile.name : "Arrastra o haz clic para seleccionar"}
+                label={t("uploadDocument")}
+                description={selectedFile ? selectedFile.name : t("dragOrClickToSelect")}
                 disabled={isUploading}
               />
               {selectedFile && (
                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                  ✓ Archivo seleccionado: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                  ✓ {t("fileSelected")} {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
                 </div>
               )}
               {!selectedCategory && (
                 <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                  ⚠ Selecciona una categoría para habilitar la subida
+                  ⚠ {t("selectCategoryToEnableUpload")}
                 </div>
               )}
             </div>
           </div>
           <DialogFooter className="flex gap-2 mt-4 sm:flex-row !bg-white">
-            <Button 
-              variant="outline" 
-              onClick={handleCancel} 
+            <Button
+              variant="outline"
+              onClick={handleCancel}
               className="flex-1 text-sm"
               disabled={isUploading}
             >
-              Cancelar
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleUpload}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isUploading || !selectedFile || !selectedCategory}
               title={
-                !selectedFile 
-                  ? "Selecciona un archivo" 
-                  : !selectedCategory 
-                    ? "Selecciona una categoría" 
-                    : isUploading 
-                      ? "Subiendo..." 
+                !selectedFile
+                  ? "Selecciona un archivo"
+                  : !selectedCategory
+                    ? "Selecciona una categoría"
+                    : isUploading
+                      ? "Subiendo..."
                       : "Subir documento"
               }
             >
@@ -1249,7 +1260,7 @@ export function BuildingGestion() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setIsDeleteModalOpen(false);
                 setDeletingDocument(null);
@@ -1296,17 +1307,16 @@ export function BuildingGestion() {
               <div className="grid grid-cols-4 gap-2">
                 {COLOR_OPTIONS.map((color, index) => {
                   const isSelected = newCategoryColor.bgColor === color.bgColor;
-                  
+
                   return (
                     <button
                       key={index}
                       type="button"
                       onClick={() => setNewCategoryColor(color)}
-                      className={`h-10 rounded border-2 transition-all ${
-                        isSelected
-                          ? "border-gray-900 scale-110"
-                          : "border-gray-200 hover:border-gray-300"
-                      } ${color.solidColor}`}
+                      className={`h-10 rounded border-2 transition-all ${isSelected
+                        ? "border-gray-900 scale-110"
+                        : "border-gray-200 hover:border-gray-300"
+                        } ${color.solidColor}`}
                     />
                   );
                 })}
