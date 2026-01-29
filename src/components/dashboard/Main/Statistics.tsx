@@ -14,19 +14,46 @@ import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
   type DashboardStats,
+  type Building,
 } from "~/services/buildingsApi";
 
 export function Statistics() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    BuildingsApiService.getDashboardStats()
-      .then(setStats)
-      .catch(() => setStats(null))
+    Promise.all([
+      BuildingsApiService.getDashboardStats(),
+      BuildingsApiService.getAllBuildings()
+    ])
+      .then(([statsData, buildingsData]) => {
+        setStats(statsData);
+        setBuildings(buildingsData);
+      })
+      .catch((err) => {
+        console.error('[Statistics] Error al cargar:', err);
+        setStats(null);
+        setBuildings([]);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  const calculateTotalPortfolioValue = () => {
+    if (!buildings || buildings.length === 0) return '-';
+    
+    const total = buildings.reduce((acc, building) => acc + (building.price || 0), 0);
+    
+    if (total === 0) return '-';
+
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      notation: 'compact',
+      maximumFractionDigits: 1
+    }).format(total);
+  };
 
   if (loading) {
     return <StatisticsLoading />;
@@ -75,7 +102,7 @@ export function Statistics() {
         <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg text-white">
           <LucideTriangleAlert className="w-5 h-5 mb-1.5 opacity-80"></LucideTriangleAlert>
           <p className="text-xs opacity-90 mb-0.5">{t("activeAlerts")}</p>
-          <p className="text-2xl mb-0.5">0</p>
+          <p className="text-2xl mb-0.5">{stats.nextEventsCount}</p>
           <p className="text-xs opacity-75"></p>
         </div>
       </div>
@@ -143,6 +170,32 @@ export function Statistics() {
                 </div>
               </div>
             </div>
+            {[
+              { label: 'Residencial', value: stats.typologyDistribution.residential, color: 'bg-green-500' },
+              { label: 'Comercial', value: stats.typologyDistribution.commercial, color: 'bg-purple-500' },
+              { label: 'Mixto', value: stats.typologyDistribution.mixed, color: 'bg-orange-500' },
+            ].map((item) => {
+              const percentage = stats.totalAssets > 0 ? (item.value / stats.totalAssets) * 100 : 0;
+              return (
+                <div key={item.label} className="flex items-center gap-2">
+                  <div className="w-24">
+                    <p className="text-xs text-gray-700">{t(item.label.toLowerCase(), item.label)}</p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                      <div
+                        className={`${item.color} h-4 rounded-full flex items-center px-2 transition-all duration-500`}
+                        style={{ width: `${percentage}%` }}
+                      >
+                        {item.value > 0 && (
+                          <span className="text-xs text-white">{item.value}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
@@ -151,25 +204,37 @@ export function Statistics() {
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">{t("totalArea")}</span>
-                <span className="text-sm">125,450 m²</span>
+                <span className="text-sm">
+                  {stats.totalSurfaceArea > 0 
+                    ? `${new Intl.NumberFormat('es-ES').format(stats.totalSurfaceArea)} m²`
+                    : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">{t("totalUnits")}</span>
-                <span className="text-sm">200</span>
+                <span className="text-sm">
+                  {stats.totalAssets > 0 
+                    ? (stats.totalAssets * (stats.averageUnitsPerBuilding || 0))
+                    : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">{t("occupancyRate")}</span>
-                <span className="text-sm">92%</span>
+                <span className="text-sm">
+                  {stats.averageOccupancy && stats.averageOccupancy > 0 ? `${stats.averageOccupancy}%` : '-'}
+                </span>
               </div>
             </div>
             <div className="p-2 bg-gray-50 rounded">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-gray-600">{t("portfolioValue")}</span>
-                <span className="text-sm">€84.5M</span>
+                <span className="text-sm">
+                  {calculateTotalPortfolioValue()}
+                </span>
               </div>
             </div>
           </div>
@@ -194,8 +259,8 @@ export function Statistics() {
             <Clock className="w-4 h-4 text-blue-600"></Clock>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl">0</span>
             <span className="text-xs text-gray-500">{t("scheduledThisMonth")}</span>
+            <span className="text-2xl">{stats.nextEventsCount}</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">

@@ -22,10 +22,7 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { type Building, BuildingsApiService } from "~/services/buildingsApi";
-import {
-  type Document,
-  DocumentsApiService,
-} from "~/services/documentsApi";
+import { type Document, DocumentsApiService } from "~/services/documentsApi";
 import { BuildingCertificatesLoading } from "./ui/dashboardLoading";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -144,14 +141,22 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
 
 // Iconos disponibles para categorías personalizadas
 const AVAILABLE_ICONS = [
-  { name: "FileSpreadsheet", component: FileSpreadsheet, label: "Hoja de cálculo" },
+  {
+    name: "FileSpreadsheet",
+    component: FileSpreadsheet,
+    label: "Hoja de cálculo",
+  },
   { name: "FileCheck", component: FileCheck, label: "Documento verificado" },
   { name: "Wrench", component: Wrench, label: "Herramienta" },
   { name: "BuildingIcon", component: BuildingIcon, label: "Edificio" },
   { name: "Users", component: Users, label: "Usuarios" },
   { name: "Scale", component: Scale, label: "Balanza" },
   { name: "Shield", component: Shield, label: "Escudo" },
-  { name: "FileChartColumnIncreasing", component: FileChartColumnIncreasing, label: "Gráfico" },
+  {
+    name: "FileChartColumnIncreasing",
+    component: FileChartColumnIncreasing,
+    label: "Gráfico",
+  },
   { name: "FileText", component: FileText, label: "Documento" },
   { name: "Calendar", component: Calendar, label: "Calendario" },
   { name: "Receipt", component: Receipt, label: "Recibo" },
@@ -159,22 +164,83 @@ const AVAILABLE_ICONS = [
 
 // Opciones de colores predefinidas
 const COLOR_OPTIONS = [
-  { bgColor: "bg-blue-50", iconColor: "text-blue-600", solidColor: "bg-blue-500", label: "Azul" },
-  { bgColor: "bg-green-50", iconColor: "text-green-600", solidColor: "bg-green-500", label: "Verde" },
-  { bgColor: "bg-orange-50", iconColor: "text-orange-600", solidColor: "bg-orange-500", label: "Naranja" },
-  { bgColor: "bg-purple-50", iconColor: "text-purple-600", solidColor: "bg-purple-500", label: "Morado" },
-  { bgColor: "bg-indigo-50", iconColor: "text-indigo-600", solidColor: "bg-indigo-500", label: "Índigo" },
-  { bgColor: "bg-red-50", iconColor: "text-red-600", solidColor: "bg-red-500", label: "Rojo" },
-  { bgColor: "bg-teal-50", iconColor: "text-teal-600", solidColor: "bg-teal-500", label: "Verde azulado" },
-  { bgColor: "bg-cyan-50", iconColor: "text-cyan-600", solidColor: "bg-cyan-500", label: "Cian" },
-  { bgColor: "bg-pink-50", iconColor: "text-pink-600", solidColor: "bg-pink-500", label: "Rosa" },
-  { bgColor: "bg-yellow-50", iconColor: "text-yellow-600", solidColor: "bg-yellow-500", label: "Amarillo" },
-  { bgColor: "bg-gray-50", iconColor: "text-gray-600", solidColor: "bg-gray-500", label: "Gris" },
-  { bgColor: "bg-slate-50", iconColor: "text-slate-600", solidColor: "bg-slate-500", label: "Pizarra" },
+  {
+    bgColor: "bg-blue-50",
+    iconColor: "text-blue-600",
+    solidColor: "bg-blue-500",
+    label: "Azul",
+  },
+  {
+    bgColor: "bg-green-50",
+    iconColor: "text-green-600",
+    solidColor: "bg-green-500",
+    label: "Verde",
+  },
+  {
+    bgColor: "bg-orange-50",
+    iconColor: "text-orange-600",
+    solidColor: "bg-orange-500",
+    label: "Naranja",
+  },
+  {
+    bgColor: "bg-purple-50",
+    iconColor: "text-purple-600",
+    solidColor: "bg-purple-500",
+    label: "Morado",
+  },
+  {
+    bgColor: "bg-indigo-50",
+    iconColor: "text-indigo-600",
+    solidColor: "bg-indigo-500",
+    label: "Índigo",
+  },
+  {
+    bgColor: "bg-red-50",
+    iconColor: "text-red-600",
+    solidColor: "bg-red-500",
+    label: "Rojo",
+  },
+  {
+    bgColor: "bg-teal-50",
+    iconColor: "text-teal-600",
+    solidColor: "bg-teal-500",
+    label: "Verde azulado",
+  },
+  {
+    bgColor: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+    solidColor: "bg-cyan-500",
+    label: "Cian",
+  },
+  {
+    bgColor: "bg-pink-50",
+    iconColor: "text-pink-600",
+    solidColor: "bg-pink-500",
+    label: "Rosa",
+  },
+  {
+    bgColor: "bg-yellow-50",
+    iconColor: "text-yellow-600",
+    solidColor: "bg-yellow-500",
+    label: "Amarillo",
+  },
+  {
+    bgColor: "bg-gray-50",
+    iconColor: "text-gray-600",
+    solidColor: "bg-gray-500",
+    label: "Gris",
+  },
+  {
+    bgColor: "bg-slate-50",
+    iconColor: "text-slate-600",
+    solidColor: "bg-slate-500",
+    label: "Pizarra",
+  },
 ];
 
 // Funciones para guardar/cargar categorías personalizadas desde localStorage
-const getCustomCategoriesKey = (buildingId: string) => `gestion_custom_categories_${buildingId}`;
+const getCustomCategoriesKey = (buildingId: string) =>
+  `gestion_custom_categories_${buildingId}`;
 
 const loadCustomCategories = (buildingId: string): DocumentCategory[] => {
   try {
@@ -183,7 +249,7 @@ const loadCustomCategories = (buildingId: string): DocumentCategory[] => {
     const parsed = JSON.parse(stored);
     // Reconstruir los iconos desde los nombres
     return parsed.map((cat: any) => {
-      const iconData = AVAILABLE_ICONS.find(ic => ic.name === cat.iconName);
+      const iconData = AVAILABLE_ICONS.find((ic) => ic.name === cat.iconName);
       return {
         ...cat,
         icon: iconData?.component || FileText,
@@ -195,15 +261,23 @@ const loadCustomCategories = (buildingId: string): DocumentCategory[] => {
   }
 };
 
-const saveCustomCategories = (buildingId: string, categories: DocumentCategory[]) => {
+const saveCustomCategories = (
+  buildingId: string,
+  categories: DocumentCategory[],
+) => {
   try {
     // Guardar solo los datos serializables (sin los componentes de icono)
-    const serializable = categories.map(cat => ({
+    const serializable = categories.map((cat) => ({
       ...cat,
-      iconName: AVAILABLE_ICONS.find(ic => ic.component === cat.icon)?.name || "FileText",
+      iconName:
+        AVAILABLE_ICONS.find((ic) => ic.component === cat.icon)?.name ||
+        "FileText",
       icon: undefined, // No guardar el componente
     }));
-    localStorage.setItem(getCustomCategoriesKey(buildingId), JSON.stringify(serializable));
+    localStorage.setItem(
+      getCustomCategoriesKey(buildingId),
+      JSON.stringify(serializable),
+    );
   } catch (error) {
     console.error("Error guardando categorías personalizadas:", error);
   }
@@ -279,7 +353,9 @@ const DocumentItem = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-sm text-gray-900 truncate">{document.name}</h4>
+              <h4 className="text-sm text-gray-900 truncate">
+                {document.name}
+              </h4>
               {getStatusBadge(document.status)}
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
@@ -349,7 +425,9 @@ const DocumentItem = ({
             size="icon"
             className="h-8 w-8 hover:bg-green-50"
             title="Descargar documento"
-            onClick={() => document.url && onDownload(document.url, document.name)}
+            onClick={() =>
+              document.url && onDownload(document.url, document.name)
+            }
           >
             <Download className="w-4 h-4 text-gray-600" aria-hidden="true" />
           </Button>
@@ -437,9 +515,13 @@ export function BuildingGestion() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<
+    string | null
+  >(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
+  const [deletingDocument, setDeletingDocument] = useState<Document | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Estado para categorías (base + personalizadas)
@@ -447,26 +529,31 @@ export function BuildingGestion() {
   const [documentCategories, setDocumentCategories] = useState<DocumentCategory[]>(BASE_DOCUMENT_CATEGORIES);
 
   // Estado para modal de crear categoría
-  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] = useState(false);
+  const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
+    useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(COLOR_OPTIONS[0]);
 
   // Estado para modal de factura de servicio
-  const [isServiceInvoiceModalOpen, setIsServiceInvoiceModalOpen] = useState(false);
-  const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
-  const [isProcessingAI, setIsProcessingAI] = useState(false);
-  const [invoiceStep, setInvoiceStep] = useState<'upload' | 'processing' | 'review'>('upload');
+  const [isServiceInvoiceModalOpen, setIsServiceInvoiceModalOpen] =
+    useState(false);
+  const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(
+    null,
+  );
+  const [invoiceStep, setInvoiceStep] = useState<
+    "upload" | "processing" | "review"
+  >("upload");
   const [serviceInvoiceData, setServiceInvoiceData] = useState({
-    service_type: 'electricity' as ServiceType,
-    invoice_date: new Date().toISOString().split('T')[0],
+    service_type: "electricity" as ServiceType,
+    invoice_date: new Date().toISOString().split("T")[0],
     amount_eur: 0,
     units: null as number | null,
-    notes: '',
-    provider: '',
-    invoice_number: '',
-    period_start: '',
-    period_end: '',
-    expiration_date: '',
+    notes: "",
+    provider: "",
+    invoice_number: "",
+    period_start: "",
+    period_end: "",
+    expiration_date: "",
     is_overdue: false,
   });
 
@@ -522,18 +609,18 @@ export function BuildingGestion() {
   }
 
   const handleFilesSelected = (files: File[]) => {
-    console.log('Archivos seleccionados:', files);
+    console.log("Archivos seleccionados:", files);
     if (files.length > 0) {
       const file = files[0];
-      console.log('Estableciendo archivo seleccionado:', {
+      console.log("Estableciendo archivo seleccionado:", {
         name: file.name,
         type: file.type,
         size: file.size,
-        lastModified: file.lastModified
+        lastModified: file.lastModified,
       });
       setSelectedFile(file);
     } else {
-      console.log('No se seleccionaron archivos válidos');
+      console.log("No se seleccionaron archivos válidos");
       setSelectedFile(null);
     }
   };
@@ -585,7 +672,7 @@ export function BuildingGestion() {
         selectedFile,
         buildingId,
         selectedCategory,
-        user.userId
+        user.userId,
       );
 
       if (result.success && result.document) {
@@ -602,46 +689,55 @@ export function BuildingGestion() {
           setUploadedDocumentUrl(result.document.url);
           setIsUploadModalOpen(false);
           setSelectedCategory("");
-          
+
           setIsServiceInvoiceModalOpen(true);
-          setInvoiceStep('processing');
-          setIsProcessingAI(true);
-          
+          setInvoiceStep("processing");
+
           try {
             const aiResponse = await extractInvoiceData(selectedFile);
-            
+
             setServiceInvoiceData({
-              service_type: aiResponse.service_type || 'electricity',
-              invoice_date: aiResponse.invoice_date || new Date().toISOString().split('T')[0],
+              service_type: aiResponse.service_type || "electricity",
+              invoice_date:
+                aiResponse.invoice_date ||
+                new Date().toISOString().split("T")[0],
               amount_eur: aiResponse.amount_eur || 0,
               units: aiResponse.units,
-              notes: aiResponse.notes || '',
-              provider: aiResponse.provider || '',
-              invoice_number: aiResponse.invoice_number || '',
-              period_start: aiResponse.period_start || '',
-              period_end: aiResponse.period_end || '',
-              expiration_date: aiResponse.expiration_date || '',
+              notes: aiResponse.notes || "",
+              provider: aiResponse.provider || "",
+              invoice_number: aiResponse.invoice_number || "",
+              period_start: aiResponse.period_start || "",
+              period_end: aiResponse.period_end || "",
+              expiration_date: aiResponse.expiration_date || "",
               is_overdue: aiResponse.is_overdue || false,
             });
-            
-            setInvoiceStep('review');
+
+            setInvoiceStep("review");
           } catch (error) {
             console.error("Error procesando factura con IA:", error);
-            showError("Advertencia", "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.");
-            setInvoiceStep('review');
+            showError(
+              "Advertencia",
+              "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.",
+            );
+            setInvoiceStep("review");
           } finally {
-            setIsProcessingAI(false);
             setSelectedFile(null);
           }
         } else {
-          showSuccess("Documento subido", "El documento se ha subido correctamente");
+          showSuccess(
+            "Documento subido",
+            "El documento se ha subido correctamente",
+          );
           reloadDocuments();
           setIsUploadModalOpen(false);
           setSelectedFile(null);
           setSelectedCategory("");
         }
       } else {
-        showError("Error al subir", result.error || "No se pudo subir el documento");
+        showError(
+          "Error al subir",
+          result.error || "No se pudo subir el documento",
+        );
       }
     }
     } catch (error) {
@@ -661,7 +757,10 @@ export function BuildingGestion() {
   
 
   // Manejar creación de factura de servicio
-  const isValidUuid = (value: string) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(value);
+  const isValidUuid = (value: string) =>
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
+      value,
+    );
 
   // Manejar creación de factura de servicio
   const handleCreateServiceInvoice = async () => {
@@ -671,7 +770,10 @@ export function BuildingGestion() {
     }
 
     if (!isValidUuid(buildingId)) {
-      showError("Error", "El identificador del edificio no es válido. Guarda el edificio antes de registrar la factura.");
+      showError(
+        "Error",
+        "El identificador del edificio no es válido. Guarda el edificio antes de registrar la factura.",
+      );
       return;
     }
 
@@ -703,27 +805,30 @@ export function BuildingGestion() {
         is_overdue: serviceInvoiceData.is_overdue,
       });
 
-      showSuccess("Factura creada", "La factura de servicio se ha registrado correctamente");
-      
+      showSuccess(
+        "Factura creada",
+        "La factura de servicio se ha registrado correctamente",
+      );
+
       reloadDocuments();
-      
+
       setIsServiceInvoiceModalOpen(false);
-      setInvoiceStep('upload');
+      setInvoiceStep("upload");
       setIsUploadModalOpen(false);
       setSelectedFile(null);
       setSelectedCategory("");
       setUploadedDocumentUrl(null);
       setServiceInvoiceData({
-        service_type: 'electricity',
-        invoice_date: new Date().toISOString().split('T')[0],
+        service_type: "electricity",
+        invoice_date: new Date().toISOString().split("T")[0],
         amount_eur: 0,
         units: null,
-        notes: '',
-        provider: '',
-        invoice_number: '',
-        period_start: '',
-        period_end: '',
-        expiration_date: '',
+        notes: "",
+        provider: "",
+        invoice_number: "",
+        period_start: "",
+        period_end: "",
+        expiration_date: "",
         is_overdue: false,
       });
     } catch (error: any) {
@@ -738,15 +843,15 @@ export function BuildingGestion() {
   // Manejar cancelación de factura de servicio (solo cerrar modal, el PDF ya está subido)
   const handleCancelServiceInvoice = () => {
     setIsServiceInvoiceModalOpen(false);
-    setInvoiceStep('upload');
+    setInvoiceStep("upload");
     reloadDocuments();
     setIsUploadModalOpen(false);
     setSelectedFile(null);
     setSelectedCategory("");
     setUploadedDocumentUrl(null);
     setServiceInvoiceData({
-      service_type: 'electricity',
-      invoice_date: new Date().toISOString().split('T')[0],
+      service_type: "electricity",
+      invoice_date: new Date().toISOString().split("T")[0],
       amount_eur: 0,
       units: null,
       notes: '',
@@ -764,10 +869,10 @@ export function BuildingGestion() {
   const handleDownloadDocument = (url: string, fileName: string) => {
     if (url) {
       // Crear un enlace temporal para descargar
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = fileName;
-      link.target = '_blank';
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -786,7 +891,7 @@ export function BuildingGestion() {
     try {
       // Extraer el nombre del archivo en storage desde el ID
       // El ID tiene formato: buildingId_category_storageFileName
-      const idParts = deletingDocument.id.split('_');
+      const idParts = deletingDocument.id.split("_");
       if (idParts.length < 3) {
         showError("Error", "No se pudo identificar el archivo a eliminar");
         return;
@@ -800,18 +905,19 @@ export function BuildingGestion() {
 
       // Necesitamos el nombre completo del archivo en storage
       // Buscar el documento en la lista para obtener el storageFileName
-      const fullDocument = documents.find(d => d.id === deletingDocument.id);
+      const fullDocument = documents.find((d) => d.id === deletingDocument.id);
       if (!fullDocument?.storageFileName) {
         showError("Error", "No se pudo identificar el archivo a eliminar");
         return;
       }
 
-      const { deleteGestionDocument } = await import("~/services/gestionDocuments");
+      const { deleteGestionDocument } =
+        await import("~/services/gestionDocuments");
       const result = await deleteGestionDocument(
-        deletingDocument.url || '',
+        deletingDocument.url || "",
         buildingId,
         categoryValue,
-        fullDocument.storageFileName
+        fullDocument.storageFileName,
       );
 
       if (result.success) {
@@ -840,36 +946,45 @@ export function BuildingGestion() {
         setIsDeleteModalOpen(false);
         setDeletingDocument(null);
       } else {
-        showError("Error al eliminar", result.error || "No se pudo eliminar el documento");
+        showError(
+          "Error al eliminar",
+          result.error || "No se pudo eliminar el documento",
+        );
       }
     } catch (error) {
       console.error("Error eliminando documento:", error);
-      showError("Error", "Ocurrió un error inesperado al eliminar el documento");
+      showError(
+        "Error",
+        "Ocurrió un error inesperado al eliminar el documento",
+      );
     } finally {
       setIsDeleting(false);
     }
   };
 
   // Manejar eliminación de categoría personalizada
-  const handleDeleteCategory = (categoryValue: string, categoryLabel: string) => {
+  const handleDeleteCategory = (
+    categoryValue: string,
+    categoryLabel: string,
+  ) => {
     if (!buildingId) return;
 
     // Verificar si hay documentos en esta categoría
     const documentsInCategory = documents.filter(
-      doc => doc.category === categoryLabel
+      (doc) => doc.category === categoryLabel,
     );
 
     if (documentsInCategory.length > 0) {
       showError(
         "No se puede eliminar",
-        `Esta categoría tiene ${documentsInCategory.length} documento(s). Elimina los documentos primero.`
+        `Esta categoría tiene ${documentsInCategory.length} documento(s). Elimina los documentos primero.`,
       );
       return;
     }
 
     // Eliminar de las categorías personalizadas
     const updatedCustom = customCategories.filter(
-      cat => cat.value !== categoryValue
+      (cat) => cat.value !== categoryValue,
     );
     setCustomCategories(updatedCustom);
     setDocumentCategories([...BASE_DOCUMENT_CATEGORIES, ...updatedCustom]);
@@ -892,7 +1007,7 @@ export function BuildingGestion() {
 
     // Validar que el nombre no exista
     const nameExists = documentCategories.some(
-      cat => cat.label.toLowerCase() === newCategoryName.trim().toLowerCase()
+      (cat) => cat.label.toLowerCase() === newCategoryName.trim().toLowerCase(),
     );
     if (nameExists) {
       showError("Error", "Ya existe una categoría con ese nombre");
@@ -1031,7 +1146,9 @@ export function BuildingGestion() {
                   const IconComponent = category.icon;
                   // Calcular el conteo de documentos por categoría dinámicamente
                   const categoryFileCount = documents.filter((doc) => {
-                    return doc.category === CATEGORY_VALUE_TO_NAME[category.value];
+                    return (
+                      doc.category === CATEGORY_VALUE_TO_NAME[category.value]
+                    );
                   }).length;
 
                   const isSelected = selectedCategoryFilter === category.value;
@@ -1048,7 +1165,10 @@ export function BuildingGestion() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteCategory(category.value, category.label);
+                            handleDeleteCategory(
+                              category.value,
+                              category.label,
+                            );
                           }}
                           className="absolute -top-2 -right-2 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white border border-gray-300 rounded-full p-1.5 shadow-sm hover:shadow-md hover:bg-red-50 hover:border-red-300 text-gray-400 hover:text-red-600"
                           title={t("eliminarCategoria")}
@@ -1218,16 +1338,16 @@ export function BuildingGestion() {
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 acceptedTypes={[
-                  'application/pdf',
-                  'application/msword',
-                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  'application/vnd.ms-excel',
-                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                  'application/vnd.ms-powerpoint',
-                  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                  'image/jpeg',
-                  'image/png',
-                  'text/plain'
+                  "application/pdf",
+                  "application/msword",
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                  "application/vnd.ms-excel",
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                  "application/vnd.ms-powerpoint",
+                  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                  "image/jpeg",
+                  "image/png",
+                  "text/plain",
                 ]}
                 multiple={false}
                 maxFiles={1}
@@ -1278,22 +1398,27 @@ export function BuildingGestion() {
       </Dialog>
 
       {/* Modal de confirmación de eliminación */}
-      <AlertDialog open={isDeleteModalOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsDeleteModalOpen(false);
-          setDeletingDocument(null);
-        }
-      }}>
+      <AlertDialog
+        open={isDeleteModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsDeleteModalOpen(false);
+            setDeletingDocument(null);
+          }
+        }}
+      >
         <AlertDialogContent className="bg-white !bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">
               Eliminar Documento
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-700">
-              ¿Estás seguro de que deseas eliminar el documento <strong>"{deletingDocument?.name}"</strong>?
+              ¿Estás seguro de que deseas eliminar el documento{" "}
+              <strong>"{deletingDocument?.name}"</strong>?
               <br />
               <span className="text-xs text-gray-500 mt-2 block">
-                Esta acción no se puede deshacer. El archivo se eliminará permanentemente.
+                Esta acción no se puede deshacer. El archivo se eliminará
+                permanentemente.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1319,10 +1444,15 @@ export function BuildingGestion() {
       </AlertDialog>
 
       {/* Modal de crear categoría */}
-      <Dialog open={isCreateCategoryModalOpen} onOpenChange={setIsCreateCategoryModalOpen}>
+      <Dialog
+        open={isCreateCategoryModalOpen}
+        onOpenChange={setIsCreateCategoryModalOpen}
+      >
         <DialogContent className="max-w-md shadow-xl bg-white !bg-white">
           <DialogHeader className="!bg-white">
-            <DialogTitle className="!bg-white mb-3">Crear Nueva Categoría</DialogTitle>
+            <DialogTitle className="!bg-white mb-3">
+              Crear Nueva Categoría
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 !bg-white">
             <div className="!bg-white">
@@ -1339,9 +1469,7 @@ export function BuildingGestion() {
             </div>
 
             <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Color
-              </label>
+              <label className="block text-sm text-gray-700 mb-1">Color</label>
               <div className="grid grid-cols-4 gap-2">
                 {COLOR_OPTIONS.map((color, index) => {
                   const isSelected = newCategoryColor.bgColor === color.bgColor;
@@ -1363,7 +1491,8 @@ export function BuildingGestion() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
               <p className="text-xs text-blue-800">
-                ℹ️ Las categorías personalizadas te permiten organizar documentos específicos de tu edificio
+                ℹ️ Las categorías personalizadas te permiten organizar
+                documentos específicos de tu edificio
               </p>
             </div>
           </div>
@@ -1392,15 +1521,20 @@ export function BuildingGestion() {
       </Dialog>
 
       {/* Modal de factura de servicio */}
-      <Dialog open={isServiceInvoiceModalOpen} onOpenChange={setIsServiceInvoiceModalOpen}>
+      <Dialog
+        open={isServiceInvoiceModalOpen}
+        onOpenChange={setIsServiceInvoiceModalOpen}
+      >
         <DialogContent className="max-w-md shadow-xl bg-white flex flex-col max-h-[90vh]">
           <DialogHeader className="!bg-white">
             <DialogTitle className="mb-3">
-              {invoiceStep === 'processing' ? 'Procesando Factura' : 'Revisar Datos de Factura'}
+              {invoiceStep === "processing"
+                ? "Procesando Factura"
+                : "Revisar Datos de Factura"}
             </DialogTitle>
           </DialogHeader>
-          
-          {invoiceStep === 'processing' ? (
+
+          {invoiceStep === "processing" ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
               <div className="relative">
                 <Sparkles className="w-16 h-16 text-blue-600 animate-pulse" />
@@ -1414,195 +1548,227 @@ export function BuildingGestion() {
               <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
                   <p className="text-xs text-blue-800">
-                    ℹ️ Revisa y ajusta los datos extraídos automáticamente de la factura
+                    ℹ️ Revisa y ajusta los datos extraídos automáticamente de la
+                    factura
                   </p>
                 </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Tipo de Servicio <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={serviceInvoiceData.service_type}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  service_type: e.target.value as ServiceType
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300"
-              >
-                {(Object.keys(SERVICE_TYPE_LABELS) as ServiceType[]).map((type) => (
-                  <option key={type} value={type}>
-                    {getServiceTypeLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Tipo de Servicio <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={serviceInvoiceData.service_type}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        service_type: e.target.value as ServiceType,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300"
+                  >
+                    {(Object.keys(SERVICE_TYPE_LABELS) as ServiceType[]).map(
+                      (type) => (
+                        <option key={type} value={type}>
+                          {getServiceTypeLabel(type)}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Fecha de la Factura <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="date"
-                value={serviceInvoiceData.invoice_date}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  invoice_date: e.target.value
-                })}
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Fecha de la Factura <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    value={serviceInvoiceData.invoice_date}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        invoice_date: e.target.value,
+                      })
+                    }
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                    max={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Importe (EUR) <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={serviceInvoiceData.amount_eur || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  amount_eur: parseFloat(e.target.value) || 0
-                })}
-                placeholder="0.00"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Importe (EUR) <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={serviceInvoiceData.amount_eur || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        amount_eur: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Unidades Consumidas (opcional)
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={serviceInvoiceData.units || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  units: e.target.value ? parseFloat(e.target.value) : null
-                })}
-                placeholder="Opcional"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Unidades Consumidas (opcional)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={serviceInvoiceData.units || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        units: e.target.value
+                          ? parseFloat(e.target.value)
+                          : null,
+                      })
+                    }
+                    placeholder="Opcional"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Proveedor (opcional)
-              </label>
-              <Input
-                type="text"
-                value={serviceInvoiceData.provider || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  provider: e.target.value
-                })}
-                placeholder="Proveedor"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Proveedor (opcional)
+                  </label>
+                  <Input
+                    type="text"
+                    value={serviceInvoiceData.provider || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        provider: e.target.value,
+                      })
+                    }
+                    placeholder="Proveedor"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Número de Factura (opcional)
-              </label>
-              <Input
-                type="text"
-                value={serviceInvoiceData.invoice_number || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  invoice_number: e.target.value
-                })}
-                placeholder="Número de Factura"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Número de Factura (opcional)
+                  </label>
+                  <Input
+                    type="text"
+                    value={serviceInvoiceData.invoice_number || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        invoice_number: e.target.value,
+                      })
+                    }
+                    placeholder="Número de Factura"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Periodo de inicio <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="date"
-                value={serviceInvoiceData.period_start || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  period_start: e.target.value
-                })}
-                placeholder="Fecha de inicio"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Periodo de inicio <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    value={serviceInvoiceData.period_start || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        period_start: e.target.value,
+                      })
+                    }
+                    placeholder="Fecha de inicio"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Periodo de fin <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="date"
-                value={serviceInvoiceData.period_end || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  period_end: e.target.value
-                })}
-                placeholder="Fecha de fin"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Periodo de fin <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    value={serviceInvoiceData.period_end || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        period_end: e.target.value,
+                      })
+                    }
+                    placeholder="Fecha de fin"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Fecha de vencimiento <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="date"
-                value={serviceInvoiceData.expiration_date || ''}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  expiration_date: e.target.value
-                })}
-                placeholder="Fecha de vencimiento"
-                className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
-              />
-            </div>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Fecha de vencimiento <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    value={serviceInvoiceData.expiration_date || ""}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        expiration_date: e.target.value,
+                      })
+                    }
+                    placeholder="Fecha de vencimiento"
+                    className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
+                  />
+                </div>
 
-            <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">
-                Notas (opcional)
-              </label>
-              <textarea
-                value={serviceInvoiceData.notes}
-                onChange={(e) => setServiceInvoiceData({
-                  ...serviceInvoiceData,
-                  notes: e.target.value
-                })}
-                placeholder="Notas adicionales sobre la factura..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300"
-                rows={2}
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex gap-2 mt-4 sm:flex-row !bg-white">
-            <Button
-              variant="outline"
-              onClick={handleCancelServiceInvoice}
-              className="flex-1 text-sm"
-            >
-              Omitir
-            </Button>
-            <Button
-              onClick={handleCreateServiceInvoice}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm"
-              disabled={!serviceInvoiceData.amount_eur || serviceInvoiceData.amount_eur <= 0 || !serviceInvoiceData.period_start || !serviceInvoiceData.period_end || !serviceInvoiceData.expiration_date || !serviceInvoiceData.invoice_date}
-            >
-              Registrar Factura
-            </Button>
-          </DialogFooter>
-          </>
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Notas (opcional)
+                  </label>
+                  <textarea
+                    value={serviceInvoiceData.notes}
+                    onChange={(e) =>
+                      setServiceInvoiceData({
+                        ...serviceInvoiceData,
+                        notes: e.target.value,
+                      })
+                    }
+                    placeholder="Notas adicionales sobre la factura..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300"
+                    rows={2}
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex gap-2 mt-4 sm:flex-row !bg-white">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelServiceInvoice}
+                  className="flex-1 text-sm"
+                >
+                  Omitir
+                </Button>
+                <Button
+                  onClick={handleCreateServiceInvoice}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm"
+                  disabled={
+                    !serviceInvoiceData.amount_eur ||
+                    serviceInvoiceData.amount_eur <= 0 ||
+                    !serviceInvoiceData.period_start ||
+                    !serviceInvoiceData.period_end ||
+                    !serviceInvoiceData.expiration_date ||
+                    !serviceInvoiceData.invoice_date
+                  }
+                >
+                  Registrar Factura
+                </Button>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
