@@ -37,6 +37,7 @@ export interface BuildingStep1Data {
   cfoEmail: string;
   propietarioEmail: string;
   squareMeters: string;
+  cadastralReference?: string;
 }
 
 interface BuildingStep2Data {
@@ -244,7 +245,7 @@ const CreateBuildingWizard: React.FC = () => {
     // Numeric parsing with safe defaults
     const year = Number.parseInt(step1Data.constructionYear, 10);
     const floors = Number.parseInt(step1Data.floors, 10);
-    const units = Number.parseInt(step1Data.units, 10);
+    const units = step1Data.units ? Number.parseInt(step1Data.units, 10) : undefined;
     const price = step1Data.price
       ? Number.parseFloat(step1Data.price)
       : undefined;
@@ -252,12 +253,12 @@ const CreateBuildingWizard: React.FC = () => {
       ? Number.parseFloat(step1Data.squareMeters)
       : undefined;
 
-    if (Number.isNaN(year) || Number.isNaN(floors) || Number.isNaN(units)) {
+    if (Number.isNaN(year) || Number.isNaN(floors)) {
       showError(
         t("common.error", "Error"),
         t(
           "buildingWizard.numericFieldsInvalid",
-          "Revisa los campos numéricos: año, plantas y unidades."
+          "Revisa los campos numéricos: año y plantas."
         )
       );
       return;
@@ -266,13 +267,18 @@ const CreateBuildingWizard: React.FC = () => {
     startLoading();
 
     try {
+      // Preparar referencia catastral - solo incluir si tiene valor válido
+      const cadastralRef = step1Data.cadastralReference?.trim();
+      const cadastralReference = cadastralRef && cadastralRef.length > 0 ? cadastralRef : undefined;
+
       const buildingPayload: CreateBuildingPayload = {
         name: step1Data.name,
         address: step2Data.address,
+        cadastralReference,
         constructionYear: year,
         typology: step1Data.typology as "residential" | "mixed" | "commercial",
         numFloors: floors,
-        numUnits: units,
+        numUnits: units && !Number.isNaN(units) ? units : undefined,
         price,
         technicianEmail: step1Data.technicianEmail || undefined,
         cfoEmail: step1Data.cfoEmail || undefined,
@@ -351,7 +357,11 @@ const CreateBuildingWizard: React.FC = () => {
         t("buildings.buildingCreatedSuccess", "Edificio creado correctamente.")
       );
 
-      navigate(fromDashboard ? "/dashboard" : "/assets");
+      // Navegar con un estado para forzar recarga de la lista
+      navigate(fromDashboard ? "/dashboard" : "/assets", {
+        state: { refresh: true, timestamp: Date.now() },
+        replace: false,
+      });
     } catch (err: unknown) {
       // Normalize error
       const rawMessage =

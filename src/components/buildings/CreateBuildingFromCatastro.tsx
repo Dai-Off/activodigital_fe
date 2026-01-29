@@ -55,18 +55,27 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     propietarioEmail: '',
   });
 
-  // Cargar provincias al montar
+  // Cargar provincias solo cuando el usuario selecciona búsqueda por dirección
   useEffect(() => {
-    const loadProvinces = async () => {
-      try {
-        const provs = await CatastroApiService.getProvinces();
-        setProvinces(provs);
-      } catch (err) {
-        console.error('Error cargando provincias:', err);
-      }
-    };
-    loadProvinces();
-  }, []);
+    if (searchMethod === 'address' && provinces.length === 0) {
+      const loadProvinces = async () => {
+        try {
+          const provs = await CatastroApiService.getProvinces();
+          setProvinces(provs);
+        } catch (err: any) {
+          console.error('Error cargando provincias:', err);
+          // Si es un error 401, no hacer nada (el ProtectedRoute ya manejará el redirect)
+          // Si es otro error, mostrar mensaje pero no bloquear la UI
+          if (err?.status !== 401) {
+            // Solo mostrar error si no es un problema de autenticación del usuario
+            // Los errores 403 de la API de Catastro se manejarán cuando el usuario intente buscar
+            setError('No se pudieron cargar las provincias. Por favor, intenta de nuevo.');
+          }
+        }
+      };
+      loadProvinces();
+    }
+  }, [searchMethod]);
 
   // Cargar municipios cuando se selecciona una provincia
   useEffect(() => {
@@ -253,10 +262,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     const buildingData: BuildingStep1Data = {
       name: buildingName,
       address: catastroDataLoaded.address || '',
+      // Asegurar que la referencia catastral se pase correctamente (no convertir undefined a string vacío)
+      cadastralReference: catastroDataLoaded.cadastralReference && catastroDataLoaded.cadastralReference.trim().length > 0 
+        ? catastroDataLoaded.cadastralReference.trim() 
+        : '',
       constructionYear: catastroDataLoaded.constructionYear?.toString() || '',
       typology: catastroDataLoaded.typology || '',
       floors: catastroDataLoaded.numFloors?.toString() || '',
-      units: catastroDataLoaded.numUnits?.toString() || '',
+      units: '', // Ya no se usa, pero mantenemos el campo para compatibilidad
       price: additionalData.price,
       technicianEmail: additionalData.technicianEmail,
       cfoEmail: additionalData.cfoEmail,

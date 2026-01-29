@@ -1,4 +1,7 @@
-export function getTimeRemaining(dateString: string): string {
+export function getTimeRemaining(dateString: string | null | undefined): string {
+  if (!dateString) {
+    return "Fecha no disponible";
+  }
   // 1. Parsear la cadena de fecha (DD/MM/YYYY)
   const parts = dateString.split("/");
   if (parts.length !== 3) {

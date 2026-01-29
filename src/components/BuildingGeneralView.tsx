@@ -45,6 +45,9 @@ import {
   TriangleAlert,
   Wrench,
   Zap,
+  Edit2,
+  Save,
+  X,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
@@ -56,7 +59,7 @@ export function BuildingGeneralView() {
   // Hooks de navegación y notificaciones
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
 
   const { t } = useLanguage();
   // Estado para datos del edificio
@@ -81,6 +84,9 @@ export function BuildingGeneralView() {
     consumption: number;
     source: 'invoice' | 'certificate' | null;
   } | null>(null);
+  const [isEditingCadastralRef, setIsEditingCadastralRef] = useState(false);
+  const [tempCadastralRef, setTempCadastralRef] = useState("");
+  const [isSavingCadastralRef, setIsSavingCadastralRef] = useState(false);
 
   const buildingImages = useMemo(() => {
     const fallback = "/image.png";
@@ -105,29 +111,43 @@ export function BuildingGeneralView() {
   useEffect(() => {
     // Resetear carrusel al cambiar de edificio / imágenes
     setCurrentImageIndex(0);
-    setDisplayedImageSrc(buildingImages[0] || "/image.png");
+    const firstImage = buildingImages[0] || "/image.png";
+    setDisplayedImageSrc(firstImage);
     setIsImageLoading(false);
-  }, [id, buildingImages.length]);
+  }, [id, buildingImages]);
 
-  // Pre-cargar la imagen objetivo y evitar “pantalla en blanco” al cambiar
+  // Pre-cargar la imagen objetivo y evitar "pantalla en blanco" al cambiar
   useEffect(() => {
     const targetSrc = buildingImages[currentImageIndex] || "/image.png";
 
     // Si ya se está mostrando, no hacer nada
-    if (targetSrc === displayedImageSrc) return;
+    if (targetSrc === displayedImageSrc) {
+      setIsImageLoading(false);
+      return;
+    }
 
     let cancelled = false;
     setIsImageLoading(true);
+
+    // Timeout de seguridad para evitar spinner infinito (10 segundos)
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        setDisplayedImageSrc("/image.png");
+        setIsImageLoading(false);
+      }
+    }, 10000);
 
     // Ojo: en este componente `Image` es un ícono (lucide), por eso usamos un elemento <img> para pre-cargar.
     const img = document.createElement("img");
     img.onload = () => {
       if (cancelled) return;
+      clearTimeout(timeoutId);
       setDisplayedImageSrc(targetSrc);
       setIsImageLoading(false);
     };
     img.onerror = () => {
       if (cancelled) return;
+      clearTimeout(timeoutId);
       setDisplayedImageSrc("/image.png");
       setIsImageLoading(false);
     };
@@ -135,8 +155,9 @@ export function BuildingGeneralView() {
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [buildingImages, currentImageIndex, displayedImageSrc]);
+  }, [buildingImages, currentImageIndex]); // Removido displayedImageSrc de dependencias para evitar loop
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % buildingImages.length);
@@ -228,84 +249,99 @@ export function BuildingGeneralView() {
         const buildingData = await BuildingsApiService.getBuildingById(id);
         setBuilding(buildingData);
 
-        // Cargar libro digital si existe
-        try {
-          const book = await getBookByBuilding(id);
-          setDigitalBook(book);
-        } catch (e) {
+        // Paralelizar todas las llamadas independientes para mejorar rendimiento
+        const [
+          bookResult,
+          snapshotsResult,
+          expiredResult,
+          esgResult,
+          unitsResult,
+          costsResult,
+        ] = await Promise.allSettled([
+          // Libro digital
+          getBookByBuilding(id).catch(() => null),
+          
+          // Datos financieros
+          FinancialSnapshotsService.getFinancialSnapshots(buildingData.id),
+          
+          // Documentos vencidos
+          getExpiredList({ building_id: id, limit: 5 }),
+          
+          // Datos ESG
+          calculateESGScore(buildingData.id).catch(async () => {
+            try {
+              return await getESGScore(buildingData.id);
+            } catch {
+              return null;
+            }
+          }),
+          
+          // Unidades
+          UnitsApiService.listUnits(buildingData.id),
+          
+          // Costes mensuales
+          (async () => {
+            const now = new Date();
+            return ServiceInvoicesService.getMonthlyCostsForBuilding(
+              buildingData.id,
+              now.getFullYear(),
+              now.getMonth() + 1
+            );
+          })(),
+        ]);
+
+        // Procesar resultados del libro digital
+        if (bookResult.status === "fulfilled" && bookResult.value) {
+          setDigitalBook(bookResult.value);
+        } else {
           setDigitalBook(null);
         }
 
-        // Cargar datos financieros y análisis
-        try {
-          const snapshots =
-            await FinancialSnapshotsService.getFinancialSnapshots(
-              buildingData.id
-            );
+        // Procesar resultados financieros
+        if (snapshotsResult.status === "fulfilled") {
+          const snapshots = snapshotsResult.value;
           const hasData = snapshots && snapshots.length > 0;
           setHasFinancialData(hasData);
 
           if (hasData) {
-            const analysis = await FinancialAnalysisService.analyzeBuilding(
-              buildingData.id,
-              buildingData.name,
-              snapshots[0],
-              buildingData.price || 0
-            );
-            setFinancialAnalysis(analysis);
+            try {
+              const analysis = await FinancialAnalysisService.analyzeBuilding(
+                buildingData.id,
+                buildingData.name,
+                snapshots[0],
+                buildingData.price || 0
+              );
+              setFinancialAnalysis(analysis);
+            } catch (error) {
+              console.error("Error analizando datos financieros:", error);
+            }
           }
-        } catch (error) {
-          console.error("Error cargando datos financieros:", error);
+        } else {
           setHasFinancialData(false);
         }
 
-        // Cargar documentos vencidos (alertas)
-        try {
-          const expiredResponse = await getExpiredList({
-            building_id: id,
-            limit: 5,
-          });
-          setExpiredDocs(expiredResponse.items || []);
-        } catch (error) {
-          console.error("Error cargando documentos vencidos:", error);
+        // Procesar documentos vencidos
+        if (expiredResult.status === "fulfilled") {
+          setExpiredDocs(expiredResult.value.items || []);
         }
 
-        // Cargar datos ESG
+        // Procesar datos ESG
         setEsgLoading(true);
-        try {
-          const esgResponse = await calculateESGScore(buildingData.id);
-          setEsgData(esgResponse);
-        } catch (error) {
-          console.error("Error cargando ESG:", error);
-          try {
-            const savedESG = await getESGScore(buildingData.id);
-            setEsgData(savedESG);
-          } catch {
-            setEsgData(null);
-          }
-        } finally {
-          setEsgLoading(false);
+        if (esgResult.status === "fulfilled" && esgResult.value) {
+          setEsgData(esgResult.value);
+        } else {
+          setEsgData(null);
+        }
+        setEsgLoading(false);
+
+        // Procesar unidades
+        if (unitsResult.status === "fulfilled") {
+          setUnits(unitsResult.value || []);
         }
 
-        // Cargar unidades
-        try {
-          const unitsData = await UnitsApiService.listUnits(buildingData.id);
-          setUnits(unitsData || []);
-        } catch (error) {
-          console.error("Error cargando unidades:", error);
-        }
-
-        // Cargar costes mensuales (mes actual)
-        try {
-          const now = new Date();
-          const costs = await ServiceInvoicesService.getMonthlyCostsForBuilding(
-            buildingData.id,
-            now.getFullYear(),
-            now.getMonth() + 1
-          );
-          setMonthlyCosts(costs);
-        } catch (error) {
-          console.error("Error cargando costes mensuales:", error);
+        // Procesar costes mensuales
+        if (costsResult.status === "fulfilled") {
+          setMonthlyCosts(costsResult.value);
         }
 
         setLoading(false);
@@ -401,6 +437,38 @@ export function BuildingGeneralView() {
     loadEvents();
   }, [id]);
 
+  // Función para guardar la referencia catastral
+  const handleSaveCadastralRef = async () => {
+    if (!building?.id) return;
+
+    setIsSavingCadastralRef(true);
+    try {
+      const updatedBuilding = await BuildingsApiService.updateBuilding(building.id, {
+        cadastralReference: tempCadastralRef.trim() || undefined,
+      });
+      setBuilding(updatedBuilding);
+      setIsEditingCadastralRef(false);
+      showSuccess("Referencia catastral actualizada correctamente");
+    } catch (error) {
+      showError("Error al actualizar la referencia catastral");
+    } finally {
+      setIsSavingCadastralRef(false);
+    }
+  };
+
+  // Función para cancelar edición
+  const handleCancelEditCadastralRef = () => {
+    setTempCadastralRef(building?.cadastralReference || "");
+    setIsEditingCadastralRef(false);
+  };
+
+  // Inicializar el valor temporal cuando se entra en modo edición
+  useEffect(() => {
+    if (isEditingCadastralRef) {
+      setTempCadastralRef(building?.cadastralReference || "");
+    }
+  }, [isEditingCadastralRef, building?.cadastralReference]);
+
   // Cálculos para el calendario de acciones
   const calendarStats = useMemo(() => {
     const now = new Date();
@@ -442,13 +510,19 @@ export function BuildingGeneralView() {
 
 
 
-  // Calculate derived metrics
+  // Calculate derived metrics - Lógica unificada con BuildingUnits y UnitsListDashboard
+  // Una unidad está ocupada SOLO si su status es "ocupada" o "occupied" (case-insensitive)
   const occupancyStats = useMemo(() => {
     if (!units.length) return { percentage: 0, occupied: 0, total: 0 };
-    const occupied = units.filter(u => u.status === 'occupied' || u.tenant).length;
+    
+    const occupiedCount = units.filter((unit) => {
+      const statusStr = (unit.status || "").toLowerCase().trim();
+      return statusStr === "ocupada" || statusStr === "occupied";
+    }).length;
+    
     return {
-      percentage: Math.round((occupied / units.length) * 100),
-      occupied,
+      percentage: Math.round((occupiedCount / units.length) * 100),
+      occupied: occupiedCount,
       total: units.length
     };
   }, [units]);
@@ -689,29 +763,76 @@ export function BuildingGeneralView() {
                     <p className="text-xs text-gray-900">{building?.technicianEmail || "-"}</p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("catastralReference", "Referencia Catastral")}</label>
-                    <p
-                      className="text-xs text-gray-900 truncate"
-                      title={building?.cadastralReference || "-"}
-                    >
-                      {building?.cadastralReference || "-"}
-                    </p>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="text-xs text-gray-500">
+                        Referencia Catastral
+                      </label>
+                      {!isEditingCadastralRef && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingCadastralRef(true)}
+                          className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+                          title="Editar referencia catastral"
+                        >
+                          <Edit2 className="w-3 h-3 text-gray-500" />
+                        </button>
+                      )}
+                    </div>
+                    {isEditingCadastralRef ? (
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          value={tempCadastralRef}
+                          onChange={(e) => setTempCadastralRef(e.target.value)}
+                          className="w-full text-xs text-gray-900 border border-gray-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Ej: 1234567VK1234A0001WX"
+                          disabled={isSavingCadastralRef}
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={handleSaveCadastralRef}
+                            disabled={isSavingCadastralRef}
+                            className="p-0.5 hover:bg-green-100 rounded transition-colors disabled:opacity-50"
+                            title="Guardar"
+                          >
+                            <Save className="w-3 h-3 text-green-600" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditCadastralRef}
+                            disabled={isSavingCadastralRef}
+                            className="p-0.5 hover:bg-red-100 rounded transition-colors disabled:opacity-50"
+                            title="Cancelar"
+                          >
+                            <X className="w-3 h-3 text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p
+                        className="text-xs text-gray-900 truncate"
+                        title={building?.cadastralReference || "-"}
+                      >
+                        {building?.cadastralReference || "-"}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <MapPin className="w-3.5 h-3.5 text-gray-600" />
-                  <h3 className="text-sm">{t("building", "Inmueble")}</h3>
+                  <h3 className="text-sm">{t("building")}</h3>
                 </div>
                 <div className="space-y-1.5 flex-1">
                   <div>
-                    <label className="text-xs text-gray-500">{t("domain", "Dominio")}</label>
+                    <label className="text-xs text-gray-500">{t("domain")}</label>
                     <p className="text-xs text-gray-900">Propiedad Plena</p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      {t("address", "Dirección")}
+                      {t("address")}
                     </label>
                     <p
                       className="text-xs text-gray-900 truncate"
@@ -721,7 +842,7 @@ export function BuildingGeneralView() {
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("surface", "Superficie")}</label>
+                    <label className="text-xs text-gray-500">{t("surface")}</label>
                     <p className="text-xs text-gray-900">
                       {building?.squareMeters ? `${building.squareMeters.toLocaleString()} m²` : "-"}
                     </p>
@@ -731,29 +852,29 @@ export function BuildingGeneralView() {
               <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Building2 className="w-3.5 h-3.5 text-gray-600" />
-                  <h3 className="text-sm">{t("typeAndCharacteristics", "Tipo y Características")}</h3>
+                  <h3 className="text-sm">{t("typeAndCharacteristics")}</h3>
                 </div>
                 <div className="space-y-1.5 flex-1">
                   <div>
-                    <label className="text-xs text-gray-500">{t("type", "Tipo")}</label>
+                    <label className="text-xs text-gray-500">{t("type")}</label>
                     <p className="text-xs text-gray-900">
-                      {building ? (building.typology === 'residential' ? t('residential', 'Residencial') : building.typology === 'mixed' ? t('mixed', 'Mixto') : t('commercial', 'Comercial')) : "-"}
+                      {building ? (building.typology === 'residential' ? t('residential') : building.typology === 'mixed' ? t('mixed') : t('commercial')) : "-"}
                     </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      {t("commercialUse", "Uso Comercial")}
+                      {t("commercialUse")}
                     </label>
                     <p className="text-xs text-gray-900">
-                      {building?.typology === 'commercial' ? t('commercial', 'Comercial') : building?.typology === 'mixed' ? t('mixed', 'Mixto') : '-'}
+                      {building?.typology === 'commercial' ? t('commercial') : building?.typology === 'mixed' ? t('mixed') : '-'}
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("subType", "Sub-tipo")}</label>
+                    <label className="text-xs text-gray-500">{t("subType")}</label>
                     <p className="text-xs text-gray-900"></p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("units", "Unidades")}</label>
+                    <label className="text-xs text-gray-500">{t("units")}</label>
                     <p className="text-xs text-gray-900">{building?.numUnits || "-"}</p>
                   </div>
                 </div>
@@ -761,21 +882,21 @@ export function BuildingGeneralView() {
               <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Target className="w-3.5 h-3.5 text-gray-600" />
-                  <h3 className="text-sm">{t("strategy", "Estrategia")}</h3>
+                  <h3 className="text-sm">{t("strategy")}</h3>
                 </div>
                 <div className="space-y-1.5 flex-1">
                   <div>
-                    <label className="text-xs text-gray-500">{t("strategy", "Estrategia")}</label>
+                    <label className="text-xs text-gray-500">{t("strategy")}</label>
                     <p className="text-xs text-gray-900">
-                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? t('improvement', 'Valor añadido') : financialAnalysis.recommendation.type === 'mantener' ? t('core', 'Core') : t('sale', 'Venta')) : "-"}
+                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? t('improvement') : financialAnalysis.recommendation.type === 'mantener' ? t('core') : t('sale')) : "-"}
                     </p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
-                      {t("concept", "Concepto")}
+                      {t("concept")}
                     </label>
                     <p className="text-xs text-gray-900">
-                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? t('rehabilitation', 'Rehabilitación') : financialAnalysis.recommendation.type === 'mantener' ? t('maintenance', 'Mantenimiento') : t('disinvestment', 'Desinversión')) : "-"}
+                      {financialAnalysis ? (financialAnalysis.recommendation.type === 'mejorar' ? t('rehabilitation') : financialAnalysis.recommendation.type === 'mantener' ? t('maintenance') : t('disinvestment')) : "-"}
                     </p>
                   </div>
                   <div>
@@ -785,9 +906,9 @@ export function BuildingGeneralView() {
                     </span>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("client", "Cliente")}</label>
+                    <label className="text-xs text-gray-500">{t("client")}</label>
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700">
-                      {t("pending", "Pendiente")}
+                      {t("pending")}
                     </span>
                   </div>
                 </div>
@@ -799,7 +920,7 @@ export function BuildingGeneralView() {
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1 h-3.5 bg-orange-600 rounded"></div>
-              <h3 className="text-sm text-black">{t("technicalState", "Estado Técnico")}</h3>
+              <h3 className="text-sm text-black">{t("technicalState"  )}</h3>
             </div>
             <div className="space-y-2">
               <div className="bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] rounded p-2 text-white shadow-sm">

@@ -125,7 +125,7 @@ export function MainPanel() {
   }: {
     text: string;
     nameBuilding: string;
-    date: string;
+    date: string | null;
     value: number;
   }) {
     const values: any = {
@@ -145,7 +145,7 @@ export function MainPanel() {
         color: "bg-yellow-600",
       },
     };
-    date = getTimeRemaining(date);
+    const dateRemaining = getTimeRemaining(date);
     return (
       <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-100 rounded">
         <div className="p-1.5 bg-red-100 rounded flex-shrink-0">
@@ -156,7 +156,7 @@ export function MainPanel() {
             <div className="flex-1">
               <p className="text-xs mb-0.5">{text}</p>
               <p className="text-xs text-gray-600">
-                {nameBuilding} - {date}
+                {nameBuilding} - {dateRemaining}
               </p>
             </div>
             <span
