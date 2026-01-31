@@ -21,6 +21,17 @@ import { useToast } from "~/contexts/ToastContext";
 import { buildingService } from "~/services/buildings";
 
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+
 export function GeneralView() {
   interface MenuItem {
     id: string;
@@ -34,6 +45,7 @@ export function GeneralView() {
     useNavigation();
   const [DropdownMenu, setDropdownMenu] = useState<boolean>(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
   const { showError, showSuccess } = useToast();
   const { pathname } = useLocation();
@@ -113,17 +125,17 @@ export function GeneralView() {
   const handleDeleteBuilding = async () => {
     if (!buildingId) return;
     
-    if (window.confirm(t("confirmDeleteBuilding", "¿Estás seguro de que deseas eliminar este edificio? Esta acción no se puede deshacer."))) {
-      try {
-        await buildingService.delete(buildingId);
-        showSuccess(t("buildingDeleted", "Edificio eliminado correctamente"));
-        navigate("/assets");
-      } catch (error) {
-        console.error("Error deleting building:", error);
-        showError(t("errorDeletingBuilding", "Error al eliminar el edificio"));
-      }
+    try {
+      await buildingService.delete(buildingId);
+      showSuccess(t("buildingDeleted", "Edificio eliminado correctamente"));
+      // Despachar evento para actualizar sidebar
+      window.dispatchEvent(new Event('building-deleted'));
+      navigate("/assets");
+    } catch (error) {
+      console.error("Error deleting building:", error);
+      showError(t("errorDeletingBuilding", "Error al eliminar el edificio"));
     }
-    setActionsMenuOpen(false);
+    setShowDeleteDialog(false);
   };
 
   return (
@@ -247,7 +259,10 @@ export function GeneralView() {
             {actionsMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                 <button
-                  onClick={handleDeleteBuilding}
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    setShowDeleteDialog(true);
+                  }}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                 >
                   <Trash className="w-4 h-4" />
@@ -259,6 +274,23 @@ export function GeneralView() {
         </div>
       </div>
       <Outlet />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("confirmDeleteTitle", "¿Estás absolutamente seguro?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("confirmDeleteDescription", "Esta acción no se puede deshacer. Esto eliminará permanentemente el edificio y todos sus datos asociados.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel", "Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteBuilding} className="bg-red-600 hover:bg-red-700">
+              {t("delete", "Eliminar")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
