@@ -10,11 +10,15 @@ import {
   Wallet,
   Wrench,
   Zap,
+  MoreVertical,
+  Trash,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useLanguage } from "~/contexts/LanguageContext";
 import { useNavigation } from "~/contexts/NavigationContext";
+import { useToast } from "~/contexts/ToastContext";
+import { buildingService } from "~/services/buildings";
 
 
 export function GeneralView() {
@@ -29,6 +33,9 @@ export function GeneralView() {
   const { setActiveSection, setActiveTab, setViewMode, setActiveModule } =
     useNavigation();
   const [DropdownMenu, setDropdownMenu] = useState<boolean>(false);
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+  const { showError, showSuccess } = useToast();
   const { pathname } = useLocation();
   const { id: buildingId } = useParams<{ id: string }>();
   const menuItems: MenuItem[] = [
@@ -89,6 +96,35 @@ export function GeneralView() {
     }) || menuItems[0];
 
   const CurrentIcon = currentItem.Icon;
+
+  // Cerrar menú de acciones al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setActionsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleDeleteBuilding = async () => {
+    if (!buildingId) return;
+    
+    if (window.confirm(t("confirmDeleteBuilding", "¿Estás seguro de que deseas eliminar este edificio? Esta acción no se puede deshacer."))) {
+      try {
+        await buildingService.delete(buildingId);
+        showSuccess(t("buildingDeleted", "Edificio eliminado correctamente"));
+        navigate("/assets");
+      } catch (error) {
+        console.error("Error deleting building:", error);
+        showError(t("errorDeletingBuilding", "Error al eliminar el edificio"));
+      }
+    }
+    setActionsMenuOpen(false);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -198,6 +234,28 @@ export function GeneralView() {
               {t("greenFinancial", "Financiación Verde")}
             </span>
           </button>
+          
+          <div className="relative" ref={actionsMenuRef}>
+            <button
+              onClick={() => setActionsMenuOpen(!actionsMenuOpen)}
+              className="flex items-center justify-center p-2 bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-gray-500"
+              title={t("moreOptions", "Más opciones")}
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            
+            {actionsMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+                <button
+                  onClick={handleDeleteBuilding}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Trash className="w-4 h-4" />
+                  {t("deleteBuilding", "Eliminar edificio")}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Outlet />
