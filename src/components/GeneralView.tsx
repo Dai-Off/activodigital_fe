@@ -285,7 +285,7 @@ export function GeneralView() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("cancel", "Cancelar")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteBuilding} className="bg-red-600 hover:bg-red-700 text-white">
+            <AlertDialogAction onClick={handleDeleteBuilding} className="bg-red-600 hover:bg-red-700 !text-white">
               {t("delete", "Eliminar")}
             </AlertDialogAction>
           </AlertDialogFooter>
