@@ -36,8 +36,8 @@ export function SidebarAssets() {
     city: "",
   });
 
-  // Cargar edificios
-  useEffect(() => {
+  // Función para cargar edificios
+  const loadBuildings = () => {
     setLoading(true);
     BuildingsApiService.getAllBuildings()
       .then((data) => {
@@ -48,6 +48,21 @@ export function SidebarAssets() {
         setBuildings([]);
         setLoading(false);
       });
+  };
+
+  // Cargar edificios al montar y establecer listener
+  useEffect(() => {
+    loadBuildings();
+
+    const handleBuildingDeleted = () => {
+      loadBuildings();
+    };
+
+    window.addEventListener('building-deleted', handleBuildingDeleted);
+    
+    return () => {
+      window.removeEventListener('building-deleted', handleBuildingDeleted);
+    };
   }, []);
 
   // Auto-expandir el edificio seleccionado
