@@ -118,22 +118,16 @@ export function Sidebar() {
         : "Financiación Verde",
     },
     {
-      id: "archive",
+      id: "expired",
       icon: Folder,
       label: t ? t("archive", "Archivo") : "Archivo",
-      route: "/assets", // Placeholder route
     },
     {
       id: "settings",
       icon: Settings,
       label: t ? t("settings", "Configuración") : "Configuración",
       route: "/configuration", // Placeholder route
-    },
-    {
-      id: "expired",
-      icon: Folder,
-      label: t ? t("archive", "Archivo") : "Archivo",
-    },
+    }
   ];
 
   const handleModuleChange = (moduleId: string, route?: string) => {
