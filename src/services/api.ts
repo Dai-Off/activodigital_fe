@@ -35,10 +35,19 @@ export const getApiBaseUrl = async (): Promise<string> => {
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
 
-  // 1. Si hay VITE_API_BASE, usarlo directamente sin detección (prioridad máxima)
-  if (import.meta.env.VITE_API_BASE) {
-    console.log('✅ Usando VITE_API_BASE:', import.meta.env.VITE_API_BASE);
-    return import.meta.env.VITE_API_BASE;
+  // 1. Si hay VITE_API_BASE, usarlo SOLO si:
+  //    - Estamos en localhost, O
+  //    - No apunta a localhost (evita usar localhost en producción)
+  const viteApiBase = import.meta.env.VITE_API_BASE;
+  if (viteApiBase) {
+    const isLocalhostUrl = viteApiBase.includes('localhost') || viteApiBase.includes('127.0.0.1');
+    // Solo usar VITE_API_BASE si estamos en localhost o si no apunta a localhost
+    if (isLocalhost || !isLocalhostUrl) {
+      console.log('✅ Usando VITE_API_BASE:', viteApiBase);
+      return viteApiBase;
+    } else {
+      console.log('⚠️ Ignorando VITE_API_BASE (localhost en producción):', viteApiBase);
+    }
   }
 
   // 2. Si estamos en localhost → detectar automáticamente
