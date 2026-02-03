@@ -1023,20 +1023,13 @@
   "writeMessage": "Escribe un mensaje...",
   "complianceDescription": "Cumplimiento",
   "newCertificate": "Nuevo certificado",
-
   "eventsTitle": "Agenda de Eventos",
   "eventsCount": "eventos próximos",
   "eventsMonth": "Eventos de la semana",
   "eventsWeek": "Eventos de la semana",
   "audit": "Auditorías",
   "calendarEvents": "Calendario de Eventos",
-  "Lun": "Lun",
-  "Mar": "Mar",
-  "Mié": "Mié",
-  "Jue": "Jue",
-  "Vie": "Vie",
-  "Sáb": "Sáb",
-  "Dom": "Dom",
-
-  "": ""
+  "gestionGeneral": "Gestión General de la Plataforma",
+  "more": "Más",
+  "gestionGeneralDescription": "Vista consolidada de todos los documentos de edificios y unidades"
 }

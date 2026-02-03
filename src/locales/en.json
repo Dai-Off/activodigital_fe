@@ -1019,5 +1019,13 @@
   "writeMessage": "Write a message...",
   "complianceDescription": "Compliance",
   "newCertificate": "New certificate",
-  "": ""
+  "eventsTitle": "Events Calendar",
+  "eventsCount": "events next",
+  "eventsMonth": "Events of the week",
+  "eventsWeek": "Events of the week",
+  "audit": "Auditorías",
+  "calendarEvents": "Events Calendar",
+  "gestionGeneral": "General Management",
+  "gestionGeneralDescription": "Consolidated view of all documents of buildings and units",
+  "more": "More"
 }
