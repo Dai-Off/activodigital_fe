@@ -34,11 +34,9 @@ export const buildingService = {
     });
   },
 
-  // Eliminar edificio (si el backend lo permite)
-  delete: async (): Promise<void> => {
-    // Si hay endpoint DELETE, usarlo. Si no, omitir.
-    // return apiFetch(`/edificios/${id}`, { method: 'DELETE' });
-    throw new Error('No implementado en backend');
+  // Eliminar edificio
+  delete: async (id: string): Promise<void> => {
+    return apiFetch(`/edificios/${id}`, { method: 'DELETE' });
   },
 };
 
