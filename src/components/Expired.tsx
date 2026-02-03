@@ -306,7 +306,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Certificados")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Certificados")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Certificados") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
 
@@ -338,7 +341,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Contratos")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Contratos")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Contratos") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
 
@@ -370,7 +376,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Inspecciones")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Inspecciones")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Inspecciones") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
 
@@ -402,7 +411,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Pagos")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Pagos")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Pagos") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
 
@@ -434,7 +446,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Mantenimiento")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Mantenimiento")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Mantenimiento") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
 
@@ -466,7 +481,10 @@ export default function Expired() {
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Documentos")} ${t("vencidos")}`}
+                  : `${getCategoryCount("Documentos")} ${t(
+                      "expired.documents",
+                      getCategoryCount("Documentos") === 1 ? "documento" : "documentos",
+                    )}`}
               </p>
             </button>
           </div>
@@ -657,12 +675,26 @@ export default function Expired() {
                       : prioridad === "media"
                         ? "bg-orange-50"
                         : "bg-yellow-50";
-                  const diasLabel =
-                    doc.dias_vencido && doc.dias_vencido > 0
-                      ? t("expiredDaysAgo", {
-                          days: doc.dias_vencido,
-                        })
-                      : null;
+                  // Mostrar etiqueta de días: vencido o próximo a vencer
+                  const diasLabel = doc.dias_vencido && doc.dias_vencido > 0
+                    ? t("expired.daysAgo", {
+                        defaultValue: "Vencido hace {{days}} días",
+                        days: doc.dias_vencido,
+                      })
+                    : doc.contenido_extraido?.estado === 'próximo-vencer'
+                    ? (() => {
+                        // Extraer días hasta vencimiento del texto de vigencia
+                        const vigencia = doc.contenido_extraido?.vigencia || '';
+                        const match = vigencia.match(/Vence en (\d+) día/);
+                        if (match) {
+                          return t("expired.expiresIn", {
+                            defaultValue: "Vence en {{days}} días",
+                            days: match[1],
+                          });
+                        }
+                        return null;
+                      })()
+                    : null;
                   const contenido = doc.contenido_extraido || {};
                   const resumen = contenido.resumen || "";
                   const categoria =
@@ -712,7 +744,11 @@ export default function Expired() {
                                 <>
                                   <span>•</span>
                                   <span>
-                                    {t("vencidoEl")}{" "}
+                                    {vigencia.includes('Vencido') 
+                                      ? t("expired.vencidoEl", "Venció:") 
+                                      : vigencia.includes('Vence en')
+                                      ? t("expired.expiresIn", "Vence en:")
+                                      : t("expired.expiresOn", "Vence:")}{" "}
                                     {vigencia}
                                   </span>
                                 </>

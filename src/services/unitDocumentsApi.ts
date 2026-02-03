@@ -92,15 +92,36 @@ function mapUnitGestionToDocument(gestionDoc: UnitGestionDocument): UnitDocument
   const day = String(uploadDate.getDate()).padStart(2, '0');
   const formattedDate = `${year}-${month}-${day}`;
 
-  // Por defecto, todos los documentos subidos son "activos"
-  const status: UnitDocumentStatus = "activo";
+  // Usar el status real de la BD si está disponible
+  const status: UnitDocumentStatus = (gestionDoc.status as UnitDocumentStatus) || "activo";
+
+  // Mapear información de contrato si está disponible
+  const contractInfo: UnitContractInfo | undefined = 
+    (gestionDoc.contractProvider || gestionDoc.contractAmount || gestionDoc.contractExpiration || gestionDoc.contractRenewal)
+      ? {
+          proveedor: gestionDoc.contractProvider,
+          importe: gestionDoc.contractAmount,
+          vencimiento: gestionDoc.contractExpiration,
+          renovacion: gestionDoc.contractRenewal,
+        }
+      : undefined;
+
+  // Formatear expiration_date si está disponible
+  let expirationDateFormatted: string | undefined;
+  if (gestionDoc.expirationDate) {
+    const expDate = new Date(gestionDoc.expirationDate);
+    const expYear = expDate.getFullYear();
+    const expMonth = String(expDate.getMonth() + 1).padStart(2, '0');
+    const expDay = String(expDate.getDate()).padStart(2, '0');
+    expirationDateFormatted = `${expYear}-${expMonth}-${expDay}`;
+  }
 
   return {
     id: gestionDoc.id,
     name: gestionDoc.title || gestionDoc.fileName,
     status,
     category: categoryName,
-    subcategory: "General", // Por defecto, se puede expandir después
+    subcategory: gestionDoc.subcategory || "General",
     date: formattedDate,
     size: formatUnitFileSize(gestionDoc.fileSize),
     fileType: fileExtension,
@@ -108,9 +129,11 @@ function mapUnitGestionToDocument(gestionDoc: UnitGestionDocument): UnitDocument
     iconBgColor: colors.bg,
     iconColor: colors.icon,
     url: gestionDoc.url,
+    expirationDate: expirationDateFormatted,
+    contractInfo,
     // Información adicional para operaciones
-    storageFileName: gestionDoc.storageFileName || gestionDoc.id.split('_').slice(3).join('_'), // Nombre del archivo en storage
-    categoryValue: gestionDoc.category, // Valor de la categoría (financial, contracts, etc.)
+    storageFileName: gestionDoc.storageFileName || gestionDoc.id.split('_').slice(3).join('_'),
+    categoryValue: gestionDoc.category,
   };
 }
 
