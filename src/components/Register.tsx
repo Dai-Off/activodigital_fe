@@ -78,7 +78,7 @@ export default function Register() {
 
   // Helper para mostrar error en banner
   const setError = (message: string) => {
-    stopLoading(message || t("unknownError", "Ocurrió un error"));
+    stopLoading(message || t("unknownError"));
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -86,15 +86,15 @@ export default function Register() {
     setSuccess(null);
 
     if (!name.trim())
-      return setError(t("nameRequired", "El nombre es obligatorio"));
+      return setError(t("nameRequired"));
     if (!email.trim())
-      return setError(t("emailRequired", "El correo es obligatorio"));
+      return setError(t("emailRequired"));
     if (password.length < 8)
       return setError(
-        t("passwordMin", "La contraseña debe tener al menos 8 caracteres")
+        t("passwordMin")
       );
     if (password !== password2)
-      return setError(t("passwordMismatch", "Las contraseñas no coinciden"));
+      return setError(t("passwordMismatch"));
 
     startLoading();
 
@@ -151,7 +151,7 @@ export default function Register() {
     e.preventDefault();
 
     if (twoFactorCode.length !== 6) {
-      setError2FA(t("invalid2FACodeLength", "El código debe tener 6 dígitos"));
+      setError2FA(t("invalid2FACodeLength"));
       return;
     }
 
@@ -225,7 +225,7 @@ export default function Register() {
         } catch (loginErr: any) {
           console.error("Error en login después del setup:", loginErr);
           setError2FA(
-            t("loginError", "Error al iniciar sesión. Redirigiendo al login...")
+            t("loginError")
           );
 
           // Redirigir al login después de un tiempo
@@ -236,7 +236,7 @@ export default function Register() {
       } else {
         setError2FA(
           verifyResponse.message ||
-            t("invalid2FACode", "Código inválido. Intenta nuevamente.")
+            t("invalid2FACode")
         );
       }
     } catch (err: any) {
@@ -244,7 +244,7 @@ export default function Register() {
       const errorMessage =
         err?.body?.message ||
         err?.message ||
-        t("invalid2FACode", "Código inválido. Intenta nuevamente.");
+        t("invalid2FACode");
       setError2FA(errorMessage);
     } finally {
       setVerifying2FA(false);
@@ -253,7 +253,7 @@ export default function Register() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(manualEntryKey);
-    setSuccess(t("keyCopied", "Clave copiada"));
+    setSuccess(t("keyCopied"));
     setTimeout(() => setSuccess(null), 2000);
   };
 
@@ -265,10 +265,10 @@ export default function Register() {
             <span className="text-white font-semibold">LE</span>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {t("registerTitle", "Crear cuenta")}
+            {t("registerTitle")}
           </h1>
           <p className="text-gray-600 mt-1">
-            {t("registerSubtitle", "Regístrate para comenzar")}
+            {t("registerSubtitle")}
           </p>
         </div>
 
@@ -278,7 +278,7 @@ export default function Register() {
         >
           {hasInvitation && (
             <div className="mb-4 p-3 rounded-lg border border-blue-200 bg-blue-50 text-sm text-blue-800">
-              <strong>{t("inviteDetected", "Invitación detectada")}:</strong>{" "}
+              <strong>{t("inviteDetected")}:</strong>{" "}
               {t(
                 "inviteInfo",
                 "Has sido invitado a unirte a la plataforma. El email ya está predefinido y se usará el rol de la invitación."
@@ -304,7 +304,7 @@ export default function Register() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("nameLabel", "Nombre")}
+                {t("nameLabel")}
               </label>
               <input
                 id="name"
@@ -323,7 +323,7 @@ export default function Register() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("emailLabel", "Correo electrónico")}
+                {t("emailLabel")}
               </label>
               {hasInvitation ? (
                 <input
@@ -334,8 +334,7 @@ export default function Register() {
                   value={email}
                   readOnly
                   title={t(
-                    "inviteEmailTitle",
-                    "El email está predefinido por la invitación"
+                    "inviteEmailTitle"
                   )}
                 />
               ) : (
@@ -365,7 +364,7 @@ export default function Register() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("passwordLabel", "Contraseña")}
+                {t("passwordLabel")}
               </label>
               <input
                 id="password"
@@ -384,7 +383,7 @@ export default function Register() {
                 htmlFor="password2"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("repeatPasswordLabel", "Repetir contraseña")}
+                {t("repeatPasswordLabel")}
               </label>
               <input
                 id="password2"
@@ -408,9 +407,9 @@ export default function Register() {
               }`}
             >
               {loading ? (
-                <FormLoader message={t("creating", "Creando cuenta...")} />
+                <FormLoader message={t("creating")} />
               ) : (
-                t("create", "Crear cuenta")
+                t("create")
               )}
             </button>
           </form>
@@ -421,17 +420,17 @@ export default function Register() {
               to="/login"
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
-              {t("login", "Inicia sesión")}
+              {t("login")}
             </Link>
           </p>
           <p className="mt-2 text-xs text-center text-gray-500">
-            {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+            {t("qrProblemsHelp")}{" "}
             <button
               type="button"
               onClick={() => setIsSupportModalOpen(true)}
               className="text-blue-600 hover:text-blue-700 underline"
             >
-              {t("contactSupport", "contacta a soporte")}
+              {t("contactSupport")}
             </button>
             .
           </p>
@@ -459,14 +458,12 @@ export default function Register() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {t(
-                    "setup2FATitle",
-                    "Configura tu autenticación de dos factores"
+                    "setup2FATitle"
                   )}
                 </h3>
                 <p className="text-sm text-gray-600">
                   {t(
-                    "setup2FADescription",
-                    "Para mayor seguridad, configura Google Authenticator antes de continuar."
+                    "setup2FADescription"
                   )}
                 </p>
               </div>
@@ -492,8 +489,7 @@ export default function Register() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
                       {t(
-                        "setup2FAStep1",
-                        "Descarga Google Authenticator en tu móvil"
+                        "setup2FAStep1"
                       )}
                     </p>
                     <a
@@ -516,8 +512,7 @@ export default function Register() {
                     </div>
                     <p className="text-sm font-medium text-gray-900">
                       {t(
-                        "setup2FAStep2",
-                        "Escanea este código QR con la aplicación"
+                        "setup2FAStep2"
                       )}
                     </p>
                   </div>
@@ -533,15 +528,14 @@ export default function Register() {
                     onClick={() => setShowManualEntry(!showManualEntry)}
                     className="mt-3 text-xs text-gray-600 hover:text-gray-900 underline w-full text-center"
                   >
-                    {t("cannotScanQR", "¿No puedes escanear el QR?")}
+                    {t("cannotScanQR")}
                   </button>
 
                   {showManualEntry && (
                     <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-xs text-gray-700 mb-2">
                         {t(
-                          "manualEntryInstructions",
-                          "Introduce esta clave manualmente en Google Authenticator:"
+                          "manualEntryInstructions"
                         )}
                       </p>
                       <div className="flex items-center gap-2">
@@ -553,7 +547,7 @@ export default function Register() {
                           onClick={copyToClipboard}
                           className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                         >
-                          {t("copyKey", "Copiar")}
+                          {t("copyKey")}
                         </button>
                       </div>
                     </div>
@@ -568,8 +562,7 @@ export default function Register() {
                     </div>
                     <p className="text-sm font-medium text-gray-900">
                       {t(
-                        "setup2FAStep3",
-                        "Introduce el código de 6 dígitos que aparece"
+                        "setup2FAStep3"
                       )}
                     </p>
                   </div>
@@ -580,7 +573,7 @@ export default function Register() {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={6}
-                      placeholder={t("verificationCodePlaceholder", "000000")}
+                      placeholder={t("verificationCodePlaceholder")}
                       value={twoFactorCode}
                       onChange={(e) =>
                         setTwoFactorCode(e.target.value.replace(/\D/g, ""))

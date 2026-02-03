@@ -369,7 +369,7 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-gray-400 px-4">
               <Sparkles className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">{t('startConversation', 'Inicia una conversación con el asistente')}</p>
+              <p className="text-sm">{t('startConversation')}</p>
             </div>
           </div>
         ) : (
@@ -415,7 +415,7 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={t('writeMessage', 'Escribe un mensaje...')}
+            placeholder={t('writeMessage')}
             className="flex-1 px-3 md:px-4 py-2.5 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={1}
             style={{ minHeight: '42px', maxHeight: '120px' }}

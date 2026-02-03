@@ -88,28 +88,28 @@ function PaginationBar({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3">
       <div className="text-xs text-gray-600">
-        {t("showing", { defaultValue: "Mostrando" })}{" "}
+        {t("showing")}{" "}
         <span className="font-medium">{start}</span>â€“
         <span className="font-medium">{end}</span>{" "}
-        {t("of", { defaultValue: "de" })}{" "}
+        {t("of")}{" "}
         <span className="font-medium">{total}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <label className="sr-only" htmlFor="page-size">
-          {t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
+          {t("pageSize")}
         </label>
         <select
           id="page-size"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-          aria-label={t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
-          title={t("pageSize", { defaultValue: "TamaÃ±o de pÃ¡gina" })}
+          aria-label={t("pageSize")}
+          title={t("pageSize")}
         >
           {pageSizeOptions.map((opt) => (
             <option key={opt} value={opt}>
-              {opt} {t("perPage", { defaultValue: "/pÃ¡gina" })}
+              {opt} {t("perPage")}
             </option>
           ))}
         </select>
@@ -119,8 +119,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(1)}
             disabled={page === 1}
-            title={t("firstPage", { defaultValue: "Primera pÃ¡gina" })}
-            aria-label={t("firstPage", { defaultValue: "Primera pÃ¡gina" })}
+            title={t("firstPage")}
+            aria-label={t("firstPage")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -139,8 +139,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page - 1)}
             disabled={page === 1}
-            title={t("previous", { defaultValue: "Anterior" })}
-            aria-label={t("previous", { defaultValue: "Anterior" })}
+            title={t("previous")}
+            aria-label={t("previous")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -156,7 +156,7 @@ function PaginationBar({
           </button>
 
           <span className="px-2 text-xs text-gray-600">
-            {t("page", { defaultValue: "PÃ¡gina" })}{" "}
+            {t("page")}{" "}
             <span className="font-medium">{page}</span> / {totalPages}
           </span>
 
@@ -164,8 +164,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page + 1)}
             disabled={page === totalPages}
-            title={t("next", { defaultValue: "Siguiente" })}
-            aria-label={t("next", { defaultValue: "Siguiente" })}
+            title={t("next")}
+            aria-label={t("next")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -183,8 +183,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(totalPages)}
             disabled={page === totalPages}
-            title={t("lastPage", { defaultValue: "Ãšltima pÃ¡gina" })}
-            aria-label={t("lastPage", { defaultValue: "Ãšltima pÃ¡gina" })}
+            title={t("lastPage")}
+            aria-label={t("lastPage")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -78,7 +78,7 @@ export default function Login() {
     e.preventDefault();
 
     if (twoFactorCode.length !== 6) {
-      setError2FA(t("invalid2FACodeLength", "El código debe tener 6 dígitos"));
+      setError2FA(t("invalid2FACodeLength"));
       return;
     }
 
@@ -126,7 +126,7 @@ export default function Login() {
         // Respuesta exitosa pero sin access_token
         const errorMsg =
           verifyResponse.message ||
-          t("invalid2FACode", "Código inválido. Intenta nuevamente.");
+          t("invalid2FACode");
         setError2FA(errorMsg);
         console.error(
           "verify2FALogin returned success but no access_token:",
@@ -138,7 +138,7 @@ export default function Login() {
       const errorMessage =
         err?.body?.message ||
         err?.message ||
-        t("invalid2FACode", "Código inválido. Intenta nuevamente.");
+        t("invalid2FACode");
       setError2FA(errorMessage);
     } finally {
       setVerifying2FA(false);
@@ -153,10 +153,10 @@ export default function Login() {
             <span className="text-white font-semibold">LE</span>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {t("loginTitle", "Iniciar sesión")}
+            {t("loginTitle")}
           </h1>
           <p className="text-gray-600 mt-1">
-            {t("loginSubtitle", "Accede a tu plataforma")}
+            {t("loginSubtitle")}
           </p>
         </div>
 
@@ -195,13 +195,10 @@ export default function Login() {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {t("enter2FACode", "Introduce tu código de autenticación")}
+                  {t("enter2FACode")}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {t(
-                    "enter2FACodeDesc",
-                    "Abre Google Authenticator y escribe el código de 6 dígitos"
-                  )}
+                  {t("enter2FACodeDesc")}
                 </p>
               </div>
 
@@ -217,7 +214,7 @@ export default function Login() {
                     htmlFor="2fa-code"
                     className="block text-sm font-medium text-gray-700 mb-2 text-center"
                   >
-                    {t("codeFromAuthenticator", "Código de 6 dígitos")}
+                    {t("codeFromAuthenticator")}
                   </label>
                   <input
                     id="2fa-code"
@@ -278,18 +275,18 @@ export default function Login() {
                   }}
                   className="w-full py-2 text-sm text-gray-600 hover:text-gray-900"
                 >
-                  ← {t("back", "Volver")}
+                  ← {t("back")}
                 </button>
               </form>
 
               <p className="mt-4 text-xs text-center text-gray-500">
-                {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                {t("qrProblemsHelp")}{" "}
                 <button
                   type="button"
                   onClick={() => setIsSupportModalOpen(true)}
                   className="text-blue-600 hover:text-blue-700 underline"
                 >
-                  {t("contactSupport", "contacta a soporte")}
+                  {t("contactSupport")}
                 </button>
                 .
               </p>
@@ -302,14 +299,14 @@ export default function Login() {
                     htmlFor="email"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    {t("email", "Correo electrónico")}
+                    {t("emailLogin")}
                   </label>
                   <input
                     id="email"
                     type="email"
                     autoComplete="email"
                     className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder={t("emailPlaceholder", "tucorreo@ejemplo.com")}
+                    placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -327,7 +324,7 @@ export default function Login() {
                       to="#"
                       className="text-sm text-blue-600 hover:text-blue-700"
                     >
-                      {t("forgotPassword", "¿Olvidaste tu contraseña?")}
+                      {t("forgotPassword")}
                     </Link>
                   </div>
                   <input
@@ -349,7 +346,7 @@ export default function Login() {
                       checked={remember}
                       onChange={(e) => setRemember(e.target.checked)}
                     />
-                    {t("rememberMe", "Recuérdame")}
+                    {t("rememberMe")}
                   </label>
                 </div>
                 <button

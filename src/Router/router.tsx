@@ -86,7 +86,7 @@ const SectionsListPage = () => {
                   onClick={() => navigate("/assets")}
                   className="hover:text-blue-600"
                 >
-                  {t("assets", "Activos")}
+                  {t("assets")}
                 </button>
               </li>
               <li>
@@ -107,7 +107,7 @@ const SectionsListPage = () => {
                   onClick={() => navigate("/digital-book/hub/building-1")}
                   className="hover:text-blue-600"
                 >
-                  {t("digitalBook", "Libro del Edificio")}
+                  {t("digitalBook")}
                 </button>
               </li>
               <li>
@@ -124,7 +124,7 @@ const SectionsListPage = () => {
                 </svg>
               </li>
               <li className="text-gray-900 font-medium">
-                {t("sections", "Secciones")}
+                {t("sections")}
               </li>
             </ol>
           </nav>

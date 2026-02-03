@@ -543,7 +543,7 @@ export function BuildingGeneralView() {
   // Datos para el gráfico (dinámicos según eventos)
   const chartData = useMemo(() => {
     // Si no hay eventos, devolvemos skeleton de "Sin datos"
-    const emptyData = [{ name: t("nodata", "Sin datos"), value: 1, color: "#e5e7eb" }];
+    const emptyData = [{ name: t("nodata"), value: 1, color: "#e5e7eb" }];
 
     if (!events.length) return emptyData;
 
@@ -558,10 +558,10 @@ export function BuildingGeneralView() {
     const delayed = maintenanceEvents.filter(e => e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length;
 
     const result = [
-      { name: t("completed", "Completado"), value: completed, color: "#10b981" },
-      { name: t("inprogress", "En curso"), value: inProgress, color: "#3b82f6" },
-      { name: t("scheduled", "Programado"), value: scheduled, color: "#f59e0b" },
-      { name: t("delayed", "Atrasado"), value: delayed, color: "#ef4444" },
+      { name: t("completed"), value: completed, color: "#10b981" },
+      { name: t("inprogress"), value: inProgress, color: "#3b82f6" },
+      { name: t("scheduled"), value: scheduled, color: "#f59e0b" },
+      { name: t("delayed"), value: delayed, color: "#ef4444" },
     ].filter(d => d.value > 0);
 
     return result.length > 0 ? result : emptyData;
@@ -576,7 +576,7 @@ export function BuildingGeneralView() {
 
 
   // Datos para cuando no hay datos (un círculo gris)
-  const emptyData = [{ name: t("nodata", "Sin datos"), value: 1, color: "#e5e7eb" }];
+  const emptyData = [{ name: t("nodata"), value: 1, color: "#e5e7eb" }];
   // const chartData = data.some(d => d.value > 0) ? data : emptyData; // Ya calculado arriba
 
   const innerRadius = 30; // 30px
@@ -605,7 +605,7 @@ export function BuildingGeneralView() {
 
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Image className="w-3.5 h-3.5 text-gray-600" />
-                <h3 className="text-sm">{t("imagesOfBuilding", "Imágenes del edificio")}</h3>
+                <h3 className="text-sm">{t("imagesOfBuilding")}</h3>
               </div>
               <div className="relative w-full h-[140px] bg-gray-100 rounded overflow-hidden">
                 <img
@@ -625,7 +625,7 @@ export function BuildingGeneralView() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[1px]">
                     <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-black/55 text-white text-xs shadow-sm">
                       <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
-                      <span>{t("loadingImage", "Cargando imagen…")}</span>
+                      <span>{t("loadingImage")}</span>
                     </div>
                   </div>
                 )}
@@ -659,7 +659,7 @@ export function BuildingGeneralView() {
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <div className="w-1 h-3.5 bg-[#1e3a8a] rounded"></div>
-                <h3 className="text-sm text-black">{t("generalInfo", "Información General")}</h3>
+                <h3 className="text-sm text-black">{t("generalInfo")}</h3>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div
@@ -667,21 +667,21 @@ export function BuildingGeneralView() {
                   className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
-                    {t("generalInfo", "Información General")}
+                    {t("generalInfo")}
                   </h4>
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">{t("year", "Año")}</span>
+                      <span className="text-xs text-gray-500">{t("year")}</span>
                       <span className="text-sm text-gray-900">{building?.constructionYear || "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">{t("floors", "Plantas")}</span>
+                      <span className="text-xs text-gray-500">{t("floors")}</span>
                       <span className="text-sm text-gray-900">{building?.numFloors || "-"}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">{t("type", "Tipo")}</span>
+                      <span className="text-xs text-gray-500">{t("type")}</span>
                       <span className="text-sm text-gray-900">
-                        {building ? (building.typology === 'residential' ? t("residential", "Residencial") : building.typology === 'mixed' ? t("mixed", "Mixto") : t("commercial", "Comercial")) : "-"}
+                        {building ? (building.typology === 'residential' ? t("residential") : building.typology === 'mixed' ? t("mixed") : t("commercial")) : "-"}
                       </span>
                     </div>
                   </div>
@@ -691,7 +691,7 @@ export function BuildingGeneralView() {
                   className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
-                    {t("energyEfficiency", "Eficiencia Energética")}
+                    {t("energyEfficiency")}
                   </h4>
                   <div className="flex items-center gap-2.5">
                     <div className={`w-10 h-10 rounded flex items-center justify-center text-white ${energyEfficiencyData?.rating === "A" ? "bg-green-600" :
@@ -708,10 +708,10 @@ export function BuildingGeneralView() {
                     <div>
                       <p className="text-sm text-gray-900">
                         {energyEfficiencyData?.consumption && energyEfficiencyData.consumption > 0
-                          ? `${energyEfficiencyData.consumption.toFixed(2)} kWh/m²·${t("year", "año")}`
+                          ? `${energyEfficiencyData.consumption.toFixed(2)} kWh/m²·${t("year")}`
                           : "—"}
                       </p>
-                      <p className="text-xs text-gray-500">kWh/m²·{t("year", "año")}</p>
+                      <p className="text-xs text-gray-500">kWh/m²·{t("year")}</p>
                     </div>
                   </div>
                 </div>
@@ -720,12 +720,12 @@ export function BuildingGeneralView() {
                   className="bg-white text-card-foreground rounded-lg shadow-sm p-3"
                 >
                   <h4 className="text-xs text-gray-500 mb-2">
-                    {t("occupancy", "Ocupación")}
+                    {t("occupancy")}
                   </h4>
                   <div className="mb-2">
                     <span className="text-2xl text-gray-900">{occupancyStats.percentage}%</span>
                     <span className="text-xs text-gray-500 ml-1.5">
-                      {t("occupied", "ocupado")} ({occupancyStats.occupied}/{occupancyStats.total})
+                      {t("occupied")} ({occupancyStats.occupied}/{occupancyStats.total})
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -741,38 +741,38 @@ export function BuildingGeneralView() {
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1 h-3.5 bg-slate-700 rounded"></div>
-              <h3 className="text-sm text-black">{t("activeIdentification", "Identificación del Activo")}</h3>
+              <h3 className="text-sm text-black">{t("activeIdentification")}</h3>
             </div>
             <div className="grid grid-cols-2 gap-2 flex-1">
               <div className="bg-white rounded-lg shadow-sm p-2 h-full flex flex-col">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Hash className="w-3.5 h-3.5 text-gray-600" />
-                  <h3 className="text-sm">{t("identifiers", "Identificadores")}</h3>
+                  <h3 className="text-sm">{t("identifiers")}</h3>
                 </div>
                 <div className="space-y-1.5 flex-1">
                   <div>
-                    <label className="text-xs text-gray-500">{t("buildingId", "ID Inmueble")}</label>
+                    <label className="text-xs text-gray-500">{t("buildingId")}</label>
                     <p className="text-xs text-gray-900">{building?.id || "-"}</p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("portfolio", "Portfolio")}</label>
+                    <label className="text-xs text-gray-500">{t("portfolio")}</label>
                     <p className="text-xs text-gray-900"></p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("technician", "Gestor")}</label>
+                    <label className="text-xs text-gray-500">{t("technician")}</label>
                     <p className="text-xs text-gray-900">{building?.technicianEmail || "-"}</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <label className="text-xs text-gray-500">
-                        Referencia Catastral
+                        {t("cadastralReference")}
                       </label>
                       {!isEditingCadastralRef && (
                         <button
                           type="button"
                           onClick={() => setIsEditingCadastralRef(true)}
                           className="p-0.5 hover:bg-gray-100 rounded transition-colors"
-                          title="Editar referencia catastral"
+                          title={`${t("edit")} ${t("cadastralReference")}`}
                         >
                           <Edit2 className="w-3 h-3 text-gray-500" />
                         </button>
@@ -828,7 +828,7 @@ export function BuildingGeneralView() {
                 <div className="space-y-1.5 flex-1">
                   <div>
                     <label className="text-xs text-gray-500">{t("domain")}</label>
-                    <p className="text-xs text-gray-900">Propiedad Plena</p>
+                    <p className="text-xs text-gray-900">{t("fullProperty")}</p>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500">
@@ -900,9 +900,9 @@ export function BuildingGeneralView() {
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t("state", "Estado")}</label>
+                    <label className="text-xs text-gray-500">{t("state")}</label>
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs ${building ? (building.status === 'with_book' ? 'bg-green-100 text-green-700' : building.status === 'ready_book' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700') : 'bg-gray-100 text-gray-700'}`}>
-                      {building ? (building.status === 'with_book' ? t('with_book', 'Con libro') : building.status === 'ready_book' ? t('ready_book', 'Listo') : t('draft', 'Borrador')) : "-"}
+                      {building ? (building.status === 'with_book' ? t('with_book') : building.status === 'ready_book' ? t('ready_book') : t('draft')) : "-"}
                     </span>
                   </div>
                   <div>
@@ -930,9 +930,9 @@ export function BuildingGeneralView() {
                       <Book className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h4 className="text-xs mb-0.5">{t("digitalBook", "Libro del Edificio")}</h4>
+                      <h4 className="text-xs mb-0.5">{t("digitalBook")}</h4>
                       <p className="text-xs text-blue-100">
-                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% {t("completed", "completado")} • {docCount} {t("documents", "documentos")}
+                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% {t("completed")} • {docCount} {t("documents")}
                       </p>
                     </div>
                   </div>
@@ -945,7 +945,7 @@ export function BuildingGeneralView() {
                     className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
                   >
                     <Eye className="w-3 h-3" />
-                    {digitalBook ? t("seeBook", "Ver Libro") : t("createBook", "Crear Libro")}
+                    {digitalBook ? t("seeBook") : t("createBook")}
                   </button>
                 </div>
               </div>
@@ -956,7 +956,7 @@ export function BuildingGeneralView() {
                       <Shield className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h4 className="text-xs mb-0.5">{t("financialData", "Datos financieros")}</h4>
+                      <h4 className="text-xs mb-0.5">{t("financialData")}</h4>
                     </div>
                   </div>
                   <button
@@ -964,7 +964,7 @@ export function BuildingGeneralView() {
                     className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
                   >
                     <Eye className="w-3 h-3" />
-                    {t("loadFinancialData", "Cargar Datos Financieros")}
+                    {t("loadFinancialData")}
                   </button>
                 </div>
               </div>
@@ -972,11 +972,11 @@ export function BuildingGeneralView() {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5">
                     <Wrench className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-sm">{t("maintenancePlan", "Plan de Mantenimiento")}</h3>
+                    <h3 className="text-sm">{t("maintenancePlan")}</h3>
                   </div>
                   {chartData === emptyData && (
                     <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                      {t("noDataAvailable", "Sin datos disponibles")}
+                      {t("noDataAvailable")}
                     </span>
                   )}
                 </div>
@@ -1011,28 +1011,28 @@ export function BuildingGeneralView() {
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(16, 185, 129)" }}
                     ></div>
-                    <span className="text-gray-700">{t("completed", "Completado")}: {events.filter(e => e.category === 'maintenance' && e.status === 'completed').length || "-"}</span>
+                    <span className="text-gray-700">{t("completed")}: {events.filter(e => e.category === 'maintenance' && e.status === 'completed').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(59, 130, 246)" }}
                     ></div>
-                    <span className="text-gray-700">{t("inProgress", "En curso")}: {events.filter(e => e.category === 'maintenance' && e.status === 'in_progress').length || "-"}</span>
+                    <span className="text-gray-700">{t("inProgress")}: {events.filter(e => e.category === 'maintenance' && e.status === 'in_progress').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(245, 158, 11)" }}
                     ></div>
-                    <span className="text-gray-700">{t("scheduled", "Programado")}: {events.filter(e => e.category === 'maintenance' && e.status === 'pending').length || "-"}</span>
+                    <span className="text-gray-700">{t("scheduled")}: {events.filter(e => e.category === 'maintenance' && e.status === 'pending').length || "-"}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"
                       style={{ backgroundColor: "rgb(239, 68, 68)" }}
                     ></div>
-                    <span className="text-gray-700">{t("overdue", "Atrasado")}: {events.filter(e => e.category === 'maintenance' && e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length || "-"}</span>
+                    <span className="text-gray-700">{t("overdue")}: {events.filter(e => e.category === 'maintenance' && e.status !== 'completed' && e.status !== 'cancelled' && new Date(e.eventDate) < new Date()).length || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -1041,7 +1041,7 @@ export function BuildingGeneralView() {
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1 h-3.5 bg-emerald-600 rounded"></div>
-              <h3 className="text-sm text-black">{t("monthlyExpenses", "Costes Mensuales")}</h3>
+              <h3 className="text-sm text-black">{t("monthlyExpenses")}</h3>
             </div>
             <div className="flex-1">
               <div className="bg-white rounded-lg p-2 shadow-sm">
@@ -1049,47 +1049,47 @@ export function BuildingGeneralView() {
                   <div className="p-1.5 border border-blue-200 bg-blue-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Zap className="w-3 h-3 text-blue-600" />
-                      <p className="text-xs text-blue-900">{t("electricity", "Electricidad")}</p>
+                      <p className="text-xs text-blue-900">{t("electricity")}</p>
                     </div>
                     <p className="text-sm text-blue-700">€{monthlyCosts?.byService['electricity'] || "-"}</p>
-                    <p className="text-xs text-blue-600">{t("building", "Edificio")}</p>
+                    <p className="text-xs text-blue-600">{t("building")}</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Droplet className="w-3 h-3 text-cyan-600" />
-                      <p className="text-xs text-cyan-900">{t("water", "Agua")}</p>
+                      <p className="text-xs text-cyan-900">{t("water")}</p>
                     </div>
                     <p className="text-sm text-cyan-700">€{monthlyCosts?.byService['water'] || "-"}</p>
-                    <p className="text-xs text-cyan-600">{t("total", "Total")}</p>
+                    <p className="text-xs text-cyan-600">{t("total")}</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Flame className="w-3 h-3 text-orange-600" />
-                      <p className="text-xs text-orange-900">{t("gas", "Gas")}</p>
+                      <p className="text-xs text-orange-900">{t("gas")}</p>
                     </div>
                     <p className="text-sm text-orange-700">€{monthlyCosts?.byService['gas'] || "-"}</p>
-                    <p className="text-xs text-orange-600">{t("total", "Total")}</p>
+                    <p className="text-xs text-orange-600">{t("total")}</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <FileText className="w-3 h-3 text-purple-600" />
-                      <p className="text-xs text-purple-900">{t("ibi", "IBI")}</p>
+                      <p className="text-xs text-purple-900">{t("ibi")}</p>
                     </div>
                     <p className="text-sm text-purple-700">€{monthlyCosts?.byService['ibi'] || "-"}</p>
-                    <p className="text-xs text-purple-600">{t("units", "Unidades")}</p>
+                    <p className="text-xs text-purple-600">{t("units")}</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Trash className="w-3 h-3 text-amber-600" />
-                      <p className="text-xs text-amber-900">{t("waste", "Basuras")}</p>
+                      <p className="text-xs text-amber-900">{t("waste")}</p>
                     </div>
                     <p className="text-sm text-amber-700">€{monthlyCosts?.byService['waste'] || "-"}</p>
-                    <p className="text-xs text-amber-600">{t("units", "Unidades")}</p>
+                    <p className="text-xs text-amber-600">{t("units")}</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <Euro className="w-3 h-3 text-green-700" />
-                      <p className="text-xs text-green-900">{t("total", "Total")}</p>
+                      <p className="text-xs text-green-900">{t("total")}</p>
                     </div>
                     <p className="text-sm text-green-800">€{monthlyCosts?.total || "-"}</p>
                     <p className="text-xs text-green-700">{monthlyCosts?.total ? `€${monthlyCosts.total * 12}/año` : "-"}</p>
@@ -1100,28 +1100,28 @@ export function BuildingGeneralView() {
                     <div className="flex items-center gap-0.5 mb-1">
                       <Building2 className="w-2.5 h-2.5 text-purple-600" />
                       <p className="text-xs text-purple-900">
-                        {t("communityMeters", "Contadores Comunitarios")}
+                        {t("communityMeters")}
                       </p>
                     </div>
                     <div className="space-y-0.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Zap className="w-2.5 h-2.5 text-blue-600" />
-                          <span className="text-gray-700">{t("electricity", "Electricidad")}</span>
+                          <span className="text-gray-700">{t("electricity")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
-                          <span className="text-gray-700">{t("water", "Agua")}</span>
+                          <span className="text-gray-700">{t("water")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
-                          <span className="text-gray-700">{t("gas", "Gas")}</span>
+                          <span className="text-gray-700">{t("gas")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
@@ -1136,34 +1136,34 @@ export function BuildingGeneralView() {
                   <div className="p-1.5 bg-indigo-50 border border-indigo-200 rounded">
                     <div className="flex items-center gap-0.5 mb-1">
                       <House className="w-2.5 h-2.5 text-indigo-600" />
-                      <p className="text-xs text-indigo-900">{t("unitCosts", "Costes Unidades")}</p>
+                      <p className="text-xs text-indigo-900">{t("unitCosts")}</p>
                     </div>
                     <div className="space-y-0.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Droplet className="w-2.5 h-2.5 text-cyan-600" />
-                          <span className="text-gray-700">{t("water", "Agua")}</span>
+                          <span className="text-gray-700">{t("water")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Flame className="w-2.5 h-2.5 text-orange-600" />
-                          <span className="text-gray-700">{t("gas", "Gas")}</span>
+                          <span className="text-gray-700">{t("gas")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <FileText className="w-2.5 h-2.5 text-purple-600" />
-                          <span className="text-gray-700">{t("ibi", "IBI")}</span>
+                          <span className="text-gray-700">{t("ibi")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1">
                           <Trash2 className="w-2.5 h-2.5 text-amber-600" />
-                          <span className="text-gray-700">{t("waste", "Basuras")}</span>
+                          <span className="text-gray-700">{t("waste")}</span>
                         </div>
                         <span className="text-gray-900">€-</span>
                       </div>
@@ -1184,7 +1184,7 @@ export function BuildingGeneralView() {
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
               <div className="w-1 h-3.5 bg-teal-600 rounded"></div>
-              <h3 className="text-sm text-black">{t("auditory", "Auditoría")}</h3>
+              <h3 className="text-sm text-black">{t("auditory")}</h3>
             </div>
             <div className="space-y-2">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1.5 h-full flex flex-col">
@@ -1193,14 +1193,14 @@ export function BuildingGeneralView() {
                     <Scale className="w-3 h-3 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm">{t("auditoryRegulatoria", "Auditoría Regulatoria")}</h3>
+                    <h3 className="text-sm">{t("auditoryRegulatoria")}</h3>
                     <p className="text-xs text-gray-500">Directiva EPBD 2030</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-1.5">
                   <div className="bg-gray-50 rounded p-1">
                     <div className="text-xs text-gray-600">
-                      {t("currentGrade", "Calificación Actual")}
+                      {t("currentGrade")}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs">{_esgData?.status === 'complete' ? _esgData.data.label : "-"}</span>
@@ -1210,7 +1210,7 @@ export function BuildingGeneralView() {
                     </div>
                   </div>
                   <div className="bg-blue-50 rounded p-1">
-                    <div className="text-xs text-blue-700">{t("objective", "Objetivo")}</div>
+                    <div className="text-xs text-blue-700">{t("objective")}</div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-blue-600">-</span>
                       <span className="text-xs text-blue-600">-</span>
@@ -1222,7 +1222,7 @@ export function BuildingGeneralView() {
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
                         <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
-                        <span className="text-gray-600 text-xs">{t("consumption", "Consumo")}</span>
+                        <span className="text-gray-600 text-xs">{t("consumption")}</span>
                       </div>
                       <span className="text-xs text-gray-400">-</span>
                     </div>
@@ -1237,7 +1237,7 @@ export function BuildingGeneralView() {
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-0.5 text-xs">
                         <TriangleAlert className="w-2.5 h-2.5 text-gray-400" />
-                        <span className="text-gray-600 text-xs">{t("emissions", "Emisiones")}</span>
+                        <span className="text-gray-600 text-xs">{t("emissions")}</span>
                       </div>
                       <span className="text-xs text-gray-400">-</span>
                     </div>
@@ -1262,15 +1262,15 @@ export function BuildingGeneralView() {
                     <Wrench className="w-3.5 h-3.5 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm">{t("auditoryTechnical", "Auditoría Técnica")}</h3>
-                    <p className="text-xs text-gray-500">{t("bookOfBuilding", "Libro del Edificio")}</p>
+                    <h3 className="text-sm">{t("auditoryTechnical")}</h3>
+                    <p className="text-xs text-gray-500">{t("bookOfBuilding")}</p>
                   </div>
                 </div>
                 <div className="bg-blue-50 rounded p-1.5 mb-1.5">
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-1">
                       <FileText className="w-2.5 h-2.5 text-[#1e3a8a]" />
-                      <span className="text-xs text-gray-700">{t("completed", "Completado")}</span>
+                      <span className="text-xs text-gray-700">{t("completed")}</span>
                     </div>
                     <span className="text-xs text-[#1e3a8a]">{digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}%</span>
                   </div>
@@ -1283,12 +1283,12 @@ export function BuildingGeneralView() {
                   <div className="mt-0.5 text-xs text-gray-600">{digitalBook?.sections?.filter(s => s.complete).length || 0}/8 tareas</div>
                 </div>
                 <div className="space-y-1 flex-1">
-                  <div className="text-xs text-gray-700">{t("improvements", "Mejoras")}:</div>
+                  <div className="text-xs text-gray-700">{t("improvements")}:</div>
                   <div className="bg-orange-50 rounded p-1">
                     <div className="flex items-center gap-1">
                       <Zap className="w-2.5 h-2.5 text-orange-600" />
                       <span className="text-xs text-orange-900">
-                        {t("envelope", "Envolvente")}: -
+                        {t("envelope")}: -
                       </span>
                     </div>
                   </div>
@@ -1314,14 +1314,14 @@ export function BuildingGeneralView() {
                     <Euro className="w-3 h-3 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm">{t("auditoryFinancial", "Auditoría Financiera")}</h3>
-                    <p className="text-xs text-gray-500">{t("roiAnalysis", "ROI Valoración")}</p>
+                    <h3 className="text-sm">{t("auditoryFinancial")}</h3>
+                    <p className="text-xs text-gray-500">{t("roiAnalysis")}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-1.5">
                   <div className="border-l-2 border-blue-500 pl-1">
                     <div className="text-xs text-gray-600">
-                      {t("activeValue", "Valor del Activo")}
+                      {t("activeValue")}
                     </div>
                     <div className="text-xs">
                       {financialAnalysis?.metrics.marketValue ? `€${(financialAnalysis.metrics.marketValue / 1000000).toFixed(2)}M` : "-"}
@@ -1331,33 +1331,33 @@ export function BuildingGeneralView() {
                     </div>
                   </div>
                   <div className="border-l-2 border-green-500 bg-green-50 pl-1">
-                    <div className="text-xs text-green-700">{t("currentGrade", "Calificación Actual")}</div>
+                    <div className="text-xs text-green-700">{t("currentGrade")}</div>
                     <div className="text-xs text-green-600">
                       {financialAnalysis?.metrics.roi ? `${financialAnalysis.metrics.roi.toFixed(2)}%` : "-"}
                     </div>
-                    <div className="text-xs text-green-600">{t("annual", "Anual")}</div>
+                    <div className="text-xs text-green-600">{t("annual")}</div>
                   </div>
                 </div>
                 <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded p-1.5 mb-1.5 flex-1">
                   <div className="text-xs text-gray-700 mb-1 flex items-center gap-0.5">
                     <TrendingUp className="w-2.5 h-2.5 text-green-600" />
-                    <span>{t("postImprovement", "Post-mejora")}:</span>
+                    <span>{t("postImprovement")}:</span>
                   </div>
                   <div className="space-y-0.5 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{t("investment", "Inversión")}:</span>
+                      <span className="text-gray-600">{t("investment")}:</span>
                       <span className="text-orange-600">
                         {financialAnalysis?.recommendation.financialImpact.investmentRequired ? `€${Math.round(financialAnalysis.recommendation.financialImpact.investmentRequired / 1000)}k` : "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{t("revaluation", "Revalorización")}:</span>
+                      <span className="text-gray-600">{t("revaluation")}:</span>
                       <span className="text-green-600">
                         {financialAnalysis?.metrics.valueGap ? `+${financialAnalysis.metrics.valueGap.toFixed(1)}%` : "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{t("futureValue", "Valor Futuro")}:</span>
+                      <span className="text-gray-600">{t("futureValue")}:</span>
                       <span className="text-green-700">
                         {financialAnalysis?.recommendation.financialImpact.projectedValue ? `€${(financialAnalysis.recommendation.financialImpact.projectedValue / 1000000).toFixed(2)}M` : "-"}
                       </span>
@@ -1366,7 +1366,7 @@ export function BuildingGeneralView() {
                 </div>
                 <div className="bg-[#1e3a8a] text-white rounded p-1.5">
                   <div className="flex items-center justify-between mb-0.5">
-                    <div className="text-xs">{t("netProfit", "Ganancia Neta")}</div>
+                    <div className="text-xs">{t("netProfit")}</div>
                     <ArrowUpRight className="w-2.5 h-2.5" />
                   </div>
                   <div className="text-base">
@@ -1384,7 +1384,7 @@ export function BuildingGeneralView() {
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <div className="w-1 h-3.5 bg-green-600 rounded"></div>
-                <h3 className="text-sm text-black">{t("rents", "Rentas")}</h3>
+                <h3 className="text-sm text-black">{t("rents")}</h3>
               </div>
               <div
                 data-slot="card"
@@ -1393,13 +1393,13 @@ export function BuildingGeneralView() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
                     <Euro className="w-3.5 h-3.5 text-green-600" />
-                    <h3 className="text-xs">{t("rents", "Rentas")}</h3>
+                    <h3 className="text-xs">{t("rents")}</h3>
                   </div>
                   <button
                     data-slot="button"
                     className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-md gap-1.5 has-[&gt;svg]:px-2.5 text-xs h-6 px-2"
                   >
-                    {t("viewDetail", "Ver Detalle")}
+                    {t("viewDetail")}
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -1424,15 +1424,15 @@ export function BuildingGeneralView() {
                   <div className="grid grid-cols-3 gap-1.5">
                     <div className="text-center p-1.5 bg-green-50 rounded">
                       <p className="text-xs text-green-600">{rentStats.paid || "-"}</p>
-                      <p className="text-xs text-gray-600">{t("paid", "Pagadas")}</p>
+                      <p className="text-xs text-gray-600">{t("paid")}</p>
                     </div>
                     <div className="text-center p-1.5 bg-amber-50 rounded">
                       <p className="text-xs text-amber-600">{rentStats.pending || "-"}</p>
-                      <p className="text-xs text-gray-600">{t("pending", "Pendientes")}</p>
+                      <p className="text-xs text-gray-600">{t("pending")}</p>
                     </div>
                     <div className="text-center p-1.5 bg-red-50 rounded">
                       <p className="text-xs text-red-600">{rentStats.delayed || "-"}</p>
-                      <p className="text-xs text-gray-600">{t("delayed", "Retrasadas")}</p>
+                      <p className="text-xs text-gray-600">{t("delayed")}</p>
                     </div>
                   </div>
                 </div>
@@ -1441,34 +1441,34 @@ export function BuildingGeneralView() {
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <div className="w-1 h-3.5 bg-[#1e3a8a] rounded"></div>
-                <h3 className="text-sm text-black">{t("actionsCalendar", "Calendario de Acciones")}</h3>
+                <h3 className="text-sm text-black">{t("actionsCalendar")}</h3>
               </div>
               <div className="bg-white rounded-lg p-2 shadow-sm">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <div className="w-6 h-6 bg-gradient-to-br from-[#1e3a8a] to-[#1e40af] rounded flex items-center justify-center">
                     <Calendar className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <h3 className="text-sm text-gray-900">{t("nextActions", "Próximas Acciones")}</h3>
+                  <h3 className="text-sm text-gray-900">{t("nextActions")}</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-2">
                   <div className="p-1.5 bg-red-50 border border-red-200 rounded">
                     <div className="flex items-center gap-1 mb-0.5">
                       <TriangleAlert className="w-3 h-3 text-red-600" />
-                      <p className="text-xs text-red-900">{t("urgent", "Urgentes")}</p>
+                      <p className="text-xs text-red-900">{t("urgent")}</p>
                     </div>
                     <p className="text-xs text-red-700">{calendarStats.urgent}</p>
                   </div>
                   <div className="p-1.5 bg-blue-50 border border-blue-200 rounded">
                     <div className="flex items-center gap-1 mb-0.5">
                       <Clock className="w-3 h-3 text-blue-600" />
-                      <p className="text-xs text-blue-900">{t("thisMonth", "Este Mes")}</p>
+                      <p className="text-xs text-blue-900">{t("thisMonth")}</p>
                     </div>
                     <p className="text-xs text-blue-700">{calendarStats.thisMonth}</p>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-700 mb-1">
-                    {t("priorityActions", "Acciones Prioritarias")}:
+                    {t("priorityActions")}:
                   </p>
                   {calendarStats.priorityAction ? (
                     <div className="flex items-center justify-between p-1.5 rounded text-xs bg-orange-50 border border-orange-200">
@@ -1490,7 +1490,7 @@ export function BuildingGeneralView() {
                     </div>
                   ) : (
                     <div className="p-1.5 rounded text-xs bg-gray-50 border border-gray-100 text-gray-500 text-center">
-                      {t("noPendingActions", "No hay acciones pendientes")}
+                      {t("noPendingActions")}
                     </div>
                   )}
                 </div>
@@ -1498,20 +1498,20 @@ export function BuildingGeneralView() {
                   onClick={() => navigate(`/building/${id}/general-view/calendar`)}
                   className="w-full mt-2 px-2 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-xs rounded transition-colors"
                 >
-                  {t("viewCompleteCalendar", "Ver Calendario Completo")}
+                  {t("viewCompleteCalendar")}
                 </button>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <div className="w-1 h-3.5 bg-red-600 rounded"></div>
-                <h3 className="text-sm text-black">{t("followUpAndAlerts", "Seguimiento y Alertas")}</h3>
+                <h3 className="text-sm text-black">{t("followUpAndAlerts")}</h3>
               </div>
               <div className="space-y-2">
                 <div className="bg-white rounded-lg p-2 shadow-sm">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Clock className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-sm">{t("recentActivity", "Actividad Reciente")}</h3>
+                    <h3 className="text-sm">{t("recentActivity")}</h3>
                   </div>
                   <div className="space-y-1.5">
                     {events.filter(e => e.status === 'completed').slice(-3).reverse().map(event => (
@@ -1527,7 +1527,7 @@ export function BuildingGeneralView() {
                     ))}
                     {events.filter(e => e.status === 'completed').length === 0 && (
                       <div className="py-4 text-center bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
-                        <p className="text-xs text-gray-500">{t("noRecentActivity", "Sin actividad reciente registrada")}.</p>
+                        <p className="text-xs text-gray-500">{t("noRecentActivity")}.</p>
                       </div>
                     )}
                   </div>
@@ -1535,7 +1535,7 @@ export function BuildingGeneralView() {
                 <div className="bg-white rounded-lg p-2 shadow-sm">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Bell className="w-3.5 h-3.5 text-gray-600" />
-                    <h3 className="text-sm">{t("nextAlerts", "Próximas Alertas")}</h3>
+                    <h3 className="text-sm">{t("nextAlerts")}</h3>
                   </div>
                   <div className="space-y-1">
                     {[...expiredDocs, ...events.filter(e => e.status !== 'completed' && e.priority === 'urgent')].slice(0, 4).map((item) => {
@@ -1552,7 +1552,7 @@ export function BuildingGeneralView() {
                     {expiredDocs.length === 0 && events.filter(e => e.status !== 'completed' && e.priority === 'urgent').length === 0 && (
                       <div className="text-center py-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
                         <CheckCircle className="w-5 h-5 text-green-500/50 mx-auto mb-1" />
-                        <p className="text-xs text-gray-500">{t("noUrgentAlerts", "No hay alertas urgentes pendientes")}.</p>
+                        <p className="text-xs text-gray-500">{t("noUrgentAlerts")}.</p>
                       </div>
                     )}
                   </div>

@@ -32,11 +32,8 @@ import {
 // Configuración de secciones con iconos y colores
 const SECTION_CONFIG = (t: any) => ({
   general_data: {
-    title: t("generalData", "Datos generales del edificio"),
-    description: t(
-      "generalDataDesc",
-      "Información básica y características principales"
-    ),
+    title: t("generalData"),
+    description: t("generalDataDesc"),
     uiId: "general_data",
     icon: Building2,
     color: "blue",
@@ -44,14 +41,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-blue-50 to-blue-100/50",
   },
   construction_features: {
-    title: t(
-      "constructionFeatures",
-      "Características constructivas y técnicas"
-    ),
-    description: t(
-      "constructionFeaturesDesc",
-      "Especificaciones técnicas de construcción"
-    ),
+    title: t("constructionFeatures"),
+    description: t("constructionFeaturesDesc"),
     uiId: "construction_features",
     icon: Wrench,
     color: "purple",
@@ -59,11 +50,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-purple-50 to-purple-100/50",
   },
   certificates_and_licenses: {
-    title: t("certificatesAndLicenses", "Certificados y licencias"),
-    description: t(
-      "certificatesAndLicensesDesc",
-      "Documentación legal y certificaciones"
-    ),
+    title: t("certificatesAndLicenses"),
+    description: t("certificatesAndLicensesDesc"),
     uiId: "certificates",
     icon: FileCheck,
     color: "green",
@@ -71,11 +59,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-green-50 to-green-100/50",
   },
   maintenance_and_conservation: {
-    title: t("maintenanceAndConservation", "Mantenimiento y conservación"),
-    description: t(
-      "maintenanceAndConservationDesc",
-      "Historial y planes de mantenimiento"
-    ),
+    title: t("maintenanceAndConservation"),
+    description: t("maintenanceAndConservationDesc"),
     uiId: "maintenance",
     icon: Settings,
     color: "orange",
@@ -83,11 +68,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-orange-50 to-orange-100/50",
   },
   facilities_and_consumption: {
-    title: t("facilitiesAndConsumption", "Instalaciones y consumos"),
-    description: t(
-      "facilitiesAndConsumptionDesc",
-      "Sistemas e instalaciones del edificio"
-    ),
+    title: t("facilitiesAndConsumption"),
+    description: t("facilitiesAndConsumptionDesc"),
     uiId: "installations",
     icon: Zap,
     color: "yellow",
@@ -95,11 +77,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-yellow-50 to-yellow-100/50",
   },
   renovations_and_rehabilitations: {
-    title: t("renovationsAndRehabilitations", "Reformas y rehabilitaciones"),
-    description: t(
-      "renovationsAndRehabilitationsDesc",
-      "Historial de modificaciones y mejoras"
-    ),
+    title: t("renovationsAndRehabilitations"),
+    description: t("renovationsAndRehabilitationsDesc"),
     uiId: "reforms",
     icon: Hammer,
     color: "red",
@@ -107,11 +86,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-red-50 to-red-100/50",
   },
   sustainability_and_esg: {
-    title: t("sustainabilityAndESG", "Sostenibilidad y ESG"),
-    description: t(
-      "sustainabilityAndESGDesc",
-      "Criterios ambientales y sostenibilidad"
-    ),
+    title: t("sustainabilityAndESG"),
+    description: t("sustainabilityAndESGDesc"),
     uiId: "sustainability",
     icon: Leaf,
     color: "emerald",
@@ -119,8 +95,8 @@ const SECTION_CONFIG = (t: any) => ({
     bgGradient: "from-emerald-50 to-emerald-100/50",
   },
   annex_documents: {
-    title: t("annexDocuments", "Documentos anexos"),
-    description: t("annexDocumentsDesc", "Documentación adicional y anexos"),
+    title: t("annexDocuments"),
+    description: t("annexDocumentsDesc"),
     uiId: "attachments",
     icon: Paperclip,
     color: "indigo",

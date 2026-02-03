@@ -29,7 +29,7 @@ export default function Cumplimiento() {
               <path d="M9 12l2 2 4-4" />
             </svg>
           </span>
-          <span>{t('complianceView.newCertificate')}</span>
+          <span>{t('newCertificate')}</span>
         </button>
       </div>
 

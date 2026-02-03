@@ -93,11 +93,11 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   const getTypologyLabel = (typology: string) => {
     switch (typology) {
       case 'residential':
-        return t('digitalbook.options.residential', 'Residencial');
+        return t('residential');
       case 'mixed':
-        return t('digitalbook.options.mixed', 'Mixto');
+        return t('mixed');
       case 'commercial':
-        return t('digitalbook.options.commercial', 'Comercial');
+        return t('commercial');
       default:
         return typology;
     }
@@ -106,24 +106,24 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
   const priceText =
     buildingData.price?.trim()
       ? fmtCurrency(parseFloat(buildingData.price))
-      : t('common.notSpecified', 'No especificado');
+      : t('notSpecified');
 
   const surfaceText =
     buildingData.squareMeters?.trim()
       ? `${fmtNumber(parseFloat(buildingData.squareMeters), {
           maximumFractionDigits: 2,
         })} m²`
-      : t('common.notSpecified', 'No especificado');
+      : t('notSpecified');
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildingWizard.assetSummary', 'Resumen del activo')}
+          {t('assetSummary')}
         </h1>
         <p className="text-gray-600">
-          {t('buildingWizard.reviewBeforeCreating', 'Revisa los datos antes de crear el activo.')}
+          {t('reviewBeforeCreating')}
         </p>
       </div>
 
@@ -133,7 +133,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           <div className="relative h-72 bg-gray-200">
             <img
               src={mainPhotoUrl}
-              alt={`${t('buildingWizard.mainPhotoOf', 'Foto principal de')} ${buildingData.name}`}
+              alt={`${t('mainPhotoOf')} ${buildingData.name}`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -154,7 +154,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   </svg>
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {t('buildingWizard.imageLoadError', 'Error cargando la imagen')}
+                  {t('imageLoadError')}
                 </p>
               </div>
             </div>
@@ -181,7 +181,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 </svg>
               </div>
               <p className="text-gray-500 text-sm">
-                {t('buildingWizard.noMainPhoto', 'Sin foto principal')}
+                {t('noMainPhoto')}
               </p>
             </div>
             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 via-black/20 to-transparent">
@@ -202,72 +202,69 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {t('buildingWizard.generalInfo', 'Información general')}
+                  {t('generalInfo')}
                 </h3>
                 <button
                   onClick={onEditData}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  {t('buildings.editDataButton', 'Editar datos')}
+                  {t('editDataButton')}
                 </button>
               </div>
 
               <div className="space-y-3">
                 <Row
-                  label={t('buildings.fields.name', 'Nombre')}
+                  label={t('buildingName')}
                   value={buildingData.name}
                 />
                 <Row
-                  label={t('buildings.fields.constructionYear', 'Año de construcción')}
+                  label={t('constructionYear')}
                   value={buildingData.constructionYear}
                 />
                 <Row
-                  label={t('buildings.fields.typology', 'Tipología')}
+                  label={t('typology')}
                   value={getTypologyLabel(buildingData.typology)}
                 />
                 <Row
-                  label={t('buildings.fields.numFloors', 'Número de plantas')}
+                  label={t('numFloors')}
                   value={buildingData.floors}
                 />
                 <Row
-                  label={t('buildings.fields.assetPrice', 'Precio del activo')}
+                  label={t('assetPrice')}
                   value={priceText}
                 />
                 <Row
-                  label={t('buildings.fields.technicianEmail', 'Email del técnico')}
-                  value={buildingData.technicianEmail || t('common.unassigned', 'Sin asignar')}
+                  label={t('technicianEmail')}
+                  value={buildingData.technicianEmail || t('unassigned')}
                 />
                 <Row
-                  label={t('buildings.fields.cfoEmail', 'Email del CFO')}
-                  value={buildingData.cfoEmail || t('common.unassigned', 'Sin asignar')}
+                  label={t('cfoEmail')}
+                  value={buildingData.cfoEmail || t('unassigned')}
                 />
                 <Row
-                  label={t('buildings.fields.propietarioEmail', 'Email del propietario')}
-                  value={buildingData.propietarioEmail || t('common.unassigned', 'Sin asignar')}
+                  label={t('propietarioEmail')}
+                  value={buildingData.propietarioEmail || t('unassigned')}
                 />
                 <div className="py-2">
                   <span className="text-sm font-medium text-gray-600 block mb-1">
-                    {t('buildings.sections.financialInfo', 'Información financiera')}
+                    {t('financialInfo')}
                   </span>
                   <p className="text-sm text-gray-500">
-                    {t(
-                      'buildings.financialInfoHandledByCfo',
-                      'El CFO añadirá los datos financieros una vez creado el activo.'
-                    )}
+                    {t('financialInfoHandledByCfo')}
                   </p>
                 </div>
                 <Row
-                  label={t('buildings.fields.surface', 'Superficie')}
+                  label={t('surface')}
                   value={surfaceText}
                 />
                 <Row
-                  label={t('buildings.fields.cadastralReference', 'Referencia Catastral')}
-                  value={buildingData.cadastralReference || t('common.notProvided', 'No proporcionada')}
+                  label={t('cadastralReference')}
+                  value={buildingData.cadastralReference || t('notProvided')}
                 />
 
                 <div className="py-2">
                   <span className="text-sm font-medium text-gray-600 block mb-2">
-                    {t('buildings.address', 'Dirección')}:
+                    {t('address')}
                   </span>
                   <p className="text-sm text-gray-900">{buildingData.address}</p>
                 </div>
@@ -278,13 +275,13 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {t('building.location', 'Ubicación del edificio')}
+                  {t('location')}
                 </h3>
                 <button
                   onClick={onEditLocation}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  {t('buildings.editLocationButton', 'Editar ubicación')}
+                  {t('editLocationButton')}
                 </button>
               </div>
 
@@ -311,10 +308,10 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
 
               <div className="mt-2 text-sm text-gray-500">
                 <p>
-                  {t('maps.latitude', 'Latitud')}: {buildingData.latitude.toFixed(6)}
+                  {t('latitude')}: {buildingData.latitude.toFixed(6)}
                 </p>
                 <p>
-                  {t('maps.longitude', 'Longitud')}: {buildingData.longitude.toFixed(6)}
+                  {t('longitude')}: {buildingData.longitude.toFixed(6)}
                 </p>
               </div>
             </div>
@@ -329,7 +326,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           disabled={isSaving}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          {t('buildings.editDataButton', 'Editar datos')}
+          {t('editDataButton')}
         </button>
 
         <button
@@ -337,7 +334,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           disabled={isSaving}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          {t('buildings.editLocationButton', 'Editar ubicación')}
+          {t('editLocationButton')}
         </button>
 
         <button
@@ -348,7 +345,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
           {isSaving ? (
             <>
               <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>{t('buildings.creating', 'Creando...')}</span>
+              <span>{t('creating')}</span>
             </>
           ) : (
             <>
@@ -359,7 +356,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                   clipRule="evenodd"
                 />
               </svg>
-              <span>{t('buildings.createAsset', 'Crear activo')}</span>
+              <span>{t('createAsset')}</span>
             </>
           )}
         </button>

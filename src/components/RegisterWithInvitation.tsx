@@ -120,7 +120,7 @@ export default function RegisterWithInvitation() {
     e.preventDefault();
 
     if (twoFactorCode.length !== 6) {
-      setError2FA(t("invalid2FACodeLength", "El código debe tener 6 dígitos"));
+      setError2FA(t("invalid2FACodeLength"));
       return;
     }
 
@@ -194,7 +194,7 @@ export default function RegisterWithInvitation() {
         } catch (loginErr: any) {
           console.error("Error en login después del setup:", loginErr);
           setError2FA(
-            t("loginError", "Error al iniciar sesión. Redirigiendo al login...")
+            t("loginError")
           );
 
           // Redirigir al login después de un tiempo
@@ -205,7 +205,7 @@ export default function RegisterWithInvitation() {
       } else {
         setError2FA(
           verifyResponse.message ||
-            t("invalid2FACode", "Código inválido. Intenta nuevamente.")
+            t("invalid2FACode")
         );
       }
     } catch (err: any) {
@@ -213,7 +213,7 @@ export default function RegisterWithInvitation() {
       const errorMessage =
         err?.body?.message ||
         err?.message ||
-        t("invalid2FACode", "Código inválido. Intenta nuevamente.");
+        t("invalid2FACode");
       setError2FA(errorMessage);
     } finally {
       setVerifying2FA(false);
@@ -222,7 +222,7 @@ export default function RegisterWithInvitation() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(manualEntryKey);
-    setSuccess(t("keyCopied", "Clave copiada"));
+    setSuccess(t("keyCopied"));
     setTimeout(() => setSuccess(null), 2000);
   };
 
@@ -233,7 +233,7 @@ export default function RegisterWithInvitation() {
         <div className="w-full max-w-md">
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Validando invitación...</p>
+            <p className="text-gray-600">{t("validatingInvitation")}</p>
           </div>
         </div>
       </div>
@@ -262,7 +262,7 @@ export default function RegisterWithInvitation() {
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-gray-900">
-              {t("invalidInvitation", "Invitación Inválida")}
+              {t("invalidInvitation")}
             </h1>
             <p className="text-gray-600 mt-1">{tokenError}</p>
           </div>
@@ -283,14 +283,14 @@ export default function RegisterWithInvitation() {
                 to="/register"
                 className="w-full inline-flex justify-center items-center gap-2 rounded-lg text-white font-semibold py-2.5 bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                {t("registerNormally", "Registrarse normalmente")}
+                {t("registerNormally")}
               </Link>
 
               <Link
                 to="/login"
                 className="w-full inline-flex justify-center items-center gap-2 rounded-lg text-gray-700 font-semibold py-2.5 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
               >
-                Iniciar sesión
+                {t("signIn")}
               </Link>
             </div>
           </div>
@@ -320,10 +320,10 @@ export default function RegisterWithInvitation() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {t("invitedTitle", "¡Has sido invitado!")}
+            {t("invitedTitle")}
           </h1>
           <p className="text-gray-600 mt-1">
-            {t("registerSubtitle", "Completa tu registro para comenzar")}
+            {t("registerSubtitle2")}
           </p>
         </div>
 
@@ -350,18 +350,18 @@ export default function RegisterWithInvitation() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-medium text-blue-900">
-                Invitación para ser{" "}
+                {t("invitationFor")}{" "}
                 {invitationData.role === "tecnico"
-                  ? "Técnico"
+                  ? t("technician")
                   : invitationData.role === "cfo"
-                  ? "CFO"
-                  : "Propietario"}
+                  ? t("cfo")
+                  : t("owner")}
               </h3>
               <p className="text-sm text-blue-700 mt-1">
-                <strong>Edificio:</strong> {invitationData.buildingName}
+                <strong>{t("building")}:</strong> {invitationData.buildingName}
               </p>
               <p className="text-sm text-blue-700">
-                <strong>Invitado por:</strong> {invitationData.invitedBy}
+                <strong>{t("invitedBy")}:</strong> {invitationData.invitedBy}
               </p>
             </div>
           </div>
@@ -383,7 +383,7 @@ export default function RegisterWithInvitation() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Nombre completo
+                {t("fullName")}
               </label>
               <input
                 id="name"
@@ -402,7 +402,7 @@ export default function RegisterWithInvitation() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Correo electrónico
+                {t("email")}
               </label>
               <input
                 id="email"
@@ -414,7 +414,7 @@ export default function RegisterWithInvitation() {
                 title="El email está predefinido por la invitación"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Este email está definido por la invitación
+                {t("emailDefinedByInvitation")}
               </p>
             </div>
 
@@ -423,7 +423,7 @@ export default function RegisterWithInvitation() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Contraseña
+                {t("passwordLabel2")}
               </label>
               <input
                 id="password"
@@ -442,7 +442,7 @@ export default function RegisterWithInvitation() {
                 htmlFor="password2"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Repetir contraseña
+                {t("repeatPasswordLabel2")}
               </label>
               <input
                 id="password2"
@@ -474,12 +474,12 @@ export default function RegisterWithInvitation() {
           </form>
 
           <p className="mt-4 text-center text-sm text-gray-600">
-            ¿Ya tienes cuenta?{" "}
+            {t("alreadyHaveAccount")}{" "}
             <Link
               to="/login"
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
-              Inicia sesión
+              {t("login")}
             </Link>
           </p>
         </div>
@@ -505,16 +505,10 @@ export default function RegisterWithInvitation() {
                   </svg>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {t(
-                    "setup2FATitle",
-                    "Configura tu autenticación de dos factores"
-                  )}
+                  {t("setup2FATitle")}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {t(
-                    "setup2FADescription",
-                    "Para mayor seguridad, configura Google Authenticator antes de continuar."
-                  )}
+                  {t("setup2FADescription")}
                 </p>
               </div>
 
@@ -538,10 +532,7 @@ export default function RegisterWithInvitation() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">
-                      {t(
-                        "setup2FAStep1",
-                        "Descarga Google Authenticator en tu móvil"
-                      )}
+                      {t("setup2FAStep1")}
                     </p>
                     <a
                       href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2"
@@ -549,7 +540,7 @@ export default function RegisterWithInvitation() {
                       rel="noopener noreferrer"
                       className="text-xs text-blue-600 hover:text-blue-700 mt-1 inline-block"
                     >
-                      {t("downloadGoogleAuth", "Descargar para Android o iOS")}{" "}
+                      {t("downloadGoogleAuth")}{" "}
                       →
                     </a>
                   </div>
@@ -562,10 +553,7 @@ export default function RegisterWithInvitation() {
                       2
                     </div>
                     <p className="text-sm font-medium text-gray-900">
-                      {t(
-                        "setup2FAStep2",
-                        "Escanea este código QR con la aplicación"
-                      )}
+                      {t("setup2FAStep2")}
                     </p>
                   </div>
 
@@ -580,16 +568,13 @@ export default function RegisterWithInvitation() {
                     onClick={() => setShowManualEntry(!showManualEntry)}
                     className="mt-3 text-xs text-gray-600 hover:text-gray-900 underline w-full text-center"
                   >
-                    {t("cannotScanQR", "¿No puedes escanear el QR?")}
+                    {t("cannotScanQR")}
                   </button>
 
                   {showManualEntry && (
                     <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-xs text-gray-700 mb-2">
-                        {t(
-                          "manualEntryInstructions",
-                          "Introduce esta clave manualmente en Google Authenticator:"
-                        )}
+                        {t("manualEntryInstructions")}
                       </p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">
@@ -600,7 +585,7 @@ export default function RegisterWithInvitation() {
                           onClick={copyToClipboard}
                           className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                         >
-                          {t("copyKey", "Copiar")}
+                          {t("copyKey")}
                         </button>
                       </div>
                     </div>
@@ -614,10 +599,7 @@ export default function RegisterWithInvitation() {
                       3
                     </div>
                     <p className="text-sm font-medium text-gray-900">
-                      {t(
-                        "setup2FAStep3",
-                        "Introduce el código de 6 dígitos que aparece"
-                      )}
+                      {t("setup2FAStep3")}
                     </p>
                   </div>
 
@@ -627,7 +609,7 @@ export default function RegisterWithInvitation() {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={6}
-                      placeholder={t("verificationCodePlaceholder", "000000")}
+                      placeholder={t("verificationCodePlaceholder")}
                       value={twoFactorCode}
                       onChange={(e) =>
                         setTwoFactorCode(e.target.value.replace(/\D/g, ""))
@@ -666,23 +648,23 @@ export default function RegisterWithInvitation() {
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                             />
                           </svg>
-                          {t("verifying2FA", "Verificando código...")}
+                          {t("verifying2FA")}
                         </span>
                       ) : (
-                        t("verifyAndContinue", "Verificar y continuar")
+                        t("verifyAndContinue")
                       )}
                     </button>
                   </form>
                 </div>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
-                  {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                  {t("qrProblemsHelp")}{" "}
                   <button
                     type="button"
                     onClick={() => setIsSupportModalOpen(true)}
                     className="text-blue-600 hover:text-blue-700 underline"
                   >
-                    {t("contactSupport", "contacta a soporte")}
+                    {t("contactSupport")}
                   </button>
                   .
                 </p>
