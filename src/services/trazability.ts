@@ -34,9 +34,8 @@ export interface trazabilityList {
 
 }
 
-export async function getTrazability(data?: any) {
-  return apiFetch('/trazability/list', {
+export async function getTrazability(buildingId?: string) {
+  return apiFetch(`/trazability/list/${buildingId ? buildingId : ''}`, {
     method: 'GET',
-    body: JSON.stringify(data),
   });
 }

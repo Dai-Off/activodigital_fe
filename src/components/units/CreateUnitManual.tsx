@@ -46,6 +46,9 @@ const CreateUnitManual: React.FC<CreateUnitManualProps> = ({
   });
   const [errors, setErrors] = useState<Partial<Record<keyof UnitFormData, string>>>({});
   const [unitErrors, setUnitErrors] = useState<Record<number, Partial<Record<keyof UnitFormData, string>>>>({});
+  // Mostrar u ocultar el formulario de alta. Si venimos de Catastro con datos iniciales,
+  // empezamos mostrando solo la lista de unidades para que funcione como pantalla de revisión.
+  const [showForm, setShowForm] = useState(initialData.length === 0);
 
   const generateId = () => `unit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -226,16 +229,32 @@ const CreateUnitManual: React.FC<CreateUnitManualProps> = ({
         </p>
       </div>
 
-      {/* Formulario para agregar/editar unidad */}
-      <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {isEditing 
-            ? t('units.editUnit', 'Editar Unidad')
-            : t('units.addNewUnit', 'Agregar Nueva Unidad')
-          }
-        </h2>
+      {/* Botón para alternar entre revisión y creación cuando ya hay unidades */}
+      {units.length > 0 && (
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={() => setShowForm(prev => !prev)}
+            className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {showForm
+              ? t('units.hideForm', 'Ocultar formulario')
+              : t('units.showForm', 'Agregar / editar unidades manualmente')}
+          </button>
+        </div>
+      )}
 
-        <form onSubmit={e => { e.preventDefault(); isEditing ? handleSaveEdit() : handleAddUnit(); }} className="space-y-6">
+      {/* Formulario para agregar/editar unidad */}
+      {showForm && (
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {isEditing 
+              ? t('units.editUnit', 'Editar Unidad')
+              : t('units.addNewUnit', 'Agregar Nueva Unidad')
+            }
+          </h2>
+
+          <form onSubmit={e => { e.preventDefault(); isEditing ? handleSaveEdit() : handleAddUnit(); }} className="space-y-6">
           {/* Unit name/number */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -396,38 +415,39 @@ const CreateUnitManual: React.FC<CreateUnitManualProps> = ({
             </div>
           </div>
 
-          {/* Botones de acción del formulario */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            {isEditing ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  {t('common.cancel', 'Cancelar')}
-                </button>
+            {/* Botones de acción del formulario */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    {t('common.cancel', 'Cancelar')}
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 ml-auto"
+                  >
+                    <Check className="w-4 h-4" />
+                    {t('common.save', 'Guardar')}
+                  </button>
+                </>
+              ) : (
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 ml-auto"
                 >
-                  <Check className="w-4 h-4" />
-                  {t('common.save', 'Guardar')}
+                  <Plus className="w-4 h-4" />
+                  {t('units.addUnit', 'Agregar Unidad')}
                 </button>
-              </>
-            ) : (
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 ml-auto"
-              >
-                <Plus className="w-4 h-4" />
-                {t('units.addUnit', 'Agregar Unidad')}
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Lista de unidades agregadas */}
       {units.length > 0 && (

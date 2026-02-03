@@ -10,7 +10,7 @@ import {
   MinusCircle,
 } from "lucide-react";
 import { BuildingCarousel } from "../components/BuildingCarousel";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreateBuildingMethodSelection from "./buildings/CreateBuildingMethodSelection";
@@ -224,8 +224,10 @@ function PaginationBar({
 export default function AssetsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
@@ -261,6 +263,9 @@ export default function AssetsList() {
     sortOrder: "asc",
     statusFilter: [],
     energyClassFilter: [],
+    typologyFilter: [],
+    occupationFilter: [],
+    complianceFilter: [],
   });
 
   useEffect(() => {
@@ -281,7 +286,8 @@ export default function AssetsList() {
 
         if (!mounted) return;
 
-        setBuildings(buildingsData);
+        console.log(`[AssetsList] Edificios cargados: ${buildingsData?.length || 0}`, buildingsData);
+        setBuildings(buildingsData || []);
         setDashboardStats(statsData);
 
         // Cargar certificados, libros digitales y ESG para todos los edificios en paralelo
@@ -357,32 +363,94 @@ export default function AssetsList() {
   }, [
     user,
     authLoading,
+    location.pathname, // Recargar cuando cambia la ruta (ej: volver desde crear edificio)
+    refreshKey, // Recargar cuando se fuerza refresh desde navegación
     startLoading,
     stopLoading,
     startStatsLoading,
     stopStatsLoading,
   ]);
 
+  // Escuchar cambios en location.state para forzar recarga
+  useEffect(() => {
+    if (location.state && (location.state as any).refresh) {
+      setRefreshKey((prev) => prev + 1);
+      // Limpiar el state para evitar recargas infinitas
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
+
 
   // Aplicar filtros y ordenamiento
   const filteredAndSortedBuildings = useMemo(() => {
+    console.log(`[AssetsList] Aplicando filtros - Total edificios: ${buildings.length}`, buildings.map(b => ({ id: b.id, name: b.name })));
     let result = [...buildings];
 
     // Ordenar por fecha de creación descendente (más recientes primero)
     result.sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
 
-    // Filtro de búsqueda por texto
+    // Filtro de búsqueda por texto (Soporta etiquetas localizadas)
     if (searchFilters.searchTerm) {
       const term = searchFilters.searchTerm.toLowerCase();
-      result = result.filter(
-        (building) =>
+      result = result.filter((building) => {
+        // 1. Campos básicos
+        const matchesBasic =
           building.name.toLowerCase().includes(term) ||
           building.address.toLowerCase().includes(term) ||
-          building.cadastralReference?.toLowerCase().includes(term)
-      );
+          building.cadastralReference?.toLowerCase().includes(term);
+        if (matchesBasic) return true;
+
+        // 2. Tipología (Localizada ES/EN)
+        const typologies = {
+          residential: { es: "residencial", en: "residential" },
+          commercial: { es: "comercial", en: "commercial" },
+          mixed: { es: "mixto", en: "mixed" },
+        };
+        const typ = typologies[building.typology] as { es: string; en: string };
+        if (typ && (typ.es.includes(term) || typ.en.includes(term))) return true;
+
+        // 3. Ocupación (Simulado para que el buscador responda a los términos)
+        const occupation = { es: "operativo", en: "operational" };
+        if (occupation.es.includes(term) || occupation.en.includes(term))
+          return true;
+
+        // 4. Clase Energética (Búsqueda exacta de letra A-G)
+        const certs = energyCertificates.filter(
+          (c) => c.buildingId === building.id
+        );
+        const rating =
+          certs.length > 0 ? getLatestRating(certs).toLowerCase().trim() : "";
+        if (rating === term) return true;
+
+        // 5. Cumplimiento (Basado en ESG Label)
+        const esg = esgScores.get(building.id);
+        const esgLabel =
+          esg?.status === "complete" && esg.data?.label
+            ? esg.data.label.toLowerCase()
+            : "";
+        
+        const complianceTerms = {
+          high: { es: "alto", en: "high" },
+          medium: { es: "medio", en: "medium" },
+          low: { es: "bajo", en: "low" },
+        };
+
+        let complianceLevel = "";
+        if (["a", "b"].includes(esgLabel)) complianceLevel = "high";
+        else if (["c", "d"].includes(esgLabel)) complianceLevel = "medium";
+        else if (["e", "f", "g"].includes(esgLabel)) complianceLevel = "low";
+
+        if (complianceLevel) {
+          const ct =
+            complianceTerms[complianceLevel as keyof typeof complianceTerms];
+          if (ct.es.includes(term) || ct.en.includes(term)) return true;
+        }
+
+        return false;
+      });
     }
 
     // Filtro por estado
@@ -403,6 +471,7 @@ export default function AssetsList() {
     }
 
     // Filtro por clase energética
+    // Filtro por clase energética
     if (searchFilters.energyClassFilter.length > 0) {
       result = result.filter((building) => {
         const certs = energyCertificates.filter(
@@ -410,7 +479,47 @@ export default function AssetsList() {
         );
         if (certs.length === 0) return false;
         const rating = getLatestRating(certs);
-        return searchFilters.energyClassFilter.includes(rating);
+        return searchFilters.energyClassFilter.includes(rating.trim());
+      });
+    }
+
+    // Filtro por Tipología
+    if (searchFilters.typologyFilter.length > 0) {
+      result = result.filter((building) =>
+        searchFilters.typologyFilter.includes(building.typology)
+      );
+    }
+
+    // Filtro por Ocupación (Simulado con "Operativo" ya que está hardcoded en la vista)
+    if (searchFilters.occupationFilter.length > 0) {
+      result = result.filter((_building) => {
+        // Asumimos que todos son "operativos" por ahora, como en la vista
+        if (searchFilters.occupationFilter.includes("operative")) return true;
+        return false;
+      });
+    }
+
+    // Filtro por Cumplimiento (Estimación basada en ESG Label)
+    if (searchFilters.complianceFilter.length > 0) {
+      result = result.filter((building) => {
+        const esg = esgScores.get(building.id);
+        const label =
+          esg?.status === "complete" && esg.data?.label ? esg.data.label : "Z";
+        const high = ["A", "B"];
+        const medium = ["C", "D"];
+        const low = ["E", "F", "G"];
+
+        if (searchFilters.complianceFilter.includes("high") && high.includes(label))
+          return true;
+        if (
+          searchFilters.complianceFilter.includes("medium") &&
+          medium.includes(label)
+        )
+          return true;
+        if (searchFilters.complianceFilter.includes("low") && low.includes(label))
+          return true;
+
+        return false;
       });
     }
 
@@ -467,6 +576,7 @@ export default function AssetsList() {
       return searchFilters.sortOrder === "asc" ? comparison : -comparison;
     });
 
+    console.log(`[AssetsList] Después de filtros - Resultado: ${result.length} edificios`);
     return result;
   }, [buildings, searchFilters, digitalBooks, energyCertificates, esgScores]);
 
@@ -760,6 +870,18 @@ export default function AssetsList() {
           </h3>
           {loading ? (
             <SkeletonBuildingList />
+          ) : buildings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">
+                {t("noBuildings", { defaultValue: "No hay edificios registrados" })}
+              </p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              >
+                {t("createFirstBuilding", { defaultValue: "Crear primer edificio" })}
+              </button>
+            </div>
           ) : paginated.length > 0 ? (
             <div className="flex flex-col gap-6">
               {paginated.map((building, index) => {

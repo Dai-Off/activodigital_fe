@@ -36,8 +36,8 @@ export function SidebarAssets() {
     city: "",
   });
 
-  // Cargar edificios
-  useEffect(() => {
+  // Función para cargar edificios
+  const loadBuildings = () => {
     setLoading(true);
     BuildingsApiService.getAllBuildings()
       .then((data) => {
@@ -48,6 +48,21 @@ export function SidebarAssets() {
         setBuildings([]);
         setLoading(false);
       });
+  };
+
+  // Cargar edificios al montar y establecer listener
+  useEffect(() => {
+    loadBuildings();
+
+    const handleBuildingDeleted = () => {
+      loadBuildings();
+    };
+
+    window.addEventListener('building-deleted', handleBuildingDeleted);
+    
+    return () => {
+      window.removeEventListener('building-deleted', handleBuildingDeleted);
+    };
   }, []);
 
   // Auto-expandir el edificio seleccionado
@@ -108,6 +123,12 @@ export function SidebarAssets() {
 
       // Establecer selectedBuildingId
       setSelectedBuildingId(buildingId);
+    } else if (pathname === "/assets" || pathname === "/assets/units") {
+      // Si estamos en el listado general, limpiar la selección del edificio
+      setSelectedBuildingId(null);
+      setViewMode("list");
+      setActiveSection(pathname === "/assets" ? "assetslist" : "unitslist");
+      setActiveTab(pathname === "/assets" ? "assetslist" : "unitslist");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Solo dependemos de pathname para evitar loops
@@ -161,13 +182,13 @@ export function SidebarAssets() {
   const menuItems = [
     {
       id: "assetslist",
-      label: "Listado de activos",
+      label: t("assetsglobalTitle", "Listado de activos"),
       Icon: House,
       route: "/assets",
     },
     {
       id: "unitslist",
-      label: "Listado de unidades",
+      label: t("unitsglobalTitle", "Listado de unidades"),
       Icon: House,
       route: "/assets/units",
     },
@@ -407,7 +428,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("units", "Unidades")}
+                          {t("units")}
                         </span>
                       </button>
                     </div>

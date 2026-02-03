@@ -1,8 +1,14 @@
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-export type SortField = 'name' | 'value' | 'status' | 'energyClass' | 'esgScore' | 'squareMeters';
-export type SortOrder = 'asc' | 'desc';
+export type SortField =
+  | "name"
+  | "value"
+  | "status"
+  | "energyClass"
+  | "esgScore"
+  | "squareMeters";
+export type SortOrder = "asc" | "desc";
 
 export interface SearchFilters {
   searchTerm: string;
@@ -10,6 +16,9 @@ export interface SearchFilters {
   sortOrder: SortOrder;
   statusFilter: string[];
   energyClassFilter: string[];
+  typologyFilter: string[];
+  occupationFilter: string[];
+  complianceFilter: string[];
 }
 
 interface AssetsSearchBarProps {
@@ -21,35 +30,60 @@ interface AssetsSearchBarProps {
 // STATUS_OPTIONS will be created inside component for i18n
 // moved inside component function
 
-const ENERGY_CLASS_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+const ENERGY_CLASS_OPTIONS = ["A", "B", "C", "D", "E", "F", "G"];
 
 // SORT_OPTIONS will be created inside component for i18n
 // moved inside component function
 
-export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoading }: AssetsSearchBarProps) {
+export default function AssetsSearchBar({
+  onFiltersChange,
+  totalResults,
+  isLoading,
+}: AssetsSearchBarProps) {
   const { t } = useTranslation();
 
   const STATUS_OPTIONS = [
-    { value: 'draft', label: t('pending', 'Pendiente') },
-    { value: 'ready_book', label: t('ready', 'Listo') },
-    { value: 'with_book', label: t('inProgress', 'En curso') },
-    { value: 'completed', label: t('completed', 'Completado') },
+    { value: "draft", label: t("pending", "Pendiente") },
+    { value: "ready_book", label: t("ready", "Listo") },
+    { value: "with_book", label: t("inProgress", "En curso") },
+    { value: "completed", label: t("completed", "Completado") },
+  ];
+
+  const TYPOLOGY_OPTIONS = [
+    { value: "residential", label: t("residential", "Residencial") },
+    { value: "commercial", label: t("commercial", "Comercial") },
+    { value: "mixed", label: t("office", "Mixto") },
+  ];
+
+  const OCCUPATION_OPTIONS = [
+    { value: "operative", label: t("operational", "Operativo") },
+    { value: "remodeling", label: t("inRemodeling", "En remodelación") },
+    { value: "vacant", label: t("vacant", "Vacío") },
+  ];
+
+  const COMPLIANCE_OPTIONS = [
+    { value: "high", label: t("high", "Alto") },
+    { value: "medium", label: t("medium", "Medio") },
+    { value: "low", label: t("low", "Bajo") },
   ];
 
   const SORT_OPTIONS: { value: SortField; label: string }[] = [
-    { value: 'name', label: t('name', 'Nombre') },
-    { value: 'value', label: t('value', 'Valor') },
-    { value: 'status', label: t('status', 'Estado') },
-    { value: 'energyClass', label: t('energyClass', 'Clase energética') },
-    { value: 'esgScore', label: t('esgScore', 'ESG Score') },
-    { value: 'squareMeters', label: t('squareMeters', 'Superficie') },
+    { value: "name", label: t("name", "Nombre") },
+    { value: "value", label: t("value", "Valor") },
+    { value: "status", label: t("status", "Estado") },
+    { value: "energyClass", label: t("energyClass", "Clase energética") },
+    { value: "esgScore", label: t("esgScore", "ESG Score") },
+    { value: "squareMeters", label: t("squareMeters", "Superficie") },
   ];
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [energyClassFilter, setEnergyClassFilter] = useState<string[]>([]);
+  const [typologyFilter, setTypologyFilter] = useState<string[]>([]);
+  const [occupationFilter, setOccupationFilter] = useState<string[]>([]);
+  const [complianceFilter, setComplianceFilter] = useState<string[]>([]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -62,7 +96,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
   };
 
   const handleSortOrderToggle = () => {
-    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(newOrder);
     emitFilters({ sortOrder: newOrder });
   };
@@ -83,18 +117,48 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
     emitFilters({ energyClassFilter: newFilter });
   };
 
+  const handleTypologyFilterChange = (type: string) => {
+    const newFilter = typologyFilter.includes(type)
+      ? typologyFilter.filter((t) => t !== type)
+      : [...typologyFilter, type];
+    setTypologyFilter(newFilter);
+    emitFilters({ typologyFilter: newFilter });
+  };
+
+  const handleOccupationFilterChange = (status: string) => {
+    const newFilter = occupationFilter.includes(status)
+      ? occupationFilter.filter((s) => s !== status)
+      : [...occupationFilter, status];
+    setOccupationFilter(newFilter);
+    emitFilters({ occupationFilter: newFilter });
+  };
+
+  const handleComplianceFilterChange = (level: string) => {
+    const newFilter = complianceFilter.includes(level)
+      ? complianceFilter.filter((l) => l !== level)
+      : [...complianceFilter, level];
+    setComplianceFilter(newFilter);
+    emitFilters({ complianceFilter: newFilter });
+  };
+
   const handleClearFilters = () => {
-    setSearchTerm('');
-    setSortField('name');
-    setSortOrder('asc');
+    setSearchTerm("");
+    setSortField("name");
+    setSortOrder("asc");
     setStatusFilter([]);
     setEnergyClassFilter([]);
+    setTypologyFilter([]);
+    setOccupationFilter([]);
+    setComplianceFilter([]);
     onFiltersChange({
-      searchTerm: '',
-      sortField: 'name',
-      sortOrder: 'asc',
+      searchTerm: "",
+      sortField: "name",
+      sortOrder: "asc",
       statusFilter: [],
       energyClassFilter: [],
+      typologyFilter: [],
+      occupationFilter: [],
+      complianceFilter: [],
     });
   };
 
@@ -105,11 +169,19 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
       sortOrder,
       statusFilter,
       energyClassFilter,
+      typologyFilter,
+      occupationFilter,
+      complianceFilter,
       ...overrides,
     });
   };
 
-  const activeFiltersCount = statusFilter.length + energyClassFilter.length;
+  const activeFiltersCount =
+    statusFilter.length +
+    energyClassFilter.length +
+    typologyFilter.length +
+    occupationFilter.length +
+    complianceFilter.length;
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-300 p-5 mb-6">
@@ -136,18 +208,28 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             type="text"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={t('searchAssets', 'Buscar activos...')}
+            placeholder={t("searchAssets", "Buscar activos...")}
             className="block w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           />
           {searchTerm && (
             <button
-              onClick={() => handleSearchChange('')}
+              onClick={() => handleSearchChange("")}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              aria-label={t('clearSearch', 'Limpiar búsqueda')}
+              aria-label={t("clearSearch", "Limpiar búsqueda")}
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           )}
@@ -158,7 +240,9 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
           <div className="relative group">
             <select
               value={sortField}
-              onChange={(e) => handleSortFieldChange(e.target.value as SortField)}
+              onChange={(e) =>
+                handleSortFieldChange(e.target.value as SortField)
+              }
               className="appearance-none pl-3 pr-8 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100/50"
               disabled={isLoading}
             >
@@ -169,8 +253,18 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
               ))}
             </select>
             <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <svg
+                className="h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </div>
@@ -179,39 +273,60 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             onClick={handleSortOrderToggle}
             className="px-3 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100/50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
-            aria-label={t('sortOrder', 'Ordenar {{order}}', { order: sortOrder === 'asc' ? t('descending', 'descendente') : t('ascending', 'ascendente') })}
-            title={sortOrder === 'asc' ? t('ascendingSort', 'Ascendente (A-Z, menor-mayor)') : t('descendingSort', 'Descendente (Z-A, mayor-menor)')}
+            aria-label={t("sortOrder", "Ordenar {{order}}", {
+              order:
+                sortOrder === "asc"
+                  ? t("descending", "descendente")
+                  : t("ascending", "ascendente"),
+            })}
+            title={
+              sortOrder === "asc"
+                ? t("ascendingSort", "Ascendente (A-Z, menor-mayor)")
+                : t("descendingSort", "Descendente (Z-A, mayor-menor)")
+            }
           >
             <svg
-              className={`w-3.5 h-3.5 transition-transform duration-300 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+              className={`w-3.5 h-3.5 transition-transform duration-300 ${sortOrder === "desc" ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
               strokeWidth={2.5}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7 11l5-5m0 0l5 5m-5-5v12"
+              />
             </svg>
-            <span className="hidden sm:inline">{sortOrder === 'asc' ? 'A-Z' : 'Z-A'}</span>
+            <span className="hidden sm:inline">
+              {sortOrder === "asc" ? "A-Z" : "Z-A"}
+            </span>
           </button>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
               showFilters || activeFiltersCount > 0
-                ? 'bg-blue-50 border border-blue-200/60 text-blue-700 shadow-sm'
-                : 'bg-gray-50/50 border border-gray-200/80 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300'
+                ? "bg-blue-50 border border-blue-200/60 text-blue-700 shadow-sm"
+                : "bg-gray-50/50 border border-gray-200/80 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={isLoading}
-            aria-label={t('additionalFilters', 'Filtros adicionales')}
+            aria-label={t("additionalFilters", "Filtros adicionales")}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
               />
             </svg>
-            <span className="hidden sm:inline">{t('filters', 'Filtros')}</span>
+            <span className="hidden sm:inline">{t("filters", "Filtros")}</span>
             {activeFiltersCount > 0 && (
               <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
                 {activeFiltersCount}
@@ -225,16 +340,26 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
       {showFilters && (
         <div
           className="pt-4 mt-3 border-t border-gray-200/50 animate-fadeIn"
-          style={{ animation: 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}
+          style={{ animation: "fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Filtro por estado con chips refinados */}
             <div>
               <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
-                {t('bookStatus', 'Estado del Libro')}
+                {t("bookStatus", "Estado del Libro")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {STATUS_OPTIONS.map((status) => (
@@ -243,8 +368,8 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                     onClick={() => handleStatusFilterChange(status.value)}
                     className={`group relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                       statusFilter.includes(status.value)
-                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm shadow-blue-500/30 scale-100'
-                        : 'bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60'
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm shadow-blue-500/30 scale-100"
+                        : "bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60"
                     }`}
                   >
                     <span className="relative z-10">{status.label}</span>
@@ -259,27 +384,37 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             {/* Filtro por clase energética con gradientes */}
             <div>
               <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
                 </svg>
-                {t('energyRating', 'Calificación Energética')}
+                {t("energyRating", "Calificación Energética")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {ENERGY_CLASS_OPTIONS.map((energyClass) => {
                   const isSelected = energyClassFilter.includes(energyClass);
                   const getEnergyGradient = (cls: string) => {
                     const gradients: Record<string, string> = {
-                      A: 'from-green-500 to-green-600 shadow-green-500/30',
-                      B: 'from-green-400 to-green-500 shadow-green-400/30',
-                      C: 'from-yellow-400 to-yellow-500 shadow-yellow-400/30',
-                      D: 'from-yellow-500 to-orange-400 shadow-yellow-500/30',
-                      E: 'from-orange-400 to-orange-500 shadow-orange-400/30',
-                      F: 'from-orange-500 to-red-500 shadow-red-500/30',
-                      G: 'from-red-500 to-red-600 shadow-red-500/30',
+                      A: "from-green-500 to-green-600 shadow-green-500/30",
+                      B: "from-green-400 to-green-500 shadow-green-400/30",
+                      C: "from-yellow-400 to-yellow-500 shadow-yellow-400/30",
+                      D: "from-yellow-500 to-orange-400 shadow-yellow-500/30",
+                      E: "from-orange-400 to-orange-500 shadow-orange-400/30",
+                      F: "from-orange-500 to-red-500 shadow-red-500/30",
+                      G: "from-red-500 to-red-600 shadow-red-500/30",
                     };
-                    return gradients[cls] || 'from-gray-400 to-gray-500';
+                    return gradients[cls] || "from-gray-400 to-gray-500";
                   };
-                  
+
                   return (
                     <button
                       key={energyClass}
@@ -287,7 +422,7 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
                       className={`group relative w-9 h-9 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center ${
                         isSelected
                           ? `bg-gradient-to-br ${getEnergyGradient(energyClass)} text-white shadow-sm scale-100`
-                          : 'bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60 hover:scale-105'
+                          : "bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60 hover:scale-105"
                       }`}
                     >
                       <span className="relative z-10">{energyClass}</span>
@@ -301,20 +436,153 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+            {/* Filtro por Tipología */}
+            <div>
+              <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+                {t("type", "Tipología")}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TYPOLOGY_OPTIONS.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => handleTypologyFilterChange(type.value)}
+                    className={`group relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      typologyFilter.includes(type.value)
+                        ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-sm shadow-purple-500/30 scale-100"
+                        : "bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60"
+                    }`}
+                  >
+                    <span className="relative z-10">{type.label}</span>
+                    {typologyFilter.includes(type.value) && (
+                      <div className="absolute inset-0 rounded-lg bg-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtro por Ocupación */}
+            <div>
+              <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                {t("occupation", "Ocupación")}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {OCCUPATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleOccupationFilterChange(opt.value)}
+                    className={`group relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      occupationFilter.includes(opt.value)
+                        ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-sm shadow-cyan-500/30 scale-100"
+                        : "bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60"
+                    }`}
+                  >
+                    <span className="relative z-10">{opt.label}</span>
+                    {occupationFilter.includes(opt.value) && (
+                      <div className="absolute inset-0 rounded-lg bg-cyan-400 opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtro por Cumplimiento (Compliance / ESG) */}
+            <div>
+              <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                {t("compliance", "Cumplimiento")}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {COMPLIANCE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleComplianceFilterChange(opt.value)}
+                    className={`group relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      complianceFilter.includes(opt.value)
+                        ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm shadow-emerald-500/30 scale-100"
+                        : "bg-gray-50/80 text-gray-600 hover:bg-gray-100 hover:text-gray-800 border border-gray-200/60"
+                    }`}
+                  >
+                    <span className="relative z-10">{opt.label}</span>
+                    {complianceFilter.includes(opt.value) && (
+                      <div className="absolute inset-0 rounded-lg bg-emerald-400 opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Botón para limpiar filtros mejorado */}
-          {(activeFiltersCount > 0 || searchTerm || sortField !== 'name' || sortOrder !== 'asc') && (
+          {(activeFiltersCount > 0 ||
+            searchTerm ||
+            sortField !== "name" ||
+            sortOrder !== "asc") && (
             <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-between items-center">
               <span className="text-xs text-gray-500">
-                {activeFiltersCount > 0 && t('activeFilters', '{{count}} filtro{{s}} activo{{s}}', { count: activeFiltersCount, s: activeFiltersCount === 1 ? '' : 's' })}
+                {activeFiltersCount > 0 &&
+                  t("activeFilters", "{{count}} filtro{{s}} activo{{s}}", {
+                    count: activeFiltersCount,
+                    s: activeFiltersCount === 1 ? "" : "s",
+                  })}
               </span>
               <button
                 onClick={handleClearFilters}
                 className="group px-3.5 py-1.5 text-xs font-medium text-gray-600 bg-gray-50/80 rounded-lg hover:bg-red-50 hover:text-red-600 border border-gray-200/60 hover:border-red-200 transition-all duration-200 flex items-center gap-1.5"
               >
-                <svg className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
-                {t('clearFilters', 'Limpiar filtros')}
+                {t("clearFilters", "Limpiar filtros")}
               </button>
             </div>
           )}
@@ -322,22 +590,39 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
       )}
 
       {/* Contador de resultados con diseño sutil */}
-      <div className={`flex items-center gap-2 text-xs ${showFilters ? 'mt-0' : 'mt-3'}`}>
+      <div
+        className={`flex items-center gap-2 text-xs ${showFilters ? "mt-0" : "mt-3"}`}
+      >
         {isLoading ? (
           <div className="flex items-center gap-2 text-gray-400">
             <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" />
-            <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-            <span>{t('loading', 'Cargando')}</span>
+            <div
+              className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"
+              style={{ animationDelay: "0.2s" }}
+            />
+            <div
+              className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"
+              style={{ animationDelay: "0.4s" }}
+            />
+            <span>{t("loading", "Cargando")}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-gray-500">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
             <span>
-              <span className="font-semibold text-gray-900">{totalResults}</span>{' '}
-              {totalResults === 1 ? t('asset', 'activo') : t('assets', 'activos')}
+              <span className="font-semibold text-gray-900">
+                {totalResults}
+              </span>{" "}
+              {totalResults === 1
+                ? t("asset", "activo")
+                : t("assets", "activos")}
               {(searchTerm || activeFiltersCount > 0) && (
-                <span className="ml-1 text-gray-400">• {t('filtered', 'filtrado{{s}}', { s: totalResults !== 1 ? 's' : '' })}</span>
+                <span className="ml-1 text-gray-400">
+                  •{" "}
+                  {t("filtered", "filtrado{{s}}", {
+                    s: totalResults !== 1 ? "s" : "",
+                  })}
+                </span>
               )}
             </span>
           </div>
@@ -366,4 +651,3 @@ export default function AssetsSearchBar({ onFiltersChange, totalResults, isLoadi
     </div>
   );
 }
-

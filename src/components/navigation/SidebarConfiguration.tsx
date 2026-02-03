@@ -13,20 +13,15 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
         useNavigation();
     const { t } = useLanguage();
     const navigate = useNavigate();
-    const [view, setView] = useState<string[]>([]);
-    const [activeMenuItem, setActiveMenuItem] = useState<String | null>("generalConfig");
+    const [activeMenuItem, setActiveMenuItem] = useState<string | null>("generalConfig");
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view') || "generalConfig";
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const viewParam = params.get('view');
         if (viewParam) {
             setActiveMenuItem(viewParam);
         }
-    }, []);
-
-    useEffect(() => {
-        setView([]);
-    }, []);
+    }, [viewParam]);
 
     const handleClick = (
         action: string,
@@ -44,7 +39,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
         <>
             <nav className="py-4">
                 <div className="space-y-1.5 px-3">
-                    {view ? (
+                    {viewParam ? (
                         <>
                             <Button
                                 variant="ghost"
@@ -60,7 +55,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
                             >
                                 <Settings className="w-4 h-4" />
                                 <span className="flex-1 text-left truncate leading-relaxed">
-                                    {t("General Config", "Configuración General")}
+                                    {t("generalPreferences")}
                                 </span>
                             </Button>
                             <Button variant="ghost"
@@ -76,7 +71,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
                             >
                                 <Settings className="w-4 h-4" />
                                 <span className="flex-1 text-left truncate leading-relaxed">
-                                    {t("Notification", "Notificación")}
+                                    {t("notifications")}
                                 </span>
                             </Button>
                             <Button variant="ghost"
@@ -92,7 +87,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
                             >
                                 <Settings className="w-4 h-4" />
                                 <span className="flex-1 text-left truncate leading-relaxed">
-                                    {t("Integration", "Integración")}
+                                    {t("integrations")}
                                 </span>
                             </Button>
                             <Button variant="ghost"
@@ -108,7 +103,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
                             >
                                 <Settings className="w-4 h-4" />
                                 <span className="flex-1 text-left truncate leading-relaxed">
-                                    {t("Security", "Seguridad")}
+                                    {t("security")}
                                 </span>
                             </Button>
                             <Button variant="ghost"
@@ -124,7 +119,7 @@ const SidebarConfiguration: React.FC<SidebarConfigurationParamas> = () => {
                             >
                                 <Settings className="w-4 h-4" />
                                 <span className="flex-1 text-left truncate leading-relaxed">
-                                    {t("Back up and Restauration", "Backup y Restauración")}
+                                    {t("backupAndRestoration")}
                                 </span>
                             </Button>
                         </>

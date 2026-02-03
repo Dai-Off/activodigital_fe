@@ -55,18 +55,27 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     propietarioEmail: '',
   });
 
-  // Cargar provincias al montar
+  // Cargar provincias solo cuando el usuario selecciona búsqueda por dirección
   useEffect(() => {
-    const loadProvinces = async () => {
-      try {
-        const provs = await CatastroApiService.getProvinces();
-        setProvinces(provs);
-      } catch (err) {
-        console.error('Error cargando provincias:', err);
-      }
-    };
-    loadProvinces();
-  }, []);
+    if (searchMethod === 'address' && provinces.length === 0) {
+      const loadProvinces = async () => {
+        try {
+          const provs = await CatastroApiService.getProvinces();
+          setProvinces(provs);
+        } catch (err: any) {
+          console.error('Error cargando provincias:', err);
+          // Si es un error 401, no hacer nada (el ProtectedRoute ya manejará el redirect)
+          // Si es otro error, mostrar mensaje pero no bloquear la UI
+          if (err?.status !== 401) {
+            // Solo mostrar error si no es un problema de autenticación del usuario
+            // Los errores 403 de la API de Catastro se manejarán cuando el usuario intente buscar
+            setError('No se pudieron cargar las provincias. Por favor, intenta de nuevo.');
+          }
+        }
+      };
+      loadProvinces();
+    }
+  }, [searchMethod]);
 
   // Cargar municipios cuando se selecciona una provincia
   useEffect(() => {
@@ -89,9 +98,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     }
   }, [selectedProvince]);
 
-  // Cargar vías cuando se selecciona un municipio
+  // Cargar vías cuando se selecciona un municipio y se escribe algo
   useEffect(() => {
-    if (selectedProvince && selectedMunicipality) {
+    if (selectedProvince && selectedMunicipality && streetName.length >= 2 && streetType) {
       const loadStreets = async () => {
         try {
           const vias = await CatastroApiService.getStreets(
@@ -142,11 +151,11 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           setIsLoading(false);
           return;
         }
-        const via = streets.find(v => v.codigo === selectedStreet);
+        const via = streets.find(v => v.codigoVia === selectedStreet);
         inmueble = await CatastroApiService.getBuildingByAddress(
           selectedProvince,
           selectedMunicipality,
-          via?.nombre || '',
+          via?.nombreVia || '',
           via?.tipoVia || '',
           number,
           escalera || undefined,
@@ -253,10 +262,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     const buildingData: BuildingStep1Data = {
       name: buildingName,
       address: catastroDataLoaded.address || '',
+      // Asegurar que la referencia catastral se pase correctamente (no convertir undefined a string vacío)
+      cadastralReference: catastroDataLoaded.cadastralReference && catastroDataLoaded.cadastralReference.trim().length > 0 
+        ? catastroDataLoaded.cadastralReference.trim() 
+        : '',
       constructionYear: catastroDataLoaded.constructionYear?.toString() || '',
       typology: catastroDataLoaded.typology || '',
       floors: catastroDataLoaded.numFloors?.toString() || '',
-      units: catastroDataLoaded.numUnits?.toString() || '',
+      units: '', // Ya no se usa, pero mantenemos el campo para compatibilidad
       price: additionalData.price,
       technicianEmail: additionalData.technicianEmail,
       cfoEmail: additionalData.cfoEmail,
@@ -423,8 +436,8 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 >
                   <option value="">{t('common.select', 'Seleccionar...')}</option>
                   {municipalities.map((m) => (
-                    <option key={m.codigo} value={m.codigo}>
-                      {m.nombre}
+                    <option key={m.nombreMunicipio} value={m.nombreMunicipio}>
+                      {m.nombreMunicipio}
                     </option>
                   ))}
                 </select>
@@ -486,9 +499,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 disabled={isLoading || !selectedMunicipality}
               >
                 <option value="">{t('common.select', 'Seleccionar...')}</option>
-                {streets.map((s) => (
-                  <option key={s.codigo} value={s.codigo}>
-                    {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombre}
+                {streets.map((s, idx) => (
+                  <option key={`${s.codigoVia}-${idx}`} value={s.codigoVia}>
+                    {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombreVia}
                   </option>
                 ))}
               </select>

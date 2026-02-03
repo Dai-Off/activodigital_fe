@@ -16,14 +16,12 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState<Role[]>([]);
   const [activeMenuItem, setActiveMenuItem] = useState<String | null>("todos");
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get('role');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const role = params.get('role');
-    if (role) {
-      setActiveMenuItem(role);
-    }
-  }, []);
+    if (role) setActiveMenuItem(role)
+  }, [role]);
 
   useEffect(() => {
     Promise.all([getRoles()])
@@ -67,7 +65,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
               >
                 <UsersIcon className="w-4 h-4" />
                 <span className="flex-1 text-left truncate leading-relaxed">
-                  {t("all Users", "Todos los usuarios")}
+                  {t("allUsers")}
                 </span>
               </Button>
               {
@@ -87,8 +85,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
                     >
                       <UsersIcon className="w-4 h-4" />
                       <span className="flex-1 text-left truncate leading-relaxed">
-                        {role.name.charAt(0).toUpperCase() +
-                          role.name.slice(1).toLowerCase()}
+                        {t(role.name)}
                       </span>
                     </Button>
                   </div>
@@ -108,7 +105,7 @@ const SidebarUsers: React.FC<SidebarUsersParamas> = () => {
               >
                 <UsersIcon className="w-4 h-4" />
                 <span className="flex-1 text-left truncate leading-relaxed">
-                  {t("Manage Permission", "Gestión de permisos")}
+                  {t("managePermission")}
                 </span>
               </Button>
             </>

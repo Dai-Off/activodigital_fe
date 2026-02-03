@@ -369,6 +369,9 @@ export default function CFOAssetsList() {
     sortOrder: "asc",
     statusFilter: [],
     energyClassFilter: [],
+    typologyFilter: [],
+    occupationFilter: [],
+    complianceFilter: [],
   });
 
   useEffect(() => {
@@ -478,15 +481,60 @@ export default function CFOAssetsList() {
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    // Filtro de bÃºsqueda por texto
+    // Filtro de bÃºsqueda por texto (Soporta etiquetas localizadas)
     if (searchFilters.searchTerm) {
       const term = searchFilters.searchTerm.toLowerCase();
-      result = result.filter(
-        (building) =>
+      result = result.filter((building) => {
+        // 1. Campos bÃ¡sicos
+        const matchesBasic =
           building.name.toLowerCase().includes(term) ||
           building.address.toLowerCase().includes(term) ||
-          building.cadastralReference?.toLowerCase().includes(term)
-      );
+          building.cadastralReference?.toLowerCase().includes(term);
+        if (matchesBasic) return true;
+
+        // 2. TipologÃ­a (Localizada ES/EN)
+        const typologies = {
+          residential: { es: "residencial", en: "residential" },
+          commercial: { es: "comercial", en: "commercial" },
+          mixed: { es: "mixto", en: "mixed" },
+        };
+        const typ = typologies[building.typology as keyof typeof typologies];
+        if (typ && (typ.es.includes(term) || typ.en.includes(term))) return true;
+
+        // 3. Clase EnergÃ©tica (BÃºsqueda exacta de letra A-G)
+        const certs = energyCertificates.filter(
+          (c) => c.buildingId === building.id
+        );
+        const rating =
+          certs.length > 0 ? getLatestRating(certs).toLowerCase().trim() : "";
+        if (rating === term) return true;
+
+        // 4. Cumplimiento (Basado en ESG Label)
+        const esg = esgScores.get(building.id);
+        const esgLabel =
+          esg?.status === "complete" && esg.data?.label
+            ? esg.data.label.toLowerCase()
+            : "";
+
+        const complianceTerms = {
+          high: { es: "alto", en: "high" },
+          medium: { es: "medio", en: "medium" },
+          low: { es: "bajo", en: "low" },
+        };
+
+        let complianceLevel = "";
+        if (["a", "b"].includes(esgLabel)) complianceLevel = "high";
+        else if (["c", "d"].includes(esgLabel)) complianceLevel = "medium";
+        else if (["e", "f", "g"].includes(esgLabel)) complianceLevel = "low";
+
+        if (complianceLevel) {
+          const ct =
+            complianceTerms[complianceLevel as keyof typeof complianceTerms];
+          if (ct.es.includes(term) || ct.en.includes(term)) return true;
+        }
+
+        return false;
+      });
     }
 
     // Filtro por estado
@@ -514,7 +562,53 @@ export default function CFOAssetsList() {
         );
         if (certs.length === 0) return false;
         const rating = getLatestRating(certs);
-        return searchFilters.energyClassFilter.includes(rating);
+        return searchFilters.energyClassFilter.includes(rating.trim());
+      });
+    }
+
+    // Filtro por TipologÃ­a
+    if (searchFilters.typologyFilter.length > 0) {
+      result = result.filter((building) =>
+        searchFilters.typologyFilter.includes(building.typology)
+      );
+    }
+
+    // Filtro por OcupaciÃ³n (Simulado con "Operativo" ya que estÃ¡ hardcoded en la vista)
+    if (searchFilters.occupationFilter.length > 0) {
+      result = result.filter((_building) => {
+        // Asumimos que todos son "operativos" por ahora, como en la vista
+        if (searchFilters.occupationFilter.includes("operative")) return true;
+        return false;
+      });
+    }
+
+    // Filtro por Cumplimiento (EstimaciÃ³n basada en ESG Label)
+    if (searchFilters.complianceFilter.length > 0) {
+      result = result.filter((building) => {
+        const esg = esgScores.get(building.id);
+        const label =
+          esg?.status === "complete" && esg.data?.label ? esg.data.label : "Z";
+        const high = ["A", "B"];
+        const medium = ["C", "D"];
+        const low = ["E", "F", "G"];
+
+        if (
+          searchFilters.complianceFilter.includes("high") &&
+          high.includes(label)
+        )
+          return true;
+        if (
+          searchFilters.complianceFilter.includes("medium") &&
+          medium.includes(label)
+        )
+          return true;
+        if (
+          searchFilters.complianceFilter.includes("low") &&
+          low.includes(label)
+        )
+          return true;
+
+        return false;
       });
     }
 

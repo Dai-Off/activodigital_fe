@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Users as UsersIcon, UserPlus, Filter, Search, Shield } from "lucide-react";
+import { Users as UsersIcon, UserPlus, Filter, Search, Shield, Trash, Pencil } from "lucide-react";
 import { createUser, deleteUser, editUser, getAllUsers, getRoles, type Role } from "~/services/users";
 import { t } from "i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import { SkeletonUsers } from './ui/LoadingSystem';
 import { Button } from "./ui/button";
 import { useToast } from "~/contexts/ToastContext";
 import { howTimeWas } from "~/utils/fechas";
+import { useTranslations } from "./i18n/useTranslations";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ interface User {
 type Mode = 'USUARIOS' | 'PERMISOS';
 
 export default function App() {
+  const { users: txt } = useTranslations() as any;
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>();
   const [roles, setRoles] = useState<Role[]>();
@@ -31,13 +33,14 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<Boolean | null>(null);
 
   const modalRef = useRef<VenUsuarioRefMethods>(null);
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
 
   const [sortColumn, setSortColumn] = useState<'name' | 'role' | 'activity'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  
 
   useEffect(() => {
     setLoading(true);
@@ -118,7 +121,15 @@ export default function App() {
 
   const handleDelete = async (userId: string) => {
     try {
-      await deleteUser(userId);
+      const response = await deleteUser(userId);
+      if (response?.ok) {
+        setUsers(prev => {
+          return (prev ?? []).filter(user => user.id !== userId);
+        });
+
+        showSuccess(txt.messages.deleteSuccess);
+      }
+      return response;
     } catch (err) {
       let errorMsg = 'Puedes reportar este fallo a nuestro equipo.';
       if (err instanceof Error) {
@@ -127,8 +138,6 @@ export default function App() {
         errorMsg = err;
       }
       showError('¡Ups! Ocurrió algo.', errorMsg)
-    } finally {
-      reloadData()
     }
   };
 
@@ -244,11 +253,11 @@ export default function App() {
                   </span>
                   <div>
                     <h2 className="text-lg sm:text-xl md:text-2xl text-gray-900 font-semibold">
-                      {canSeeUser ? t('User Manage', 'Gestión de Usuarios') : t('Permission Role', 'Gestión de Permisos')}
+                      {canSeeUser ? txt.title : txt.permissionsTitle}
                     </h2>
                     {canSeeUser ? (<p className="text-xs sm:text-sm text-gray-500">
-                      {users?.length} {t('usersFound', 'usuarios en el sistema')}
-                    </p>) : (<p className="text-xs sm:text-sm text-gray-500">Administra roles y permisos de usuarios</p>)}
+                      {users?.length} {txt.found}
+                    </p>) : (<p className="text-xs sm:text-sm text-gray-500">{txt.permissionsDescription}</p>)}
                   </div>
                 </div>
 
@@ -256,8 +265,8 @@ export default function App() {
                   onClick={handleCreateUser}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-700 text-sm transition-all shadow-sm hover:shadow-md">
                   <UserPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Nuevo Usuario</span>
-                  <span className="sm:hidden">Nuevo</span>
+                  <span className="hidden sm:inline">{txt.newUser}</span>
+                  <span className="sm:hidden">{txt.newUser}</span>
                 </Button>}
               </div>
             </div>
@@ -270,14 +279,14 @@ export default function App() {
                       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Buscar por nombre, email o rol..."
+                        placeholder={txt.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div className="text-xs text-gray-500 whitespace-nowrap hidden sm:block">
-                      {filteredUsers.length} de {users?.length} usuarios
+                      {filteredUsers.length} de {users?.length} {txt.usersFound}
                     </div>
                   </div>
 
@@ -287,9 +296,9 @@ export default function App() {
                       onChange={e => setSortColumn(e.target.value as 'name' | 'role' | 'activity')}
                       className="px-3 py-2 border border-gray-300 rounded-lg text-xs hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-none min-w-0"
                     >
-                      <option value="name">Nombre</option>
-                      <option value="role">Rol</option>
-                      <option value="activity">Actividad</option>
+                      <option value="name">{txt.sortName}</option>
+                      <option value="role">{txt.sortRole}</option>
+                      <option value="activity">{txt.sortActivity}</option>
                     </select>
 
                     <Button
@@ -305,13 +314,13 @@ export default function App() {
                       className="flex items-center gap-2 px-3 py-2 border rounded-lg text-xs hover:bg-gray-50 border-gray-300 flex-shrink-0"
                       onClick={() => setShowFilters(f => !f)}>
                       <Filter className="w-3 h-3" />
-                      <span>Filtros</span>
+                      <span>{txt.filters.label}</span>
                     </Button>
                   </div>
                 </div>
 
                 <div className="text-xs text-gray-500 sm:hidden">
-                  {filteredUsers.length} de {users?.length} usuarios
+                  {filteredUsers.length} de {users?.length} {txt.usersFound}
                 </div>
               </div>
 
@@ -347,27 +356,27 @@ export default function App() {
                             {r.name.charAt(0).toUpperCase() + r.name.slice(1).toLowerCase()}
                           </option>
                         ))}
-                        <option value='permisos'>Gestión de permisos</option>
+                        <option value='permisos'>{txt.permissions}</option>
                       </select>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="flex-1 w-full">
-                        <label className="block text-gray-700 font-medium text-sm mb-2">Rol</label>
+                        <label className="block text-gray-700 font-medium text-sm mb-2">{txt.role.label}</label>
                         <select
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors text-sm"
                           value={roleFilter || ''}
                           onChange={e => setRoleFilter(e.target.value || null)}
                         >
-                          <option value=''>Todos los roles</option>
+                          <option value=''>{txt.status_app.all}</option>
                           {roles?.map((r, idx) => (
-                            <option value={r.name} key={idx}>{r.name}</option>
+                            <option value={r.name} key={idx}>{txt.role[r.name]}</option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex-1 w-full">
-                        <label className="block text-gray-700 font-medium text-sm mb-2">Estado</label>
+                        <label className="block text-gray-700 font-medium text-sm mb-2">{txt.status_app.label}</label>
                         <select
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors text-sm"
                           value={statusSelectValue}
@@ -382,9 +391,9 @@ export default function App() {
                             }
                           }}
                         >
-                          <option value=''>Todos los estados</option>
-                          <option value={'true'}>Activo</option>
-                          <option value={'false'}>Inactivo</option>
+                          <option value=''>{txt.status_app.all}</option>
+                          <option value={'true'}>{txt.status_app.active}</option>
+                          <option value={'false'}>{txt.status_app.inactive}</option>
                         </select>
                       </div>
                     </div>
@@ -401,22 +410,22 @@ export default function App() {
                     <table className="w-full">
                       <thead className="bg-gray-50 sticky top-0">
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{t('Name', "Nombre")}</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Rol</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Email</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Estado</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Última actividad</th>
-                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">Acciones</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.name}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.role}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.email}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.status}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.activity}</th>
+                          <th className="text-left py-2 px-3 text-xs text-gray-600 font-semibold">{txt.table.actions}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredUsers.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="p-8 text-center text-gray-500 text-base">
-                              {t('noUsers', 'No se encontraron usuarios que coincidan con los filtros.')}
+                              {txt.messages.empty}
                             </td>
                           </tr>
-                        ) : (
+                        ) : ( 
                           filteredUsers.map((u) => (
                             <tr
                               key={u.id}
@@ -439,13 +448,13 @@ export default function App() {
                               </td>
                               <td className="py-2 px-3">
                                 <span className={`inline-flex px-2 py-0.5 rounded text-xs ${u.status ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                                  {u.status ? "Activo" : "Inactivo"}
+                                  {u.status ? txt.status_app.active : txt.status_app.inactive}
                                 </span>
                               </td>
                               <td className="py-2 px-3">
                                 <span className="text-xs text-gray-500">{howTimeWas(u.updatedAt)}</span>
                               </td>
-                              <td className="py-2 px-3">
+                              <td className="py-2 px-3 flex gap-2">
                                 <button
                                   className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
                                   onClick={(e) => {
@@ -459,7 +468,16 @@ export default function App() {
                                     });
                                   }}
                                 >
-                                  Editar
+                                  <Pencil className="w-4 h-4 text-blue-600" />
+                                </button>
+                                <button
+                                  className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(u.id);
+                                  }}
+                                >
+                                  <Trash className="w-4 h-4 text-red-600" />
                                 </button>
                               </td>
                             </tr>
@@ -495,21 +513,32 @@ export default function App() {
                                 <p className="text-xs text-gray-600 truncate max-w-[200px]">{u.email}</p>
                               </div>
                             </div>
-                            <button
-                              className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser({
-                                  id: u.id,
-                                  fullName: u.fullName,
-                                  email: u.email,
-                                  role: typeof u.role === "string" ? u.role : u.role?.name,
-                                  status: u.status
-                                });
-                              }}
-                            >
-                              Editar
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditUser({
+                                    id: u.id,
+                                    fullName: u.fullName,
+                                    email: u.email,
+                                    role: typeof u.role === "string" ? u.role : u.role?.name,
+                                    status: u.status
+                                  });
+                                }}
+                              >
+                                <Pencil className="w-4 h-4 text-blue-600" />
+                              </button>
+                              <button
+                                className="text-xs text-blue-600 hover:text-blue-700 transition-colors shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(u.id);
+                                }}
+                              >
+                                <Trash className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
                           </div>
                           <div className="mt-2 flex justify-between items-center">
                             <span className="text-xs text-gray-700">

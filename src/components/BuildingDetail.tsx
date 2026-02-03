@@ -47,6 +47,7 @@ import {
   type ESGResponse,
 } from "../services/esg";
 import { FinancialSnapshotsService } from "../services/financialSnapshots";
+import { UnitsApiService, type BuildingUnit } from "../services/unitsApi";
 
 // Fix para los iconos de Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -96,6 +97,7 @@ const BuildingDetail: React.FC = () => {
   const [hasFinancialData, setHasFinancialData] = useState<boolean | null>(
     null
   );
+  const [units, setUnits] = useState<BuildingUnit[]>([]);
 
   // Función para confirmar eliminación
   const confirmDeleteCertificate = async () => {
@@ -236,6 +238,15 @@ const BuildingDetail: React.FC = () => {
         } catch (error) {
           console.error("Error cargando datos financieros:", error);
           setHasFinancialData(false);
+        }
+
+        // Cargar unidades del edificio
+        try {
+          const unitsData = await UnitsApiService.listUnits(buildingData.id);
+          setUnits(unitsData || []);
+        } catch (error) {
+          console.error("Error cargando unidades:", error);
+          setUnits([]);
         }
 
         // Cargar datos ESG para este edificio específico
@@ -850,6 +861,85 @@ const BuildingDetail: React.FC = () => {
       postalCode: postalMatch ? postalMatch[1] : null,
     };
   };
+
+  // Calcular porcentaje de ocupación basado en unidades ocupadas
+  // Una unidad está ocupada SOLO si:
+  // 1. Tiene status="ocupada" (case-insensitive) - NO cuenta "disponible", "available", "mantenimiento", etc.
+  // 2. Y/O tiene tenant (no vacío) - PERO solo si el status NO es explícitamente "disponible" o "available"
+  const occupancyPercentage = useMemo(() => {
+    if (!units || units.length === 0) {
+      return 0;
+    }
+    
+    const totalUnits = units.length;
+    let occupiedCount = 0;
+
+    console.log("🔍 [OCUPACIÓN] ===== INICIO CÁLCULO =====");
+    console.log(`📊 Total unidades: ${totalUnits}`);
+    
+    for (const unit of units) {
+      const statusStr = unit.status ? String(unit.status).trim() : "";
+      const statusLower = statusStr.toLowerCase();
+      
+      // Verificar si el status es explícitamente "ocupada" o "occupied"
+      const isStatusOccupied = statusLower === "ocupada" || statusLower === "occupied";
+      
+      // Verificar si el status es explícitamente "disponible" o "available"
+      const isStatusAvailable = statusLower === "disponible" || statusLower === "available";
+      
+      const tenantStr = unit.tenant ? String(unit.tenant).trim() : "";
+      const hasTenant = tenantStr.length > 0;
+      
+      // Una unidad está ocupada si:
+      // - Tiene status="ocupada" O
+      // - Tiene tenant Y el status NO es "disponible"/"available"
+      const isOccupied = isStatusOccupied || (hasTenant && !isStatusAvailable);
+      
+      console.log(`\n🏢 Unidad: ${unit.name || unit.identifier || 'Sin nombre'}`);
+      console.log(`   - Status original: "${unit.status}"`);
+      console.log(`   - Status lower: "${statusLower}"`);
+      console.log(`   - isStatusOccupied (ocupada/occupied): ${isStatusOccupied}`);
+      console.log(`   - isStatusAvailable (disponible/available): ${isStatusAvailable}`);
+      console.log(`   - Tenant: "${tenantStr}"`);
+      console.log(`   - hasTenant: ${hasTenant}`);
+      console.log(`   - Lógica: isStatusOccupied (${isStatusOccupied}) || (hasTenant (${hasTenant}) && !isStatusAvailable (${!isStatusAvailable}))`);
+      console.log(`   - ✅ RESULTADO: ${isOccupied ? 'OCUPADA' : 'NO OCUPADA'}`);
+      
+      if (isOccupied) {
+        occupiedCount++;
+      }
+    }
+
+    const percentage = totalUnits > 0 ? (occupiedCount / totalUnits) * 100 : 0;
+    console.log(`\n📈 RESULTADO FINAL: ${occupiedCount}/${totalUnits} = ${Math.round(percentage)}%`);
+    console.log("🔍 [OCUPACIÓN] ===== FIN CÁLCULO =====\n");
+    
+    return Math.round(percentage);
+  }, [units]);
+
+  // Contar unidades ocupadas para mostrar en el ratio
+  const occupiedCount = useMemo(() => {
+    if (!units || units.length === 0) return 0;
+    
+    let count = 0;
+    for (const unit of units) {
+      const statusStr = unit.status ? String(unit.status).trim() : "";
+      const statusLower = statusStr.toLowerCase();
+      
+      const isStatusOccupied = statusLower === "ocupada" || statusLower === "occupied";
+      const isStatusAvailable = statusLower === "disponible" || statusLower === "available";
+      
+      const tenantStr = unit.tenant ? String(unit.tenant).trim() : "";
+      const hasTenant = tenantStr.length > 0;
+      
+      const isOccupied = isStatusOccupied || (hasTenant && !isStatusAvailable);
+      
+      if (isOccupied) {
+        count++;
+      }
+    }
+    return count;
+  }, [units]);
 
   // Preparar imágenes del edificio - filtrar duplicados y URLs vacías
   const buildingImages = useMemo(() => {
@@ -1610,23 +1700,46 @@ const BuildingDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Cumplimiento por tipología */}
+          {/* Ocupación del edificio */}
           <div className="bg-white rounded-lg p-5 shadow-sm lg:col-span-2">
-            <h3 className="text-sm mb-3">
-              {t("complianceByTypology", "Cumplimiento por tipología")}
+            <h3 className="text-sm font-medium text-gray-600 mb-5">
+              {t("buildingOccupancy", "Ocupación del Activo")}
             </h3>
-            <div className="mb-2">
-              <span className="text-gray-900">85%</span>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-4xl font-bold text-gray-900">
+                {occupancyPercentage}%
+              </span>
+              <span className="text-base font-medium text-gray-500">
+                {occupancyPercentage === 100
+                  ? "ocupado"
+                  : occupancyPercentage > 0
+                  ? "parcialmente ocupado"
+                  : "disponible"}
+              </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: "85%" }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {t("complianceLevelNormative", "Nivel de cumplimiento normativo")}
-            </p>
+            {units.length > 0 && (
+              <p className="text-sm text-gray-500 mb-4">
+                ({occupiedCount}/{units.length})
+              </p>
+            )}
+            {units.length > 0 ? (
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-3 rounded-full transition-all duration-300 ${
+                    occupancyPercentage === 100
+                      ? "bg-green-500"
+                      : occupancyPercentage > 0
+                      ? "bg-yellow-500"
+                      : "bg-gray-300"
+                  }`}
+                  style={{ width: `${occupancyPercentage}%` }}
+                ></div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                {t("noUnitsData", "No hay datos de unidades disponibles")}
+              </p>
+            )}
           </div>
 
           {/* Estado de certificación */}
@@ -1983,7 +2096,7 @@ const BuildingDetail: React.FC = () => {
           {/* Actividad reciente */}
           <div className="bg-white rounded-lg p-5 shadow-sm">
             <h3 className="text-sm mb-4">
-              {t("recentActivity", "Actividad reciente")}
+              {t("recent Activity", "Actividad Reciente")}
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 pb-3 border-b border-gray-100">

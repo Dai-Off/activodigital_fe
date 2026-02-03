@@ -9,13 +9,13 @@ export interface Provincia {
 }
 
 export interface Municipio {
-  codigo: string;
-  nombre: string;
+  codigoMunicipioIne: string;
+  nombreMunicipio: string;
 }
 
 export interface Via {
-  codigo: string;
-  nombre: string;
+  codigoVia: string;
+  nombreVia: string;
   tipoVia?: string;
 }
 
@@ -129,7 +129,169 @@ export interface CatastroBuildingData {
   squareMeters?: number;
 }
 
+// -------------------- Unidades por dirección (XML) --------------------
+
+export interface CatastroAddressParams {
+  provincia: string;
+  municipio: string;
+  siglaVia: string;
+  calle: string;
+  numero: string;
+  bloque?: string;
+  escalera?: string;
+  planta?: string;
+  puerta?: string;
+}
+
+/**
+ * Llama al backend para obtener las unidades de un inmueble a partir de su
+ * dirección, devolviendo únicamente el XML crudo que viene de Catastro.
+ *
+ * Usa la misma capa estándar de `apiFetch` (incluye automáticamente el token
+ * de autenticación del usuario desde local/sessionStorage).
+ */
+export async function fetchCatastroUnitsXmlByAddress(
+  params: CatastroAddressParams
+): Promise<string> {
+  const searchParams = new URLSearchParams();
+
+  // Campos obligatorios
+  searchParams.append('provincia', params.provincia);
+  searchParams.append('municipio', params.municipio);
+  searchParams.append('siglaVia', params.siglaVia);
+  searchParams.append('calle', params.calle);
+  searchParams.append('numero', params.numero);
+
+  // Campos opcionales solo si tienen valor
+  if (params.bloque) searchParams.append('bloque', params.bloque);
+  if (params.escalera) searchParams.append('escalera', params.escalera);
+  if (params.planta) searchParams.append('planta', params.planta);
+  if (params.puerta) searchParams.append('puerta', params.puerta);
+
+  let response: any;
+  try {
+    response = await apiFetch(
+      `/catastroApi/unidades-por-direccion?${searchParams.toString()}`,
+      {
+        method: 'GET',
+      }
+    );
+  } catch (error: any) {
+    const message =
+      (error && error.message) ||
+      'No se pudieron obtener las unidades desde Catastro. Por favor, inténtalo de nuevo.';
+
+    // Normalizar mensajes muy técnicos a algo entendible
+    if (error?.status === 403 || error?.status === 401) {
+      throw new Error(
+        'No se ha podido acceder a la información de Catastro para esta dirección. ' +
+          'Por favor, verifica que tienes sesión iniciada y, si el problema persiste, contacta con soporte.'
+      );
+    }
+
+    throw new Error(
+      message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')
+        ? 'No se pudo conectar con el servicio de Catastro. Verifica tu conexión a internet e inténtalo de nuevo.'
+        : message
+    );
+  }
+
+  if (!response || typeof response !== 'object' || typeof (response as any).xml !== 'string') {
+    throw new Error(
+      'La respuesta del servicio de Catastro no es válida. Vuelve a intentarlo en unos minutos.'
+    );
+  }
+
+  return (response as any).xml;
+}
+
 // -------------------- Servicio de API de Catastro --------------------
+
+// Normalizadores defensivos para adaptarnos a distintos formatos de respuesta,
+// pero respetando la estructura original cuando ya viene como { codigo, nombre }.
+function normalizeProvinces(raw: any[]): Provincia[] {
+  if (!raw || raw.length === 0) return [];
+  const first = raw[0];
+  if (first && typeof first === 'object' && 'codigo' in first && 'nombre' in first) {
+    return raw as Provincia[];
+  }
+
+  return raw.map((item, index) => {
+    // Catastro devuelve provincias como { nombre, codigoProvinciaIne } pero
+    // las APIs de búsqueda por dirección esperan el NOMBRE como parámetro
+    // (?provincia=MADRID). Para mantener compatibilidad con pantallas
+    // existentes, usamos siempre el nombre como "codigo" público.
+    const codigo =
+      item?.nombre ??
+      item?.codigoProvinciaIne ??
+      item?.codigo ??
+      item?.code ??
+      item?.id ??
+      String(index);
+    const nombre =
+      item?.nombre ?? item?.name ?? item?.provincia ?? item?.descripcion ?? `Provincia ${index + 1}`;
+    return { codigo: String(codigo), nombre: String(nombre) };
+  });
+}
+
+function normalizeMunicipalities(raw: any[]): Municipio[] {
+  if (!raw || raw.length === 0) return [];
+  const first = raw[0];
+  // Si ya tiene el formato correcto, devolverlo directamente
+  if (first && typeof first === 'object' && 'codigoMunicipioIne' in first && 'nombreMunicipio' in first) {
+    return raw as Municipio[];
+  }
+
+  return raw.map((item, index) => {
+    const codigoMunicipioIne =
+      // Catastro devuelve municipios como { codigoMunicipioIne, nombreMunicipio, ... }
+      // pero las APIs de búsqueda por dirección esperan el NOMBRE del municipio
+      // (?municipio=MADRID). Para mantener compatibilidad, usamos el nombre como codigoMunicipioIne
+      // cuando no hay codigoMunicipioIne disponible.
+      item?.codigoMunicipioIne ??
+      item?.codigoINE ??
+      item?.codigo ??
+      item?.code ??
+      item?.id ??
+      item?.nombreMunicipio ??
+      String(index);
+    const nombreMunicipio =
+      item?.nombreMunicipio ??
+      item?.nombre ??
+      item?.name ??
+      item?.municipio ??
+      item?.descripcion ??
+      `Municipio ${index + 1}`;
+    return { codigoMunicipioIne: String(codigoMunicipioIne), nombreMunicipio: String(nombreMunicipio) };
+  });
+}
+
+function normalizeStreets(raw: any[]): Via[] {
+  if (!raw || raw.length === 0) return [];
+  const first = raw[0];
+  // Si ya tiene el formato correcto, devolverlo directamente
+  if (first && typeof first === 'object' && 'codigoVia' in first && 'nombreVia' in first) {
+    return raw as Via[];
+  }
+
+  return raw.map((item, index) => {
+    const codigoVia = 
+      item?.codigoVia ??
+      item?.codigo ?? 
+      item?.code ?? 
+      item?.id ?? 
+      String(index);
+    const nombreVia =
+      item?.nombreVia ??
+      item?.nombre ?? 
+      item?.name ?? 
+      item?.via ?? 
+      item?.descripcion ?? 
+      `Vía ${index + 1}`;
+    const tipoVia = item?.tipoVia ?? item?.tipo ?? item?.sigla ?? undefined;
+    return { codigoVia: String(codigoVia), nombreVia: String(nombreVia), tipoVia };
+  });
+}
 
 export class CatastroApiService {
   /**
@@ -138,8 +300,20 @@ export class CatastroApiService {
   static async getProvinces(): Promise<Provincia[]> {
     try {
       const response = await apiFetch('/CatastroApi/provincias');
-      return Array.isArray(response) ? response : [];
-    } catch (error) {
+
+      // La API puede devolver directamente el array o envolverlo en { data: [...] } o { provincias: [...] }
+      const raw =
+        (Array.isArray(response) && response) ||
+        (Array.isArray((response as any)?.data) && (response as any).data) ||
+        (Array.isArray((response as any)?.provincias) && (response as any).provincias) ||
+        [];
+
+      return normalizeProvinces(raw);
+    } catch (error: any) {
+      // Manejar error 403 específicamente
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener las provincias: ${message}`);
     }
@@ -152,8 +326,18 @@ export class CatastroApiService {
     try {
       const params = new URLSearchParams({ provincia });
       const response = await apiFetch(`/CatastroApi/municipios?${params.toString()}`);
-      return Array.isArray(response) ? response : [];
-    } catch (error) {
+
+      const raw =
+        (Array.isArray(response) && response) ||
+        (Array.isArray((response as any)?.data) && (response as any).data) ||
+        (Array.isArray((response as any)?.municipios) && (response as any).municipios) ||
+        [];
+
+      return normalizeMunicipalities(raw);
+    } catch (error: any) {
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener los municipios: ${message}`);
     }
@@ -174,8 +358,18 @@ export class CatastroApiService {
       if (tipoVia) params.append('tipoVia', tipoVia);
       
       const response = await apiFetch(`/CatastroApi/vias?${params.toString()}`);
-      return Array.isArray(response) ? response : [];
-    } catch (error) {
+
+      const raw =
+        (Array.isArray(response) && response) ||
+        (Array.isArray((response as any)?.data) && (response as any).data) ||
+        (Array.isArray((response as any)?.vias) && (response as any).vias) ||
+        [];
+
+      return normalizeStreets(raw);
+    } catch (error: any) {
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`No se pudieron obtener las vías: ${message}`);
     }
@@ -208,7 +402,23 @@ export class CatastroApiService {
       
       try {
         response = await apiFetch(`/CatastroApi/inmuebleRc?${params.toString()}`) as CatastroApiResponse;
-      } catch (fetchError) {
+      } catch (fetchError: any) {
+        // Manejar error 403 específicamente primero
+        if (fetchError?.status === 403) {
+          throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+        }
+        
+        // Si el error 500 viene de la API externa de Catastro (tiene source o details específicos)
+        if (fetchError?.status === 500) {
+          const errorBody = fetchError?.body || {};
+          // Verificar si el error viene de la API externa de Catastro
+          if (errorBody.source === 'catastro_external_api' || 
+              errorBody.details?.includes('Error de autenticación con la API de Catastro') ||
+              errorBody.error?.includes('Error HTTP: 403')) {
+            throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+          }
+        }
+        
         // Capturar errores de red o de la API
         const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
         
@@ -216,15 +426,21 @@ export class CatastroApiService {
           throw new Error('No se pudo conectar con el servicio de catastro. Esto puede deberse a:\n\n• Problemas con tu conexión a internet\n• El servicio de catastro está temporalmente no disponible\n\nPor favor, verifica tu conexión e inténtalo de nuevo en unos momentos.');
         }
         
-        if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+        if (errorMessage.includes('404') || errorMessage.includes('Not Found') || fetchError?.status === 404) {
           throw new Error(`No se encontró ningún edificio con el código catastral "${trimmedRc}".\n\nPosibles causas:\n• El código catastral es incorrecto o tiene un error\n• El inmueble no está registrado en el catastro\n• El código corresponde a otro tipo de bien (terreno, etc.)\n\n💡 Consejo: Verifica que el código esté completo y sin espacios. El código catastral suele encontrarse en escrituras, recibos del IBI o certificados catastrales.`);
         }
         
-        if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+        if (errorMessage.includes('400') || errorMessage.includes('Bad Request') || fetchError?.status === 400) {
           throw new Error(`El código catastral "${trimmedRc}" no es válido.\n\nPor favor, verifica:\n• Que el código tenga entre 14 y 20 caracteres\n• Que no contenga espacios ni símbolos especiales\n• Que hayas copiado el código completo desde el documento original`);
         }
         
-        if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+        if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error') || fetchError?.status === 500) {
+          // Verificar si el error viene de la API externa de Catastro
+          const errorBody = fetchError?.body || {};
+          if (errorBody.source === 'catastro_external_api' || 
+              errorBody.details?.includes('Error de autenticación con la API de Catastro')) {
+            throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+          }
           throw new Error('El servicio de catastro está experimentando problemas técnicos en este momento. Por favor, inténtalo de nuevo en unos minutos. Si el problema persiste, puedes intentar buscar el edificio por dirección o coordenadas.');
         }
         
@@ -339,7 +555,6 @@ export class CatastroApiService {
       if (puerta) params.append('puerta', puerta);
 
       const response = await apiFetch(`/CatastroApi/inmuebleLoc?${params.toString()}`) as CatastroApiResponse;
-      
       // La API devuelve un objeto con inmuebles array, tomar el primero
       if (response.inmuebles && response.inmuebles.length > 0) {
         const inmueble = response.inmuebles[0];
@@ -353,7 +568,12 @@ export class CatastroApiService {
       const direccionCompleta = `${tipoVia ? tipoVia + ' ' : ''}${nombreVia}, ${numero}${escalera ? ', Esc. ' + escalera : ''}${planta ? ', Pl. ' + planta : ''}${puerta ? ', Puerta ' + puerta : ''}`;
       
       throw new Error(`No se encontró ningún inmueble en la dirección: ${direccionCompleta}\n\nPosibles causas:\n• La dirección no está registrada correctamente en el catastro\n• El número de calle es incorrecto o no existe\n• Los datos de escalera, planta o puerta no coinciden\n• El inmueble corresponde a un terreno u otro tipo de bien\n\n💡 Consejo: Intenta buscar sin especificar escalera, planta o puerta, o verifica la dirección en documentos oficiales. También puedes buscar por código catastral si lo conoces.`);
-    } catch (error) {
+    } catch (error: any) {
+      // Manejar error 403 específicamente primero
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
+      
       // Si ya es un Error con mensaje descriptivo, relanzarlo
       if (error instanceof Error) {
         const message = error.message;
@@ -415,7 +635,12 @@ export class CatastroApiService {
       }
       
       throw new Error(`No se encontró ningún inmueble en las coordenadas especificadas (X: ${coordX}, Y: ${coordY}).\n\nPosibles causas:\n• Las coordenadas no corresponden a un edificio registrado en el catastro\n• Las coordenadas corresponden a un terreno u otro tipo de bien inmueble\n• Las coordenadas están en un sistema de referencia diferente\n• El punto está fuera de la zona de cobertura del catastro\n\n💡 Consejo: Verifica que las coordenadas sean correctas y estén en el sistema de referencia adecuado. También puedes intentar buscar por dirección si la conoces.`);
-    } catch (error) {
+    } catch (error: any) {
+      // Manejar error 403 específicamente primero
+      if (error?.status === 403) {
+        throw new Error('Error de autenticación con la API de Catastro.\n\nEl servicio no puede acceder a la información catastral debido a un problema de credenciales.\n\nPor favor, contacta con soporte técnico para verificar la configuración de la API de Catastro.');
+      }
+      
       // Si ya es un Error con mensaje descriptivo, relanzarlo
       if (error instanceof Error) {
         const message = error.message;
@@ -639,10 +864,20 @@ export class CatastroApiService {
       }
     }
 
+    // Extraer referencia catastral - asegurar que siempre se extraiga si está disponible
+    let cadastralReference: string | undefined;
+    if (inmueble.rc) {
+      cadastralReference = inmueble.rc.trim();
+    } else if (inmueble.referenciaCatastral?.referenciaCatastral) {
+      cadastralReference = inmueble.referenciaCatastral.referenciaCatastral.trim();
+    }
+    // Solo asignar si tiene valor (no string vacío después del trim)
+    cadastralReference = cadastralReference && cadastralReference.length > 0 ? cadastralReference : undefined;
+
     return {
       name,
       address,
-      cadastralReference: inmueble.rc || inmueble.referenciaCatastral?.referenciaCatastral,
+      cadastralReference,
       constructionYear,
       typology,
       numFloors,

@@ -16,7 +16,9 @@ export interface ServiceInvoice {
   document_filename?: string | null;
   provider?: string | null;
   notes?: string | null;
-  document_url?: string | null; // URL del PDF subido
+  document_url?: string | null;
+  expiration_date?: string | null;
+  is_overdue?: boolean;
   created_at?: string;
   updated_at?: string;
   created_by?: string;

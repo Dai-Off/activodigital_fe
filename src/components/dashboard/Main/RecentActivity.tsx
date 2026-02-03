@@ -12,6 +12,7 @@ import {
   LucideTriangleAlert,
   LucideUsers,
   LucideX,
+  Power,
   TriangleAlert,
   Zap,
 } from "lucide-react";
@@ -67,8 +68,9 @@ export function RecentActivity() {
       'COMPLETAR INSPECCION ELECTRICA': 10,
       CREAR: 11,
       ELIMINAR: 12,
-      APROBAR: 0,
-      RECHAZAR: 0,
+      CARGA: 13,
+      APROBAR: 14,
+      RECHAZAR: 15,
     }
 
     return ActionsValues[activity as keyof typeof ActionsValues] || 0;
@@ -214,11 +216,16 @@ export function RecentActivity() {
         </div>
       ),
       13: (
+        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-100">
+          <Power className="w-4 h-4 text-yellow-600"></Power>
+        </div>
+      ),
+      14: (
         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100">
           <LucideCircleCheckBig className="w-4 h-4 text-gray-600"></LucideCircleCheckBig>
         </div>
       ),
-      14: (
+      15: (
         <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-100">
           <LucideX className="w-4 h-4 text-red-600"></LucideX>
         </div>
@@ -247,16 +254,16 @@ export function RecentActivity() {
           <LucideActivity className="w-5 h-5 text-green-600"></LucideActivity>
         </div>
         <div>
-          <h2 className="text-lg">Actividad Reciente del Sistema</h2>
+          <h2 className="text-lg">{t("recentActivity")}</h2>
           <p className="text-xs text-gray-500">
-            Todas las acciones y eventos recientes
+            {t("allRecentActivities")}
           </p>
         </div>
       </div>
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-1 flex flex-col min-h-0">
         <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-          <span className="text-sm">Últimas 24 horas</span>
-          <span className="text-xs text-gray-500">{history?.length} {history.length > 1 ? 'actividades': "actividad"}</span>
+          <span className="text-sm">{t("last24Hours")}</span>
+          <span className="text-xs text-gray-500">{history?.length} {history.length > 1 ? t("activities") : t("activity")}</span>
         </div>
         <div className="flex-1 overflow-auto p-3 space-y-2">
           {history && history.length > 0 ? (
@@ -281,7 +288,7 @@ export function RecentActivity() {
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Actualizaciones</p>
+              <p className="text-xs text-gray-500 mb-0.5">{t("updates")}</p>
               <p className="text-xl">{totales?.updates}</p>
             </div>
             <div className="p-2 bg-blue-50 rounded">
@@ -292,7 +299,7 @@ export function RecentActivity() {
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Completadas</p>
+              <p className="text-xs text-gray-500 mb-0.5">{t("completed")}</p>
               <p className="text-xl">{totales?.completed}</p>
             </div>
             <div className="p-2 bg-green-50 rounded">
@@ -303,7 +310,7 @@ export function RecentActivity() {
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Alertas</p>
+              <p className="text-xs text-gray-500 mb-0.5">{t("alerts")}</p>
               <p className="text-xl">{totales?.alerts}</p>
             </div>
             <div className="p-2 bg-orange-50 rounded">
@@ -314,7 +321,7 @@ export function RecentActivity() {
         <div className="bg-white rounded-lg shadow-sm p-3 border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">Usuarios Activos</p>
+              <p className="text-xs text-gray-500 mb-0.5">{t("activeUsers")}</p>
               <p className="text-xl">{totales?.activeUsers}</p>
             </div>
             <div className="p-2 bg-purple-50 rounded">
