@@ -44,7 +44,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("General View", "Vista general")}
+              {t("generalView")}
             </span>
           </Button>
           <Button
@@ -61,7 +61,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("Month View", "Vista mensual")}
+              {t("monthView")}
             </span>
           </Button>
           <Button
@@ -78,7 +78,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("all Events", "Vista semanal")}
+              {t("weekView")}
             </span>
           </Button>
           <Button
@@ -95,7 +95,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("Maintenance ", "Mantenimientos")}
+              {t("maintenance")}
             </span>
           </Button>
           <Button
@@ -112,7 +112,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("inspections", "Inspecciones")}
+              {t("inspections")}
             </span>
           </Button>
           <Button
@@ -129,7 +129,7 @@ const SidebarEvents: React.FC<SidebarUsersParamas> = () => {
           >
             <Calendar className="w-4 h-4" />
             <span className="flex-1 text-left truncate leadinge-relaxed">
-              {t("expiration", "Vencimientos")}
+              {t("expiration")}
             </span>
           </Button>
         </div>

@@ -59,12 +59,8 @@ export function SupportContactModal({
     if (!subject.trim() || !message.trim()) {
       showToast({
         type: 'error',
-        title: t('support.form.validationTitle', {
-          defaultValue: 'Campos requeridos',
-        }),
-        message: t('support.form.validation', {
-          defaultValue: 'Por favor, completa todos los campos requeridos.',
-        }),
+        title: t('validationTitle'),
+        message: t('validation'),
       });
       return;
     }
@@ -84,10 +80,10 @@ export function SupportContactModal({
 
       showToast({
         type: 'success',
-        title: t('support.form.successTitle', {
+        title: t('successTitle', {
           defaultValue: 'Mensaje enviado',
         }),
-        message: t('support.form.success', {
+        message: t('success', {
           defaultValue: 'Tu mensaje ha sido enviado correctamente. Te responderemos pronto.',
         }),
       });
@@ -100,13 +96,13 @@ export function SupportContactModal({
     } catch (error) {
       showToast({
         type: 'error',
-        title: t('support.form.errorTitle', {
+        title: t('errorTitle', {
           defaultValue: 'Error al enviar',
         }),
         message:
           error instanceof Error
             ? error.message
-            : t('support.form.error', {
+            : t('error', {
                 defaultValue: 'No se pudo enviar el mensaje. Por favor, intenta de nuevo.',
               }),
       });
@@ -152,14 +148,11 @@ export function SupportContactModal({
           <div className="flex items-center gap-2">
             <HelpCircle className="h-5 w-5 text-blue-600" />
             <DialogTitle className="text-gray-900 text-xl">
-              {t('support.title', { defaultValue: 'Contactar con Soporte' })}
+              {t('supportTitle')}
             </DialogTitle>
           </div>
           <DialogDescription className="text-gray-600 text-sm mt-2">
-            {t('support.description', {
-              defaultValue:
-                'Describe tu problema o consulta y nuestro equipo te responderá lo antes posible.',
-            })}
+            {t('supportDescription')}
           </DialogDescription>
           <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-800 flex items-start gap-2">
@@ -177,10 +170,7 @@ export function SupportContactModal({
                 />
               </svg>
               <span>
-                {t('support.responseTime', {
-                  defaultValue:
-                    'Nuestro equipo revisará tu consulta y te responderá en un plazo máximo de 24 horas hábiles.',
-                })}
+                {t('responseTime')}
               </span>
             </p>
           </div>
@@ -189,7 +179,7 @@ export function SupportContactModal({
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="support-category" className="text-sm font-medium text-gray-700">
-              {t('support.form.category', { defaultValue: 'Categoría' })}
+              {t('category')}
             </Label>
             <Select
               value={category}
@@ -212,41 +202,31 @@ export function SupportContactModal({
                   value="technical"
                   className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 py-2.5"
                 >
-                  {t('support.categories.technical', {
-                    defaultValue: 'Problema técnico',
-                  })}
+                  {t('technicalProblem')}
                 </SelectItem>
                 <SelectItem 
                   value="billing"
                   className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 py-2.5"
                 >
-                  {t('support.categories.billing', {
-                    defaultValue: 'Facturación',
-                  })}
+                  {t('billingProblem')}
                 </SelectItem>
                 <SelectItem 
                   value="feature"
                   className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 py-2.5"
                 >
-                  {t('support.categories.feature', {
-                    defaultValue: 'Solicitud de funcionalidad',
-                  })}
+                  {t('featureRequest')}
                 </SelectItem>
                 <SelectItem 
                   value="bug"
                   className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 py-2.5"
                 >
-                  {t('support.categories.bug', {
-                    defaultValue: 'Reportar error',
-                  })}
+                  {t('bugReport')}
                 </SelectItem>
                 <SelectItem 
                   value="other"
                   className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 py-2.5"
                 >
-                  {t('support.categories.other', {
-                    defaultValue: 'Otro',
-                  })}
+                  {t('other')}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -254,14 +234,14 @@ export function SupportContactModal({
 
           <div className="space-y-2">
             <Label htmlFor="support-subject" className="text-sm font-medium text-gray-700">
-              {t('support.form.subject', { defaultValue: 'Asunto' })}{' '}
+              {t('subject')}{' '}
               <span className="text-red-500">*</span>
             </Label>
             <Input
               id="support-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder={t('support.form.subjectPlaceholder', {
+              placeholder={t('subjectPlaceholder', {
                 defaultValue: 'Ej: Problema al crear un edificio',
               })}
               disabled={isSubmitting}
@@ -272,17 +252,14 @@ export function SupportContactModal({
 
           <div className="space-y-2">
             <Label htmlFor="support-message" className="text-sm font-medium text-gray-700">
-              {t('support.form.message', { defaultValue: 'Mensaje' })}{' '}
+              {t('message', { defaultValue: 'Mensaje' })}{' '}
               <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="support-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={t('support.form.messagePlaceholder', {
-                defaultValue:
-                  'Describe tu problema o consulta con el mayor detalle posible...',
-              })}
+              placeholder={t('messagePlaceholder')}
               disabled={isSubmitting}
               required
               rows={6}
@@ -292,9 +269,7 @@ export function SupportContactModal({
 
           {user?.email && (
             <div className="text-sm text-gray-600 bg-gray-50 rounded-md p-3 border border-gray-200">
-              {t('support.form.emailInfo', {
-                defaultValue: 'Te responderemos a:',
-              })}{' '}
+              {t('emailInfo')}{' '}
               <span className="font-medium text-gray-900">{user.email}</span>
             </div>
           )}
@@ -307,7 +282,7 @@ export function SupportContactModal({
               disabled={isSubmitting}
               className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-400"
             >
-              {t('common.cancel', { defaultValue: 'Cancelar' })}
+              {t('cancel')}
             </Button>
             <button
               type="submit"
@@ -317,10 +292,10 @@ export function SupportContactModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>{t('support.form.sending', { defaultValue: 'Enviando...' })}</span>
+                  <span>{t('sending')}</span>
                 </>
               ) : (
-                <span>{t('support.form.send', { defaultValue: 'Enviar mensaje' })}</span>
+                <span>{t('send')}</span>
               )}
             </button>
           </DialogFooter>

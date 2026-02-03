@@ -275,7 +275,7 @@ export function Sidebar() {
         {/* Título y subtítulo - Solo visible en mobile */}
         <div className="md:hidden px-4 mb-2">
           <h2 className="text-white text-lg font-semibold">ARKIA</h2>
-          <p className="text-blue-200 text-sm">Gestión Inmobiliaria</p>
+          <p className="text-blue-200 text-sm">{t("managementInmobiliaria")}</p>
         </div>
 
         {/* Menu Items */}
@@ -315,7 +315,7 @@ export function Sidebar() {
             }}
           >
             <MessageCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span className="text-sm">Colaboración</span>
+            <span className="text-sm">{t("collaboration")}</span>
             <span className="absolute right-3 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               11
             </span>

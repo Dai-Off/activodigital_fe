@@ -70,9 +70,8 @@ function getCityAndDistrict(address: string): string {
   }
 
   if (parts.length >= 2) {
-    return `${parts[parts.length - 2]}, ${
-      parts[parts.length - 3] || parts[parts.length - 1]
-    }`;
+    return `${parts[parts.length - 2]}, ${parts[parts.length - 3] || parts[parts.length - 1]
+      }`;
   }
 
   return address.length > 20 ? `${address.substring(0, 20)}...` : address;
@@ -103,28 +102,28 @@ function PaginationBar({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3">
       <div className="text-xs text-gray-600">
-        {t("showing", { defaultValue: "Mostrando" })}{" "}
+        {t("showing")}{" "}
         <span className="font-medium">{start}</span>–
         <span className="font-medium">{end}</span>{" "}
-        {t("of", { defaultValue: "de" })}{" "}
+        {t("of")}{" "}
         <span className="font-medium">{total}</span>
       </div>
 
       <div className="flex items-center gap-2">
         <label className="sr-only" htmlFor="page-size">
-          {t("pageSize", { defaultValue: "Tamaño de página" })}
+          {t("pageSize")}
         </label>
         <select
           id="page-size"
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700"
-          aria-label={t("pageSize", { defaultValue: "Tamaño de página" })}
-          title={t("pageSize", { defaultValue: "Tamaño de página" })}
+          aria-label={t("pageSize")}
+          title={t("pageSize")}
         >
           {pageSizeOptions.map((opt) => (
             <option key={opt} value={opt}>
-              {opt} {t("perPage", { defaultValue: "/página" })}
+              {opt} {t("perPage")}
             </option>
           ))}
         </select>
@@ -134,8 +133,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(1)}
             disabled={page === 1}
-            title={t("firstPage", { defaultValue: "Primera página" })}
-            aria-label={t("firstPage", { defaultValue: "Primera página" })}
+            title={t("firstPage")}
+            aria-label={t("firstPage")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -154,8 +153,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page - 1)}
             disabled={page === 1}
-            title={t("previous", { defaultValue: "Anterior" })}
-            aria-label={t("previous", { defaultValue: "Anterior" })}
+            title={t("previous")}
+            aria-label={t("previous")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -171,7 +170,7 @@ function PaginationBar({
           </button>
 
           <span className="px-2 text-xs text-gray-600">
-            {t("page", { defaultValue: "Página" })}{" "}
+            {t("page")}{" "}
             <span className="font-medium">{page}</span> / {totalPages}
           </span>
 
@@ -179,8 +178,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(page + 1)}
             disabled={page === totalPages}
-            title={t("next", { defaultValue: "Siguiente" })}
-            aria-label={t("next", { defaultValue: "Siguiente" })}
+            title={t("next")}
+            aria-label={t("next")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -198,8 +197,8 @@ function PaginationBar({
             className="rounded-md border border-gray-200 bg-white p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             onClick={() => go(totalPages)}
             disabled={page === totalPages}
-            title={t("lastPage", { defaultValue: "Última página" })}
-            aria-label={t("lastPage", { defaultValue: "Última página" })}
+            title={t("lastPage")}
+            aria-label={t("lastPage")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -431,7 +430,7 @@ export default function AssetsList() {
           esg?.status === "complete" && esg.data?.label
             ? esg.data.label.toLowerCase()
             : "";
-        
+
         const complianceTerms = {
           high: { es: "alto", en: "high" },
           medium: { es: "medio", en: "medium" },
@@ -625,7 +624,7 @@ export default function AssetsList() {
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            {t("createBuilding", { defaultValue: "Crear Edificio" })}
+            {t("createBuilding")}
           </button>
         </div>
 
@@ -672,10 +671,10 @@ export default function AssetsList() {
 
           {/* Dashboard Summary Card */}
           {user &&
-          !authLoading &&
-          !loading &&
-          !statsLoading &&
-          dashboardStats ? (
+            !authLoading &&
+            !loading &&
+            !statsLoading &&
+            dashboardStats ? (
             <div
               className="bg-white border border-gray-200 rounded-xl p-6 mb-6"
               style={{ animation: "fadeInUp 0.6s ease-out 0.1s both" }}
@@ -698,7 +697,7 @@ export default function AssetsList() {
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">
-                      {t("welcome", { defaultValue: "Bienvenido" })}
+                      {t("welcome")}
                     </div>
                     <div className="text-sm font-semibold text-gray-900">
                       {user.fullName}
@@ -706,7 +705,7 @@ export default function AssetsList() {
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-100 uppercase">
-                  {t(`roles.${user.role}`, { defaultValue: user.role || "Usuario" })}
+                  {t(`roles.${user.role}`)}
                 </span>
               </div>
 
@@ -740,7 +739,7 @@ export default function AssetsList() {
                         {dashboardStats.pendingBooks}
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500">
-                        {t("pendingBooks", { defaultValue: "Pendientes" })}
+                        {t("pendingBooks")}
                       </div>
                     </div>
                     <div className="bg-white rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 shadow-sm text-center">
@@ -749,9 +748,7 @@ export default function AssetsList() {
                         m²
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500 line-clamp-2">
-                        {t("totalSurface", {
-                          defaultValue: "Superficie total",
-                        })}
+                        {t("totalSurface")}
                       </div>
                     </div>
                   </div>
@@ -763,23 +760,19 @@ export default function AssetsList() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t("mostCommonTypology", {
-                          defaultValue: "Tipología más común",
-                        })}
+                        {t("mostCommonTypology")}
                       </div>
                       <div className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2">
                         {dashboardStats.mostCommonTypology
                           ? getBuildingTypologyLabel(
-                              dashboardStats.mostCommonTypology as any
-                            )
+                            dashboardStats.mostCommonTypology as any
+                          )
                           : "N/A"}
                       </div>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t("averageUnits", {
-                          defaultValue: "Promedio unidades",
-                        })}
+                        {t("averageUnits")}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
                         {dashboardStats.averageUnitsPerBuilding}
@@ -787,12 +780,12 @@ export default function AssetsList() {
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 text-center">
                       <div className="text-xs sm:text-sm text-gray-500 mb-2">
-                        {t("averageAge", { defaultValue: "Edad promedio" })}
+                        {t("averageAge")}
                       </div>
                       <div className="text-lg sm:text-xl font-bold text-gray-900">
                         {dashboardStats.averageBuildingAge}{" "}
                         <span className="text-sm font-normal text-gray-500">
-                          {t("years", { defaultValue: "años" })}
+                          {t("years")}
                         </span>
                       </div>
                     </div>
@@ -840,9 +833,7 @@ export default function AssetsList() {
 
                   <div className="text-center max-w-[140px] sm:max-w-[160px]">
                     <div className="text-xs sm:text-sm text-gray-500 leading-tight">
-                      {t("completedDigitalBooksPercent", {
-                            defaultValue: "% libros digitales completados",
-                          })}
+                      {t("completedDigitalBooksPercent")}
                     </div>
                   </div>
                 </div>
@@ -866,20 +857,20 @@ export default function AssetsList() {
           style={{ animation: "fadeInUp 0.6s ease-out 0.2s both" }}
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {t("assetsList", { defaultValue: "Listado de Activos" })}
+            {t("assetsList")}
           </h3>
           {loading ? (
             <SkeletonBuildingList />
           ) : buildings.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">
-                {t("noBuildings", { defaultValue: "No hay edificios registrados" })}
+                {t("noBuildings")}
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700"
               >
-                {t("createFirstBuilding", { defaultValue: "Crear primer edificio" })}
+                {t("createFirstBuilding")}
               </button>
             </div>
           ) : paginated.length > 0 ? (
@@ -903,13 +894,12 @@ export default function AssetsList() {
                 // Estado badge color
                 const getEstadoBadgeClassName = (estado: string) => {
                   if (
-                    estado === t("operational", { defaultValue: "Operativo" })
+                    estado === t("operational")
                   ) {
                     return "bg-green-500/20 text-green-400 border border-green-500/50";
                   }
                   if (
-                    estado ===
-                    t("inRemodeling", { defaultValue: "En remodelación" })
+                    estado === t("inRemodeling")
                   ) {
                     return "bg-yellow-500/20 text-yellow-400 border border-yellow-500/50";
                   }
@@ -961,7 +951,7 @@ export default function AssetsList() {
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
                           <div className="min-w-0">
                             <p className="text-xs text-gray-500 mb-1">
-                              {t("value", { defaultValue: "Valor" })}
+                              {t("value")}
                             </p>
                             <p className="text-sm sm:text-lg font-medium text-gray-900 truncate">
                               {formatBuildingValue(building.price)}
@@ -969,9 +959,7 @@ export default function AssetsList() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs text-gray-500 mb-1">
-                              {t("squareMeters", {
-                                defaultValue: "Superficie",
-                              })}
+                              {t("surface")}
                             </p>
                             <p className="text-sm sm:text-lg font-medium text-gray-900">
                               {building.squareMeters
@@ -981,21 +969,17 @@ export default function AssetsList() {
                           </div>
                           <div className="col-span-2 sm:col-span-1">
                             <p className="text-xs text-gray-500 mb-1">
-                              {t("status", { defaultValue: "Estado" })}
+                              {t("status")}
                             </p>
                             <Badge
                               className={
                                 getEstadoBadgeClassName(
-                                  t("operational", {
-                                    defaultValue: "Operativo",
-                                  })
+                                  t("operational")
                                 ) + " flex items-center gap-1 sm:gap-2 text-xs"
                               }
                             >
                               {(() => {
-                                const estado = t("operational", {
-                                  defaultValue: "Operativo",
-                                });
+                                const estado = t("operational");
                                 if (estado === "Operativo") {
                                   return (
                                     <CircleCheck className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
@@ -1011,17 +995,13 @@ export default function AssetsList() {
                                 );
                               })()}
                               <span className="truncate">
-                                {t("operational", {
-                                  defaultValue: "Operativo",
-                                })}
+                                {t("operational")}
                               </span>
                             </Badge>
                           </div>
                           <div className="col-span-1">
                             <p className="text-xs text-gray-500 mb-1">
-                              {t("energyCertificate", {
-                                defaultValue: "Cert. Energética",
-                              })}
+                              {t("energyCertificate")}
                             </p>
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 border border-gray-300 rounded-lg flex items-center justify-center text-gray-900 text-xs sm:text-sm font-medium">
@@ -1036,7 +1016,7 @@ export default function AssetsList() {
                           <div className="flex-1 w-full sm:w-auto">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs text-gray-500">
-                                ESG Score
+                                {t("ESGScore")}
                               </span>
                               <span className="text-sm font-medium text-gray-900">
                                 {esgScore !== null ? `${esgScore}/100` : "-"}
@@ -1056,12 +1036,10 @@ export default function AssetsList() {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span className="text-xs text-gray-500 hidden sm:block">
-                              {t("digitalBook", {
-                                defaultValue: "Libro del Edificio",
-                              })}
+                              {t("digitalBook")}
                             </span>
                             <span className="text-xs text-gray-500 sm:hidden">
-                              {t("digitalBook", { defaultValue: "Libro" })}
+                              {t("digitalBook")}
                             </span>
                             {completedSections === totalSections ? (
                               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center">
@@ -1097,13 +1075,10 @@ export default function AssetsList() {
                 />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {t("noAssetsYet", { defaultValue: "No tienes activos aún" })}
+                {t("noAssetsYet")}
               </h3>
               <p className="text-gray-600 mb-4">
-                {t("createFirstAsset", {
-                  defaultValue:
-                    "Comienza creando tu primer activo para gestionar tu cartera.",
-                })}
+                {t("createFirstAsset")}
               </p>
               <Link
                 to="/buildings/crear"
@@ -1123,9 +1098,7 @@ export default function AssetsList() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                {t("createFirstAssetBtn", {
-                  defaultValue: "Crear primer activo",
-                })}
+                {t("createFirstAssetBtn")}
               </Link>
             </div>
           )}

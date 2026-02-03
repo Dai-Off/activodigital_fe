@@ -119,7 +119,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-sm text-green-600 font-medium">
-              {t("status.completed", "Completada")}
+              {t("completed")}
             </span>
           </div>
         );
@@ -128,7 +128,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
             <span className="text-sm text-yellow-600 font-medium">
-              {t("status.inProgress", "En progreso")}
+              {t("inProgress")}
             </span>
           </div>
         );
@@ -137,7 +137,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
             <span className="text-sm text-gray-500 font-medium">
-              {t("status.pending", "Pendiente")}
+              {t("pending")}
             </span>
           </div>
         );
@@ -149,11 +149,11 @@ const SectionsList: React.FC<SectionsListProps> = ({
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {t("sectionsList.title", "Secciones del Libro del Edificio")}
+          {t("sectionsListtitle", "Secciones del Libro del Edificio")}
         </h2>
         <p className="text-gray-600">
           {t(
-            "sectionsList.instructions",
+            "sectionsListinstructions",
             "Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente."
           )}
         </p>
@@ -201,7 +201,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
                   onClick={(e) => handleMarkComplete(e, section.id)}
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                 >
-                  {t("sectionsList.markComplete", "Marcar completa")}
+                  {t("sectionsListmarkComplete")}
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -227,11 +227,10 @@ const SectionsList: React.FC<SectionsListProps> = ({
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
           {/* Progreso */}
           <div className="text-sm text-gray-600">
-            {t("sectionsList.progress", {
+            {t("sectionsListprogress", {
               completed: sections.filter((s) => s.status === "completed")
                 .length,
               total: sections.length,
-              defaultValue: "{{completed}} de {{total}} secciones completadas",
             })}
           </div>
 
@@ -241,7 +240,7 @@ const SectionsList: React.FC<SectionsListProps> = ({
               onClick={() => navigate("/digital-book/manual")}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {t("sectionsList.continueWizard", "Continuar con Wizard")}
+              {t("sectionsListcontinueWizard")}
             </button>
           </div>
         </div>

@@ -118,7 +118,7 @@ export function BuildingSecondaryNav() {
           }`}
         >
           <SlidersHorizontal className="w-4 h-4" />
-          <span className="flex-1 text-left">{t("filters2", "Filtros")}</span>
+          <span className="flex-1 text-left">{t("filters")}</span>
           {hasActiveFilters && (
             <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full min-w-[18px] text-center">
               {Object.values(filters).filter((v) => v !== "").length}
