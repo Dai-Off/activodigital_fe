@@ -1383,15 +1383,15 @@ export function BuildingGestion() {
               disabled={isUploading || !selectedFile || !selectedCategory}
               title={
                 !selectedFile
-                  ? "Selecciona un archivo"
+                  ? t("selectFile")
                   : !selectedCategory
-                    ? "Selecciona una categoría"
+                    ? t("selectCategoryToEnableUpload")
                     : isUploading
-                      ? "Subiendo..."
-                      : "Subir documento"
+                      ? t("uploading")
+                      : t("uploadDocument")
               }
             >
-              {isUploading ? "Subiendo..." : "Subir"}
+              {isUploading ? t("uploading") : t("uploadDocument")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1410,15 +1410,14 @@ export function BuildingGestion() {
         <AlertDialogContent className="bg-white !bg-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600">
-              Eliminar Documento
+              {t("delete")} {t("Document")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-700">
-              ¿Estás seguro de que deseas eliminar el documento{" "}
+              {t("areYouSureDeleteDocument")}{" "}
               <strong>"{deletingDocument?.name}"</strong>?
               <br />
               <span className="text-xs text-gray-500 mt-2 block">
-                Esta acción no se puede deshacer. El archivo se eliminará
-                permanentemente.
+                {t("areYouSureDeleteDocumentDescription")}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1430,14 +1429,14 @@ export function BuildingGestion() {
               }}
               disabled={isDeleting}
             >
-              Cancelar
+              {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={isDeleting}
             >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
+              {isDeleting ? t("deleting") : t("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1451,19 +1450,19 @@ export function BuildingGestion() {
         <DialogContent className="max-w-md shadow-xl bg-white !bg-white">
           <DialogHeader className="!bg-white">
             <DialogTitle className="!bg-white mb-3">
-              Crear Nueva Categoría
+             {t("create")} {t("newCategory")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 !bg-white">
             <div className="!bg-white">
               <label className="block text-sm text-gray-700 mb-1">
-                Nombre de la categoría
+                {t("categoryName")}
               </label>
               <Input
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                placeholder="Ej: Documentación Especial"
+                placeholder={t("categoryNamePlaceholder")}
                 className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
               />
             </div>
@@ -1491,8 +1490,7 @@ export function BuildingGestion() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
               <p className="text-xs text-blue-800">
-                ℹ️ Las categorías personalizadas te permiten organizar
-                documentos específicos de tu edificio
+                ℹ️ {t("categoriesDescription")}
               </p>
             </div>
           </div>
@@ -1506,7 +1504,7 @@ export function BuildingGestion() {
               }}
               className="flex-1 text-sm"
             >
-              Cancelar
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleCreateCategory}
@@ -1514,7 +1512,7 @@ export function BuildingGestion() {
               disabled={!newCategoryName.trim()}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Crear Categoría
+              {t("create")} {t("category")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1540,7 +1538,7 @@ export function BuildingGestion() {
                 <Sparkles className="w-16 h-16 text-blue-600 animate-pulse" />
               </div>
               <p className="text-sm text-gray-600 text-center">
-                Extrayendo datos de la factura con IA...
+                {t("extractingDataFromInvoice")}
               </p>
             </div>
           ) : (
@@ -1548,14 +1546,13 @@ export function BuildingGestion() {
               <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
                   <p className="text-xs text-blue-800">
-                    ℹ️ Revisa y ajusta los datos extraídos automáticamente de la
-                    factura
+                    ℹ️ {t("checkAndAdjustData")}
                   </p>
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Tipo de Servicio <span className="text-red-500">*</span>
+                    {t("serviceType")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={serviceInvoiceData.service_type}
@@ -1579,7 +1576,7 @@ export function BuildingGestion() {
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Fecha de la Factura <span className="text-red-500">*</span>
+                    {t("invoiceDate")} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="date"
@@ -1597,7 +1594,7 @@ export function BuildingGestion() {
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Importe (EUR) <span className="text-red-500">*</span>
+                    {t("amount")} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="number"
@@ -1617,7 +1614,7 @@ export function BuildingGestion() {
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Unidades Consumidas (opcional)
+                    {t("unitsConsumed")} ({t("optional")})
                   </label>
                   <Input
                     type="number"
@@ -1632,14 +1629,14 @@ export function BuildingGestion() {
                           : null,
                       })
                     }
-                    placeholder="Opcional"
+                    placeholder={t("optional")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Proveedor (opcional)
+                    {t("provider")} (opcional)
                   </label>
                   <Input
                     type="text"
@@ -1650,14 +1647,14 @@ export function BuildingGestion() {
                         provider: e.target.value,
                       })
                     }
-                    placeholder="Proveedor"
+                    placeholder={t("providerPlaceholder")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Número de Factura (opcional)
+                    {t("invoiceNumber")} ({t("optional")})
                   </label>
                   <Input
                     type="text"
@@ -1668,14 +1665,14 @@ export function BuildingGestion() {
                         invoice_number: e.target.value,
                       })
                     }
-                    placeholder="Número de Factura"
+                    placeholder={t("invoiceNumberPlaceholder")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Periodo de inicio <span className="text-red-500">*</span>
+                    {t("periodStart")} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="date"
@@ -1686,14 +1683,14 @@ export function BuildingGestion() {
                         period_start: e.target.value,
                       })
                     }
-                    placeholder="Fecha de inicio"
+                    placeholder={t("periodStartPlaceholder")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Periodo de fin <span className="text-red-500">*</span>
+                    {t("periodEnd")} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="date"
@@ -1704,14 +1701,14 @@ export function BuildingGestion() {
                         period_end: e.target.value,
                       })
                     }
-                    placeholder="Fecha de fin"
+                    placeholder={t("periodEndPlaceholder")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Fecha de vencimiento <span className="text-red-500">*</span>
+                    {t("expirationDate")} <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="date"
@@ -1722,14 +1719,14 @@ export function BuildingGestion() {
                         expiration_date: e.target.value,
                       })
                     }
-                    placeholder="Fecha de vencimiento"
+                    placeholder={t("expirationDatePlaceholder")}
                     className="w-full focus-visible:border-blue-300 focus-visible:ring-blue-200/30"
                   />
                 </div>
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    Notas (opcional)
+                    {t("notes")} ({t("optional")})
                   </label>
                   <textarea
                     value={serviceInvoiceData.notes}
@@ -1739,7 +1736,7 @@ export function BuildingGestion() {
                         notes: e.target.value,
                       })
                     }
-                    placeholder="Notas adicionales sobre la factura..."
+                    placeholder={t("notesPlaceholder")}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-blue-200/40 focus:border-blue-300"
                     rows={2}
                   />
@@ -1751,7 +1748,7 @@ export function BuildingGestion() {
                   onClick={handleCancelServiceInvoice}
                   className="flex-1 text-sm"
                 >
-                  Omitir
+                  {t("omit")}
                 </Button>
                 <Button
                   onClick={handleCreateServiceInvoice}
@@ -1765,7 +1762,7 @@ export function BuildingGestion() {
                     !serviceInvoiceData.invoice_date
                   }
                 >
-                  Registrar Factura
+                  {t("registerInvoice")}
                 </Button>
               </DialogFooter>
             </>

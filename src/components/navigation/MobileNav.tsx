@@ -147,10 +147,10 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         className="w-[85vw] max-w-sm p-0 overflow-y-auto"
       >
         <SheetTitle className="sr-only">
-          {t("navigation", "Navegación")}
+          {t("navigation")}
         </SheetTitle>
         <SheetDescription className="sr-only">
-          {t("buildingListNavigation", "Navegación por la lista de edificios")}
+          {t("buildingListNavigation")}
         </SheetDescription>
 
         <div className="h-full flex flex-col">
@@ -159,14 +159,14 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
             <button
               onClick={handleLogoClick}
               className="w-12 h-12 bg-white rounded-lg flex items-center justify-center hover:bg-blue-50 transition-all cursor-pointer mx-auto"
-              title={t("backToDashboard", "Volver al dashboard")}
+              title={t("backToDashboard")}
             >
               <Building2 className="w-7 h-7 text-[#1e3a8a]" />
             </button>
             <div className="text-center mt-3">
               <h2 className="text-white text-sm font-bold">ARKIA</h2>
               <p className="text-blue-200 text-xs mt-1">
-                {t("assetsList", "Listado de activos")}
+                {t("assetsList")}
               </p>
             </div>
           </div>
@@ -185,7 +185,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 <span className="flex-1 text-left">
-                  {t("filters2", "Filtros")}
+                  {t("filters")}
                 </span>
                 {hasActiveFilters && (
                   <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full min-w-[18px] text-center">
@@ -200,7 +200,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                   {/* Filtro tipo */}
                   <div>
                     <label className="block text-xs mb-1.5 text-gray-600">
-                      {t("type", "Tipo")}
+                      {t("type")}
                     </label>
                     <select
                       value={filters.buildingType}
@@ -209,21 +209,21 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       }
                       className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="">{t("all", "Todos")}</option>
+                      <option value="">{t("all")}</option>
                       <option value="residential">
-                        {t("residential", "Residencial")}
+                        {t("residential")}
                       </option>
                       <option value="commercial">
-                        {t("commercial", "Comercial")}
+                        {t("commercial")}
                       </option>
-                      <option value="mixed">{t("office", "Mixto")}</option>
+                      <option value="mixed">{t("office")}</option>
                     </select>
                   </div>
 
                   {/* Filtro ciudad */}
                   <div>
                     <label className="block text-xs mb-1.5 text-gray-600">
-                      {t("city", "Ciudad")}
+                      {t("city")}
                     </label>
                     <select
                       value={filters.city}
@@ -232,7 +232,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       }
                       className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      <option value="">{t("all", "Todos")}</option>
+                      <option value="">{t("all")}</option>
                       {cities.map((city) => (
                         <option key={city} value={city}>
                           {city}
@@ -248,7 +248,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       className="w-full px-2 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors text-gray-700 flex items-center justify-center gap-1.5"
                     >
                       <X className="w-3 h-3" />
-                      {t("clearFilters", "Limpiar filtros")}
+                      {t("clearFilters")}
                     </button>
                   )}
                 </div>
@@ -301,7 +301,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                           >
                             <Circle className="w-1.5 h-1.5 fill-current" />
                             <span className="leading-relaxed">
-                              {t("generalView", "Vista General")}
+                              {t("generalView")}
                             </span>
                           </button>
 
@@ -317,7 +317,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                           >
                             <Circle className="w-1.5 h-1.5 fill-current" />
                             <span className="leading-relaxed">
-                              {t("generalAnalysis", "Análisis general")}
+                              {t("generalAnalysis")}
                             </span>
                           </button>
                         </div>
@@ -330,8 +330,8 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               {!loading && filteredBuildings.length === 0 && (
                 <div className="text-center py-8 text-gray-500 text-sm">
                   {hasActiveFilters
-                    ? t("noBuildingsFound", "No se encontraron edificios")
-                    : t("noBuildings", "No hay edificios")}
+                    ? t("noBuildingsFound")
+                    : t("noBuildings")}
                 </div>
               )}
             </div>

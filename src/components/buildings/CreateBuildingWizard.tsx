@@ -95,25 +95,16 @@ const CreateBuildingWizard: React.FC = () => {
   // -------------------- Steps (i18n) --------------------
   const wizardSteps = [
     {
-      title: t("buildingWizard.generalData", "Datos Generales"),
-      description: t(
-        "buildingWizard.generalDataDesc",
-        "Información básica del edificio"
-      ),
+      title: t("generalData"),
+      description: t("generalDataDesc"),
     },
     {
-      title: t("buildingWizard.locationPhotos", "Ubicación y Fotos"),
-      description: t(
-        "buildingWizard.locationPhotosDesc",
-        "Localización y elementos visuales"
-      ),
+      title: t("locationPhotos"),
+      description: t("locationPhotosDesc"),
     },
     {
-      title: t("buildingWizard.summary", "Resumen"),
-      description: t(
-        "buildingWizard.summaryDesc",
-        "Revisar información antes de continuar"
-      ),
+      title: t("summary"),
+      description: t("summaryDesc"),
     },
   ];
 
@@ -179,13 +170,7 @@ const CreateBuildingWizard: React.FC = () => {
 
   const handleStep1SaveDraft = (data: BuildingStep1Data) => {
     setStep1Data(data);
-    showInfo(
-      t("common.draftSavedTitle", "Borrador guardado"),
-      t(
-        "buildingWizard.dataSavedTemporarily",
-        "Los datos se han guardado temporalmente."
-      )
-    );
+    showInfo(t("draftSavedTitle"), t("draftSavedDesc"));
   };
 
   // -------------------- Handlers: Step 2 --------------------
@@ -209,13 +194,7 @@ const CreateBuildingWizard: React.FC = () => {
       };
       return { ...base, ...data };
     });
-    showInfo(
-      t("common.draftSavedTitle", "Borrador guardado"),
-      t(
-        "buildingWizard.locationAndPhotosSaved",
-        "Ubicación y fotos guardadas temporalmente."
-      )
-    );
+    showInfo(t("draftSavedTitle"), t("draftSavedDesc"));
   };
 
   // -------------------- Handlers: Step 3 --------------------
@@ -225,19 +204,16 @@ const CreateBuildingWizard: React.FC = () => {
   const handleSaveFinal = async () => {
     if (!step1Data || !step2Data) {
       showError(
-        t("common.error", "Error"),
-        t(
-          "buildings.missingFormData",
-          "Faltan datos del formulario. Completa todos los pasos."
-        )
+        t("error"),
+        t("missingFormData")
       );
       return;
     }
 
     if (!step2Data.address || step2Data.address.trim() === "") {
       showError(
-        t("common.error", "Error"),
-        t("buildings.addressRequired", "La dirección es obligatoria.")
+        t("error"),
+        t("addressRequired")
       );
       return;
     }
@@ -255,11 +231,8 @@ const CreateBuildingWizard: React.FC = () => {
 
     if (Number.isNaN(year) || Number.isNaN(floors)) {
       showError(
-        t("common.error", "Error"),
-        t(
-          "buildingWizard.numericFieldsInvalid",
-          "Revisa los campos numéricos: año y plantas."
-        )
+        t("error"),
+        t("numericFieldsInvalid")
       );
       return;
     }
@@ -305,9 +278,9 @@ const CreateBuildingWizard: React.FC = () => {
         const failed = uploadResults.filter((r) => !r.success);
         if (failed.length) {
           showError(
-            t("common.warning", "Advertencia"),
+            t("warning"),
             t(
-              "buildingWizard.someImagesFailed",
+              "someImagesFailed",
               "{{failed}} de {{total}} imágenes no se pudieron subir. El edificio se creó correctamente.",
               { failed: failed.length, total: uploadResults.length }
             )
@@ -353,8 +326,8 @@ const CreateBuildingWizard: React.FC = () => {
       }
 
       showSuccess(
-        t("buildings.successTitle", "Éxito"),
-        t("buildings.buildingCreatedSuccess", "Edificio creado correctamente.")
+        t("successTitle"),
+        t("buildingCreatedSuccess")
       );
 
       // Navegar con un estado para forzar recarga de la lista
@@ -367,11 +340,8 @@ const CreateBuildingWizard: React.FC = () => {
       const rawMessage =
         err instanceof Error
           ? err.message
-          : t("common.unknownError", "Error desconocido");
-      let title = t(
-        "buildings.errorCreatingAsset",
-        "No se pudo crear el activo"
-      );
+          : t("unknownError");
+      let title = t("errorCreatingAsset");
       let message = rawMessage;
 
       const lower = rawMessage.toLowerCase();
@@ -391,15 +361,14 @@ const CreateBuildingWizard: React.FC = () => {
         lower.includes("assignment");
 
       if (roleConflict) {
-        title = t("buildings.roleConflict", "Conflicto de roles asignados");
+        title = t("roleConflict");
         if (
           step1Data.technicianEmail &&
           step1Data.cfoEmail &&
           step1Data.propietarioEmail
         ) {
           message = t(
-            "buildings.roleConflictDetailAll",
-            "Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser CFO o propietario\n• CFO ({{cfo}}): No puede ser técnico o propietario\n• Propietario ({{prop}}): No puede ser técnico o CFO\n\nVerifica que todos los correos sean diferentes.",
+            "roleConflictDetailAll",
             {
               tech: step1Data.technicianEmail,
               cfo: step1Data.cfoEmail,
@@ -408,14 +377,12 @@ const CreateBuildingWizard: React.FC = () => {
           );
         } else if (step1Data.technicianEmail && step1Data.cfoEmail) {
           message = t(
-            "buildings.roleConflictDetailBoth",
-            "Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser CFO o propietario\n• CFO ({{cfo}}): No puede ser técnico o propietario\n\nVerifica los correos.",
+            "roleConflictDetailBoth",
             { tech: step1Data.technicianEmail, cfo: step1Data.cfoEmail }
           );
         } else if (step1Data.technicianEmail && step1Data.propietarioEmail) {
           message = t(
-            "buildings.roleConflictDetailTechProp",
-            "Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• Técnico ({{tech}}): No puede ser propietario\n• Propietario ({{prop}}): No puede ser técnico\n\nVerifica los correos.",
+            "roleConflictDetailTechProp",
             {
               tech: step1Data.technicianEmail,
               prop: step1Data.propietarioEmail,
@@ -423,33 +390,26 @@ const CreateBuildingWizard: React.FC = () => {
           );
         } else if (step1Data.cfoEmail && step1Data.propietarioEmail) {
           message = t(
-            "buildings.roleConflictDetailCfoProp",
-            "Uno de los usuarios asignados ya tiene un rol incompatible:\n\n• CFO ({{cfo}}): No puede ser propietario\n• Propietario ({{prop}}): No puede ser CFO\n\nVerifica los correos.",
+            "roleConflictDetailCfoProp",
             { cfo: step1Data.cfoEmail, prop: step1Data.propietarioEmail }
           );
         } else if (step1Data.technicianEmail) {
           message = t(
-            "buildings.roleConflictDetailTech",
-            'El usuario "{{email}}" ya tiene un rol incompatible. Un técnico no puede ser CFO o propietario. Usa otro email o deja el campo vacío.',
+            "roleConflictDetailTech",
             { email: step1Data.technicianEmail }
           );
         } else if (step1Data.cfoEmail) {
           message = t(
-            "buildings.roleConflictDetailCfo",
-            'El usuario "{{email}}" ya tiene un rol incompatible. Un CFO no puede ser técnico o propietario. Usa otro email o deja el campo vacío.',
+            "roleConflictDetailCfo",
             { email: step1Data.cfoEmail }
           );
         } else if (step1Data.propietarioEmail) {
           message = t(
-            "buildings.roleConflictDetailProp",
-            'El usuario "{{email}}" ya tiene un rol incompatible. Un propietario no puede ser técnico o CFO. Usa otro email o deja el campo vacío.',
+            "roleConflictDetailProp",
             { email: step1Data.propietarioEmail }
           );
         } else {
-          message = t(
-            "buildings.roleConflictDetailGeneric",
-            "Alguno de los usuarios asignados tiene un rol incompatible. Verifica los correos."
-          );
+          message = t("roleConflictDetailGeneric");
         }
       }
 
@@ -503,7 +463,7 @@ const CreateBuildingWizard: React.FC = () => {
           onSaveDraft={handleStep2SaveDraft}
           initialData={step2Data || ({} as Partial<BuildingStep2Data>)}
           buildingName={
-            step1Data?.name || t("buildings.newBuilding", "Nuevo Edificio")
+            step1Data?.name || t("newBuilding")
           }
         />
       );
@@ -533,16 +493,16 @@ const CreateBuildingWizard: React.FC = () => {
       <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Breadcrumb / Header */}
         <div className="mb-4 md:mb-8">
-          <nav className="mb-2 md:mb-4" aria-label={t("nav.breadcrumb", "Breadcrumb")}>
+          <nav className="mb-2 md:mb-4" aria-label={t("breadcrumb")}>
             <ol className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500">
               <li>
                 <button
                   type="button"
                   onClick={() => navigate(fromDashboard ? "/dashboard" : "/assets")}
                   className="hover:text-blue-600"
-                  aria-label={fromDashboard ? t("nav.backToDashboard", "Volver al Dashboard") : t("nav.backToAssets", "Volver a Activos")}
+                  aria-label={fromDashboard ? t("backToDashboard") : t("backToAssets")}
                 >
-                  {fromDashboard ? t("dashboard", "Dashboard") : t("assets", "Activos")}
+                  {fromDashboard ? t("dashboard") : t("assets")}
                 </button>
               </li>
               <li aria-hidden="true">
@@ -559,7 +519,7 @@ const CreateBuildingWizard: React.FC = () => {
                 </svg>
               </li>
               <li className="text-gray-900 font-medium">
-                {t("buildings.createBuilding", "Crear Edificio")}
+                {t("createBuilding")}
               </li>
             </ol>
           </nav>
@@ -588,20 +548,17 @@ const CreateBuildingWizard: React.FC = () => {
         {/* Footer Help */}
         <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
           <p>
-            {t("help.needHelp", "¿Necesitas ayuda?")}{" "}
+            {t("needHelp")}{" "}
             <a href="#" className="text-blue-600 hover:text-blue-700">
-              {t(
-                "buildings.buildingCreationGuide",
-                "Guía de creación de edificios"
-              )}
+              {t("buildingCreationGuide")}
             </a>{" "}
-            {t("common.or", "o")}{" "}
+            {t("or")}{" "}
             <button
               type="button"
               onClick={() => setIsSupportModalOpen(true)}
               className="text-blue-600 hover:text-blue-700 underline"
             >
-              {t("help.contactSupport", "Contactar soporte")}
+              {t("contactSupport")}
             </button>
           </p>
         </div>
@@ -611,7 +568,7 @@ const CreateBuildingWizard: React.FC = () => {
         isOpen={isSupportModalOpen}
         onClose={() => setIsSupportModalOpen(false)}
         initialCategory="technical"
-        initialSubject={t("help.contactSupport", "Contactar soporte")}
+        initialSubject={t("contactSupport")}
         context={`Create Building Wizard - ${window.location.href}`}
       />
     </div>

@@ -54,7 +54,7 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="button"
         tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-label={t('close')}
         onWheel={(e) => e.preventDefault()}
         onTouchMove={(e) => e.preventDefault()}
       />
@@ -66,17 +66,17 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
         <div className="flex items-start justify-between mb-4 md:mb-6">
           <div className="flex-1 pr-2">
             <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-              {t('buildingWizard.selectMethod', 'Selecciona cómo crear el edificio')}
+              {t('selectMethod')}
             </h2>
             <p className="text-xs md:text-sm text-gray-600 mt-1">
-              {t('buildingWizard.selectMethodDesc', 'Elige el método que prefieras para cargar los datos del edificio')}
+              {t('selectMethodDesc')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 ml-2"
-            aria-label={t('common.close', 'Cerrar')}
+            aria-label={t('close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -95,13 +95,10 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
                 <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </div>
               <h3 className="text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                {t('buildingWizard.manualMethod', 'Cargar datos manualmente')}
+                {t('manualMethod')}
               </h3>
               <p className="text-xs md:text-sm text-gray-500">
-                {t(
-                  'buildingWizard.manualMethodDesc',
-                  'Completa el formulario paso a paso con la información del edificio'
-                )}
+                {t('manualMethodDesc')}
               </p>
             </div>
           </button>
@@ -117,13 +114,10 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
                 <Database className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </div>
               <h3 className="text-sm md:text-base font-medium text-gray-700 mb-1 md:mb-2">
-                {t('buildingWizard.catastroMethod', 'Cargar desde Catastro')}
+                {t('catastroMethod')}
               </h3>
               <p className="text-xs md:text-sm text-gray-500">
-                {t(
-                  'buildingWizard.catastroMethodDesc',
-                  'Ingresa el ID de catastro y obtén automáticamente toda la información del edificio'
-                )}
+                {t('catastroMethodDesc')}
               </p>
             </div>
           </button>

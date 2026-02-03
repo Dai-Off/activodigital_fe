@@ -4,6 +4,7 @@ import { calendarApiService } from "~/services/calendar"
 import type { BuildingEvent, EventCategory, EventExecution } from "~/types/calendar"
 import { useSearchParams } from "react-router-dom";
 import { SkeletonEvents } from "./ui/LoadingSystem";
+import { useLanguage } from "~/contexts/LanguageContext";
 
 export const getExecutionBg = (execution: EventExecution) => {
     switch (execution) {
@@ -50,6 +51,7 @@ export const Events = () => {
     const [loading, setLoading] = useState<boolean>(true)
     const [count, setCount] = useState<number>(0)
     const [currentDate, setCurrentDate] = useState(new Date());
+    const { t } = useLanguage();
 
     const [searchParams] = useSearchParams();
     const viewParam = searchParams.get('view') || 'general';
@@ -255,15 +257,15 @@ export const Events = () => {
     return (
         <>
             <div className="bg-white shadow-sm h-full flex flex-col overflow-hidden">
-                <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-gray-200 flex-shrink-0">
+                {(viewParam === "general" || viewParam === "maintenance" || viewParam === "inspections" || viewParam === "expiration" || !viewParam) && <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-5 border-b border-gray-200 flex-shrink-0">
                     <div className="p-2 bg-orange-100 rounded-lg">
                         <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                     </div>
                     <div>
-                        <h2 className="text-base sm:text-lg font-semibold text-gray-900">Agenda de Eventos</h2>
-                        <p className="text-xs sm:text-sm text-gray-500">{count} eventos próximos</p>
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900">{t('eventsTitle')}</h2>
+                        <p className="text-xs sm:text-sm text-gray-500">{count} {t('eventsCount')}</p>
                     </div>
-                </div>
+                </div>}
                 {['maintenance', 'inspections', 'expiration', 'general'].includes(viewParam) && (
                     <div className="space-y-3 flex-1 overflow-y-auto px-4 sm:px-6 py-4">
                         {showData(eventsFilter, viewParam)}
@@ -278,7 +280,7 @@ export const Events = () => {
                                     <Calendar className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base sm:text-lg font-semibold">Vista Semanal</h2>
+                                    <h2 className="text-base sm:text-lg font-semibold">{t('weekView')}</h2>
                                     <p className="text-xs text-gray-500">
                                         {weekDays[0].toLocaleDateString('es-ES', { day: 'numeric' })} -
                                         {weekDays[6].toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -290,7 +292,7 @@ export const Events = () => {
                                     onClick={goToday}
                                     className="px-3 py-1.5 border border-gray-300 rounded text-xs hover:bg-gray-50 transition-colors"
                                 >
-                                    Hoy
+                                    {t('today')}
                                 </button>
                                 <button
                                     onClick={prevWeek}
@@ -338,18 +340,18 @@ export const Events = () => {
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-gray-100">
-                            <h3 className="text-xs font-semibold mb-2">Eventos de la semana</h3>
+                            <h3 className="text-xs font-semibold mb-2">{t('eventsWeek')}</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div className="p-2 bg-orange-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Mantenimientos</p>
+                                    <p className="text-xs text-gray-600">{t('maintenance')}</p>
                                     <p className="text-orange-600 font-bold">{categoryCounts?.maintenance || 0}</p>
                                 </div>
                                 <div className="p-2 bg-red-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Vencimientos</p>
+                                    <p className="text-xs text-gray-600">{t('expiration')}</p>
                                     <p className="text-red-600 font-bold">{categoryCounts?.expiration || 0}</p>
                                 </div>
                                 <div className="p-2 bg-purple-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Auditorías</p>
+                                    <p className="text-xs text-gray-600">{t('audit')}</p>
                                     <p className="text-purple-600 font-bold">{categoryCounts?.audit || 0}</p>
                                 </div>
                             </div>
@@ -365,12 +367,12 @@ export const Events = () => {
                                     <Calendar className="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base sm:text-lg font-semibold">Calendario de Eventos</h2>
+                                    <h2 className="text-base sm:text-lg font-semibold">{t('calendarEvents')}</h2>
                                     <p className="text-xs text-gray-500 capitalize">{monthData.monthName}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={goToday} className="px-3 py-1.5 border border-gray-300 rounded text-xs hover:bg-gray-50">Hoy</button>
+                                <button onClick={goToday} className="px-3 py-1.5 border border-gray-300 rounded text-xs hover:bg-gray-50">{t('today')}</button>
                                 <button onClick={prevMonth} className="px-3 py-1.5 border border-gray-300 rounded text-xs hover:bg-gray-50">←</button>
                                 <button onClick={nextMonth} className="px-3 py-1.5 border border-gray-300 rounded text-xs hover:bg-gray-50">→</button>
                             </div>
@@ -378,6 +380,7 @@ export const Events = () => {
 
                         <div className="mb-4">
                             <div className="grid grid-cols-7 gap-1 mb-1 text-center text-xs text-gray-600 font-medium">
+                                
                                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => <div key={d} className="p-1">{d}</div>)}
                             </div>
 
@@ -414,7 +417,7 @@ export const Events = () => {
                         </div>
 
                         <div>
-                            <h3 className="mb-3">Próximos eventos</h3>
+                            <h3 className="mb-3">{t('eventsCount')}</h3>
                             <div className="space-y-2 max-h-[200px] overflow-y-auto">
                                 {showData(events, viewParam)}
                             </div>
@@ -422,22 +425,22 @@ export const Events = () => {
 
 
                         <div className="mt-4 pt-4 border-t border-gray-100">
-                            <h3 className="text-xs font-semibold mb-2">Eventos del mes</h3>
+                            <h3 className="text-xs font-semibold mb-2">{t('eventsMonth')}</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <div className="p-2 bg-blue-50 rounded-lg">
-                                    <p className="text-xs text-gray-600">Contratos</p>
+                                    <p className="text-xs text-gray-600">{t('contracts')}</p>
                                     <p className="text-blue-600 font-bold">{categoryCounts?.contract || 0}</p>
                                 </div>
                                 <div className="p-2 bg-orange-50 rounded-lg text-center">
-                                    <p className="text-[10px] text-gray-600 uppercase">Mantenimientos</p>
+                                    <p className="text-[10px] text-gray-600 uppercase">{t('maintenance')}</p>
                                     <p className="text-orange-600 font-bold">{categoryCounts?.maintenance || 0}</p>
                                 </div>
                                 <div className="p-2 bg-red-50 rounded-lg text-center">
-                                    <p className="text-[10px] text-gray-600 uppercase">Vencimientos</p>
+                                    <p className="text-[10px] text-gray-600 uppercase">{t('expiration')}</p>
                                     <p className="text-red-600 font-bold">{categoryCounts?.expiration || 0}</p>
                                 </div>
                                 <div className="p-2 bg-purple-50 rounded-lg text-center">
-                                    <p className="text-[10px] text-gray-600 uppercase">Reuniones</p>
+                                    <p className="text-[10px] text-gray-600 uppercase">{t('general')}</p>
                                     <p className="text-purple-600 font-bold">{categoryCounts?.general || 0}</p>
                                 </div>
                             </div>

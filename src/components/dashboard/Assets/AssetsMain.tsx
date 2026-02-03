@@ -231,18 +231,17 @@ export function AssetsMain() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl mb-1">
-              {t("generalDashboard", "Dashboard General")}
+              {t("generalDashboard")}
             </h1>
             <p className="text-sm text-gray-500">
               {t(
-                "executiveSummary",
-                "Resumen ejecutivo del portfolio de activos"
+                "executiveSummary"
               )}
             </p>
           </div>
         </div>
         <div className="text-center py-12 text-gray-500">
-          {t("errorLoadingStats", "Error al cargar estadísticas")}
+          {t("errorLoadingStats")}
         </div>
       </div>
     );

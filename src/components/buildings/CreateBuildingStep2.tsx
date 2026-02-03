@@ -132,11 +132,11 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
         setLocation({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
       } else {
         setLocation(null);
-        setGeoError(t('maps.noLocationFound', 'No se encontró la ubicación.'));
+        setGeoError(t('noLocationFound'));
       }
     } catch {
       setLocation(null);
-      setGeoError(t('maps.searchError', 'Error buscando la ubicación.'));
+      setGeoError(t('searchError'));
     } finally {
       setGeoLoading(false);
     }
@@ -227,8 +227,8 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
   // --- Validation ---
   const validateForm = (): boolean => {
     const newErrs: { location?: string; photos?: string } = {};
-    if (!location) newErrs.location = t('buildings.locationRequired', 'La ubicación es obligatoria');
-    if (photos.length > MAX_PHOTOS) newErrs.photos = t('buildings.maxPhotos', 'Máximo {{n}} fotos', { n: MAX_PHOTOS });
+    if (!location) newErrs.location = t('locationRequired');
+    if (photos.length > MAX_PHOTOS) newErrs.photos = t('maxPhotos', { n: MAX_PHOTOS });
     setErrors(newErrs);
     return Object.keys(newErrs).length === 0;
   };
@@ -285,13 +285,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {buildingName} — {t('buildingWizard.locationPhotos', 'Ubicación y fotos')}
+          {buildingName} — {t('locationPhotos')}
         </h1>
         <p className="text-gray-600">
-          {t(
-            'buildingWizard.markLocationAndUpload',
-            'Marca la ubicación del edificio en el mapa y sube las fotos correspondientes.'
-          )}
+          {t('markLocationAndUpload')}
         </p>
       </div>
 
@@ -300,11 +297,11 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('building.location', 'Ubicación del edificio')} *
+              {t('location')} *
             </h2>
             <p className="text-sm text-gray-600 mb-4">
               {t(
-                'buildingWizard.searchOrClickMap',
+                'searchOrClickMap',
                 'Puedes buscar escribiendo la dirección o haciendo clic en el mapa.'
               )}
             </p>
@@ -322,10 +319,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                   setHasSelectedSuggestion(false);
                 }}
                 onFocus={() => address.trim() && setShowSuggestions(true)}
-                placeholder={t('common.addressPlaceholder', 'Ej.: Calle Mayor 123, Madrid')}
+                placeholder={t('addressPlaceholder')}
                 className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 autoComplete="off"
-                aria-label={t('common.address', 'Dirección')}
+                aria-label={t('address')}
               />
               <button
                 type="button"
@@ -334,7 +331,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                 className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
                 aria-busy={geoLoading}
               >
-                {geoLoading ? t('common.searching', 'Buscando...') : t('common.search', 'Buscar')}
+                {geoLoading ? t('searching') : t('search')}
               </button>
             </div>
 
@@ -346,7 +343,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
               >
                 {suggestions.length === 0 && address.trim() && (
                   <li className="px-3 py-2 text-gray-500 text-sm select-none">
-                    {t('common.noResults', 'No se encontraron resultados')}
+                    {t('noResults')}
                   </li>
                 )}
                 {suggestions.map((s) => (
@@ -395,19 +392,19 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {location && (
             <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                <strong>{t('maps.selectedLocation', 'Ubicación seleccionada')}:</strong>
+                <strong>{t('selectedLocation')}:</strong>
                 {address && (
                   <span className="block font-semibold text-green-900 mb-1">{address}</span>
                 )}
-                {t('maps.latitude', 'Latitud')}: {location.lat.toFixed(6)} <br />
-                {t('maps.longitude', 'Longitud')}: {location.lng.toFixed(6)}
+                {t('latitude')}: {location.lat.toFixed(6)} <br />
+                {t('longitude')}: {location.lng.toFixed(6)}
               </p>
             </div>
           )}
 
           {errors.location && (
             <p className="mt-2 text-sm text-red-600">
-              {t('buildings.locationRequired', 'La ubicación es obligatoria')}
+              {t('locationRequired')}
             </p>
           )}
         </div>
@@ -416,13 +413,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
         <div>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('buildingWizard.buildingPhotos', 'Fotos del edificio')}
+              {t('buildingPhotos')}
             </h2>
             <p className="text-sm text-gray-600 mb-4">
-              {t(
-                'buildingWizard.uploadPhotosDesc',
-                'Sube fotos del edificio. Marca una como principal.'
-              )}
+              {t('uploadPhotosDesc')}
             </p>
           </div>
 
@@ -432,12 +426,8 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
               acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
               maxFiles={MAX_PHOTOS - photos.length}
               maxSizeInMB={5}
-              label={t('buildingWizard.uploadPhotos', 'Subir fotos')}
-              description={t(
-                'buildingWizard.dragPhotosOrClick',
-                'Arrastra aquí o haz clic ({{remaining}} restantes)',
-                { remaining: MAX_PHOTOS - photos.length }
-              )}
+              label={t('uploadPhotos')}
+              description={t('dragPhotosOrClick', { remaining: MAX_PHOTOS - photos.length })}
               className="mb-6"
             />
           )}
@@ -449,7 +439,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {photos.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-gray-900">
-                {t('buildingWizard.uploadedPhotos', 'Fotos subidas')} ({photos.length}/{MAX_PHOTOS})
+                {t('uploadedPhotos')} ({photos.length}/{MAX_PHOTOS})
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
@@ -465,7 +455,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                       >
                         <img
                           src={previewUrl}
-                          alt={t('buildingWizard.photoAlt', 'Foto {{n}}', { n: index + 1 })}
+                          alt={t('photoAlt', { n: index + 1 })}
                           className="w-full h-32 object-cover"
                           onLoad={() => URL.revokeObjectURL(previewUrl)}
                         />
@@ -473,7 +463,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                         {isMain && (
                           <div className="absolute top-2 left-2">
                             <span className="px-2 py-1 text-xs font-medium text-white bg-blue-500 rounded">
-                              {t('buildingWizard.mainPhoto', 'Principal')}
+                              {t('mainPhoto')}
                             </span>
                           </div>
                         )}
@@ -484,7 +474,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                               type="button"
                               onClick={() => handleSetMainPhoto(index)}
                               className="p-1 text-white bg-black bg-opacity-50 rounded hover:bg-opacity-70"
-                              title={t('buildingWizard.setAsMain', 'Marcar como principal')}
+                              title={t('setAsMain')}
                             >
                               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -495,7 +485,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
                             type="button"
                             onClick={() => handleRemovePhoto(index)}
                             className="p-1 text-white bg-red-500 bg-opacity-70 rounded hover:bg-opacity-90"
-                            title={t('common.remove', 'Eliminar')}
+                            title={t('remove')}
                           >
                             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                               <path
@@ -524,7 +514,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={onPrevious}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          {t('common.previous', 'Anterior')}
+          {t('previous')}
         </button>
 
         <button
@@ -532,7 +522,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={handleSaveDraft}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          {t('common.saveDraft', 'Guardar borrador')}
+          {t('saveDraft')}
         </button>
 
         <button
@@ -540,7 +530,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           onClick={handleNext}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:ml-auto"
         >
-          {t('common.saveAndContinue', 'Guardar y continuar')}
+          {t('saveAndContinue')}
         </button>
       </div>
     </div>

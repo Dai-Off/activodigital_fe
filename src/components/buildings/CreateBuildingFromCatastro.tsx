@@ -298,20 +298,17 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildingWizard.loadFromCatastro', 'Cargar desde Catastro')}
+          {t('loadFromCatastro')}
         </h1>
         <p className="text-gray-600">
-          {t(
-            'buildingWizard.loadFromCatastroDesc',
-            'Busca el edificio usando uno de los métodos disponibles'
-          )}
+          {t('loadFromCatastroDesc')}
         </p>
       </div>
 
       {/* Selector de método */}
       <div className="mb-4 md:mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          {t('buildingWizard.searchMethod', 'Método de búsqueda')}
+          {t('searchMethod', 'Método de búsqueda')}
         </label>
         <div className="flex flex-col sm:flex-row gap-2 md:gap-2">
           <button
@@ -327,7 +324,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <Hash className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByRC', 'Por Código Catastral')}</span>
           </button>
           <button
             type="button"
@@ -342,7 +339,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByAddress', 'Por Dirección')}</span>
           </button>
           <button
             type="button"
@@ -357,7 +354,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <Navigation className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByCoords', 'Por Coordenadas')}</span>
           </button>
         </div>
       </div>
@@ -368,7 +365,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         {searchMethod === 'rc' && (
           <div>
             <label htmlFor="rc" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildingWizard.catastralCode', 'Código Catastral (RC)')} *
+              {t('catastralCode', 'Código Catastral (RC)')} *
             </label>
             <input
               id="rc"
@@ -379,7 +376,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 setError(null);
               }}
               onKeyPress={handleKeyPress}
-              placeholder={t('buildingWizard.rcPlaceholder', 'Ej: 1249023VK4714G0001FH')}
+              placeholder={t('catastralReferencePlaceholder')}
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 error ? 'border-red-300' : 'border-gray-300'
               }`}
@@ -394,7 +391,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.province', 'Provincia')} *
+                  {t('province', 'Provincia')} *
                 </label>
                 <select
                   id="province"
@@ -408,7 +405,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   }`}
                   disabled={isLoading}
                 >
-                  <option value="">{t('common.select', 'Seleccionar...')}</option>
+                  <option value="">{t('select')}</option>
                   {provinces.map((p) => (
                     <option key={p.codigo} value={p.codigo}>
                       {p.nombre}
@@ -419,7 +416,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="municipality" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.municipality', 'Municipio')} *
+                  {t('municipality', 'Municipio')} *
                 </label>
                 <select
                   id="municipality"
@@ -434,7 +431,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   }`}
                   disabled={isLoading || !selectedProvince}
                 >
-                  <option value="">{t('common.select', 'Seleccionar...')}</option>
+                  <option value="">{t('select')}</option>
                   {municipalities.map((m) => (
                     <option key={m.nombreMunicipio} value={m.nombreMunicipio}>
                       {m.nombreMunicipio}
@@ -447,7 +444,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="streetType" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.streetType', 'Tipo de Vía')}
+                  {t('streetType', 'Tipo de Vía')}
                 </label>
                 <input
                   id="streetType"
@@ -457,7 +454,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                     setStreetType(e.target.value);
                     setError(null);
                   }}
-                  placeholder={t('buildingWizard.streetTypePlaceholder', 'Ej: CL, AV, PL')}
+                  placeholder={t('streetTypePlaceholder')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={isLoading || !selectedMunicipality}
                 />
@@ -465,7 +462,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="streetName" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.streetName', 'Nombre de Vía')}
+                  {t('streetName', 'Nombre de Vía')}
                 </label>
                 <input
                   id="streetName"
@@ -475,7 +472,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                     setStreetName(e.target.value);
                     setError(null);
                   }}
-                  placeholder={t('buildingWizard.streetNamePlaceholder', 'Ej: Alcalá')}
+                  placeholder={t('streetNamePlaceholder', 'Ej: Alcalá')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={isLoading || !selectedMunicipality}
                 />
@@ -484,7 +481,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
             <div>
               <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.street', 'Vía')} *
+                {t('street', 'Vía')} *
               </label>
               <select
                 id="street"
@@ -498,7 +495,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 }`}
                 disabled={isLoading || !selectedMunicipality}
               >
-                <option value="">{t('common.select', 'Seleccionar...')}</option>
+                <option value="">{t('select')}</option>
                 {streets.map((s, idx) => (
                   <option key={`${s.codigoVia}-${idx}`} value={s.codigoVia}>
                     {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombreVia}
@@ -510,7 +507,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.number', 'Número')} *
+                  {t('number', 'Número')} *
                 </label>
                 <input
                   id="number"
@@ -529,7 +526,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="escalera" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.escalera', 'Escalera')}
+                  {t('escalera', 'Escalera')}
                 </label>
                 <input
                   id="escalera"
@@ -546,7 +543,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="planta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.planta', 'Planta')}
+                  {t('planta', 'Planta')}
                 </label>
                 <input
                   id="planta"
@@ -563,7 +560,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="puerta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.puerta', 'Puerta')}
+                  {t('puerta', 'Puerta')}
                 </label>
                 <input
                   id="puerta"
@@ -586,7 +583,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="coordX" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.longitude', 'Longitud (X)')} *
+                {t('longitude', 'Longitud (X)')} *
               </label>
               <input
                 id="coordX"
@@ -597,7 +594,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   setError(null);
                 }}
                 onKeyPress={handleKeyPress}
-                placeholder={t('buildingWizard.longitudePlaceholder', 'Ej: -3.697444')}
+                placeholder={t('longitudePlaceholder', 'Ej: -3.697444')}
                 className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   error ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -607,7 +604,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
             <div>
               <label htmlFor="coordY" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.latitude', 'Latitud (Y)')} *
+                {t('latitude', 'Latitud (Y)')} *
               </label>
               <input
                 id="coordY"
@@ -618,7 +615,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   setError(null);
                 }}
                 onKeyPress={handleKeyPress}
-                placeholder={t('buildingWizard.latitudePlaceholder', 'Ej: 40.418773')}
+                placeholder={t('latitudePlaceholder', 'Ej: 40.418773')}
                 className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   error ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -635,7 +632,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-red-900 mb-2">
-                {t('buildingWizard.errorTitle', 'Error al buscar el edificio')}
+                {t('errorTitle', 'Error al buscar el edificio')}
               </p>
               <div className="text-sm text-red-800 leading-relaxed whitespace-pre-line space-y-1.5">
                 {error.split('\n').map((line, index) => {
@@ -775,10 +772,10 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('buildingWizard.additionalData', 'Datos adicionales')}
+              {t('additionalData', 'Datos adicionales')}
             </h3>
             <p className="text-sm text-gray-600">
-              {t('buildingWizard.additionalDataDesc', 'Completa los siguientes campos opcionales antes de continuar')}
+              {t('additionalDataDesc', 'Completa los siguientes campos opcionales antes de continuar')}
             </p>
           </div>
 
@@ -797,7 +794,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1 text-xs text-gray-500">
-                {t('buildingWizard.nameHelper', 'Si no se completa, se usará la dirección por defecto.')}
+                {t('nameHelper', 'Si no se completa, se usará la dirección por defecto.')}
               </p>
             </div>
 

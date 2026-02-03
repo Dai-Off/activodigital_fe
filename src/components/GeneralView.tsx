@@ -34,49 +34,49 @@ export function GeneralView() {
   const menuItems: MenuItem[] = [
     {
       id: "buildingGeneralView",
-      label: t("generalView", "Vista General"),
+      label: t("generalView"),
       Icon: Building2,
       route: "/building/:id/general-view",
     },
     {
       id: "buildingFinancial",
-      label: t("financial", "Financiero"),
+      label: t("financial"),
       Icon: Wallet,
       route: "/building/:id/general-view/financial",
     },
     {
       id: "buildingInsurance",
-      label: t("insurances", "Seguros"),
+      label: t("insurances"),
       Icon: Shield,
       route: "/building/:id/general-view/insurance",
     },
     {
       id: "buildingCalendar",
-      label: t("calendarOfActions", "Calendario de acciones"),
+      label: t("calendarOfActions"),
       Icon: Calendar,
       route: "/building/:id/general-view/calendar",
     },
     {
       id: "buildingRent",
-      label: t("rents", "Rentas"),
+      label: t("rents"),
       Icon: Euro,
       route: "/building/:id/general-view/rent",
     },
     {
       id: "buildingEnergyEfficiency",
-      label: t("energyEfficiency", "Eficiencia Energética"),
+      label: t("energyEfficiency"),
       Icon: Zap,
       route: "/building/:id/general-view/energy-efficiency",
     },
     {
       id: "buildingCertificates",
-      label: t("certificates", "Certificados"),
+      label: t("certificates"),
       Icon: FileText,
       route: "/building/:id/general-view/certificates",
     },
     {
       id: "buildingMaintenance",
-      label: t("maintenance", "Mantenimiento"),
+      label: t("maintenance"),
       Icon: Wrench,
       route: "/building/:id/general-view/maintenance",
     },
@@ -179,7 +179,7 @@ export function GeneralView() {
           >
             <Activity className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm hidden sm:inline">
-              {t("activity", "Actividad")}
+              {t("activity")}
             </span>
           </button>
           <button
