@@ -119,32 +119,32 @@ export default function Expired() {
   ]);
 
   const totalVencidos = kpis?.total_vencidos ?? 0;
-  const totalLabel = `${total} ${t("expired.de", "de")} ${totalVencidos}`;
+  const totalLabel = `${total} ${t("of")} ${totalVencidos}`;
 
   return (
     <div className="w-full h-full flex flex-col">
       <div className="border-t border-b border-gray-200 bg-gray-50 py-2.5 -mx-2 md:-mx-4 lg:-mx-6">
         <nav
           className="flex items-center gap-2 text-sm pl-2 md:pl-4 lg:pl-6 pr-2 md:pr-4 lg:pr-6"
-          aria-label={t("expired.breadcrumb", "Breadcrumb archivo")}
+          aria-label={t("breadcrumb")}
         >
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => navigate("/expired")}
               className="flex items-center gap-1.5 text-gray-600 hover:text-blue-600 transition-colors group"
-              aria-label={t("expired.goToArchive", "Navegar a Archivo")}
+              aria-label={t("goToArchive")}
             >
               <Archive className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span className="group-hover:underline">
-                {t("expired.archive", "Archivo")}
+                {t("archive")}
               </span>
             </button>
             <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-gray-900 font-medium">
-              <span>{t("expired.documents", "documentos")}</span>
+              <span>{t("documents")}</span>
             </div>
           </div>
         </nav>
@@ -158,12 +158,11 @@ export default function Expired() {
             </div>
             <div>
               <h2 className="text-gray-900 text-lg font-normal">
-                {t("expired.title", "Archivo - Elementos Vencidos")}
+                {t("expireTitle")}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 {t(
-                  "expired.subtitle",
-                  "Documentos, certificados, contratos e inspecciones que NO se completaron a tiempo"
+                  "expireSubtitle",
                 )}
               </p>
             </div>
@@ -177,7 +176,7 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.total", "Total Vencidos")}
+                    {t("expireTotal")}
                   </p>
                   <p className="text-2xl text-gray-900">
                     {loading || !kpis ? "—" : kpis.total_vencidos}
@@ -193,7 +192,7 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.highPriority", "Alta Prioridad")}
+                    {t("highPriority")}
                   </p>
                   <p className="text-2xl text-gray-900">
                     {loading || !kpis ? "—" : kpis.alta_prioridad}
@@ -209,7 +208,7 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.mediumPriority", "Media Prioridad")}
+                    {t("mediumPriority", "Media Prioridad")}
                   </p>
                   <p className="text-2xl text-gray-900">
                     {loading || !kpis ? "—" : kpis.media_prioridad}
@@ -225,10 +224,10 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.avgDays", "Promedio Retraso")}
+                    {t("avgDays", "Promedio Retraso")}
                   </p>
                   <p className="text-2xl text-gray-900">
-                    {loading || !kpis ? "—" : `${kpis.dias_promedio} ${t("expired.days", "días")}`}
+                    {loading || !kpis ? "—" : `${kpis.dias_promedio} ${t("days", "días")}`}
                   </p>
                 </div>
               </div>
@@ -241,7 +240,7 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.totalDebt", "Coste Total")}
+                    {t("totalDebt", "Coste Total")}
                   </p>
                   <p className="text-2xl text-gray-900">
                     {loading || !kpis
@@ -263,7 +262,7 @@ export default function Expired() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">
-                    {t("expired.noCoverage", "Seguros Vencidos")}
+                    {t("noCoverage", "Seguros Vencidos")}
                   </p>
                   <p className="text-2xl text-gray-900">
                     {loading || !kpis ? "—" : kpis.sin_cobertura}
@@ -276,7 +275,7 @@ export default function Expired() {
 
         <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
           <h3 className="text-sm mb-3">
-            {t("expired.categoriesTitle", "Categorías de Vencimientos")}
+            {t("categoriesTitle", "Categorías de Vencimientos")}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <button
@@ -302,15 +301,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Certificados" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryCertificados", "Certificados")}
+                {t("categoryCertificados")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Certificados")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Certificados")} ${t("vencidos")}`}
               </p>
             </button>
 
@@ -337,15 +333,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Contratos" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryContratos", "Contratos")}
+                {t("categoryContratos")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Contratos")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Contratos")} ${t("vencidos")}`}
               </p>
             </button>
 
@@ -372,15 +365,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Inspecciones" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryInspecciones", "Inspecciones")}
+                {t("categoryInspecciones")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Inspecciones")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Inspecciones")} ${t("vencidos")}`}
               </p>
             </button>
 
@@ -407,15 +397,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Pagos" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryPagos", "Pagos")}
+                {t("categoryPagos")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Pagos")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Pagos")} ${t("vencidos")}`}
               </p>
             </button>
 
@@ -442,15 +429,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Mantenimiento" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryMantenimiento", "Mantenimiento")}
+                {t("categoryMantenimiento")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Mantenimiento")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Mantenimiento")} ${t("vencidos")}`}
               </p>
             </button>
 
@@ -477,15 +461,12 @@ export default function Expired() {
               <p className={`text-sm mb-1 ${
                 categoryFilter === "Documentos" ? "text-gray-900" : ""
               }`}>
-                {t("expired.categoryDocumentos", "Documentos")}
+                {t("categoryDocumentos")}
               </p>
               <p className="text-sm text-red-600">
                 {loadingCategories
                   ? "—"
-                  : `${getCategoryCount("Documentos")} ${t(
-                      "expired.vencidos",
-                      "vencidos",
-                    )}`}
+                  : `${getCategoryCount("Documentos")} ${t("vencidos")}`}
               </p>
             </button>
           </div>
@@ -502,10 +483,7 @@ export default function Expired() {
                     setPage(1);
                     setSearch(e.target.value);
                   }}
-                  placeholder={t(
-                    "expired.searchPlaceholder",
-                    "Buscar vencimientos...",
-                  )}
+                  placeholder={t("searchPlaceholder")}
                   className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 bg-input-background transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive pl-10 text-sm focus:ring-2 focus:ring-[#1e3a8a]"
                 />
                 <Search
@@ -525,11 +503,11 @@ export default function Expired() {
                     className="pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px] focus:ring-2 focus:ring-[#1e3a8a] focus:outline-none focus:border-gray-300"
                   >
                     <option value="all">
-                      {t("expired.allBuildings", "Todos los edificios")}
+                      {t("allBuildings")}
                     </option>
                     {loadingFilters ? (
                       <option disabled>
-                        {t("expired.loading", "Cargando...")}
+                        {t("loading")}
                       </option>
                     ) : (
                       availableFilters.edificios.map((edificio) => (
@@ -560,7 +538,7 @@ export default function Expired() {
                     className="pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[150px] focus:ring-2 focus:ring-[#1e3a8a] focus:outline-none focus:border-gray-300"
                   >
                     <option value="all">
-                      {t("expired.allUnits", "Todas las unidades")}
+                      {t("allUnits")}
                     </option>
                   </select>
                   <House
@@ -584,16 +562,16 @@ export default function Expired() {
                     className="pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[150px] focus:ring-2 focus:ring-[#1e3a8a] focus:outline-none focus:border-gray-300"
                   >
                     <option value="all">
-                      {t("expired.allPriorities", "Todas las prioridades")}
+                      {t("allPriorities")}
                     </option>
                     <option value="alta">
-                      {t("expired.priorityHigh", "Alta")}
+                      {t("priorityHigh")}
                     </option>
                     <option value="media">
-                      {t("expired.priorityMedium", "Media")}
+                      {t("priorityMedium")}
                     </option>
                     <option value="baja">
-                      {t("expired.priorityLow", "Baja")}
+                      {t("priorityLow")}
                     </option>
                   </select>
                   <TriangleAlert
@@ -623,16 +601,16 @@ export default function Expired() {
                     className="px-3 pr-8 py-2 border border-gray-300 rounded-lg text-sm bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-[#1e3a8a] focus:outline-none focus:border-gray-300"
                   >
                     <option value="mas_retrasado">
-                      {t("expired.sortMostDelayed", "Ordenar: Más retrasado")}
+                      {t("sortMostDelayed")}
                     </option>
                     <option value="menos_retrasado">
-                      {t("expired.sortLeastDelayed", "Ordenar: Menos retrasado")}
+                      {t("sortLeastDelayed")}
                     </option>
                     <option value="mas_reciente">
-                      {t("expired.sortNewest", "Ordenar: Más reciente")}
+                      {t("sortNewest")}
                     </option>
                     <option value="menos_reciente">
-                      {t("expired.sortOldest", "Ordenar: Menos reciente")}
+                      {t("sortOldest")}
                     </option>
                   </select>
                   <ChevronRight
@@ -651,14 +629,11 @@ export default function Expired() {
           <div className="flex-1 overflow-y-auto p-4">
             {loadingList ? (
               <div className="text-xs text-gray-500">
-                {t("expired.loadingList", "Cargando vencimientos...")}
+                {t("loadingList")}
               </div>
             ) : documents.length === 0 ? (
               <div className="text-xs text-gray-500">
-                {t(
-                  "expired.emptyList",
-                  "No hay vencimientos para los filtros seleccionados",
-                )}
+                {t("emptyList")}
               </div>
             ) : (
               <div className="space-y-3">
@@ -666,10 +641,10 @@ export default function Expired() {
                   const prioridad = doc.prioridad_calculada || "media";
                   const prioridadLabel =
                     prioridad === "alta"
-                      ? t("expired.priorityHigh", "Alta Prioridad")
+                      ? t("priorityHigh")
                       : prioridad === "media"
-                        ? t("expired.priorityMedium", "Media Prioridad")
-                        : t("expired.priorityLow", "Baja Prioridad");
+                        ? t("priorityMedium")
+                        : t("priorityLow");
                   const borderColor =
                     prioridad === "alta"
                       ? "border-l-red-500"
@@ -684,8 +659,7 @@ export default function Expired() {
                         : "bg-yellow-50";
                   const diasLabel =
                     doc.dias_vencido && doc.dias_vencido > 0
-                      ? t("expired.daysAgo", {
-                          defaultValue: "Vencido hace {{days}} días",
+                      ? t("expiredDaysAgo", {
                           days: doc.dias_vencido,
                         })
                       : null;
@@ -738,7 +712,7 @@ export default function Expired() {
                                 <>
                                   <span>•</span>
                                   <span>
-                                    {t("expired.vencidoEl", "Venció:")}{" "}
+                                    {t("vencidoEl")}{" "}
                                     {vigencia}
                                   </span>
                                 </>
@@ -754,10 +728,7 @@ export default function Expired() {
                               <div className="p-2 bg-red-50 rounded border border-red-200">
                                 <p className="text-xs">
                                   <span className="text-red-600">
-                                    {t(
-                                      "expired.consequenceLabel",
-                                      "⚠️ Consecuencia: ",
-                                    )}
+                                    {t("consequenceLabel")}
                                   </span>
                                   <span className="text-gray-900">
                                     {consecuencia}
@@ -772,7 +743,7 @@ export default function Expired() {
                             type="button"
                             className="inline-flex items-center justify-center whitespace-nowrap font-medium transition-all text-primary-foreground rounded-md gap-1.5 h-8 px-3 text-xs bg-red-600 hover:bg-red-700"
                           >
-                            {t("expired.resolveNow", "Resolver Urgente")}
+                            {t("resolveNow")}
                           </button>
                           <button
                             type="button"

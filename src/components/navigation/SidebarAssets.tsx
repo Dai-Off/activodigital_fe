@@ -182,13 +182,13 @@ export function SidebarAssets() {
   const menuItems = [
     {
       id: "assetslist",
-      label: t("assetsglobalTitle", "Listado de activos"),
+      label: t("assetsglobalTitle"),
       Icon: House,
       route: "/assets",
     },
     {
       id: "unitslist",
-      label: t("unitsglobalTitle", "Listado de unidades"),
+      label: t("unitsglobalTitle"),
       Icon: House,
       route: "/assets/units",
     },
@@ -207,7 +207,7 @@ export function SidebarAssets() {
               }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            <span className="flex-1 text-left">{t("filters2", "Filtros")}</span>
+            <span className="flex-1 text-left">{t("filters")}</span>
             {hasActiveFilters && (
               <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full min-w-[18px] text-center">
                 {Object.values(filters).filter((v) => v !== "").length}
@@ -230,21 +230,21 @@ export function SidebarAssets() {
                   }
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">{t("all", "Todos")}</option>
+                  <option value="">{t("all")}</option>
                   <option value="residential">
-                    {t("residential", "Residencial")}
+                    {t("residential")}
                   </option>
                   <option value="commercial">
-                    {t("commercial", "Comercial")}
+                    {t("commercial")}
                   </option>
-                  <option value="mixed">{t("office", "Mixto")}</option>
+                  <option value="mixed">{t("mixed")}</option>
                 </select>
               </div>
 
               {/* Filtro ciudad */}
               <div>
                 <label className="block text-xs mb-1.5 text-gray-600">
-                  {t("city", "Ciudad")}
+                  {t("city")}
                 </label>
                 <select
                   value={filters.city}
@@ -253,7 +253,7 @@ export function SidebarAssets() {
                   }
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="">{t("all", "Todos")}</option>
+                  <option value="">{t("all")}</option>
                   {cities.map((city) => (
                     <option key={city} value={city}>
                       {city}
@@ -269,7 +269,7 @@ export function SidebarAssets() {
                   className="w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center gap-1.5 text-gray-700"
                 >
                   <X className="w-3 h-3" />
-                  {t("clearFilters", "Limpiar filtros")}
+                  {t("clearFilters")}
                 </button>
               )}
             </div>
@@ -366,7 +366,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("generalView", "Vista General")}
+                          {t("generalView")}
                         </span>
                       </button>
 
@@ -387,7 +387,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("generalAnalysis", "Análisis general")}
+                          {t("generalAnalysis")}
                         </span>
                       </button>
 
@@ -407,7 +407,7 @@ export function SidebarAssets() {
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
-                          {t("gestion", "Gestión")}
+                          {t("gestion")}
                         </span>
                       </button>
 

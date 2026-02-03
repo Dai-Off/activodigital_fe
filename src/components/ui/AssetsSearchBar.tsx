@@ -43,37 +43,37 @@ export default function AssetsSearchBar({
   const { t } = useTranslation();
 
   const STATUS_OPTIONS = [
-    { value: "draft", label: t("pending", "Pendiente") },
-    { value: "ready_book", label: t("ready", "Listo") },
-    { value: "with_book", label: t("inProgress", "En curso") },
-    { value: "completed", label: t("completed", "Completado") },
+    { value: "draft", label: t("pending") },
+    { value: "ready_book", label: t("ready") },
+    { value: "with_book", label: t("inProgress") },
+    { value: "completed", label: t("completed") },
   ];
 
   const TYPOLOGY_OPTIONS = [
-    { value: "residential", label: t("residential", "Residencial") },
-    { value: "commercial", label: t("commercial", "Comercial") },
-    { value: "mixed", label: t("office", "Mixto") },
+    { value: "residential", label: t("residential") },
+    { value: "commercial", label: t("commercial") },
+    { value: "mixed", label: t("office") },
   ];
 
   const OCCUPATION_OPTIONS = [
-    { value: "operative", label: t("operational", "Operativo") },
-    { value: "remodeling", label: t("inRemodeling", "En remodelación") },
-    { value: "vacant", label: t("vacant", "Vacío") },
+    { value: "operative", label: t("operational") },
+    { value: "remodeling", label: t("inRemodeling") },
+    { value: "vacant", label: t("vacant") },
   ];
 
   const COMPLIANCE_OPTIONS = [
-    { value: "high", label: t("high", "Alto") },
-    { value: "medium", label: t("medium", "Medio") },
-    { value: "low", label: t("low", "Bajo") },
+    { value: "high", label: t("high") },
+    { value: "medium", label: t("medium") },
+    { value: "low", label: t("low") },
   ];
 
   const SORT_OPTIONS: { value: SortField; label: string }[] = [
-    { value: "name", label: t("name", "Nombre") },
-    { value: "value", label: t("value", "Valor") },
-    { value: "status", label: t("status", "Estado") },
-    { value: "energyClass", label: t("energyClass", "Clase energética") },
-    { value: "esgScore", label: t("esgScore", "ESG Score") },
-    { value: "squareMeters", label: t("squareMeters", "Superficie") },
+    { value: "name", label: t("name") },
+    { value: "value", label: t("value") },
+    { value: "status", label: t("status") },
+    { value: "energyClass", label: t("energyClass") },
+    { value: "esgScore", label: t("esgScore") },
+    { value: "squareMeters", label: t("squareMeters") },
   ];
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("name");
@@ -208,7 +208,7 @@ export default function AssetsSearchBar({
             type="text"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={t("searchAssets", "Buscar activos...")}
+            placeholder={t("searchAssets")}
             className="block w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           />
@@ -216,7 +216,7 @@ export default function AssetsSearchBar({
             <button
               onClick={() => handleSearchChange("")}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              aria-label={t("clearSearch", "Limpiar búsqueda")}
+              aria-label={t("clearSearch")}
             >
               <svg
                 className="h-4 w-4"
@@ -273,16 +273,16 @@ export default function AssetsSearchBar({
             onClick={handleSortOrderToggle}
             className="px-3 py-2.5 bg-gray-50/50 border border-gray-200/80 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100/50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
-            aria-label={t("sortOrder", "Ordenar {{order}}", {
+            aria-label={t("sortOrder", {
               order:
                 sortOrder === "asc"
-                  ? t("descending", "descendente")
-                  : t("ascending", "ascendente"),
+                  ? t("descending")
+                  : t("ascending"),
             })}
             title={
               sortOrder === "asc"
-                ? t("ascendingSort", "Ascendente (A-Z, menor-mayor)")
-                : t("descendingSort", "Descendente (Z-A, mayor-menor)")
+                ? t("ascendingSort")
+                : t("descendingSort")
             }
           >
             <svg
@@ -311,7 +311,7 @@ export default function AssetsSearchBar({
                 : "bg-gray-50/50 border border-gray-200/80 text-gray-700 hover:bg-gray-100/50 hover:border-gray-300"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={isLoading}
-            aria-label={t("additionalFilters", "Filtros adicionales")}
+            aria-label={t("additionalFilters")}
           >
             <svg
               className="w-4 h-4"
@@ -326,7 +326,7 @@ export default function AssetsSearchBar({
                 d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
               />
             </svg>
-            <span className="hidden sm:inline">{t("filters", "Filtros")}</span>
+            <span className="hidden sm:inline">{t("filters")}</span>
             {activeFiltersCount > 0 && (
               <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-blue-600 text-white text-[10px] font-semibold rounded-full">
                 {activeFiltersCount}
@@ -359,7 +359,7 @@ export default function AssetsSearchBar({
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                {t("bookStatus", "Estado del Libro")}
+                {t("bookStatus")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {STATUS_OPTIONS.map((status) => (
@@ -397,7 +397,7 @@ export default function AssetsSearchBar({
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                {t("energyRating", "Calificación Energética")}
+                {t("energyRating")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {ENERGY_CLASS_OPTIONS.map((energyClass) => {
@@ -453,7 +453,7 @@ export default function AssetsSearchBar({
                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                   />
                 </svg>
-                {t("type", "Tipología")}
+                {t("type")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {TYPOLOGY_OPTIONS.map((type) => (
@@ -491,7 +491,7 @@ export default function AssetsSearchBar({
                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                   />
                 </svg>
-                {t("occupation", "Ocupación")}
+                {t("occupation")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {OCCUPATION_OPTIONS.map((opt) => (
@@ -529,7 +529,7 @@ export default function AssetsSearchBar({
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {t("compliance", "Cumplimiento")}
+                {t("compliance")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {COMPLIANCE_OPTIONS.map((opt) => (
@@ -582,7 +582,7 @@ export default function AssetsSearchBar({
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                {t("clearFilters", "Limpiar filtros")}
+                {t("clearFilters")}
               </button>
             </div>
           )}
@@ -614,12 +614,12 @@ export default function AssetsSearchBar({
                 {totalResults}
               </span>{" "}
               {totalResults === 1
-                ? t("asset", "activo")
-                : t("assets", "activos")}
+                ? t("asset")
+                : t("assets")}
               {(searchTerm || activeFiltersCount > 0) && (
                 <span className="ml-1 text-gray-400">
-                  •{" "}
-                  {t("filtered", "filtrado{{s}}", {
+                  •{" "}|
+                  {t("filtered", {
                     s: totalResults !== 1 ? "s" : "",
                   })}
                 </span>
