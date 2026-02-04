@@ -1,6 +1,4 @@
-{
-  "__CORE__": "---------- NAVIGATION AND ACCESS ----------",
-  "login": "Log in",
+{ "login": "Log in",
   "register": "Register",
   "logout": "Log out",
   "profile": "My profile",
@@ -11,7 +9,6 @@
   "userArkia": "ARKIA User",
   "support": "Support",
   "contactSupport": "Contact support",
-  "__DASHBOARD__": "---------- DASHBOARD AND METRICS ----------",
   "generalDashboard": "General Dashboard",
   "executiveSummary": "Executive summary of the asset portfolio",
   "statistics": "Statistics",
@@ -63,7 +60,6 @@
   "completeBasicInfo": "Complete basic building information",
   "buildingName": "Building Name",
   "buildingNamePlaceholder": "Ex: Central Tower",
-  "__BUILDINGS__": "---------- BUILDING MANAGEMENT ----------",
   "buildingManagement": "Building Management",
   "buildings": "Buildings",
   "assets": "Assets",
@@ -1027,5 +1023,6 @@
   "calendarEvents": "Events Calendar",
   "gestionGeneral": "General Management",
   "gestionGeneralDescription": "Consolidated view of all documents of buildings and units",
-  "more": "More"
-}
+  "more": "More",
+  "dontHaveAccount": "don't have an account?",
+  "createAccount": "Create account"}

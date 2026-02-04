@@ -1,0 +1,15 @@
+{
+  "navigation": "Navigation",
+  "buildingListNavigation": "Navigation by building list",
+  "noBuildingsFound": "No buildings found",
+  "home": "Panel",
+  "events": "Events",
+  "reports": "Reports",
+  "generalManagement": "General Management",
+  "green": "Green",
+  "green-financial": "Green Financing",
+  "managementInmobiliaria": "Real Estate Management",
+  "collaboration": "Collaboration",
+  "weekView": "Weekly View",
+  "monthView": "Monthly View"
+}
