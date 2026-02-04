@@ -1,0 +1,11 @@
+{
+    "validating": "Validating...",
+    "errorLoadingStats": "Error loading statistics",
+    "languageChangedTo": "Language changed to",
+    "selectLanguage": "Select language",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications",
+    "sessionClosed": "Session closed successfully",
+    "noResultsFound": "No results found",
+    "noBuildingsAvailable": "No buildings available"
+}

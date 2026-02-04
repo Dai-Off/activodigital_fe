@@ -125,6 +125,7 @@ export interface DashboardStats {
   averageUnitsPerBuilding: number;
   averageBuildingAge: number;
   averageFloorsPerBuilding: number;
+  complianceAverage: number;
 
   // Tipología
   mostCommonTypology: string | null;
