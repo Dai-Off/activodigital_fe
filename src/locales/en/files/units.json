@@ -1,0 +1,20 @@
+{
+  "unitsglobalTitle": "Units List",
+  "assetsglobalTitle": "Assets List",
+  "unitsglobalSubtitle": "All units of the buildings in your portfolio",
+  "unit": "Unit",
+  "unitNotIdentified": "Could not identify the building or unit",
+  "unitNotIdentifiedDesc": "Please try again.",
+  "noUnitsCreated": "No units created from catastro",
+  "loadedFromCatastro": "Some units were loaded from Catastro. Review them, adjust if necessary and click 'Continue' to save them.",
+  "createdMultiple": "${unitCount === 1 ? 'created' : 'created'} ${unitCount} ${unitCount === 1 ? 'unit' : 'units'} successfully",
+  "createFailed": "No units were created. Please try again.",
+  "reviewImportedUnits": "Review imported units",
+  "door": "Door",
+  "identifier": "Identifier",
+  "useType": "Use Type",
+  "area": "Area (m²)",
+  "discardImport": "Discard import",
+  "backToSearch": "Back to search",
+  "editUnitsAndContinue": "Edit units and continue"
+}

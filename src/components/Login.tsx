@@ -367,17 +367,17 @@ export default function Login() {
               </form>
 
               <p className="mt-4 text-center text-sm text-gray-600">
-                {t('dontHaveAccount', '¿No tienes cuenta?')}{' '}
-                <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">{t('createAccount', 'Crear cuenta')}</Link>
+                {t('dontHaveAccount')}{' '}
+                <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">{t('createAccount')}</Link>
               </p>
               <p className="mt-2 text-xs text-center text-gray-500">
-                {t("qrProblemsHelp", "¿Problemas? Usa la app oficial o")}{" "}
+                {t("qrProblemsHelp")}{" "}
                 <button
                   type="button"
                   onClick={() => setIsSupportModalOpen(true)}
                   className="text-blue-600 hover:text-blue-700 underline"
                 >
-                  {t("contactSupport", "contacta a soporte")}
+                  {t("contactSupport")}
                 </button>
                 .
               </p>
