@@ -1,0 +1,23 @@
+{
+    "technicianEmail": "Technician Email",
+    "technicianEmailPlaceholder": "technician@ejemplo.com",
+    "technicianEmailHelper": "Optional. Assigns the Technician role to the user.",
+    "cfoEmail": "CFO Email",
+    "cfoEmailPlaceholder": "cfo@ejemplo.com",
+    "cfoEmailHelper": "Optional. Assigns the CFO role to the user.",
+    "propietarioEmail": "Propietario Email",
+    "propietarioEmailPlaceholder": "propietario@ejemplo.com",
+    "propietarioEmailHelper": "Optional. Assigns the Propietario role to the user.",
+    "validationTitle": "Fields required",
+    "validation": "Please complete all required fields.",
+    "selectMethod": "Select how to create the building",
+    "selectMethodDesc": "Choose the method you prefer to load the building data",
+    "manualMethod": "Load data manually",
+    "manualMethodDesc": "Complete the form step by step with the building information",
+    "catastroMethod": "Load from Catastro",
+    "catastroMethodDesc": "Enter the catastro ID and automatically obtain all the building information",
+    "back": "Back",
+    "saveDraft": "Save Draft",
+    "validating": "Validating...",
+    "next": "Next"
+}

@@ -275,7 +275,7 @@ export function AssetsMain() {
   }
 
   // Calcular cumplimiento promedio (placeholder - ajustar según datos reales)
-  const complianceAverage = 79; // Esto debería venir de stats
+  const complianceAverage = stats.complianceAverage; // Esto debería venir de stats
   const totalSurface = stats.totalSurfaceArea > 0
     ? (stats.totalSurfaceArea / 1000).toFixed(1) + "k"
     : "0";

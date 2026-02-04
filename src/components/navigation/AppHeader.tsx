@@ -30,7 +30,7 @@ import { getTimeRemaining } from "~/utils/getTimeRemaining";
 import { SupportContactModal } from "../SupportContactModal";
 
 export function AppHeader() {
-  let viewMode: "list" | "detail" = "list";
+  // let viewMode: "list" | "detail" = "list";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
   let setViewMode: ((mode: "list" | "detail") => void) | null = null;
@@ -39,7 +39,7 @@ export function AppHeader() {
 
   try {
     const navigation = useNavigation();
-    viewMode = navigation.viewMode;
+    // viewMode = navigation.viewMode;
     selectedBuildingId = navigation.selectedBuildingId;
     setSelectedBuildingId = navigation.setSelectedBuildingId;
     setViewMode = navigation.setViewMode;
@@ -293,9 +293,8 @@ export function AppHeader() {
     }
   }, [searchTerm]);
 
-  // Cargar nombre del edificio cuando cambia selectedBuildingId
   useEffect(() => {
-    if (selectedBuildingId && viewMode === "detail") {
+    if (selectedBuildingId) {
       BuildingsApiService.getBuildingById(selectedBuildingId)
         .then((building) => {
           setSelectedBuildingName(building.name);
@@ -306,7 +305,7 @@ export function AppHeader() {
     } else {
       setSelectedBuildingName(null);
     }
-  }, [selectedBuildingId, viewMode]);
+  }, [selectedBuildingId]);
 
   // Cargar nombre de la unidad cuando estamos en detalle de unidad
   useEffect(() => {
@@ -847,6 +846,8 @@ export function AppHeader() {
       <AIAssistant
         isOpen={showAIAssistant}
         onClose={() => setShowAIAssistant(false)}
+        buildingId={selectedBuildingId ?? undefined}
+        buildingName={selectedBuildingName ?? undefined}
       />
 
       {/* Support Contact Modal */}

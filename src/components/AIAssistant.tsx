@@ -7,6 +7,8 @@ const CLASSIFIER_URL = "https://orquestador-clasificador-n8n-v2.fly.dev/webhook/
 interface AIAssistantProps {
   isOpen: boolean;
   onClose: () => void;
+  buildingId?: string;
+  buildingName?: string;
 }
 
 type AgentChunk = {
@@ -32,7 +34,7 @@ type ClassifierResponse = {
   respuesta?: string;
 };
 
-export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
+export function AIAssistant({ isOpen, onClose, buildingId, buildingName }: AIAssistantProps) {
   const { t } = useLanguage();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -131,13 +133,17 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     assistantId: string
   ) => {
     try {
+      const agentPayload: Record<string, string> = {
+        chatInput: originalPrompt,
+        sessionId,
+      };
+      if (buildingId) agentPayload.building_id = buildingId;
+      if (buildingName?.trim()) agentPayload.building_name = buildingName.trim();
+
       const res = await fetch(agentUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatInput: originalPrompt,
-          sessionId,
-        }),
+        body: JSON.stringify(agentPayload),
       });
 
       if (!res.ok) {
@@ -242,8 +248,7 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             : m
         )
       );
-    } catch (err) {
-      console.error("Error en streamFromAgent:", err);
+    } catch {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -260,8 +265,8 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   };
 
   const handleSend = async () => {
-    const prompt = message.trim();
-    if (!prompt || loading) return;
+    const promptUser = message.trim();
+    if (!promptUser || loading) return;
 
     setMessage("");
     setLoading(true);
@@ -269,22 +274,29 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     const userId = createId();
     const assistantId = createId();
 
-    // 1) agregamos el mensaje del usuario y uno vacío del asistente
+    const promptWithContext =
+      buildingName?.trim()
+        ? `(Contexto: El usuario está en la ficha del edificio «${buildingName.trim()}». Si la pregunta no menciona otro edificio, responde sobre este edificio.)\n\n${promptUser}`
+        : promptUser;
+
     setMessages((prev) => [
       ...prev,
-      { id: userId, role: "user", content: prompt },
+      { id: userId, role: "user", content: promptUser },
       { id: assistantId, role: "assistant", content: "", isStreaming: true },
     ]);
 
     try {
-      // PASO 1: Llamar al clasificador
+      const classifierPayload: Record<string, string> = {
+        prompt: promptWithContext,
+        session_id: sessionId,
+      };
+      if (buildingId) classifierPayload.building_id = buildingId;
+      if (buildingName?.trim()) classifierPayload.building_name = buildingName.trim();
+
       const classifierRes = await fetch(CLASSIFIER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: prompt,
-          session_id: sessionId,
-        }),
+        body: JSON.stringify(classifierPayload),
       });
 
       if (!classifierRes.ok) {
@@ -297,11 +309,7 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
         throw new Error("El clasificador respondió con error");
       }
 
-      console.log(`✅ Clasificador: ${classifierData.tipo} → ${classifierData.categoria}`);
-
-      // PASO 2: Manejar respuesta según el tipo
       if (classifierData.tipo === 'directo') {
-        // Respuesta directa (SALUDO o FUERA_SCOPE)
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
@@ -310,17 +318,14 @@ export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
           )
         );
       } else if (classifierData.tipo === 'redirect') {
-        // Redirect a agente específico (FINANCIERO o AMBIENTAL)
         if (!classifierData.url) {
           throw new Error("El clasificador no devolvió una URL válida");
         }
-        console.log(`🔄 Redirigiendo a: ${classifierData.url}`);
-        await streamFromAgent(classifierData.url, prompt, assistantId);
+        await streamFromAgent(classifierData.url, promptWithContext, assistantId);
       } else {
         throw new Error(`Tipo de respuesta desconocido: ${classifierData.tipo}`);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
