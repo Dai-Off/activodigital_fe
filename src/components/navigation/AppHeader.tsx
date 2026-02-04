@@ -30,7 +30,7 @@ import { getTimeRemaining } from "~/utils/getTimeRemaining";
 import { SupportContactModal } from "../SupportContactModal";
 
 export function AppHeader() {
-  let viewMode: "list" | "detail" = "list";
+  // let viewMode: "list" | "detail" = "list";
   let selectedBuildingId: string | null = null;
   let setSelectedBuildingId: ((id: string | null) => void) | null = null;
   let setViewMode: ((mode: "list" | "detail") => void) | null = null;
@@ -39,7 +39,7 @@ export function AppHeader() {
 
   try {
     const navigation = useNavigation();
-    viewMode = navigation.viewMode;
+    // viewMode = navigation.viewMode;
     selectedBuildingId = navigation.selectedBuildingId;
     setSelectedBuildingId = navigation.setSelectedBuildingId;
     setViewMode = navigation.setViewMode;
