@@ -68,7 +68,7 @@ const MAX_PHOTOS = 5;
 const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
   onNext,
   onPrevious,
-  onSaveDraft,
+  /* onSaveDraft, */
   initialData = {},
   buildingName,
 }) => {
@@ -245,6 +245,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     });
   };
 
+  /*
   const handleSaveDraft = () => {
     const draft: Partial<LocationData> = {};
     if (location) {
@@ -258,6 +259,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
     }
     onSaveDraft(draft);
   };
+  */
 
   // --- Close suggestions on outside click ---
   const inputRef = useRef<HTMLInputElement>(null);
@@ -517,13 +519,13 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {t('previous')}
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={handleSaveDraft}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {t('saveDraft')}
-        </button>
+        </button> */}
 
         <button
           type="button"
