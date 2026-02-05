@@ -384,6 +384,30 @@ export const SkeletonDashboardSummary: React.FC = () => (
   </div>
 );
 
+export const HeroCardSkeleton: React.FC = () => {
+  return (
+    <div className="relative h-48 rounded-xl overflow-hidden shadow-lg bg-gray-200 animate-pulse">
+      {/* Imagen */}
+      <div className="absolute inset-0 bg-gray-300" />
+
+      {/* Gradient overlay fake */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
+      {/* Texto inferior */}
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="h-6 w-48 bg-gray-400 rounded mb-2" />
+        <div className="h-4 w-64 bg-gray-400 rounded" />
+      </div>
+
+      {/* Badge superior derecho */}
+      <div className="absolute top-4 right-4 bg-gray-400 rounded-lg px-4 py-2 flex items-center gap-2">
+        <div className="w-4 h-4 bg-gray-500 rounded-full" />
+        <div className="h-4 w-36 bg-gray-500 rounded" />
+      </div>
+    </div>
+  );
+};
+
 
 // Skeleton para botones
 // Skeleton para lista de edificios en el sidebar
