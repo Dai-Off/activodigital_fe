@@ -168,10 +168,7 @@ const CreateBuildingWizard: React.FC = () => {
     }
   };
 
-  const handleStep1SaveDraft = (data: BuildingStep1Data) => {
-    setStep1Data(data);
-    showInfo(t("draftSavedTitle"), t("draftSavedDesc"));
-  };
+
 
   // -------------------- Handlers: Step 2 --------------------
   const handleStep2Next = (data: BuildingStep2Data) => {
@@ -447,8 +444,7 @@ const CreateBuildingWizard: React.FC = () => {
           <CreateBuildingStep1
             onNext={handleStep1Next}
             onCancel={handleStep1Cancel}
-            onSaveDraft={handleStep1SaveDraft}
-            initialData={step1Data || ({} as Partial<BuildingStep1Data>)}
+            initialData={step1Data || {}}
           />
         );
       }
@@ -546,7 +542,7 @@ const CreateBuildingWizard: React.FC = () => {
         )}
 
         {/* Footer Help */}
-        <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
+        {/* <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">
           <p>
             {t("needHelp")}{" "}
             <a href="#" className="text-blue-600 hover:text-blue-700">
@@ -561,7 +557,7 @@ const CreateBuildingWizard: React.FC = () => {
               {t("contactSupport")}
             </button>
           </p>
-        </div>
+        </div> */}
       </div>
 
       <SupportContactModal

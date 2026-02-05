@@ -137,11 +137,11 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                e.currentTarget.nextElementSibling?.classList.replace('hidden', 'flex');
               }}
             />
             {/* Fallback placeholder if image fails */}
-            <div className="hidden absolute inset-0 bg-gray-200 flex items-center justify-center">
+            <div className="absolute inset-0 bg-gray-200 hidden items-center justify-center">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,12 +204,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <h3 className="text-lg font-semibold text-gray-900">
                   {t('generalInfo')}
                 </h3>
-                <button
-                  onClick={onEditData}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {t('editDataButton')}
-                </button>
+
               </div>
 
               <div className="space-y-3">
@@ -277,12 +272,7 @@ const CreateBuildingStep3: React.FC<CreateBuildingStep3Props> = ({
                 <h3 className="text-lg font-semibold text-gray-900">
                   {t('location')}
                 </h3>
-                <button
-                  onClick={onEditLocation}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {t('editLocationButton')}
-                </button>
+
               </div>
 
               <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
