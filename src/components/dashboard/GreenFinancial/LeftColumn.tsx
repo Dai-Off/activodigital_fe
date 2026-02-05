@@ -37,7 +37,7 @@ const LeftColumn: React.FC<Props> = ({
 }) => {
   return (
     <>
-      <div className={`${cardBase} relative tooltip-container min-h-[320px] flex flex-col`}>
+      <div id="taxonomia-ue" className={`${cardBase} relative tooltip-container min-h-[320px] flex flex-col`}>
         <Button className="absolute top-2 right-2 p-1 rounded-full bg-white hover:bg-emerald-100 border-emerald-200 border opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10">
           <CircleQuestionMarkIcon className="w-3 h-3 text-emerald-600" />
         </Button>

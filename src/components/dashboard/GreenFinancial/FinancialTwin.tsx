@@ -119,7 +119,6 @@ const FinancialTwin: React.FC = () => {
             /* Mobile: Left stacked then right stacked (handled inside LeftColumn when isMobile true) */
             <div>
               <LeftColumn
-
                 cardBase={cardBase}
                 showSection={showSection}
                 setShowSection={setShowSection}
