@@ -228,6 +228,10 @@ const CreateUnitWizard: React.FC = () => {
           <CreateUnitFromCatastro
             onUnitsCreated={handleCatastroUnitsCreated}
             onCancel={handleCancel}
+            onGoManual={() => {
+              // Pasar directamente al flujo manual si el usuario lo prefiere
+              setSelectedMethod("manual");
+            }}
           />
         )}
 
