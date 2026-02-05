@@ -4,6 +4,7 @@ import {
 } from "~/components/dashboard/GreenFinancial/OpportunityRadar";
 // import data from './datasetstry.json'
 import { apiFetch } from "./api";
+
 export let buildingData: BuildingOpportunity[];
 
 export class FinancialGreenService {
