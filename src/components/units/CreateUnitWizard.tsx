@@ -95,7 +95,7 @@ const CreateUnitWizard: React.FC = () => {
 
     const unitCount = units.length;
     showSuccess(
-      t("loadedFromCatastro ", { count: unitCount })
+      t("loadedFromCatastro", { count: unitCount })
     );
   };
 
@@ -128,7 +128,6 @@ const CreateUnitWizard: React.FC = () => {
 
     startLoading();
     try {
-      console.log('🔍 [CreateUnitWizard] Unidades recibidas del formulario:', units.length, units);
 
       const payloads: CreateBuildingUnitRequest[] = units.map((unit, index) => {
         const identifierParts: string[] = [];
@@ -166,17 +165,14 @@ const CreateUnitWizard: React.FC = () => {
             expirationDate: unit.expirationDate || null,
           },
         };
-        console.log(`📝 [CreateUnitWizard] Payload ${index + 1}/${units.length}:`, payload);
         return payload;
       });
 
-      console.log('📤 [CreateUnitWizard] Payloads a enviar:', payloads.length, payloads);
-      const result = await UnitsApiService.upsertUnits(buildingId, payloads);
-      console.log('✅ [CreateUnitWizard] Respuesta del backend:', result?.length, result);
+      await UnitsApiService.upsertUnits(buildingId, payloads);
 
       const unitCount = units.length;
       showSuccess(
-        t('createdMultiple', `Se ${unitCount === 1 ? 'creó' : 'crearon'} ${unitCount} ${unitCount === 1 ? 'unidad' : 'unidades'} exitosamente`)
+        t('createdMultiple', { count: unitCount })
       );
 
       // Volver a la lista de unidades
