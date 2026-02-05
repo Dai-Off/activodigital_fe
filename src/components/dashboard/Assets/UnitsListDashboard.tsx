@@ -15,7 +15,7 @@ interface UnitWithBuilding extends BuildingUnit {
 
 export function UnitsListDashboard() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [units, setUnits] = useState<UnitWithBuilding[]>([]);
@@ -166,13 +166,10 @@ export function UnitsListDashboard() {
             </div>
             <div>
               <h2 className="text-lg md:text-xl lg:text-2xl">
-                {t("unitsglobalTitle", "Listado de unidades")}
+                {t("unitsglobalTitle")}
               </h2>
               <p className="text-xs md:text-sm text-gray-500">
-                {t(
-                  "unitsglobalSubtitle",
-                  "Todas las unidades de los edificios de tu portfolio"
-                )}
+                {t("unitsglobalSubtitle")}
               </p>
             </div>
           </div>
@@ -183,10 +180,7 @@ export function UnitsListDashboard() {
               <input
                 type="text"
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={t(
-                  "units.searchPlaceholder",
-                  "Buscar por unidad, edificio, inquilino..."
-                )}
+                placeholder={t("unitsSearchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -197,7 +191,7 @@ export function UnitsListDashboard() {
               className="inline-flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-sm hover:bg-gray-50 border-gray-300"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span>{t("filters2", "Filtros")}</span>
+              <span>{t("filters")}</span>
             </button>
           </div>
         </div>
@@ -206,25 +200,25 @@ export function UnitsListDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-2">
           <div className="p-4 bg-blue-50 rounded-lg">
             <p className="text-xs md:text-sm text-gray-600 mb-1">
-              {t("units.totalUnits", "Total unidades")}
+              {t("totalUnits")}
             </p>
             <p className="text-xl md:text-2xl text-blue-600">{totalUnits}</p>
           </div>
           <div className="p-4 bg-green-50 rounded-lg">
             <p className="text-xs md:text-sm text-gray-600 mb-1">
-              {t("units.occupiedUnits", "Ocupadas")}
+              {t("occupied")}
             </p>
             <p className="text-xl md:text-2xl text-green-600">{occupiedUnits}</p>
           </div>
           <div className="p-4 bg-sky-50 rounded-lg">
             <p className="text-xs md:text-sm text-gray-600 mb-1">
-              {t("units.availableUnits", "Disponibles")}
+              {t("available")}
             </p>
             <p className="text-xl md:text-2xl text-sky-600">{availableUnits}</p>
           </div>
           <div className="p-4 bg-amber-50 rounded-lg">
             <p className="text-xs md:text-sm text-gray-600 mb-1">
-              {t("units.maintenanceUnits", "En mantenimiento")}
+              {t("maintenanceUnits")}
             </p>
             <p className="text-xl md:text-2xl text-amber-600">
               {maintenanceUnits}
@@ -238,7 +232,7 @@ export function UnitsListDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs mb-1.5 text-gray-600">
-                  {t("units.buildingFilter", "Edificio")}
+                  {t("buildingFilter")}
                 </label>
                 <select
                   value={buildingFilter}
@@ -246,7 +240,7 @@ export function UnitsListDashboard() {
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="all">
-                    {t("allBuildings", "Todos los edificios")}
+                    {t("allBuildings")}
                   </option>
                   {buildings.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -258,7 +252,7 @@ export function UnitsListDashboard() {
 
               <div>
                 <label className="block text-xs mb-1.5 text-gray-600">
-                  {t("units.status", "Estado")}
+                  {t("status")}
                 </label>
                 <select
                   value={statusFilter}
@@ -266,16 +260,16 @@ export function UnitsListDashboard() {
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="all">
-                    {t("all", "Todos")}
+                    {t("all")}
                   </option>
                   <option value="ocupada">
-                    {t("units.status.occupied", "Ocupada")}
+                    {t("occupied")}
                   </option>
                   <option value="disponible">
-                    {t("units.status.available", "Disponible")}
+                    {t("available")}
                   </option>
                   <option value="mantenimiento">
-                    {t("units.status.maintenance", "En mantenimiento")}
+                    {t("maintenance")}
                   </option>
                 </select>
               </div>
@@ -291,14 +285,14 @@ export function UnitsListDashboard() {
                   className="w-full px-2 py-1.5 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center gap-1.5 text-gray-700"
                 >
                   <Activity className="w-3 h-3" />
-                  {t("clearFilters", "Limpiar filtros")}
+                  {t("clearFilters")}
                 </button>
               </div>
-            </div>
+            </div>|
 
             <p className="text-xs text-gray-500 mt-1">
-              {t("units.showing", "Mostrando")} {filteredUnits.length}{" "}
-              {t("units.of", "de")} {totalUnits} {t("units.unitsLabel", "unidades")}
+              {t("showing")} {filteredUnits.length}{" "}
+              {t("of")} {totalUnits} {t("units")}
             </p>
           </div>
         )}
@@ -312,42 +306,36 @@ export function UnitsListDashboard() {
           ) : filteredUnits.length === 0 ? (
             <div className="py-10 text-center text-gray-500 text-sm">
               {searchTerm || buildingFilter !== "all" || statusFilter !== "all"
-                ? t(
-                    "units.noUnitsWithFilters",
-                    "No se encontraron unidades con los filtros aplicados"
-                  )
-                : t(
-                    "units.noUnitsYet",
-                    "Aún no hay unidades registradas en tus edificios"
-                  )}
+                ? t("noUnitsWithFilters")
+                : t("noUnitsYet")}
             </div>
           ) : (
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.unit", "Unidad")}
+                    {t("unit")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.building", "Edificio")}
+                    {t("building")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.floor", "Planta")}
+                    {t("floor")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.type", "Tipo")}
+                    {t("type")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.tenant", "Inquilino")}
+                    {t("tenant")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.rent", "Renta")}
+                    {t("rent")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.status", "Estado")}
+                    {t("status")}
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-600">
-                    {t("units.expiration", "Vencimiento")}
+                    {t("expiration")}
                   </th>
                 </tr>
               </thead>
@@ -370,11 +358,11 @@ export function UnitsListDashboard() {
 
                   const statusLabel =
                     status === "ocupada"
-                      ? t("units.status.occupied", "Ocupada")
+                      ? t("occupied")
                       : status === "mantenimiento"
-                      ? t("units.status.maintenance", "En mantenimiento")
+                      ? t("maintenance")
                       : status === "disponible"
-                      ? t("units.status.available", "Disponible")
+                      ? t("available")
                       : "-";
 
                   return (
@@ -490,14 +478,8 @@ export function UnitsListDashboard() {
         ) : filteredUnits.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500 text-sm">
             {searchTerm || buildingFilter !== "all" || statusFilter !== "all"
-              ? t(
-                  "units.noUnitsWithFilters",
-                  "No se encontraron unidades con los filtros aplicados"
-                )
-              : t(
-                  "units.noUnitsYet",
-                  "Aún no hay unidades registradas en tus edificios"
-                )}
+              ? t("noUnitsWithFilters")
+              : t("noUnitsYet")}
           </div>
         ) : (
           <div className="space-y-2">

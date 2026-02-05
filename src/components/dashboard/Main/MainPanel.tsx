@@ -103,7 +103,7 @@ export function MainPanel() {
     return (
       <div className="space-y-6">
         <div className="text-center py-12 text-gray-500">
-          {t("errorLoadingStats", "Error al cargar estadísticas")}
+          {t("errorLoadingStats")}
         </div>
       </div>
     );
@@ -130,17 +130,17 @@ export function MainPanel() {
   }) {
     const values: any = {
       3: {
-        name: t("urgent", "Urgente"),
+        name: t("urgent"),
         icon: <TriangleAlert className="w-4 h-4 text-red-600"></TriangleAlert>,
         color: "bg-red-600",
       },
       2: {
-        name: t("upcoming", "Próximo"),
+        name: t("upcoming"),
         icon: <Clock className="w-4 h-4 text-orange-600"></Clock>,
         color: "bg-orange-600",
       },
       1: {
-        name: t("pending", "Pendiente"),
+        name: t("pending"),
         icon: <FileText className="w-4 h-4 text-yellow-600"></FileText>,
         color: "bg-yellow-600",
       },
@@ -247,7 +247,7 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("totalBuildings", "Total Edificios")}
+                {t("totalBuildings")}
               </p>
               <p className="text-2xl mb-0.5">{stats.totalAssets}</p>
               {stats.assetsGrowth > 0 && (
@@ -266,7 +266,7 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("compliance", "Cumplimiento")}
+                {t("compliance")}
               </p>
               <p className="text-2xl mb-0.5">{stats.completionPercentage}%</p>
               {stats.complianceGrowth > 0 && (
@@ -285,13 +285,13 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("pendingAlerts", "Alertas Pendientes")}
+                {t("pendingAlerts")}
               </p>
               <p className="text-2xl mb-0.5">{totalAlerts}</p>
               {urgentCount.length > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-red-600">
                   <LucideArrowUpRight className="w-3 h-3"></LucideArrowUpRight>
-                  <span>{urgentCount.length} {t("urgents", "urgentes")}</span>
+                  <span>{urgentCount.length} {t("urgents")}</span>
                 </div>
               )}
             </div>
@@ -304,14 +304,14 @@ export function MainPanel() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">
-                {t("completedBooks", "Libros Completos")}
+                {t("completedBooks")}
               </p>
               <p className="text-2xl mb-0.5">
                 {stats.completedBooks} / {stats.totalAssets}
               </p>
               {stats.completionPercentage > 0 && (
                 <div className="flex items-center gap-0.5 text-xs text-blue-600">
-                  <span>{stats.completionPercentage}% {t("completed", "completado")}</span>
+                  <span>{stats.completionPercentage}% {t("completed")}</span>
                 </div>
               )}
             </div>
@@ -327,7 +327,7 @@ export function MainPanel() {
         <div className="lg:col-span-2 flex flex-col gap-3 min-h-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
             <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-sm">{t("urgentAlerts", "Alertas Urgentes")}</h3>
+              <h3 className="text-sm">{t("urgentAlerts")}</h3>
               <button
                 onClick={() => {
                   setActiveModule("events");
@@ -335,7 +335,7 @@ export function MainPanel() {
                 }}
                 className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
               >
-                {t("viewAll", "Ver todas")}
+                {t("viewAll")}
               </button>
             </div>
             <div className="p-3 space-y-2">

@@ -172,7 +172,7 @@ function LegalModal({ trigger, title, children }: LegalModalProps) {
 
 export function TermsModal({ trigger }: { trigger: React.ReactNode }) {
   const { t } = useTranslation();
-  const content = t("legal.terms", { returnObjects: true }) as LegalContent;
+  const content = t("termsOfUse", { returnObjects: true }) as LegalContent;
 
   return (
     <LegalModal trigger={trigger} title={content.title}>
@@ -183,7 +183,7 @@ export function TermsModal({ trigger }: { trigger: React.ReactNode }) {
 
 export function PrivacyModal({ trigger }: { trigger: React.ReactNode }) {
   const { t } = useTranslation();
-  const content = t("legal.privacy", { returnObjects: true }) as LegalContent;
+  const content = t("privacyPolicy", { returnObjects: true }) as LegalContent;
 
   return (
     <LegalModal trigger={trigger} title={content.title}>
@@ -194,7 +194,7 @@ export function PrivacyModal({ trigger }: { trigger: React.ReactNode }) {
 
 export function CookiesModal({ trigger }: { trigger: React.ReactNode }) {
   const { t } = useTranslation();
-  const content = t("legal.cookies", { returnObjects: true }) as LegalContent;
+  const content = t("cookies", { returnObjects: true }) as LegalContent;
 
   return (
     <LegalModal trigger={trigger} title={content.title}>

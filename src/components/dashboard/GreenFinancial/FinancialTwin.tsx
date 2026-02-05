@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useIsMobile } from "~/components/ui/use-mobile";
@@ -12,6 +12,10 @@ import RightColumn from "./RightColumn";
 import LeftColumn from "./LeftColumn";
 import HeaderControls from "./componentes/HeaderControls";
 import FooterAction from "./componentes/FooterAction";
+import useHeaderContext from "~/contexts/HeaderContext";
+import { BuildingsApiService, type Building } from "~/services/buildingsApi";
+import { useLocation } from "react-router-dom";
+import { HeroCardSkeleton } from "~/components/ui/LoadingSystem";
 
 interface SectionI {
   validationInfo: boolean;
@@ -73,6 +77,20 @@ const FinancialTwin: React.FC = () => {
 
   const cardBase = "bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6";
 
+  const { selectedBuildingId } = useHeaderContext();
+
+  const [buildingData, setBuildingData] = useState<Building | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (selectedBuildingId && location.pathname.includes("financial-twin")) {
+      BuildingsApiService.getBuildingById(selectedBuildingId).then((res) => {
+        setBuildingData(res);
+      });
+    }
+  }, [selectedBuildingId, location])
+
+
   return (
     <div>
       <HelpersTwin
@@ -91,8 +109,11 @@ const FinancialTwin: React.FC = () => {
               return null
             }}
           />
-
-          <HeroCard />
+          {buildingData ? (
+            <HeroCard buildingData={buildingData} alignmentScore={92} />
+          ) : (
+            <HeroCardSkeleton />
+          )}
 
           {isMobile ? (
             /* Mobile: Left stacked then right stacked (handled inside LeftColumn when isMobile true) */
@@ -133,7 +154,7 @@ const FinancialTwin: React.FC = () => {
             </div>
           )}
 
-          <FooterAction onOpen={() => setFinancialTwin(true)}/>
+          <FooterAction onOpen={() => setFinancialTwin(true)} />
         </div>
       </div>
     </div>

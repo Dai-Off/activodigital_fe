@@ -9,14 +9,12 @@ import type { BuildingStep1Data } from './CreateBuildingWizard';
 interface CreateBuildingStep1Props {
   onNext: (data: BuildingStep1Data) => void;
   onCancel?: () => void;
-  onSaveDraft: (data: BuildingStep1Data) => void;
   initialData?: Partial<BuildingStep1Data>;
 }
 
 const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   onNext,
   onCancel,
-  onSaveDraft,
   initialData = {},
 }) => {
   const { t } = useTranslation();
@@ -24,6 +22,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   const [formData, setFormData] = useState<BuildingStep1Data>({
     name: initialData.name || '',
     address: '', // not used in step 1
+    cadastralReference: initialData.cadastralReference || '',
     constructionYear: initialData.constructionYear || '',
     typology: initialData.typology || '',
     floors: initialData.floors || '',
@@ -47,38 +46,31 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     const currentYear = new Date().getFullYear();
 
     if (!formData.name.trim()) {
-      newErrors.name = t('buildings.validation.nameRequired', 'El nombre del edificio es obligatorio');
+      newErrors.name = t('nameRequired');
     }
 
     if (!formData.constructionYear) {
-      newErrors.constructionYear = t(
-        'buildings.validation.constructionYearRequired',
-        'El año de construcción es obligatorio'
-      );
+      newErrors.constructionYear = t('constructionYearRequired');
     } else {
       const year = Number.parseInt(formData.constructionYear, 10);
       if (Number.isNaN(year) || year < 1800 || year > currentYear) {
         newErrors.constructionYear = t(
-          'buildings.validation.validYear',
-          'Ingresa un año válido (1800-{{currentYear}})',
+          'validYear',
           { currentYear }
         );
       }
     }
 
     if (!formData.typology) {
-      newErrors.typology = t('buildings.validation.typologyRequired', 'Selecciona una tipología');
+      newErrors.typology = t('typologyRequired');
     }
 
     if (!formData.floors) {
-      newErrors.floors = t('buildings.validation.floorsRequired', 'El número de plantas es obligatorio');
+      newErrors.floors = t('floorsRequired');
     } else {
       const floors = Number.parseInt(formData.floors, 10);
       if (Number.isNaN(floors) || floors < 1 || floors > 100) {
-        newErrors.floors = t(
-          'buildings.validation.validFloors',
-          'Ingresa un número válido de plantas (1-100)'
-        );
+        newErrors.floors = t('validFloors');
       }
     }
 
@@ -86,28 +78,28 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     if (formData.price?.trim()) {
       const price = Number.parseFloat(formData.price);
       if (Number.isNaN(price) || price < 0) {
-        newErrors.price = t('buildings.validation.validPrice', 'Ingresa un precio válido');
+        newErrors.price = t('validPrice');
       }
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (formData.technicianEmail?.trim() && !emailRegex.test(formData.technicianEmail)) {
-      newErrors.technicianEmail = t('common.validation.email', 'Ingresa un correo válido');
+      newErrors.technicianEmail = t('email');
     }
 
     if (formData.cfoEmail?.trim() && !emailRegex.test(formData.cfoEmail)) {
-      newErrors.cfoEmail = t('common.validation.email', 'Ingresa un correo válido');
+      newErrors.cfoEmail = t('email');
     }
 
     if (formData.propietarioEmail?.trim() && !emailRegex.test(formData.propietarioEmail)) {
-      newErrors.propietarioEmail = t('common.validation.email', 'Ingresa un correo válido');
+      newErrors.propietarioEmail = t('email');
     }
 
     if (formData.squareMeters?.trim()) {
       const v = Number.parseFloat(formData.squareMeters);
       if (Number.isNaN(v) || v < 0) {
-        newErrors.squareMeters = t('buildings.validation.validSurface', 'Superficie inválida');
+        newErrors.squareMeters = t('validSurface');
       }
     }
 
@@ -173,14 +165,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
     onNext({ ...rest } as BuildingStep1Data);
   };
 
-  const handleSaveDraft = () => {
-    if (formData.name.trim()) {
-      const { address, ...rest } = formData;
-      onSaveDraft({ ...rest } as BuildingStep1Data);
-    } else {
-      setErrors({ name: t('buildings.validation.draftNameRequired', 'El borrador requiere un nombre') });
-    }
-  };
+
 
   // ---------- JSX ----------
   const currentYear = new Date().getFullYear();
@@ -190,10 +175,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildings.createBuilding', 'Crear Edificio')}
+          {t('createBuilding')}
         </h1>
         <p className="text-gray-600">
-          {t('buildings.completeBasicInfo', 'Completa la información básica para continuar')}
+          {t('completeBasicInfo')}
         </p>
       </div>
 
@@ -202,14 +187,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Building name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.fields.name', 'Nombre del edificio')} *
+            {t('buildingName')}
           </label>
           <input
             id="name"
             type="text"
             value={formData.name}
             onChange={e => handleInputChange('name', e.target.value)}
-            placeholder={t('buildings.placeholders.name', 'Ej.: Torre Central')}
+            placeholder={t('buildingNamePlaceholder')}
             className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.name ? 'border-red-300' : 'border-gray-300'
             }`}
@@ -220,14 +205,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Cadastral Reference */}
         <div>
           <label htmlFor="cadastralReference" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.fields.cadastralReference', 'Referencia Catastral')}
+            {t('catastralReference')}
           </label>
           <input
             id="cadastralReference"
             type="text"
             value={formData.cadastralReference || ''}
             onChange={e => handleInputChange('cadastralReference', e.target.value)}
-            placeholder={t('buildings.placeholders.cadastralReference', 'Ej.: 1234567VK1234A0001WX')}
+            placeholder={t('catastralReferencePlaceholder')}
             className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.cadastralReference ? 'border-red-300' : 'border-gray-300'
             }`}
@@ -236,14 +221,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             <p className="mt-1 text-sm text-red-600">{errors.cadastralReference}</p>
           )}
           <p className="mt-1 text-xs text-gray-500">
-            {t('buildings.helpers.cadastralReference', 'Opcional. Identificador único del inmueble en el catastro.')}
+            {t('catastralReferenceHelper')}
           </p>
         </div>
 
         {/* Construction year */}
         <div>
           <label htmlFor="constructionYear" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.fields.constructionYear', 'Año de construcción')} *
+            {t('constructionYear')}
           </label>
           <input
             id="constructionYear"
@@ -265,7 +250,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Typology */}
         <div>
           <label htmlFor="typology" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.fields.typology', 'Tipología')} *
+            {t('typology')}
           </label>
           <select
             id="typology"
@@ -278,10 +263,10 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               errors.typology ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            <option value="">{t('buildings.placeholders.selectTypology', 'Selecciona una tipología')}</option>
-            <option value="residential">{t('digitalbook.options.residential', 'Residencial')}</option>
-            <option value="mixed">{t('digitalbook.options.mixed', 'Mixto')}</option>
-            <option value="commercial">{t('digitalbook.options.commercial', 'Comercial')}</option>
+            <option value="">{t('selectTypology')}</option>
+            <option value="residential">{t('residential')}</option>
+            <option value="mixed">{t('mixed')}</option>
+            <option value="commercial">{t('commercial')}</option>
           </select>
           {errors.typology && <p className="mt-1 text-sm text-red-600">{errors.typology}</p>}
         </div>
@@ -289,7 +274,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         {/* Floors */}
         <div>
           <label htmlFor="floors" className="block text-sm font-medium text-gray-700 mb-2">
-            {t('buildings.fields.numFloors', 'Número de plantas')} *
+            {t('numFloors')}
           </label>
           <input
             id="floors"
@@ -310,14 +295,14 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.assetPrice', 'Precio del activo')}
+              {t('assetPrice')}
             </label>
             <input
               id="price"
               type="number"
               value={formData.price}
               onChange={e => handleInputChange('price', e.target.value)}
-              placeholder={t('buildings.placeholders.price', '250000')}
+              placeholder={t('pricePlaceholder')}
               min={0}
               step="1000"
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -326,20 +311,20 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             />
             {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
             <p className="mt-1 text-xs text-gray-500">
-              {t('buildings.helpers.assetPrice', 'Opcional. Solo informativo para análisis financiero.')}
+              {t('assetPriceHelper')}
             </p>
           </div>
 
           <div>
             <label htmlFor="squareMeters" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.surface', 'Superficie (m²)')}
+              {t('surface')}
             </label>
             <input
               id="squareMeters"
               type="number"
               value={formData.squareMeters}
               onChange={e => handleInputChange('squareMeters', e.target.value)}
-              placeholder={t('buildings.placeholders.surface', '500.50')}
+              placeholder={t('surfacePlaceholder')}
               min={0}
               step="0.01"
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
@@ -348,21 +333,21 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
             />
             {errors.squareMeters && <p className="mt-1 text-sm text-red-600">{errors.squareMeters}</p>}
             <p className="mt-1 text-xs text-gray-500">
-              {t('buildings.helpers.surface', 'Opcional. Superficie total del edificio.')}
+              {t('surfaceHelper')}
             </p>
           </div>
 
           {/* Technician email */}
           <div>
             <label htmlFor="technicianEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.technicianEmail', 'Email del técnico')}
+              {t('technicianEmail')}
             </label>
             <input
               id="technicianEmail"
               type="email"
               value={formData.technicianEmail}
               onChange={e => handleInputChange('technicianEmail', e.target.value)}
-              placeholder={t('buildings.placeholders.technicianEmail', 'tecnico@ejemplo.com')}
+              placeholder={t('technicianEmailPlaceholder')}
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.technicianEmail || validationErrors.technician ? 'border-red-300' : 'border-gray-300'
               }`}
@@ -373,21 +358,21 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              {t('buildings.helpers.technicianEmail', 'Opcional. Asignará el rol de Técnico al usuario.')}
+              {t('technicianEmailHelper')}
             </p>
           </div>
 
           {/* CFO email */}
           <div>
             <label htmlFor="cfoEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.cfoEmail', 'Email del CFO')}
+              {t('cfoEmail')}
             </label>
             <input
               id="cfoEmail"
               type="email"
               value={formData.cfoEmail}
               onChange={e => handleInputChange('cfoEmail', e.target.value)}
-              placeholder={t('buildings.placeholders.cfoEmail', 'cfo@ejemplo.com')}
+              placeholder={t('cfoEmailPlaceholder')}
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.cfoEmail || validationErrors.cfo ? 'border-red-300' : 'border-gray-300'
               }`}
@@ -398,21 +383,21 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              {t('buildings.helpers.cfoEmail', 'Opcional. Asignará el rol de CFO al usuario.')}
+              {t('cfoEmailHelper')}
             </p>
           </div>
 
           {/* Propietario email */}
           <div>
             <label htmlFor="propietarioEmail" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildings.fields.propietarioEmail', 'Email del propietario')}
+              {t('propietarioEmail')}
             </label>
             <input
               id="propietarioEmail"
               type="email"
               value={formData.propietarioEmail}
               onChange={e => handleInputChange('propietarioEmail', e.target.value)}
-              placeholder={t('buildings.placeholders.propietarioEmail', 'propietario@ejemplo.com')}
+              placeholder={t('propietarioEmailPlaceholder')}
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 errors.propietarioEmail || validationErrors.propietario ? 'border-red-300' : 'border-gray-300'
               }`}
@@ -423,7 +408,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              {t('buildings.helpers.propietarioEmail', 'Opcional. Asignará el rol de Propietario al usuario.')}
+              {t('propietarioEmailHelper')}
             </p>
           </div>
         </div>
@@ -436,17 +421,11 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
               onClick={onCancel}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {t('common.back', 'Volver')}
+              {t('back')}
             </button>
           )}
           
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {t('common.saveDraft', 'Guardar borrador')}
-          </button>
+
 
           <button
             type="button"
@@ -460,7 +439,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
                 className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
               />
             )}
-            {isValidating ? t('common.validating', 'Validando...') : t('common.next', 'Siguiente')}
+            {isValidating ? t('validating') : t('next')}
           </button>
         </div>
       </form>

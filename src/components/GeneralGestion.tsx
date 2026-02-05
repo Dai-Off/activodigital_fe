@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useToast } from "~/contexts/ToastContext";
+import { useLanguage } from "~/contexts/LanguageContext";
 
 // Categorías base
 const BASE_DOCUMENT_CATEGORIES = [
@@ -247,6 +248,7 @@ export function GeneralGestion() {
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(false); // Inicializar en false hasta que haya edificios
   const [allDocuments, setAllDocuments] = useState<(Document & { buildingId: string; buildingName: string; unitName?: string })[]>([]);
+  const { t } = useLanguage()
   const [stats, setStats] = useState({
     total: 0,
     edificios: 0,
@@ -525,29 +527,29 @@ export function GeneralGestion() {
               <BuildingIcon className="w-6 h-6 text-gray-600" />
             </div>
             <div>
-              <h2 className="text-gray-900">Gestión General de la Plataforma</h2>
-              <p className="text-sm text-gray-500">Vista consolidada de todos los documentos de edificios y unidades</p>
+              <h2 className="text-gray-900">{t("gestionGeneral")}</h2>
+              <p className="text-sm text-gray-500">{t("gestionGeneralDescription")}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mt-4">
             <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Total Documentos</p>
+              <p className="text-xs text-gray-600 mb-1">{t("totalDocumentos")}</p>
               <p className="text-blue-600">{stats.total}</p>
             </div>
             <div className="p-3 bg-green-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Edificios</p>
+              <p className="text-xs text-gray-600 mb-1">{t("buildings")}</p>
               <p className="text-green-600">{stats.edificios}</p>
             </div>
             <div className="p-3 bg-purple-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Activos</p>
+              <p className="text-xs text-gray-600 mb-1">{t("assets")}</p>
               <p className="text-purple-600">{stats.activos}</p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Pendientes</p>
+              <p className="text-xs text-gray-600 mb-1">{t("pending")}</p>
               <p className="text-yellow-600">{stats.pendientes}</p>
             </div>
             <div className="p-3 bg-indigo-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-1">Aprobados</p>
+              <p className="text-xs text-gray-600 mb-1">{t("approved")}</p>
               <p className="text-indigo-600">{stats.aprobados}</p>
             </div>
           </div>
@@ -555,7 +557,7 @@ export function GeneralGestion() {
 
         {/* Categorías */}
         <div className="bg-white rounded-lg shadow-sm p-4 flex-shrink-0">
-          <h3 className="text-sm mb-3">Categorías</h3>
+          <h3 className="text-sm mb-3">{t("categories")}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 md:gap-3">
             {BASE_DOCUMENT_CATEGORIES.map((category) => {
               const IconComponent = category.icon;
@@ -584,8 +586,8 @@ export function GeneralGestion() {
                     </div>
                     <ChevronRight className={`w-4 h-4 transition-transform text-gray-400 ${isSelected ? "text-blue-600" : ""}`} aria-hidden="true" />
                   </div>
-                  <p className="text-xs mb-1">{category.label}</p>
-                  <p className="text-xs text-gray-500">{fileCount} archivo{fileCount !== 1 ? "s" : ""}</p>
+                  <p className="text-xs mb-1">{t(category.value)}</p>
+                  <p className="text-xs text-gray-500">{fileCount} {t("file")}{fileCount !== 1 ? "s" : ""}</p>
                 </button>
               );
             })}
@@ -600,7 +602,7 @@ export function GeneralGestion() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
                 <Input
                   type="text"
-                  placeholder="Buscar documentos..."
+                  placeholder={t("searchDocuments")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 text-xs"
@@ -614,7 +616,7 @@ export function GeneralGestion() {
                     onChange={(e) => setSelectedBuildingFilter(e.target.value)}
                     className="pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-xs bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors w-full sm:min-w-[180px]"
                   >
-                    <option value="all">Todos los edificios</option>
+                    <option value="all">{t("allBuildings")}</option>
                     {buildings.map((building) => (
                       <option key={building.id} value={building.id}>
                         {building.name}
@@ -630,7 +632,7 @@ export function GeneralGestion() {
                     onChange={(e) => setSelectedUnitFilter(e.target.value)}
                     className="pl-9 pr-8 py-2 border border-gray-300 rounded-lg text-xs bg-white appearance-none cursor-pointer hover:border-gray-400 transition-colors w-full sm:min-w-[150px]"
                   >
-                    <option value="all">Todas las unidades</option>
+                    <option value="all">{t("allUnits")}</option>
                     {uniqueUnits.map((unit) => (
                       <option key={unit} value={unit}>
                         {unit}
@@ -640,10 +642,10 @@ export function GeneralGestion() {
                   <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rotate-90" aria-hidden="true" />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 whitespace-nowrap">{filteredDocuments.length} de {stats.total} docs</p>
+              <p className="text-xs text-gray-500 whitespace-nowrap">{filteredDocuments.length} {t("of")} {stats.total} docs</p>
               <Button variant="outline" size="sm" className="text-xs flex-shrink-0">
                 <Funnel className="w-3 h-3 mr-2" aria-hidden="true" />
-                Más
+                {t("more")}
               </Button>
             </div>
           </div>
@@ -708,10 +710,10 @@ export function GeneralGestion() {
                     <Search className="w-6 h-6 text-gray-400" />
                   </div>
                   <h3 className="text-sm font-medium text-gray-900 mb-2">
-                    No se encontraron documentos
+                    {t("noDocumentsFound")}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Intenta ajustar los filtros de búsqueda.
+                    {t("tryAdjustingFilters")}
                   </p>
                 </div>
               </div>
@@ -722,10 +724,10 @@ export function GeneralGestion() {
                     <FileText className="w-8 h-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No hay documentos cargados
+                    {t("noDocuments")}
                   </h3>
                   <p className="text-sm text-gray-500 max-w-md">
-                    No hay documentos cargados en la plataforma.
+                    {t("noDocumentsDescription")}
                   </p>
                 </div>
               </div>

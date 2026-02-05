@@ -7,10 +7,12 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useHeaderContext from "~/contexts/HeaderContext";
 
 export function HeaderGreenFinancial() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { selectedBuildingId } = useHeaderContext();
   const isFinancialTwin =
     location.pathname === "/green-financial/financial-twin";
   const isGreenFianncial = location.pathname === "/green-financial";
@@ -60,24 +62,23 @@ export function HeaderGreenFinancial() {
             onClick={() => {
               navigate("/green-financial");
             }}
-            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              isGreenFianncial
-                ? "border-[#1e3a8a] text-[#1e3a8a]"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-            }`}
+            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isGreenFianncial
+              ? "border-[#1e3a8a] text-[#1e3a8a]"
+              : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
           >
             <ChartColumn className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Radar</span>
           </button>
+
           <button
             onClick={() => {
-              navigate("/green-financial/financial-twin");
+              if (selectedBuildingId) navigate("/green-financial/financial-twin");
             }}
-            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              isFinancialTwin
-                ? "border-[#1e3a8a] text-[#1e3a8a]"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-            }`}
+            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isFinancialTwin
+              ? "border-[#1e3a8a] text-[#1e3a8a]"
+              : selectedBuildingId ? "border-transparent text-gray-600 hover:text-gray-900" : "border-transparent text-gray-600 hover:text-gray-900 cursor-not-allowed"
+              }`}
           >
             <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Financial Twin</span>
@@ -96,6 +97,6 @@ export function HeaderGreenFinancial() {
           </button>
         </div>
       </div>
-    </header>
+    </header >
   );
 }

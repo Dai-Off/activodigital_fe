@@ -71,105 +71,64 @@ export default function BuildingDocuments() {
     () => [
       {
         id: "certificates",
-        title: t("building.documentsCertificatesTitle", {
-          defaultValue: "Certificados y licencias",
-        }),
-        description: t("building.documentsCertificatesDescription", {
-          defaultValue:
-            "Documentación obligatoria para garantizar la habitabilidad y cumplimiento normativo.",
-        }),
+        title: t("documentsCertificatesTitle"),
+        description: t("documentsCertificatesDescription"),
         documents: [
           {
             id: "cee",
-            name: t("building.documentsEnergyCertificate", {
-              defaultValue: "Certificado energético vigente",
-            }),
+            name: t("documentsEnergyCertificate"),
             updated: "2024-02-10",
-            owner: t("building.documentsOwnerTechnician", {
-              defaultValue: "Responsable: Técnico asignado",
-            }),
+            owner: t("documentsOwnerTechnician"),
             status: "available",
           },
           {
             id: "ite",
-            name: t("building.documentsITE", {
-              defaultValue: "Inspección técnica del edificio (ITE)",
-            }),
+            name: t("documentsITE"),
             updated: "2021-07-28",
-            owner: t("building.documentsOwnerCityHall", {
-              defaultValue: "Responsable: Ayuntamiento",
-            }),
+            owner: t("documentsOwnerCityHall"),
             status: "expiring",
-            nextAction: t("building.documentsITEAction", {
-              defaultValue: "Renovar antes de 12 meses",
-            }),
+            nextAction: t("documentsITEAction"),
           },
         ],
       },
       {
         id: "plans",
-        title: t("building.documentsPlansTitle", {
-          defaultValue: "Planos y proyectos técnicos",
-        }),
-        description: t("building.documentsPlansDescription", {
-          defaultValue:
-            "Planos arquitectónicos, memorias técnicas y reformas relevantes.",
-        }),
+        title: t("documentsPlansTitle"),
+        description: t("documentsPlansDescription"),
         documents: [
           {
             id: "asbuilt",
-            name: t("building.documentsAsBuilt", {
-              defaultValue: "Planos As-Built digitalizados",
-            }),
+            name: t("documentsAsBuilt"),
             updated: "2023-11-04",
-            owner: t("building.documentsOwnerBim", {
-              defaultValue: "Responsable: Modelador BIM",
-            }),
+            owner: t("documentsOwnerBim"),
             status: "available",
           },
           {
             id: "evac",
-            name: t("building.documentsEvacuation", {
-              defaultValue: "Planos de evacuación y señalética",
-            }),
+            name: t("documentsEvacuation"),
             status: "missing",
-            nextAction: t("building.documentsUploadRequired", {
-              defaultValue: "Subir versión aprobada",
-            }),
+            nextAction: t("documentsUploadRequired"),
           },
         ],
       },
       {
         id: "legal",
-        title: t("building.documentsLegalTitle", {
-          defaultValue: "Contratos y legales",
-        }),
-        description: t("building.documentsLegalDescription", {
-          defaultValue:
-            "Contratos de arrendamiento, pólizas de seguro y acuerdos con proveedores.",
-        }),
+        title: t("documentsLegalTitle"),
+        description: t("documentsLegalDescription"),
         documents: [
           {
             id: "insurance",
-            name: t("building.documentsInsurance", {
-              defaultValue: "Póliza multirriesgo del edificio",
-            }),
+            name: t("documentsInsurance"),
             updated: "2024-01-01",
-            owner: t("building.documentsOwnerInsurance", {
-              defaultValue: "Responsable: Correduría ASEGURA",
-            }),
+            owner: t("documentsOwnerInsurance"),
             status: "available",
           },
           {
             id: "fire",
-            name: t("building.documentsFireContract", {
-              defaultValue: "Contrato mantenimiento PCI",
-            }),
+            name: t("documentsFireContract"),
             updated: "2022-09-14",
             status: "expiring",
-            nextAction: t("building.documentsFireAction", {
-              defaultValue: "Renovar contrato anual",
-            }),
+            nextAction: t("documentsFireAction"),
           },
         ],
       },
@@ -203,21 +162,14 @@ export default function BuildingDocuments() {
       <div className="p-6 sm:p-8">
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
           <h2 className="text-lg font-semibold">
-            {t("building.documentsNotFoundTitle", {
-              defaultValue: "No se pudo cargar el edificio",
-            })}
+            {t("documentsNotFoundTitle")}
           </h2>
           <p className="mt-2 text-sm">
-            {t("building.documentsNotFoundDescription", {
-              defaultValue:
-                "Vuelve al detalle del edificio e inténtalo de nuevo.",
-            })}
+            {t("documentsNotFoundDescription")}
           </p>
           <div className="mt-4 flex justify-center">
             <Button variant="outline" onClick={() => navigate("/assets")}>
-              {t("building.documentsBackToAssets", {
-                defaultValue: "Volver a activos",
-              })}
+              {t("documentsBackToAssets")}
             </Button>
           </div>
         </div>
@@ -240,26 +192,19 @@ export default function BuildingDocuments() {
           <>
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
-                {t("building.documentsPageTitle", {
-                  defaultValue: "Documentación del edificio",
-                })}{" "}
+                {t("documentsPageTitle")}{" "}
                 · {building?.name}
               </h1>
               <p className="text-sm text-gray-600">
-                {t("building.documentsPageSubtitle", {
-                  defaultValue:
-                    "Carpetas organizadas por categoría para mantener al día toda la documentación.",
-                })}
+                {t("documentsPageSubtitle")}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => building && navigate(`/building/${building.id}/general-view`)}
+                onClick={() => building && navigate(`/building/${id}/general-view`)}
               >
-                {t("building.documentsBackToDetail", {
-                  defaultValue: "Volver al detalle",
-                })}
+                {t("documentsBackToDetail")}
               </Button>
             </div>
           </>
@@ -276,15 +221,10 @@ export default function BuildingDocuments() {
           ) : (
             <>
               <CardTitle className="text-lg text-gray-900">
-                {t("building.documentsSummaryTitle", {
-                  defaultValue: "Resumen de carpetas",
-                })}
+                {t("documentsSummaryTitle")}
               </CardTitle>
               <CardDescription className="text-sm text-gray-600">
-                {t("building.documentsSummaryDescription", {
-                  defaultValue:
-                    "Visión general de la documentación clave y próximos pasos.",
-                })}
+                {t("documentsSummaryDescription")}
               </CardDescription>
             </>
           )}
@@ -307,64 +247,46 @@ export default function BuildingDocuments() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.documentsSummaryFolders", {
-                    defaultValue: "Carpetas",
-                  })}
+                  {t("documentsSummaryFolders")}
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-gray-900">
                   {documentSections.length}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {t("building.documentsSummaryFoldersHint", {
-                    defaultValue: "Organizadas por tipología documental",
-                  })}
+                  {t("documentsSummaryFoldersHint")}
                 </p>
               </div>
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.documentsSummaryDocs", {
-                    defaultValue: "Documentos indexados",
-                  })}
+                  {t("documentsSummaryDocs")}
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-gray-900">
                   {totalDocuments}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {t("building.documentsSummaryDocsHint", {
-                    defaultValue: "Listos para consulta desde la plataforma",
-                  })}
+                  {t("documentsSummaryDocsHint")}
                 </p>
               </div>
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.documentsSummaryExpiring", {
-                    defaultValue: "Próximos a vencer",
-                  })}
+                  {t("documentsSummaryExpiring")}
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-amber-600">
                   {expiringDocuments}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {t("building.documentsSummaryExpiringHint", {
-                    defaultValue:
-                      "Requieren seguimiento en los próximos 12 meses",
-                  })}
+                  {t("documentsSummaryExpiringHint")}
                 </p>
               </div>
               <div className="rounded-lg border border-gray-200 bg-white p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
-                  {t("building.documentsSummaryMissing", {
-                    defaultValue: "Pendientes",
-                  })}
+                  {t("documentsSummaryMissing")}
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-red-600">
                   {missingDocuments}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {t("building.documentsSummaryMissingHint", {
-                    defaultValue:
-                      "Prioriza subirlos para completar el expediente",
-                  })}
+                  {t("documentsSummaryMissingHint")}
                 </p>
               </div>
             </div>
@@ -448,9 +370,7 @@ export default function BuildingDocuments() {
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                             {doc.updated && (
                               <span>
-                                {t("building.documentsUpdatedAt", {
-                                  defaultValue: "Actualizado",
-                                })}
+                                {t("documentsUpdatedAt")}
                                 : {dateFormatter.format(new Date(doc.updated))}
                               </span>
                             )}
@@ -478,9 +398,7 @@ export default function BuildingDocuments() {
                             variant="outline"
                             size="icon"
                             className="size-9"
-                            title={t("building.documentsDownload", {
-                              defaultValue: "Descargar documento",
-                            })}
+                            title={t("documentsDownload")}
                             disabled={doc.status === "missing"}
                           >
                             <Download className="size-4" />
@@ -490,9 +408,7 @@ export default function BuildingDocuments() {
                             variant="outline"
                             size="icon"
                             className="size-9 text-red-600 border-red-200 hover:bg-red-50"
-                            title={t("building.documentsDelete", {
-                              defaultValue: "Eliminar documento",
-                            })}
+                            title={t("documentsDelete")}
                             disabled={doc.status === "missing"}
                           >
                             <Trash2 className="size-4" />

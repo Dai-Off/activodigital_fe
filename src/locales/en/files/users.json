@@ -1,0 +1,9 @@
+{
+  "users": "Users",
+  "allUsers": "All",
+  "administrator": "Administrator",
+  "tecnico": "Technician",
+  "cfo": "CFO",
+  "propietario": "Owner",
+  "managePermission": "Manage Permission"
+}

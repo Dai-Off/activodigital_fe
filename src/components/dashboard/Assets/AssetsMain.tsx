@@ -258,25 +258,24 @@ export function AssetsMain() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl mb-1">
-              {t("generalDashboard", "Dashboard General")}
+              {t("generalDashboard")}
             </h1>
             <p className="text-sm text-gray-500">
               {t(
-                "executiveSummary",
-                "Resumen ejecutivo del portfolio de activos"
+                "executiveSummary"
               )}
             </p>
           </div>
         </div>
         <div className="text-center py-12 text-gray-500">
-          {t("errorLoadingStats", "Error al cargar estadísticas")}
+          {t("errorLoadingStats")}
         </div>
       </div>
     );
   }
 
   // Calcular cumplimiento promedio (placeholder - ajustar según datos reales)
-  const complianceAverage = 79; // Esto debería venir de stats
+  const complianceAverage = stats.complianceAverage; // Esto debería venir de stats
   const totalSurface = stats.totalSurfaceArea > 0
     ? (stats.totalSurfaceArea / 1000).toFixed(1) + "k"
     : "0";

@@ -1,7 +1,7 @@
 // src/components/buildings/CreateBuildingFromCatastro.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertCircle, Loader2, Hash, MapPin, Navigation } from 'lucide-react';
+import { Search, AlertCircle, Loader2, Hash, MapPin, ChevronDown } from 'lucide-react';
 import { CatastroApiService, type Provincia, type Municipio, type Via, type CatastroBuildingData } from '../../services/catastroApi';
 import type { BuildingStep1Data } from './CreateBuildingWizard';
 import { SupportContactModal } from '../SupportContactModal';
@@ -11,7 +11,141 @@ interface CreateBuildingFromCatastroProps {
   onCancel: () => void;
 }
 
-type SearchMethod = 'rc' | 'address' | 'coordinates';
+type SearchMethod = 'rc' | 'address';
+
+const STREET_TYPES = [
+  { label: 'Calle', value: 'CL' },
+  { label: 'Avenida', value: 'AV' },
+  { label: 'Paseo', value: 'PS' },
+  { label: 'Plaza', value: 'PZ' },
+  { label: 'Carretera', value: 'CT' },
+  { label: 'Camino', value: 'CM' },
+  { label: 'Ronda', value: 'RD' },
+  { label: 'Travesía', value: 'TR' },
+  { label: 'Pasaje', value: 'PJ' },
+  { label: 'Urbanización', value: 'UR' },
+  { label: 'Polígono', value: 'PL' },
+  { label: 'Glorieta', value: 'GL' },
+  { label: 'Rambla', value: 'RB' },
+  { label: 'Vía', value: 'VI' },
+  { label: 'Lugar', value: 'LG' },
+  { label: 'Urbanización', value: 'UR' },
+  { label: 'Caserío', value: 'CR' },
+  { label: 'Núcleo', value: 'NU' },
+  { label: 'Parque Industrial', value: 'PI' },
+];
+
+interface AutocompleteFieldProps {
+  label: string;
+  value: string;
+  options: { id: string; label: string }[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  error?: boolean;
+  loading?: boolean;
+}
+
+const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  disabled,
+  error,
+  loading
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync searchTerm with initial value label
+  useEffect(() => {
+    const selectedOption = options.find(opt => opt.id === value);
+    if (selectedOption) {
+      setSearchTerm(selectedOption.label);
+    } else if (!value) {
+      setSearchTerm('');
+    }
+  }, [value, options]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        // Reset searchTerm to the selected value's label if not finished
+        const selectedOption = options.find(opt => opt.id === value);
+        setSearchTerm(selectedOption ? selectedOption.label : '');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [value, options]);
+
+  const filteredOptions = options.filter(opt =>
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setIsOpen(true);
+            // If clearing the input, clear the selection
+            if (!e.target.value) {
+              onChange('');
+            }
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+            error ? 'border-red-300' : 'border-gray-300'
+          } ${disabled ? 'bg-gray-50' : 'bg-white'}`}
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+          {loading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto py-1 animate-in fade-in zoom-in duration-100">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                className={`w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors text-sm ${
+                  opt.id === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                }`}
+                onClick={() => {
+                  onChange(opt.id);
+                  setSearchTerm(opt.label);
+                  setIsOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))
+          ) : (
+            <div className="px-4 py-3 text-sm text-gray-500 italic">
+              No se encontraron resultados
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   onDataLoaded,
@@ -40,9 +174,11 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   const [planta, setPlanta] = useState('');
   const [puerta, setPuerta] = useState('');
 
+  /*
   // Estados para búsqueda por coordenadas
   const [coordX, setCoordX] = useState('');
   const [coordY, setCoordY] = useState('');
+  */
 
   // Estados para datos adicionales después de cargar
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
@@ -163,28 +299,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           puerta || undefined
         );
       } else {
-        // coordinates
-        const missingCoords: string[] = [];
-        if (!coordX || coordX.trim() === '') missingCoords.push('Longitud (X)');
-        if (!coordY || coordY.trim() === '') missingCoords.push('Latitud (Y)');
-        
-        if (missingCoords.length > 0) {
-          setError(`Faltan coordenadas obligatorias:\n\n${missingCoords.map(coord => `• ${coord}`).join('\n')}\n\nLas coordenadas deben ser números válidos en formato decimal.\n💡 Ejemplo: Longitud: -3.7038, Latitud: 40.4168`);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Validar que sean números
-        const coordXNum = parseFloat(coordX.trim());
-        const coordYNum = parseFloat(coordY.trim());
-        
-        if (isNaN(coordXNum) || isNaN(coordYNum)) {
-          setError('Las coordenadas deben ser números válidos.\n\nPor favor, verifica que hayas ingresado valores numéricos en formato decimal.\n💡 Ejemplo válido: Longitud: -3.7038, Latitud: 40.4168');
-          setIsLoading(false);
-          return;
-        }
-        
-        inmueble = await CatastroApiService.getBuildingByCoordinates(coordXNum, coordYNum);
+        // En teoría no debería llegar aquí si searchMethod es 'rc' o 'address'
+        setIsLoading(false);
+        return;
       }
 
       // Mapear los datos (ahora es async porque puede geocodificar)
@@ -233,8 +350,6 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           errorMessage = 'No se pudo obtener la información del edificio con el código catastral ingresado.\n\nTe sugerimos:\n• Verificar que el código esté completo y correcto\n• Intentar buscar por dirección si conoces la ubicación\n• Contactar con soporte si el problema persiste';
         } else if (searchMethod === 'address') {
           errorMessage = 'No se pudo obtener la información del edificio con la dirección ingresada.\n\nTe sugerimos:\n• Verificar que todos los datos de la dirección sean correctos\n• Intentar buscar por código catastral si lo conoces\n• Verificar la ortografía de la calle y número';
-        } else {
-          errorMessage = 'No se pudo obtener la información del edificio con las coordenadas ingresadas.\n\nTe sugerimos:\n• Verificar que las coordenadas sean correctas\n• Verificar que estén en el sistema de referencia adecuado\n• Intentar buscar por dirección o código catastral';
         }
       }
       
@@ -267,7 +382,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         ? catastroDataLoaded.cadastralReference.trim() 
         : '',
       constructionYear: catastroDataLoaded.constructionYear?.toString() || '',
-      typology: catastroDataLoaded.typology || '',
+      // Si Catastro no devuelve tipología, usamos 'residential' como valor por defecto
+      // para no bloquear el wizard. El usuario podrá ajustarlo después.
+      typology: (catastroDataLoaded.typology as 'residential' | 'mixed' | 'commercial' | undefined) || 'residential',
       floors: catastroDataLoaded.numFloors?.toString() || '',
       units: '', // Ya no se usa, pero mantenemos el campo para compatibilidad
       price: additionalData.price,
@@ -298,20 +415,17 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('buildingWizard.loadFromCatastro', 'Cargar desde Catastro')}
+          {t('loadFromCatastro')}
         </h1>
         <p className="text-gray-600">
-          {t(
-            'buildingWizard.loadFromCatastroDesc',
-            'Busca el edificio usando uno de los métodos disponibles'
-          )}
+          {t('loadFromCatastroDesc')}
         </p>
       </div>
 
       {/* Selector de método */}
       <div className="mb-4 md:mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          {t('buildingWizard.searchMethod', 'Método de búsqueda')}
+          {t('searchMethod', 'Método de búsqueda')}
         </label>
         <div className="flex flex-col sm:flex-row gap-2 md:gap-2">
           <button
@@ -327,7 +441,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <Hash className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByRC', 'Por Código Catastral')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByRC', 'Por Código Catastral')}</span>
           </button>
           <button
             type="button"
@@ -342,8 +456,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByAddress', 'Por Dirección')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByAddress', 'Por Dirección')}</span>
           </button>
+          {/* 
           <button
             type="button"
             onClick={() => {
@@ -357,8 +472,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             }`}
           >
             <Navigation className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium text-center">{t('buildingWizard.searchByCoords', 'Por Coordenadas')}</span>
+            <span className="text-xs sm:text-sm font-medium text-center">{t('searchByCoords', 'Por Coordenadas')}</span>
           </button>
+          */}
         </div>
       </div>
 
@@ -368,7 +484,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         {searchMethod === 'rc' && (
           <div>
             <label htmlFor="rc" className="block text-sm font-medium text-gray-700 mb-2">
-              {t('buildingWizard.catastralCode', 'Código Catastral (RC)')} *
+              {t('catastralCode', 'Código Catastral (RC)')} *
             </label>
             <input
               id="rc"
@@ -379,7 +495,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 setError(null);
               }}
               onKeyPress={handleKeyPress}
-              placeholder={t('buildingWizard.rcPlaceholder', 'Ej: 1249023VK4714G0001FH')}
+              placeholder={t('catastralReferencePlaceholder')}
               className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 error ? 'border-red-300' : 'border-gray-300'
               }`}
@@ -392,80 +508,51 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         {searchMethod === 'address' && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.province', 'Provincia')} *
-                </label>
-                <select
-                  id="province"
-                  value={selectedProvince}
-                  onChange={(e) => {
-                    setSelectedProvince(e.target.value);
-                    setError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    error ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  disabled={isLoading}
-                >
-                  <option value="">{t('common.select', 'Seleccionar...')}</option>
-                  {provinces.map((p) => (
-                    <option key={p.codigo} value={p.codigo}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AutocompleteField
+                label={t('province', 'Provincia') + ' *'}
+                value={selectedProvince}
+                options={provinces.map(p => ({ id: p.codigo, label: p.nombre }))}
+                onChange={(val) => {
+                  setSelectedProvince(val);
+                  setError(null);
+                }}
+                placeholder={t('select')}
+                disabled={isLoading}
+                error={!!error}
+              />
 
-              <div>
-                <label htmlFor="municipality" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.municipality', 'Municipio')} *
-                </label>
-                <select
-                  id="municipality"
-                  value={selectedMunicipality}
-                  onChange={(e) => {
-                    setSelectedMunicipality(e.target.value);
-                    setSelectedStreet('');
-                    setError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    error ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  disabled={isLoading || !selectedProvince}
-                >
-                  <option value="">{t('common.select', 'Seleccionar...')}</option>
-                  {municipalities.map((m) => (
-                    <option key={m.nombreMunicipio} value={m.nombreMunicipio}>
-                      {m.nombreMunicipio}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AutocompleteField
+                label={t('municipality', 'Municipio') + ' *'}
+                value={selectedMunicipality}
+                options={municipalities.map(m => ({ id: m.nombreMunicipio, label: m.nombreMunicipio }))}
+                onChange={(val) => {
+                  setSelectedMunicipality(val);
+                  setSelectedStreet('');
+                  setError(null);
+                }}
+                placeholder={t('select')}
+                disabled={isLoading || !selectedProvince}
+                error={!!error}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="streetType" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.streetType', 'Tipo de Vía')}
-                </label>
-                <input
-                  id="streetType"
-                  type="text"
-                  value={streetType}
-                  onChange={(e) => {
-                    setStreetType(e.target.value);
-                    setError(null);
-                  }}
-                  placeholder={t('buildingWizard.streetTypePlaceholder', 'Ej: CL, AV, PL')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading || !selectedMunicipality}
-                />
-              </div>
+              <AutocompleteField
+                label={t('streetType', 'Tipo de Vía')}
+                value={streetType}
+                options={STREET_TYPES.map(st => ({ id: st.value, label: st.label }))}
+                onChange={(val) => {
+                  setStreetType(val);
+                  setError(null);
+                }}
+                placeholder={t('streetTypePlaceholder', 'Ej: Calle')}
+                disabled={isLoading || !selectedMunicipality}
+                error={!!error}
+              />
 
               <div>
                 <label htmlFor="streetName" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.streetName', 'Nombre de Vía')}
+                  {t('streetName', 'Nombre de Vía')}
                 </label>
                 <input
                   id="streetName"
@@ -475,42 +562,34 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                     setStreetName(e.target.value);
                     setError(null);
                   }}
-                  placeholder={t('buildingWizard.streetNamePlaceholder', 'Ej: Alcalá')}
+                  placeholder={t('streetNamePlaceholder', 'Ej: Alcalá')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   disabled={isLoading || !selectedMunicipality}
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.street', 'Vía')} *
-              </label>
-              <select
-                id="street"
-                value={selectedStreet}
-                onChange={(e) => {
-                  setSelectedStreet(e.target.value);
-                  setError(null);
-                }}
-                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  error ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={isLoading || !selectedMunicipality}
-              >
-                <option value="">{t('common.select', 'Seleccionar...')}</option>
-                {streets.map((s, idx) => (
-                  <option key={`${s.codigoVia}-${idx}`} value={s.codigoVia}>
-                    {s.tipoVia ? `${s.tipoVia} ` : ''}{s.nombreVia}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AutocompleteField
+              label={t('street', 'Vía') + ' *'}
+              value={selectedStreet}
+              options={streets.map(s => ({ 
+                id: s.codigoVia, 
+                label: `${s.tipoVia ? s.tipoVia + ' ' : ''}${s.nombreVia}` 
+              }))}
+              onChange={(val) => {
+                setSelectedStreet(val);
+                setError(null);
+              }}
+              placeholder={t('select')}
+              disabled={isLoading || !selectedMunicipality}
+              error={!!error}
+              loading={isLoading && streets.length === 0 && streetName.length >= 2}
+            />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.number', 'Número')} *
+                  {t('number', 'Número de portal')} *
                 </label>
                 <input
                   id="number"
@@ -529,7 +608,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="escalera" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.escalera', 'Escalera')}
+                  {t('escalera', 'Escalera')}
                 </label>
                 <input
                   id="escalera"
@@ -546,7 +625,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="planta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.planta', 'Planta')}
+                  {t('planta', 'Planta')}
                 </label>
                 <input
                   id="planta"
@@ -563,7 +642,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
               <div>
                 <label htmlFor="puerta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('buildingWizard.puerta', 'Puerta')}
+                  {t('puerta', 'Puerta')}
                 </label>
                 <input
                   id="puerta"
@@ -582,11 +661,12 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         )}
 
         {/* Búsqueda por Coordenadas */}
+        {/* 
         {searchMethod === 'coordinates' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="coordX" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.longitude', 'Longitud (X)')} *
+                {t('longitude', 'Longitud (X)')} *
               </label>
               <input
                 id="coordX"
@@ -597,7 +677,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   setError(null);
                 }}
                 onKeyPress={handleKeyPress}
-                placeholder={t('buildingWizard.longitudePlaceholder', 'Ej: -3.697444')}
+                placeholder={t('longitudePlaceholder', 'Ej: -3.697444')}
                 className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   error ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -607,7 +687,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
             <div>
               <label htmlFor="coordY" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buildingWizard.latitude', 'Latitud (Y)')} *
+                {t('latitude', 'Latitud (Y)')} *
               </label>
               <input
                 id="coordY"
@@ -618,7 +698,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   setError(null);
                 }}
                 onKeyPress={handleKeyPress}
-                placeholder={t('buildingWizard.latitudePlaceholder', 'Ej: 40.418773')}
+                placeholder={t('latitudePlaceholder', 'Ej: 40.418773')}
                 className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                   error ? 'border-red-300' : 'border-gray-300'
                 }`}
@@ -627,6 +707,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             </div>
           </div>
         )}
+        */}
 
         {error && (
           <div className="flex items-start gap-3 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm">
@@ -635,7 +716,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-red-900 mb-2">
-                {t('buildingWizard.errorTitle', 'Error al buscar el edificio')}
+                {t('errorTitle', 'Error al buscar el edificio')}
               </p>
               <div className="text-sm text-red-800 leading-relaxed whitespace-pre-line space-y-1.5">
                 {error.split('\n').map((line, index) => {
@@ -724,6 +805,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 </div>
               )}
               
+              {/* 
               {searchMethod === 'coordinates' && !error.includes('💡') && !error.includes('Consejo') && (
                 <div className="mt-3 pt-3 border-t border-red-200 bg-red-100/30 p-3 rounded">
                   <p className="text-xs font-medium text-red-800 mb-1">💡 Consejos útiles:</p>
@@ -734,6 +816,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                   </ul>
                 </div>
               )}
+              */}
             </div>
           </div>
         )}
@@ -775,10 +858,10 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {t('buildingWizard.additionalData', 'Datos adicionales')}
+              {t('additionalData', 'Datos adicionales')}
             </h3>
             <p className="text-sm text-gray-600">
-              {t('buildingWizard.additionalDataDesc', 'Completa los siguientes campos opcionales antes de continuar')}
+              {t('additionalDataDesc', 'Completa los siguientes campos opcionales antes de continuar')}
             </p>
           </div>
 
@@ -797,7 +880,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <p className="mt-1 text-xs text-gray-500">
-                {t('buildingWizard.nameHelper', 'Si no se completa, se usará la dirección por defecto.')}
+                {t('nameHelper', 'Si no se completa, se usará la dirección por defecto.')}
               </p>
             </div>
 

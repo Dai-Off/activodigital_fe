@@ -78,13 +78,13 @@ const CreateUnitWizard: React.FC = () => {
 
   const handleCatastroUnitsCreated = async (units: FrontendUnit[]) => {
     if (!buildingId) {
-      showError(t("units.errors.noBuilding", "No se ha especificado el edificio"));
+      showError(t("noBuilding"));
       return;
     }
 
     if (!units || units.length === 0) {
       showError(
-        t("units.errors.noUnitsCreated", "No se crearon unidades desde catastro")
+        t("noUnitsCreated")
       );
       return;
     }
@@ -95,12 +95,7 @@ const CreateUnitWizard: React.FC = () => {
 
     const unitCount = units.length;
     showSuccess(
-      t(
-        "units.success.loadedFromCatastro",
-        `Se ${unitCount === 1 ? "cargó" : "cargaron"} ${unitCount} ${
-          unitCount === 1 ? "unidad" : "unidades"
-        } desde Catastro. Revísalas, ajústalas si es necesario y pulsa "Continuar" para guardarlas.`
-      )
+      t("loadedFromCatastro ", { count: unitCount })
     );
   };
 
@@ -122,19 +117,19 @@ const CreateUnitWizard: React.FC = () => {
 
   const handleSubmitMultiple = async (units: UnitFormData[]) => {
     if (!buildingId) {
-      showError(t('units.errors.noBuilding', 'No se ha especificado el edificio'));
+      showError(t('noBuilding'));
       return;
     }
 
     if (units.length === 0) {
-      showError(t('units.errors.noUnits', 'No hay unidades para crear'));
+      showError(t('noUnitsCreated'));
       return;
     }
 
     startLoading();
     try {
       console.log('🔍 [CreateUnitWizard] Unidades recibidas del formulario:', units.length, units);
-      
+
       const payloads: CreateBuildingUnitRequest[] = units.map((unit, index) => {
         const identifierParts: string[] = [];
         if (unit.floor) identifierParts.push(String(unit.floor));
@@ -153,12 +148,12 @@ const CreateUnitWizard: React.FC = () => {
           useType: unit.typology || null,
           status:
             unit.status === "occupied"
-              ? "ocupada"
+              ? t("occupied")
               : unit.status === "maintenance"
-              ? "mantenimiento"
-              : unit.status === "available"
-              ? null // El backend usa null para disponible
-              : null,
+                ? t("maintenance")
+                : unit.status === "available"
+                  ? t("available")
+                  : null,
           rent:
             unit.monthlyRent && unit.monthlyRent.trim().length > 0
               ? parseFloat(unit.monthlyRent)
@@ -181,15 +176,15 @@ const CreateUnitWizard: React.FC = () => {
 
       const unitCount = units.length;
       showSuccess(
-        t('units.success.createdMultiple', `Se ${unitCount === 1 ? 'creó' : 'crearon'} ${unitCount} ${unitCount === 1 ? 'unidad' : 'unidades'} exitosamente`)
+        t('createdMultiple', `Se ${unitCount === 1 ? 'creó' : 'crearon'} ${unitCount} ${unitCount === 1 ? 'unidad' : 'unidades'} exitosamente`)
       );
-      
+
       // Volver a la lista de unidades
       navigate(`/building/${buildingId}/unidades`);
     } catch (error) {
       console.error('Error creando unidades:', error);
       showError(
-        t('units.errors.createFailed', 'No se pudieron crear las unidades. Por favor, inténtalo de nuevo.')
+        t('createFailed')
       );
     } finally {
       stopLoading();
@@ -223,8 +218,8 @@ const CreateUnitWizard: React.FC = () => {
               catastroImportedData.length > 0
                 ? catastroImportedData
                 : manualData.length > 0
-                ? manualData
-                : undefined
+                  ? manualData
+                  : undefined
             }
           />
         )}
@@ -233,6 +228,10 @@ const CreateUnitWizard: React.FC = () => {
           <CreateUnitFromCatastro
             onUnitsCreated={handleCatastroUnitsCreated}
             onCancel={handleCancel}
+            onGoManual={() => {
+              // Pasar directamente al flujo manual si el usuario lo prefiere
+              setSelectedMethod("manual");
+            }}
           />
         )}
 
@@ -240,12 +239,10 @@ const CreateUnitWizard: React.FC = () => {
           <div className="max-w-5xl mx-auto">
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Revisión de unidades importadas
+                {t("reviewImportedUnits")}
               </h1>
               <p className="text-gray-600">
-                Hemos importado {catastroUnits.length} unidades desde Catastro para esta
-                dirección. Revisa que los datos básicos sean correctos antes de
-                continuar. Podrás editar el detalle en el siguiente paso.
+                {t("loadedFromCatastro", { count: catastroUnits.length })}
               </p>
             </div>
 
@@ -255,19 +252,19 @@ const CreateUnitWizard: React.FC = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Unidad
+                        {t("unit")}
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Planta
+                        {t("floor")}
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Puerta / Identificador
+                        {t("door")} / {t("identifier")}
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Uso
+                        {t("useType")}
                       </th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Superficie (m²)
+                        {t("area")}
                       </th>
                     </tr>
                   </thead>
@@ -302,7 +299,7 @@ const CreateUnitWizard: React.FC = () => {
                 onClick={handleDiscardCatastroImport}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
               >
-                Descartar importación
+                {t("discardImport")}
               </button>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button
@@ -310,14 +307,14 @@ const CreateUnitWizard: React.FC = () => {
                   onClick={() => setIsReviewStep(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
                 >
-                  Volver a búsqueda
+                  {t("backToSearch")}
                 </button>
                 <button
                   type="button"
                   onClick={handleStartManualFromCatastro}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
                 >
-                  Editar unidades y continuar
+                  {t("editUnitsAndContinue")}
                 </button>
               </div>
             </div>

@@ -21,6 +21,7 @@ import {
   SkeletonOpportunityTableBody,
 } from "~/components/ui/LoadingSystem";
 import type { BuildingImage } from "~/services/buildingsApi";
+import useHeaderContext from "~/contexts/HeaderContext";
 
 interface SectionHelpersRadar {
   TotalActivos: boolean;
@@ -42,7 +43,7 @@ export interface RegistroTable {
   activo: string;
   direccion: string;
   tipo: string;
-
+  building_id: string;
   estado_actual: string;
 
   potencial: Potencial;
@@ -110,6 +111,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
   if (!data || data.length === 0) {
     return null;
   }
+  const { setSelectedBuildingId, selectedBuildingId } = useHeaderContext();
 
   return (
     <>
@@ -117,7 +119,14 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
         data.map((value, idx) => (
           <tr
             key={idx}
-            className="border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors"
+            className={`border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors ${selectedBuildingId === value.building_id ? "bg-blue-100" : ""}`}
+            onClick={() => {
+              setSelectedBuildingId(value.building_id)
+            }}
+
+            onDoubleClick={() => {
+              setSelectedBuildingId(null)
+            }}
           >
             <td className="px-4 py-3">
               <div className="flex items-center gap-3">
@@ -229,11 +238,10 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
             <td className="px-4 py-3">
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className={`flex items-center gap-1 px-2 py-1  ${
-                    value?.estado?.etiqueta === "Bank-Ready"
+                  className={`flex items-center gap-1 px-2 py-1  ${value?.estado?.etiqueta === "Bank-Ready"
                       ? "bg-green-100 text-green-700"
                       : "bg-orange-100 text-orange-700"
-                  } rounded text-xs`}
+                    } rounded text-xs`}
                 >
                   {value?.estado.etiqueta === "Bank-Ready" ? (
                     <CircleCheck className="w-3 h-3" />
@@ -488,8 +496,8 @@ export function OpportunityRadar() {
   const pendientes = summary?.total_activos - (summary?.bankReady || 0);
 
   return (
-    <div 
-      onClick={closeAllHelpers} 
+    <div
+      onClick={closeAllHelpers}
       onKeyDown={(e) => e.key === 'Escape' && closeAllHelpers()}
       role="presentation"
       className="max-w-[1800px] mx-auto space-y-6"
@@ -539,31 +547,28 @@ export function OpportunityRadar() {
           <div className="flex gap-2">
             <button
               onClick={() => aplicarFiltroEstado("todos")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                filter === "todos"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "todos"
                   ? "bg-blue-900 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Todos ({dataOriginal?.length})
             </button>
             <button
               onClick={() => aplicarFiltroEstado("bank")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                filter === "bank"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "bank"
                   ? "bg-green-700 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Bank-Ready ({summary?.bankReady})
             </button>
             <button
               onClick={() => aplicarFiltroEstado("pendientes")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-                filter === "pendientes"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "pendientes"
                   ? "bg-orange-500 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Pendientes ({pendientes})
             </button>
