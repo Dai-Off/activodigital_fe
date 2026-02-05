@@ -74,14 +74,26 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
 }) => {
   const { t } = useTranslation();
 
+  // Solo consideramos que hay ubicación inicial si las coordenadas son válidas y no son 0,0
+  const hasInitialLocation =
+    initialData.latitude != null &&
+    initialData.longitude != null &&
+    initialData.latitude !== 0 &&
+    initialData.longitude !== 0;
+
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
-    initialData.latitude != null && initialData.longitude != null
-      ? { lat: initialData.latitude, lng: initialData.longitude }
+    hasInitialLocation
+      ? { lat: initialData.latitude as number, lng: initialData.longitude as number }
       : null
   );
   const [address, setAddress] = useState<string>(initialData.address || '');
   const [geoLoading, setGeoLoading] = useState(false);
-  const [geoError, setGeoError] = useState<string | null>(null);
+  // Si tenemos dirección inicial pero no coordenadas válidas, mostrar aviso para que el usuario marque la ubicación
+  const [geoError, setGeoError] = useState<string | null>(
+    !hasInitialLocation && (initialData.address?.trim()?.length ?? 0) > 0
+      ? t('noLocationFound')
+      : null
+  );
 
   const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);

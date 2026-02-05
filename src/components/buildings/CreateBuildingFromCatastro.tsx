@@ -382,7 +382,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         ? catastroDataLoaded.cadastralReference.trim() 
         : '',
       constructionYear: catastroDataLoaded.constructionYear?.toString() || '',
-      typology: catastroDataLoaded.typology || '',
+      // Si Catastro no devuelve tipología, usamos 'residential' como valor por defecto
+      // para no bloquear el wizard. El usuario podrá ajustarlo después.
+      typology: (catastroDataLoaded.typology as 'residential' | 'mixed' | 'commercial' | undefined) || 'residential',
       floors: catastroDataLoaded.numFloors?.toString() || '',
       units: '', // Ya no se usa, pero mantenemos el campo para compatibilidad
       price: additionalData.price,
