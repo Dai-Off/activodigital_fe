@@ -124,8 +124,9 @@ const CreateBuildingWizard: React.FC = () => {
     coordinates?: { lat: number; lng: number }
   ) => {
     setStep1Data(data);
-
-    // Inicializar step2Data con la dirección y coordenadas si están disponibles
+    // Inicializar step2Data con la dirección y coordenadas si están disponibles.
+    // Si Catastro/geocodificación no devuelve coordenadas válidas,
+    // el paso 2 mostrará un mensaje para que el usuario marque la ubicación manualmente.
     const step2DataUpdate: BuildingStep2Data = {
       address: data.address || "",
       latitude: coordinates?.lat ?? 0,
@@ -135,6 +136,9 @@ const CreateBuildingWizard: React.FC = () => {
     };
 
     setStep2Data(step2DataUpdate);
+    // A partir de este punto tratamos el flujo como "manual":
+    // el paso 0 será el formulario de datos generales con los datos de Catastro pre-rellenados.
+    setSelectedMethod("manual");
 
     setCurrentStep(1); // Ir al paso 1 (Step2)
   };
@@ -241,12 +245,16 @@ const CreateBuildingWizard: React.FC = () => {
       const cadastralRef = step1Data.cadastralReference?.trim();
       const cadastralReference = cadastralRef && cadastralRef.length > 0 ? cadastralRef : undefined;
 
+      // Tipología segura: si viene vacía (casos de Catastro sin uso claro), asumimos 'residential'
+      const safeTypology =
+        (step1Data.typology as "residential" | "mixed" | "commercial" | "") || "residential";
+
       const buildingPayload: CreateBuildingPayload = {
         name: step1Data.name,
         address: step2Data.address,
         cadastralReference,
         constructionYear: year,
-        typology: step1Data.typology as "residential" | "mixed" | "commercial",
+        typology: safeTypology,
         numFloors: floors,
         numUnits: units && !Number.isNaN(units) ? units : undefined,
         price,
@@ -419,11 +427,13 @@ const CreateBuildingWizard: React.FC = () => {
   // -------------------- Summary Data --------------------
   const getCompleteData = (): CompleteBuildingData | null => {
     if (!step1Data || !step2Data) return null;
-    if (!step1Data.typology) return null;
+
+    const safeTypology =
+      (step1Data.typology as "residential" | "mixed" | "commercial" | "") || "residential";
 
     return {
       ...step1Data,
-      typology: step1Data.typology as "residential" | "mixed" | "commercial",
+      typology: safeTypology,
       ...step2Data,
     };
   };

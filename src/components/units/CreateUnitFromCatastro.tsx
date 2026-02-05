@@ -10,11 +10,14 @@ import { parseCatastroUnitsFromXml, type FrontendUnit } from '../../utils/catast
 interface CreateUnitFromCatastroProps {
   onUnitsCreated: (units: FrontendUnit[]) => void;
   onCancel: () => void;
+  // Permite saltar directamente a la creación manual cuando el usuario lo prefiera
+  onGoManual: () => void;
 }
 
 const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
   onUnitsCreated,
   onCancel,
+  onGoManual,
 }) => {
   const { t } = useTranslation();
   const { id: buildingId } = useParams<{ id: string }>();
@@ -144,11 +147,11 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
       if (!units || units.length === 0) {
         setError(
           'No se encontraron unidades en Catastro para la dirección indicada.\n\n' +
-            'Posibles causas:\n' +
-            '• La dirección no está registrada correctamente en el catastro\n' +
-            '• El número de calle es incorrecto o no existe\n' +
-            '• Los datos de bloque, escalera, planta o puerta no coinciden\n' +
-            '• El inmueble no tiene unidades constructivas registradas'
+            'Esto suele deberse a que la dirección no coincide exactamente con la registrada en Catastro o a que el inmueble no tiene unidades constructivas dadas de alta.\n\n' +
+            'Revisa:\n' +
+            '• Provincia, municipio, tipo de vía, nombre de la calle y número\n' +
+            '• Prueba a buscar sin rellenar bloque, escalera, planta o puerta\n\n' +
+            'Si aún así no aparecen unidades, puedes volver atrás y crear las unidades manualmente con el asistente.'
         );
         setIsLoading(false);
         return;
@@ -455,9 +458,9 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
                 <div className="mt-3 pt-3 border-t border-red-200 bg-red-100/30 p-3 rounded">
                   <p className="text-xs font-medium text-red-800 mb-1">💡 Consejos útiles:</p>
                   <ul className="text-xs text-red-700 space-y-1 ml-4 list-disc">
-                    <li>El código catastral de la unidad suele tener entre 14 y 20 caracteres</li>
-                    <li>Asegúrate de copiarlo completo sin espacios ni guiones</li>
-                    <li>Puedes encontrarlo en escrituras, recibos del IBI o certificados catastrales</li>
+                    <li>Verifica que provincia, municipio, tipo de vía, nombre de la calle y número coinciden con los datos oficiales del catastro.</li>
+                    <li>Si has rellenado bloque, escalera, planta o puerta, prueba a buscar solo con la dirección básica (sin esos campos opcionales).</li>
+                    <li>Es posible que el edificio no tenga las unidades constructivas publicadas en Catastro. En ese caso, crea las unidades manualmente desde el asistente.</li>
                   </ul>
                 </div>
               )}
@@ -495,6 +498,16 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
             </>
           )}
         </button>
+
+        {error && (
+          <button
+            type="button"
+            onClick={onGoManual}
+            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {t('units.createUnitsManually', 'Crear unidades manualmente')}
+          </button>
+        )}
       </div>
 
       <SupportContactModal
