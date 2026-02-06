@@ -205,7 +205,6 @@ const CreateUnitManual: React.FC<CreateUnitManualProps> = ({
       return;
     }
 
-    console.log('🔍 [CreateUnitManual] Enviando unidades al wizard:', units.length, units);
     onNext(units);
   };
 

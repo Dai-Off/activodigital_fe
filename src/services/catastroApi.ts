@@ -205,6 +205,46 @@ export async function fetchCatastroUnitsXmlByAddress(
   return (response as any).xml;
 }
 
+/**
+ * Llama al backend para obtener las unidades de un inmueble a partir de su
+ * referencia catastral (RC), devolviendo únicamente el XML crudo que viene de Catastro.
+ */
+export async function fetchCatastroUnitsXmlByRC(rc: string): Promise<string> {
+  const params = new URLSearchParams({ rc: rc.trim() });
+
+  let response: any;
+  try {
+    response = await apiFetch(`/catastroApi/unidades-por-rc?${params.toString()}`, {
+      method: 'GET',
+    });
+  } catch (error: any) {
+    const message =
+      (error && error.message) ||
+      'No se pudieron obtener las unidades desde Catastro. Por favor, inténtalo de nuevo.';
+
+    if (error?.status === 403 || error?.status === 401) {
+      throw new Error(
+        'No se ha podido acceder a la información de Catastro para esta referencia catastral. ' +
+          'Por favor, verifica que tienes sesión iniciada y, si el problema persiste, contacta con soporte.'
+      );
+    }
+
+    throw new Error(
+      message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')
+        ? 'No se pudo conectar con el servicio de Catastro. Verifica tu conexión a internet e inténtalo de nuevo.'
+        : message
+    );
+  }
+
+  if (!response || typeof response !== 'object' || typeof (response as any).xml !== 'string') {
+    throw new Error(
+      'La respuesta del servicio de Catastro no es válida. Vuelve a intentarlo en unos minutos.'
+    );
+  }
+
+  return (response as any).xml;
+}
+
 // -------------------- Servicio de API de Catastro --------------------
 
 // Normalizadores defensivos para adaptarnos a distintos formatos de respuesta,
