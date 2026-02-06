@@ -281,7 +281,7 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
 
     if (!province || !municipality || !selectedStreet || !via || !numero.trim()) {
       setError(
-        'La provincia, el municipio, la vía y el número son obligatorios. ' +
+        'La provincia, el municipio, la vía y el número de portal son obligatorios. ' +
           'Por favor, revisa que todos esos campos estén correctamente rellenados.'
       );
       return null;
@@ -579,7 +579,7 @@ const CreateUnitFromCatastro: React.FC<CreateUnitFromCatastroProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Número de portal *
+              {t('number', 'Número de portal')} *
             </label>
             <input
               type="text"
