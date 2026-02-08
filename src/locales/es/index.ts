@@ -11,6 +11,7 @@ import usersTranslations from './files/users.json';
 import configTranslations from './files/config.json';
 import notificationsTranslations from './files/notifications.json';
 import footerTranslations from './files/footer.json';
+import digitalBookTranslations from './files/digitalbook.json';
 
 export const esTranslations = {
     ...translations,
@@ -25,5 +26,6 @@ export const esTranslations = {
     ...usersTranslations,
     ...configTranslations,
     ...notificationsTranslations,
-    ...footerTranslations
+    ...footerTranslations,
+    ...digitalBookTranslations
 };

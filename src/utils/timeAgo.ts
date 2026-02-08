@@ -1,35 +1,48 @@
+import i18next from 'i18next';
+
 export function timeAgo(dateString: string): string {
+  if (!dateString) return "";
+
   const date = new Date(dateString.replace(/-/g, "/"));
   const now = new Date();
+  const secondsDifference = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (seconds < 0) {
-    return "en el futuro";
-  }
+  // Acceso directo a i18next (sin hooks)
+  const t = (key: string) => i18next.t(key);
+  const currentLang = i18next.language.split('-')[0].toUpperCase();
 
-  const intervals = {
-    año: 31536000,
-    mes: 2592000,
-    día: 86400,
-    hora: 3600,
-    minuto: 60,
-    segundo: 1,
+  if (secondsDifference < 0) return t('future'); // "en el futuro"
+  if (secondsDifference < 10) return t('just_now'); // "justo ahora"
+
+  const intervals: Record<string, number> = {
+    year: 31536000,
+    month: 2592000,
+    day: 86400,
+    hour: 3600,
+    minute: 60,
+    second: 1,
   };
 
-  for (const [label, secondsPerUnit] of Object.entries(intervals)) {
-    const interval = Math.floor(seconds / secondsPerUnit);
+  let timeText = "";
 
-    if (interval >= 1) {
-      if (label === "segundo" && interval < 60) {
-        return `Hace ${interval} segundo${interval !== 1 ? "s" : ""}`;
-      }
-      if (label === "minuto" && interval < 60) {
-        return `Hace ${interval} minuto${interval !== 1 ? "s" : ""}`;
-      }
+  for (const [unit, secondsPerUnit] of Object.entries(intervals)) {
+    const value = Math.floor(secondsDifference / secondsPerUnit);
 
-      return `Hace ${interval} ${label}${interval !== 1 ? "s" : ""}`;
+    if (value >= 1) {
+      // Manejo de plurales usando las keys de i18next
+      const label = value === 1 ? t(unit) : t(`${unit}s`);
+      timeText = `${value} ${label}`;
+      break; 
     }
   }
 
-  return "Justo ahora";
+  // Lógica de prefijos/sufijos por idioma
+  switch (currentLang) {
+    case 'ES': return `hace ${timeText}`;
+    case 'EN': return `${timeText} ago`;
+    case 'FR': return `il y a ${timeText}`;
+    case 'DE': return `vor ${timeText}`;
+    case 'PT': return `há ${timeText}`;
+    default: return timeText;
+  }
 }

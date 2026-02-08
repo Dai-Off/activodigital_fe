@@ -132,5 +132,17 @@
     "low": "Bajo",
     "squareMeters": "Metros cuadrados",
     "ascending": "Ascendente",
-    "descending": "Descendente"
+    "descending": "Descendente",
+    "years": "años",
+    "day": "día",
+    "days": "días",
+    "hour": "hora",
+    "hours": "horas",
+    "minute": "minuto",
+    "minutes": "minutos",
+    "second": "segundo",
+    "seconds": "segundos",
+    "just_now": "justo ahora",
+    "future": "en el futuro",
+    "noRecentActivities": "No hay actividades recientes"
 }

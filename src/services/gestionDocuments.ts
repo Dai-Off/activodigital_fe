@@ -256,6 +256,15 @@ export async function countBuildingDocuments(buildingId: string): Promise<number
       return 0;
     }
 
+    const { data: files, error: filesError } = await supabase.storage
+      .from('digital-book-documents')
+      .list(buildingId);
+
+    if (filesError || !files) {
+      console.error('Error al obtener categorías para conteo:', catError);
+      return 0;
+    }
+
     // 2. Recorremos cada categoría para contar sus archivos
     for (const cat of categories) {
       // Si el nombre tiene punto, es un archivo suelto en la raíz (poco común en tu estructura)
@@ -268,12 +277,27 @@ export async function countBuildingDocuments(buildingId: string): Promise<number
           .list(`${buildingId}/${cat.name}`);
 
         if (files) {
-          // Filtramos para contar solo archivos (los que tienen extensión)
           const fileCount = files.filter(f => f.name.includes('.')).length;
           totalCount += fileCount;
         }
       } else {
-        // Es un archivo en la raíz del buildingId
+        totalCount++;
+      }
+    }
+    
+    for (const cat of files) {
+      const isFolder = !cat.name.includes('.');
+      
+      if (isFolder) {
+        const { data: files } = await supabase.storage
+          .from('digital-book-documents')
+          .list(`${buildingId}/${cat.name}`);
+
+        if (files) {
+          const fileCount = files.filter(f => f.name.includes('.')).length;
+          totalCount += fileCount;
+        }
+      } else {
         totalCount++;
       }
     }
