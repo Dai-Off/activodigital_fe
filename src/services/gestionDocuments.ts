@@ -157,7 +157,7 @@ export async function uploadGestionDocument(
     const signedUrlExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
     try {
-      const response = await apiFetch('/building-documents', {
+      const dbDocument = await apiFetch('/building-documents', {
         method: 'POST',
         body: JSON.stringify({
           building_id: buildingId,
@@ -175,15 +175,6 @@ export async function uploadGestionDocument(
           signed_url_expires_at: signedUrlExpiresAt,
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        console.error('Error guardando documento en BD:', errorData);
-        // No fallar completamente, el archivo ya está en Storage
-        // Pero registrar el error para debugging
-      }
-
-      const dbDocument = await response.json().catch(() => null);
       const documentId = dbDocument?.data?.id || `${buildingId}_${category}_${timestamp}_${randomId}`;
 
       const uploadedDocument: GestionDocument = {
@@ -304,18 +295,11 @@ export async function listGestionDocuments(
       url += `?category=${encodeURIComponent(category)}`;
     }
 
-    const response = await apiFetch(url, {
+    const data = await apiFetch(url, {
       method: 'GET',
     });
 
-    if (!response.ok) {
-      console.error('Error obteniendo documentos desde BD, intentando fallback a Storage');
-      // Fallback a Storage si la BD falla (para documentos antiguos)
-      return await listGestionDocumentsFromStorage(buildingId, category);
-    }
-
-    const data = await response.json();
-    const documents = data.data || [];
+    const documents = (data as any)?.data || [];
 
     // Mapear documentos de BD al formato GestionDocument
     return documents.map((doc: any) => {
