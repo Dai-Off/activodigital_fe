@@ -280,7 +280,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         if (!selectedProvince) missingFields.push('Provincia');
         if (!selectedMunicipality) missingFields.push('Municipio');
         if (!selectedStreet) missingFields.push('Vía');
-        if (!number) missingFields.push('Número');
+        if (!number) missingFields.push(t('number', 'Número de portal'));
         
         if (missingFields.length > 0) {
           setError(`Faltan campos obligatorios para realizar la búsqueda:\n\n${missingFields.map(field => `• ${field}`).join('\n')}\n\nPor favor, completa todos los campos marcados con asterisco (*) para continuar.`);
