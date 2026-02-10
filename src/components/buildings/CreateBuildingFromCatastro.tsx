@@ -280,7 +280,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         if (!selectedProvince) missingFields.push('Provincia');
         if (!selectedMunicipality) missingFields.push('Municipio');
         if (!selectedStreet) missingFields.push('Vía');
-        if (!number) missingFields.push('Número');
+        if (!number) missingFields.push(t('number', 'Número de portal'));
         
         if (missingFields.length > 0) {
           setError(`Faltan campos obligatorios para realizar la búsqueda:\n\n${missingFields.map(field => `• ${field}`).join('\n')}\n\nPor favor, completa todos los campos marcados con asterisco (*) para continuar.`);
@@ -382,7 +382,9 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         ? catastroDataLoaded.cadastralReference.trim() 
         : '',
       constructionYear: catastroDataLoaded.constructionYear?.toString() || '',
-      typology: catastroDataLoaded.typology || '',
+      // Si Catastro no devuelve tipología, usamos 'residential' como valor por defecto
+      // para no bloquear el wizard. El usuario podrá ajustarlo después.
+      typology: (catastroDataLoaded.typology as 'residential' | 'mixed' | 'commercial' | undefined) || 'residential',
       floors: catastroDataLoaded.numFloors?.toString() || '',
       units: '', // Ya no se usa, pero mantenemos el campo para compatibilidad
       price: additionalData.price,

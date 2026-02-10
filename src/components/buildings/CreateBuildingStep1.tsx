@@ -22,6 +22,7 @@ const CreateBuildingStep1: React.FC<CreateBuildingStep1Props> = ({
   const [formData, setFormData] = useState<BuildingStep1Data>({
     name: initialData.name || '',
     address: '', // not used in step 1
+    cadastralReference: initialData.cadastralReference || '',
     constructionYear: initialData.constructionYear || '',
     typology: initialData.typology || '',
     floors: initialData.floors || '',

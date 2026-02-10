@@ -548,6 +548,7 @@ export function AssetsMain() {
                         type="text"
                         placeholder="Filtrar por año..."
                         className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                        value={columnFilters.year[0] || ""}
                         onChange={(e) => {
                           const val = e.target.value;
                           setColumnFilters(prev => ({ ...prev, year: val ? [val] : [] }));
