@@ -31,29 +31,37 @@ export function parseCatastroUnitsFromXml(xml: string): FrontendUnit[] {
     return [];
   }
 
-  // El XML de Consulta_DNPLOC para unidades por dirección viene tipicamente como:
-  // <consulta_dnp xmlns="http://www.catastro.meh.es/">
-  //   <lrcdnp>
-  //     <rcdnp> ... <loint><pt>..</pt><pu>..</pu></loint> ... <debi><luso>..</luso><sfc>..</sfc></debi> ... </rcdnp>
-  //   </lrcdnp>
-  //
-  // Usamos getElementsByTagNameNS con el namespace principal de Catastro.
-
   const CAT_NS = 'http://www.catastro.meh.es/';
 
+  // Intento 1: Buscar 'rcdnp' (Formato de Consulta_DNPLOC / Por Dirección)
   const rcdnpNodes = Array.from(doc.getElementsByTagNameNS(CAT_NS, 'rcdnp'));
-  if (rcdnpNodes.length === 0) {
-    // Puede que el parser no haya reconocido el namespace; intentamos sin NS como fallback.
-    const fallbackNodes = Array.from(doc.getElementsByTagName('rcdnp'));
-    if (fallbackNodes.length === 0) {
-      return [];
-    }
-    return fallbackNodes.map((node, index) => mapRcdnpNodeToUnit(node, index));
+  if (rcdnpNodes.length > 0) {
+    return rcdnpNodes.map((node, index) => mapRcdnpNodeToUnit(node, index));
   }
 
-  return rcdnpNodes.map((node, index) => mapRcdnpNodeToUnit(node, index));
+  // Intento 2: Buscar 'cons' (Formato de Consulta_DNPRC / Por RC)
+  const consNodes = Array.from(doc.getElementsByTagNameNS(CAT_NS, 'cons'));
+  if (consNodes.length > 0) {
+    return consNodes.map((node, index) => mapConsNodeToUnit(node, index));
+  }
+
+  // Fallback sin Namespace
+  const fallbackRcdnp = Array.from(doc.getElementsByTagName('rcdnp'));
+  if (fallbackRcdnp.length > 0) {
+    return fallbackRcdnp.map((node, index) => mapRcdnpNodeToUnit(node, index));
+  }
+
+  const fallbackCons = Array.from(doc.getElementsByTagName('cons'));
+  if (fallbackCons.length > 0) {
+    return fallbackCons.map((node, index) => mapConsNodeToUnit(node, index));
+  }
+
+  return [];
 }
 
+/**
+ * Mapea un nodo 'rcdnp' (Consulta_DNPLOC) a FrontendUnit
+ */
 function mapRcdnpNodeToUnit(node: Element, index: number): FrontendUnit {
   const getTextIn = (parent: Element | null, tag: string): string | null => {
     if (!parent) return null;
@@ -62,15 +70,13 @@ function mapRcdnpNodeToUnit(node: Element, index: number): FrontendUnit {
     return text.length > 0 ? text : null;
   };
 
-  // loint contiene la localización interior: pt (planta) y pu (puerta)
   const loint = node.getElementsByTagName('loint')[0] as Element | undefined;
-  const pt = getTextIn(loint ?? null, 'pt'); // planta
-  const pu = getTextIn(loint ?? null, 'pu'); // puerta
+  const pt = getTextIn(loint ?? null, 'pt');
+  const pu = getTextIn(loint ?? null, 'pu');
 
-  // debi contiene datos económicos / uso y superficie
   const debi = node.getElementsByTagName('debi')[0] as Element | undefined;
-  const luso = getTextIn(debi ?? null, 'luso'); // uso / descripción
-  const sfcRaw = getTextIn(debi ?? null, 'sfc'); // superficie construida
+  const luso = getTextIn(debi ?? null, 'luso');
+  const sfcRaw = getTextIn(debi ?? null, 'sfc');
 
   let areaM2: number | null = null;
   if (sfcRaw) {
@@ -80,18 +86,49 @@ function mapRcdnpNodeToUnit(node: Element, index: number): FrontendUnit {
   }
 
   const identifierParts = [pt, pu].filter(Boolean);
-  const identifier =
-    identifierParts.length > 0 ? identifierParts.join('-') : `UC-${index + 1}`;
-
+  const identifier = identifierParts.length > 0 ? identifierParts.join('-') : `UC-${index + 1}`;
   const nameBase = luso || 'Unidad';
   const name = `${nameBase} ${identifier}`;
 
-  return {
-    name,
-    identifier,
-    floor: pt,
-    areaM2,
-    useType: luso,
+  return { name, identifier, floor: pt, areaM2, useType: luso };
+}
+
+/**
+ * Mapea un nodo 'cons' (Consulta_DNPRC) a FrontendUnit
+ */
+function mapConsNodeToUnit(node: Element, index: number): FrontendUnit {
+  const getTextIn = (parent: Element | null, tag: string): string | null => {
+    if (!parent) return null;
+    const el = parent.getElementsByTagName(tag)[0] as Element | undefined;
+    const text = el?.textContent?.trim() ?? '';
+    return text.length > 0 ? text : null;
   };
+
+  // En 'cons', la info de planta/puerta suele estar en dt > lourb > loint
+  const loint = node.getElementsByTagName('loint')[0] as Element | undefined;
+  const pt = getTextIn(loint ?? null, 'pt');
+  const pu = getTextIn(loint ?? null, 'pu');
+
+  // El tipo de uso suele estar en lcd o dtip
+  const lcd = getTextIn(node, 'lcd');
+  const dtip = getTextIn(node, 'dtip');
+  const finalUse = dtip || lcd || 'Construcción';
+
+  // La superficie suele estar en dfcons > stl
+  const dfcons = node.getElementsByTagName('dfcons')[0] as Element | undefined;
+  const stlRaw = getTextIn(dfcons ?? null, 'stl');
+
+  let areaM2: number | null = null;
+  if (stlRaw) {
+    const normalized = stlRaw.replace(',', '.').replace(/[^\d.]/g, '');
+    const parsed = parseFloat(normalized);
+    areaM2 = Number.isFinite(parsed) ? parsed : null;
+  }
+
+  const identifierParts = [pt, pu].filter(Boolean);
+  const identifier = identifierParts.length > 0 ? identifierParts.join('-') : `UC-${index + 1}`;
+  const name = `${finalUse} ${identifier}`;
+
+  return { name, identifier, floor: pt, areaM2, useType: finalUse };
 }
 

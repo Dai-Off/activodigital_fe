@@ -1,10 +1,12 @@
 import { apiFetch } from "./api";
+import type { BuildingAddressData } from "../types/location";
 
 // Interfaces para edificios (backend API)
 export interface Building {
   id: string;
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   cadastralReference?: string;
   constructionYear?: number;
   typology: "residential" | "mixed" | "commercial";
@@ -39,7 +41,10 @@ export interface BuildingImage {
 
 export interface CreateBuildingPayload {
   name: string;
+  // Dirección en texto plano (string legible).
+  // Se mantiene por compatibilidad y para usos de UI rápidos.
   address: string;
+  addressData?: BuildingAddressData;
   cadastralReference?: string;
   constructionYear?: number;
   typology: "residential" | "mixed" | "commercial";

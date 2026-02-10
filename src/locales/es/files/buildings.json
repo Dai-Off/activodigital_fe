@@ -150,6 +150,13 @@
 "sections" : "Secciones",
 "complianceDescription" : "Cumplimiento",
 "newCertificate" : "Nuevo certificado",
-"audit" : "Auditorías"
+"audit" : "Auditorías",
+"analysisMessage" : "Analizando cumplimiento EBPD y generando recomendaciones...",
+"analysisMessageDesc" : "Esto puede tardar unos minutos",
+"loadingBuilding" : "Cargando información del edificio...",
+"analysisMessageBuilding" : "Generando análisis del edificio...",
+"buscarDocumentos" : "Buscar documentos",
+"documents" : "Documentos"
+
 
 }

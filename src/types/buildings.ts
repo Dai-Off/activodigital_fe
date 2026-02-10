@@ -1,3 +1,5 @@
+import type { BuildingAddressData } from './location';
+
 export interface Building {
   valuePerM2?: number;
   valuePerUnit?: number;
@@ -6,6 +8,7 @@ export interface Building {
   id: string;
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   cadastralReference?: string;
   constructionYear?: number;
   typology: 'residential' | 'mixed' | 'commercial';
@@ -187,6 +190,7 @@ export interface PersistedEnergyCertificate {
 export interface BuildingFormStep1 {
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   constructionYear: string;
   typology: Building['typology'];
   floors: string;
@@ -200,6 +204,7 @@ export interface BuildingFormStep1 {
 export interface BuildingFormStep2 {
   latitude: number;
   longitude: number;
+  addressData?: BuildingAddressData;
   photos: File[];
   mainPhotoIndex: number;
 }

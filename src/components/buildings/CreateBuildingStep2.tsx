@@ -6,8 +6,9 @@ import type { Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import FileUpload from '../ui/FileUpload';
-
-  import type { LatLngTuple } from 'leaflet';
+import BuildingLocationForm from './BuildingLocationForm';
+import type { BuildingAddressData } from '../../types/location';
+import type { LatLngTuple } from 'leaflet';
 // --- Simple debounce ---
 function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
   let timeout: ReturnType<typeof setTimeout>;
@@ -34,6 +35,7 @@ interface LocationData {
   latitude: number;
   longitude: number;
   address: string;
+  addressData?: BuildingAddressData;
   photos: File[];
   mainPhotoIndex: number;
 }
@@ -87,6 +89,10 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       : null
   );
   const [address, setAddress] = useState<string>(initialData.address || '');
+  const [addressData, setAddressData] = useState<BuildingAddressData | undefined>(
+    initialData.addressData,
+  );
+  const [showLocationForm, setShowLocationForm] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   // Si tenemos dirección inicial pero no coordenadas válidas, mostrar aviso para que el usuario marque la ubicación
   const [geoError, setGeoError] = useState<string | null>(
@@ -252,6 +258,7 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
       latitude: location.lat,
       longitude: location.lng,
       address: address.trim(),
+      addressData,
       photos,
       mainPhotoIndex,
     });
@@ -324,20 +331,46 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
           {/* Address + Search */}
           <div className="relative mb-4">
             <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={address}
-                onChange={(e) => {
-                  setAddress(e.target.value);
-                  setHasSelectedSuggestion(false);
-                }}
-                onFocus={() => address.trim() && setShowSuggestions(true)}
-                placeholder={t('addressPlaceholder')}
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                autoComplete="off"
-                aria-label={t('address')}
-              />
+              <div className="relative flex-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setHasSelectedSuggestion(false);
+                  }}
+                  onFocus={() => address.trim() && setShowSuggestions(true)}
+                  placeholder={t('addressPlaceholder')}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  autoComplete="off"
+                  aria-label={t('address')}
+                />
+
+                {/* Suggestions */}
+                {showSuggestions && (
+                  <ul
+                    data-role="suggestions"
+                    className="absolute left-0 top-full w-full bg-white border border-blue-400 rounded-lg shadow-2xl mt-1 max-h-56 overflow-auto z-50"
+                  >
+                    {suggestions.length === 0 && address.trim() && (
+                      <li className="px-3 py-2 text-gray-500 text-sm select-none">
+                        {t('noResults')}
+                      </li>
+                    )}
+                    {suggestions.map((s) => (
+                      <li
+                        key={s.place_id}
+                        className="px-3 py-2 cursor-pointer hover:bg-blue-100 text-sm"
+                        onMouseDown={() => handleSuggestionSelect(s)}
+                      >
+                        {s.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handleGeocode}
@@ -347,31 +380,33 @@ const CreateBuildingStep2: React.FC<CreateBuildingStep2Props> = ({
               >
                 {geoLoading ? t('searching') : t('search')}
               </button>
-            </div>
 
-            {/* Suggestions */}
-            {showSuggestions && (
-              <ul
-                data-role="suggestions"
-                className="absolute left-0 top-full w-full bg-white border border-blue-400 rounded-lg shadow-2xl mt-1 max-h-56 overflow-auto z-50"
+              <button
+                type="button"
+                onClick={() => setShowLocationForm(true)}
+                className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 whitespace-nowrap"
               >
-                {suggestions.length === 0 && address.trim() && (
-                  <li className="px-3 py-2 text-gray-500 text-sm select-none">
-                    {t('noResults')}
-                  </li>
-                )}
-                {suggestions.map((s) => (
-                  <li
-                    key={s.place_id}
-                    className="px-3 py-2 cursor-pointer hover:bg-blue-100 text-sm"
-                    onMouseDown={() => handleSuggestionSelect(s)}
-                  >
-                    {s.display_name}
-                  </li>
-                ))}
-              </ul>
-            )}
+                {t('chooseByAddress', 'Elegir por provincia/municipio')}
+              </button>
+            </div>
           </div>
+
+          {showLocationForm && (
+            <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <BuildingLocationForm
+                initialValue={addressData}
+                onConfirm={(value) => {
+                  setAddress(value.fullAddress);
+                  setAddressData(value);
+                  if (value.lat != null && value.lng != null) {
+                    setLocation({ lat: value.lat, lng: value.lng });
+                  }
+                  setShowLocationForm(false);
+                }}
+                onCancel={() => setShowLocationForm(false)}
+              />
+            </div>
+          )}
 
           {geoError && <p className="mt-1 text-sm text-red-600">{geoError}</p>}
 

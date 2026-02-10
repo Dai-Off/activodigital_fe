@@ -1,10 +1,12 @@
 // src/components/buildings/CreateBuildingFromCatastro.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertCircle, Loader2, Hash, MapPin, ChevronDown } from 'lucide-react';
-import { CatastroApiService, type Provincia, type Municipio, type Via, type CatastroBuildingData } from '../../services/catastroApi';
+import { Search, AlertCircle, Loader2, Hash, MapPin } from 'lucide-react';
+import { CatastroApiService, type CatastroBuildingData } from '../../services/catastroApi';
 import type { BuildingStep1Data } from './CreateBuildingWizard';
 import { SupportContactModal } from '../SupportContactModal';
+import BuildingLocationForm from './BuildingLocationForm';
+import type { BuildingAddressData, BuildingLocationValue } from '../../types/location';
 
 interface CreateBuildingFromCatastroProps {
   onDataLoaded: (data: BuildingStep1Data, coordinates?: { lat: number; lng: number }) => void;
@@ -12,140 +14,6 @@ interface CreateBuildingFromCatastroProps {
 }
 
 type SearchMethod = 'rc' | 'address';
-
-const STREET_TYPES = [
-  { label: 'Calle', value: 'CL' },
-  { label: 'Avenida', value: 'AV' },
-  { label: 'Paseo', value: 'PS' },
-  { label: 'Plaza', value: 'PZ' },
-  { label: 'Carretera', value: 'CT' },
-  { label: 'Camino', value: 'CM' },
-  { label: 'Ronda', value: 'RD' },
-  { label: 'Travesía', value: 'TR' },
-  { label: 'Pasaje', value: 'PJ' },
-  { label: 'Urbanización', value: 'UR' },
-  { label: 'Polígono', value: 'PL' },
-  { label: 'Glorieta', value: 'GL' },
-  { label: 'Rambla', value: 'RB' },
-  { label: 'Vía', value: 'VI' },
-  { label: 'Lugar', value: 'LG' },
-  { label: 'Urbanización', value: 'UR' },
-  { label: 'Caserío', value: 'CR' },
-  { label: 'Núcleo', value: 'NU' },
-  { label: 'Parque Industrial', value: 'PI' },
-];
-
-interface AutocompleteFieldProps {
-  label: string;
-  value: string;
-  options: { id: string; label: string }[];
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  error?: boolean;
-  loading?: boolean;
-}
-
-const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
-  label,
-  value,
-  options,
-  onChange,
-  placeholder,
-  disabled,
-  error,
-  loading
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Sync searchTerm with initial value label
-  useEffect(() => {
-    const selectedOption = options.find(opt => opt.id === value);
-    if (selectedOption) {
-      setSearchTerm(selectedOption.label);
-    } else if (!value) {
-      setSearchTerm('');
-    }
-  }, [value, options]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        // Reset searchTerm to the selected value's label if not finished
-        const selectedOption = options.find(opt => opt.id === value);
-        setSearchTerm(selectedOption ? selectedOption.label : '');
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [value, options]);
-
-  const filteredOptions = options.filter(opt =>
-    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setIsOpen(true);
-            // If clearing the input, clear the selection
-            if (!e.target.value) {
-              onChange('');
-            }
-          }}
-          onFocus={() => setIsOpen(true)}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-            error ? 'border-red-300' : 'border-gray-300'
-          } ${disabled ? 'bg-gray-50' : 'bg-white'}`}
-        />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-        </div>
-      </div>
-
-      {isOpen && !disabled && (
-        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto py-1 animate-in fade-in zoom-in duration-100">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                className={`w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors text-sm ${
-                  opt.id === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
-                }`}
-                onClick={() => {
-                  onChange(opt.id);
-                  setSearchTerm(opt.label);
-                  setIsOpen(false);
-                }}
-              >
-                {opt.label}
-              </button>
-            ))
-          ) : (
-            <div className="px-4 py-3 text-sm text-gray-500 italic">
-              No se encontraron resultados
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   onDataLoaded,
@@ -160,19 +28,8 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   // Estados para búsqueda por RC
   const [rc, setRc] = useState('');
 
-  // Estados para búsqueda por dirección
-  const [provinces, setProvinces] = useState<Provincia[]>([]);
-  const [municipalities, setMunicipalities] = useState<Municipio[]>([]);
-  const [streets, setStreets] = useState<Via[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState('');
-  const [selectedMunicipality, setSelectedMunicipality] = useState('');
-  const [selectedStreet, setSelectedStreet] = useState('');
-  const [streetType, setStreetType] = useState('');
-  const [streetName, setStreetName] = useState('');
-  const [number, setNumber] = useState('');
-  const [escalera, setEscalera] = useState('');
-  const [planta, setPlanta] = useState('');
-  const [puerta, setPuerta] = useState('');
+  // Dirección estructurada (cuando se busca por dirección)
+  const [addressData, setAddressData] = useState<BuildingAddressData | undefined>(undefined);
 
   /*
   // Estados para búsqueda por coordenadas
@@ -191,125 +48,30 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     propietarioEmail: '',
   });
 
-  // Cargar provincias solo cuando el usuario selecciona búsqueda por dirección
-  useEffect(() => {
-    if (searchMethod === 'address' && provinces.length === 0) {
-      const loadProvinces = async () => {
-        try {
-          const provs = await CatastroApiService.getProvinces();
-          setProvinces(provs);
-        } catch (err: any) {
-          console.error('Error cargando provincias:', err);
-          // Si es un error 401, no hacer nada (el ProtectedRoute ya manejará el redirect)
-          // Si es otro error, mostrar mensaje pero no bloquear la UI
-          if (err?.status !== 401) {
-            // Solo mostrar error si no es un problema de autenticación del usuario
-            // Los errores 403 de la API de Catastro se manejarán cuando el usuario intente buscar
-            setError('No se pudieron cargar las provincias. Por favor, intenta de nuevo.');
-          }
-        }
-      };
-      loadProvinces();
-    }
-  }, [searchMethod]);
-
-  // Cargar municipios cuando se selecciona una provincia
-  useEffect(() => {
-    if (selectedProvince) {
-      const loadMunicipalities = async () => {
-        try {
-          const munis = await CatastroApiService.getMunicipalities(selectedProvince);
-          setMunicipalities(munis);
-          setSelectedMunicipality('');
-          setStreets([]);
-        } catch (err) {
-          console.error('Error cargando municipios:', err);
-          setMunicipalities([]);
-        }
-      };
-      loadMunicipalities();
-    } else {
-      setMunicipalities([]);
-      setSelectedMunicipality('');
-    }
-  }, [selectedProvince]);
-
-  // Cargar vías cuando se selecciona un municipio y se escribe algo
-  useEffect(() => {
-    if (selectedProvince && selectedMunicipality && streetName.length >= 2 && streetType) {
-      const loadStreets = async () => {
-        try {
-          const vias = await CatastroApiService.getStreets(
-            selectedProvince,
-            selectedMunicipality,
-            streetName || undefined,
-            streetType || undefined
-          );
-          setStreets(vias);
-        } catch (err) {
-          console.error('Error cargando vías:', err);
-          setStreets([]);
-        }
-      };
-      // Debounce para evitar demasiadas peticiones
-      const timer = setTimeout(loadStreets, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setStreets([]);
-    }
-  }, [selectedProvince, selectedMunicipality, streetName, streetType]);
-
-  const handleSearch = async () => {
+  const handleSearchByRc = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      let inmueble;
-
-      if (searchMethod === 'rc') {
-        const trimmedRc = rc.trim();
-        if (!trimmedRc) {
-          setError('El código catastral es obligatorio.\n\nPor favor, ingresa el código completo del edificio. Puedes encontrarlo en:\n• Escrituras de propiedad\n• Recibos del IBI (Impuesto de Bienes Inmuebles)\n• Certificados catastrales');
-          setIsLoading(false);
-          return;
-        }
-        
-        inmueble = await CatastroApiService.getBuildingByRC(trimmedRc);
-      } else if (searchMethod === 'address') {
-        const missingFields: string[] = [];
-        if (!selectedProvince) missingFields.push('Provincia');
-        if (!selectedMunicipality) missingFields.push('Municipio');
-        if (!selectedStreet) missingFields.push('Vía');
-        if (!number) missingFields.push('Número');
-        
-        if (missingFields.length > 0) {
-          setError(`Faltan campos obligatorios para realizar la búsqueda:\n\n${missingFields.map(field => `• ${field}`).join('\n')}\n\nPor favor, completa todos los campos marcados con asterisco (*) para continuar.`);
-          setIsLoading(false);
-          return;
-        }
-        const via = streets.find(v => v.codigoVia === selectedStreet);
-        inmueble = await CatastroApiService.getBuildingByAddress(
-          selectedProvince,
-          selectedMunicipality,
-          via?.nombreVia || '',
-          via?.tipoVia || '',
-          number,
-          escalera || undefined,
-          planta || undefined,
-          puerta || undefined
+      const trimmedRc = rc.trim();
+      if (!trimmedRc) {
+        setError(
+          'El código catastral es obligatorio.\n\nPor favor, ingresa el código completo del edificio. Puedes encontrarlo en:\n• Escrituras de propiedad\n• Recibos del IBI (Impuesto de Bienes Inmuebles)\n• Certificados catastrales',
         );
-      } else {
-        // En teoría no debería llegar aquí si searchMethod es 'rc' o 'address'
         setIsLoading(false);
         return;
       }
 
-      // Mapear los datos (ahora es async porque puede geocodificar)
+      const inmueble = await CatastroApiService.getBuildingByRC(trimmedRc);
+
       const catastroData = await CatastroApiService.mapToBuildingData(inmueble);
 
       // Guardar los datos y mostrar formulario adicional
       setCatastroDataLoaded(catastroData);
-      // Inicializar los datos adicionales (nombre vacío, se usará placeholder)
+      setAddressData({
+        fullAddress: catastroData.address,
+        country: 'España',
+      });
       setAdditionalData({
         name: '',
         price: '',
@@ -318,9 +80,10 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
         propietarioEmail: '',
       });
       setShowAdditionalFields(true);
-      } catch (err) {
+    } catch (err) {
       // Manejar errores de manera más amigable - siempre en español
-      let errorMessage = 'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.';
+      let errorMessage =
+        'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.';
       
       if (err instanceof Error) {
         const message = err.message;
@@ -345,7 +108,10 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
       }
       
       // Si el mensaje es genérico, agregar más contexto según el método de búsqueda
-      if (errorMessage === 'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.') {
+      if (
+        errorMessage ===
+        'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.'
+      ) {
         if (searchMethod === 'rc') {
           errorMessage = 'No se pudo obtener la información del edificio con el código catastral ingresado.\n\nTe sugerimos:\n• Verificar que el código esté completo y correcto\n• Intentar buscar por dirección si conoces la ubicación\n• Contactar con soporte si el problema persiste';
         } else if (searchMethod === 'address') {
@@ -363,7 +129,101 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
-      handleSearch();
+      handleSearchByRc();
+    }
+  };
+
+  const handleAddressSearch = async (value: BuildingLocationValue) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      setAddressData(value);
+
+      const provincia = (value.extra?.provinceCode as string) || value.province || '';
+      const municipio = value.municipality || '';
+      const nombreVia = value.streetName || '';
+      const tipoVia = value.streetType || '';
+      const numero = value.number || '';
+      const escalera = value.stair;
+      const planta = value.floor;
+      const puerta = value.door;
+
+      const missingFields: string[] = [];
+      if (!provincia) missingFields.push('Provincia');
+      if (!municipio) missingFields.push('Municipio');
+      if (!nombreVia) missingFields.push('Vía');
+      if (!numero) missingFields.push(t('number', 'Número de portal'));
+
+      if (missingFields.length > 0) {
+        setError(
+          `Faltan campos obligatorios para realizar la búsqueda:\n\n${missingFields
+            .map((field) => `• ${field}`)
+            .join(
+              '\n',
+            )}\n\nPor favor, completa todos los campos marcados con asterisco (*) para continuar.`,
+        );
+        return;
+      }
+
+      const inmueble = await CatastroApiService.getBuildingByAddress(
+        provincia,
+        municipio,
+        nombreVia,
+        tipoVia,
+        numero,
+        escalera || undefined,
+        planta || undefined,
+        puerta || undefined,
+      );
+
+      const catastroData = await CatastroApiService.mapToBuildingData(inmueble);
+
+      setCatastroDataLoaded(catastroData);
+      setAdditionalData({
+        name: '',
+        price: '',
+        technicianEmail: '',
+        cfoEmail: '',
+        propietarioEmail: '',
+      });
+      setShowAdditionalFields(true);
+    } catch (err) {
+      let errorMessage =
+        'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.';
+
+      if (err instanceof Error) {
+        const message = err.message;
+
+        if (
+          message &&
+          !message.includes('Cannot read') &&
+          !message.includes('null') &&
+          !message.includes('undefined') &&
+          !message.includes('TypeError') &&
+          !message.includes('ReferenceError') &&
+          !message.includes('reading')
+        ) {
+          errorMessage = message;
+        }
+      } else if (typeof err === 'string') {
+        if (!err.includes('Cannot read') && !err.includes('null') && !err.includes('undefined')) {
+          errorMessage = err;
+        }
+      }
+
+      if (
+        errorMessage ===
+        'No se pudo obtener la información del edificio. Por favor, inténtalo de nuevo.'
+      ) {
+        errorMessage =
+          'No se pudo obtener la información del edificio con la dirección ingresada.\n\nTe sugerimos:\n• Verificar que todos los datos de la dirección sean correctos\n• Intentar buscar por código catastral si lo conoces\n• Verificar la ortografía de la calle y número';
+      }
+
+      setError(errorMessage);
+      console.error('Error técnico al buscar en catastro por dirección:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -377,6 +237,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     const buildingData: BuildingStep1Data = {
       name: buildingName,
       address: catastroDataLoaded.address || '',
+      addressData,
       // Asegurar que la referencia catastral se pase correctamente (no convertir undefined a string vacío)
       cadastralReference: catastroDataLoaded.cadastralReference && catastroDataLoaded.cadastralReference.trim().length > 0 
         ? catastroDataLoaded.cadastralReference.trim() 
@@ -506,158 +367,14 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
         {/* Búsqueda por Dirección */}
         {searchMethod === 'address' && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <AutocompleteField
-                label={t('province', 'Provincia') + ' *'}
-                value={selectedProvince}
-                options={provinces.map(p => ({ id: p.codigo, label: p.nombre }))}
-                onChange={(val) => {
-                  setSelectedProvince(val);
-                  setError(null);
-                }}
-                placeholder={t('select')}
-                disabled={isLoading}
-                error={!!error}
-              />
-
-              <AutocompleteField
-                label={t('municipality', 'Municipio') + ' *'}
-                value={selectedMunicipality}
-                options={municipalities.map(m => ({ id: m.nombreMunicipio, label: m.nombreMunicipio }))}
-                onChange={(val) => {
-                  setSelectedMunicipality(val);
-                  setSelectedStreet('');
-                  setError(null);
-                }}
-                placeholder={t('select')}
-                disabled={isLoading || !selectedProvince}
-                error={!!error}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <AutocompleteField
-                label={t('streetType', 'Tipo de Vía')}
-                value={streetType}
-                options={STREET_TYPES.map(st => ({ id: st.value, label: st.label }))}
-                onChange={(val) => {
-                  setStreetType(val);
-                  setError(null);
-                }}
-                placeholder={t('streetTypePlaceholder', 'Ej: Calle')}
-                disabled={isLoading || !selectedMunicipality}
-                error={!!error}
-              />
-
-              <div>
-                <label htmlFor="streetName" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('streetName', 'Nombre de Vía')}
-                </label>
-                <input
-                  id="streetName"
-                  type="text"
-                  value={streetName}
-                  onChange={(e) => {
-                    setStreetName(e.target.value);
-                    setError(null);
-                  }}
-                  placeholder={t('streetNamePlaceholder', 'Ej: Alcalá')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading || !selectedMunicipality}
-                />
-              </div>
-            </div>
-
-            <AutocompleteField
-              label={t('street', 'Vía') + ' *'}
-              value={selectedStreet}
-              options={streets.map(s => ({ 
-                id: s.codigoVia, 
-                label: `${s.tipoVia ? s.tipoVia + ' ' : ''}${s.nombreVia}` 
-              }))}
-              onChange={(val) => {
-                setSelectedStreet(val);
-                setError(null);
-              }}
-              placeholder={t('select')}
-              disabled={isLoading || !selectedMunicipality}
-              error={!!error}
-              loading={isLoading && streets.length === 0 && streetName.length >= 2}
-            />
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('number', 'Número de portal')} *
-                </label>
-                <input
-                  id="number"
-                  type="text"
-                  value={number}
-                  onChange={(e) => {
-                    setNumber(e.target.value);
-                    setError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    error ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="escalera" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('escalera', 'Escalera')}
-                </label>
-                <input
-                  id="escalera"
-                  type="text"
-                  value={escalera}
-                  onChange={(e) => {
-                    setEscalera(e.target.value);
-                    setError(null);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="planta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('planta', 'Planta')}
-                </label>
-                <input
-                  id="planta"
-                  type="text"
-                  value={planta}
-                  onChange={(e) => {
-                    setPlanta(e.target.value);
-                    setError(null);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="puerta" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('puerta', 'Puerta')}
-                </label>
-                <input
-                  id="puerta"
-                  type="text"
-                  value={puerta}
-                  onChange={(e) => {
-                    setPuerta(e.target.value);
-                    setError(null);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          </>
+          <BuildingLocationForm
+            initialValue={addressData}
+            onConfirm={handleAddressSearch}
+            onCancel={() => {
+              setSearchMethod('rc');
+              setError(null);
+            }}
+          />
         )}
 
         {/* Búsqueda por Coordenadas */}
@@ -833,24 +550,26 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
           {t('common.back', 'Volver')}
         </button>
 
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:ml-auto"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{t('common.loading', 'Cargando...')}</span>
-            </>
-          ) : (
-            <>
-              <Search className="w-4 h-4" />
-              <span>{t('common.search', 'Buscar')}</span>
-            </>
-          )}
-        </button>
+        {searchMethod === 'rc' && (
+          <button
+            type="button"
+            onClick={handleSearchByRc}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:ml-auto"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{t('common.loading', 'Cargando...')}</span>
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                <span>{t('common.search', 'Buscar')}</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Formulario de datos adicionales después de cargar desde catastro */}
