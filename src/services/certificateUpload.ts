@@ -29,6 +29,8 @@ export interface UploadedCertificateImage {
   filename: string;
   uploadedAt: Date;
   sessionId?: string;
+  storagePath: string;
+  storageFileName: string;
 }
 
 export interface CertificateImageUploadResult {
@@ -103,12 +105,15 @@ export async function uploadCertificateImage(
       };
     }
 
+    const storageFileName = `${timestamp}_${randomId}.${fileExtension}`;
     const uploadedImage: UploadedCertificateImage = {
       id: `${buildingId}_${timestamp}_${randomId}`,
       url: signedUrlData.signedUrl,
       filename: file.name,
       uploadedAt: new Date(),
-      sessionId
+      sessionId,
+      storagePath: filename,
+      storageFileName,
     };
 
     return {
