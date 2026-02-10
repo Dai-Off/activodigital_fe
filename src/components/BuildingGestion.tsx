@@ -58,6 +58,14 @@ import {
 import { useLanguage } from "~/contexts/LanguageContext";
 import { extractInvoiceData } from "~/services/invoiceExtractor";
 import { Sparkles } from "lucide-react";
+import { EnergyCertificatesService } from "~/services/energyCertificates";
+import {
+  extractCertificateData,
+  mapAIResponseToReviewData,
+  checkCertificateExtractorHealth,
+} from "~/services/certificateExtractor";
+import { uploadCertificateImage } from "~/services/certificateUpload";
+import type { AIExtractedEnergyCertificateData } from "~/types/buildings";
 
 // Tipo para categorías de documentos
 type DocumentCategory = {
@@ -123,8 +131,8 @@ const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
   },
   {
     value: "certificates",
-    label: "Certificaciones",
-    traduct: "certificaciones",
+    label: "Certificado Energético",
+    traduct: "certificadoEnergetico",
     icon: Shield,
     bgColor: "bg-teal-50",
     iconColor: "text-teal-600",
@@ -557,6 +565,32 @@ export function BuildingGestion() {
     is_overdue: false,
   });
 
+  const [isCeeModalOpen, setIsCeeModalOpen] = useState(false);
+  const [ceeStep, setCeeStep] = useState<"processing" | "review">("processing");
+  const [ceeSessionId, setCeeSessionId] = useState<string | null>(null);
+  const [ceeReviewData, setCeeReviewData] = useState({
+    rating: "" as "" | "A" | "B" | "C" | "D" | "E" | "F" | "G",
+    primaryEnergyKwhPerM2Year: "" as string | number,
+    emissionsKgCo2PerM2Year: "" as string | number,
+    certificateNumber: "",
+    scope: "building" as "building" | "dwelling" | "commercial_unit",
+    issuerName: "",
+    issueDate: "",
+    expiryDate: "",
+    propertyReference: "",
+    notes: "",
+    imageUrl: "",
+    imageFilename: "",
+    imageUploadedAt: "",
+  });
+  const [ceeUploadMeta, setCeeUploadMeta] = useState<{
+    storagePath: string;
+    storageFileName: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  } | null>(null);
+
   // Cargar categorías personalizadas al montar el componente
   useEffect(() => {
     if (!buildingId) return;
@@ -668,6 +702,84 @@ export function BuildingGestion() {
 
     setIsUploading(true);
     try {
+      const isCertificateCategory = selectedCategory === "certificates";
+
+      if (isCertificateCategory) {
+        if (!selectedFile.type.startsWith("image/")) {
+          showError("Error", "El certificado energético debe ser una imagen (JPG, PNG)");
+          return;
+        }
+        setIsUploadModalOpen(false);
+        setSelectedCategory("");
+        setIsCeeModalOpen(true);
+        setCeeStep("processing");
+        try {
+          const healthOk = await checkCertificateExtractorHealth();
+          if (!healthOk) {
+            showError("Servicio de IA no disponible", "El extractor de certificados no está disponible. Intenta más tarde.");
+            setIsCeeModalOpen(false);
+            return;
+          }
+          const uploadResult = await uploadCertificateImage(selectedFile, buildingId);
+          if (!uploadResult.success || !uploadResult.image) {
+            showError("Error al subir", uploadResult.error || "No se pudo subir la imagen");
+            setIsCeeModalOpen(false);
+            return;
+          }
+          setCeeUploadMeta({
+            storagePath: uploadResult.image.storagePath,
+            storageFileName: uploadResult.image.storageFileName,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
+            mimeType: selectedFile.type,
+          });
+          const session = await EnergyCertificatesService.createSimpleSession(buildingId);
+          setCeeSessionId(session.id);
+          const aiResponse = await extractCertificateData(selectedFile);
+          const mappedData = mapAIResponseToReviewData(aiResponse);
+          const extractedData: AIExtractedEnergyCertificateData = {
+            rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: "AI OCR" },
+            primaryEnergyKwhPerM2Year: { value: aiResponse.energy_consumption_kwh_m2y, confidence: 0.95, source: "AI OCR" },
+            emissionsKgCo2PerM2Year: { value: aiResponse.co2_emissions_kg_m2y, confidence: 0.95, source: "AI OCR" },
+            certificateNumber: { value: aiResponse.registry_code, confidence: 0.95, source: "AI OCR" },
+            scope: { value: "building" as any, confidence: 0.95, source: "AI OCR" },
+            issuerName: { value: aiResponse.normative, confidence: 0.95, source: "AI OCR" },
+            issueDate: { value: aiResponse.registry_date, confidence: 0.95, source: "AI OCR" },
+            expiryDate: { value: aiResponse.valid_until, confidence: 0.95, source: "AI OCR" },
+            propertyReference: { value: aiResponse.cadastral_reference, confidence: 0.95, source: "AI OCR" },
+            notes: { value: mappedData.notes ?? null, confidence: 0.95, source: "AI OCR" },
+          };
+          await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
+          setCeeReviewData({
+            rating: (mappedData.rating as any) ?? "",
+            primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? "",
+            emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? "",
+            certificateNumber: mappedData.certificateNumber ?? "",
+            scope: mappedData.scope ?? "building",
+            issuerName: mappedData.issuerName ?? "",
+            issueDate: mappedData.issueDate ?? "",
+            expiryDate: mappedData.expiryDate ?? "",
+            propertyReference: mappedData.propertyReference ?? "",
+            notes: mappedData.notes ?? "",
+            imageUrl: uploadResult.image.url,
+            imageFilename: uploadResult.image.filename,
+            imageUploadedAt: uploadResult.image.uploadedAt.toISOString(),
+          });
+          setCeeStep("review");
+        } catch (err) {
+          console.error("Error procesando certificado energético:", err);
+          showError(
+            "Advertencia",
+            "No se pudieron extraer los datos. Completa los campos manualmente y guarda.",
+          );
+          setCeeStep("review");
+        } finally {
+          setSelectedFile(null);
+          setIsUploading(false);
+        }
+        return;
+      }
+
       const result = await uploadGestionDocument(
         selectedFile,
         buildingId,
@@ -683,14 +795,12 @@ export function BuildingGestion() {
         return;
       }
 
-      // Verificar si es una factura de servicio (categoría Financiero/Contable)
       const isFinancialCategory =
         selectedCategory === "financial" ||
         documentCategories.find(
           (cat) => cat.value === selectedCategory,
         )?.label === "Financiero/Contable";
 
-      // Si es categoría financiera, lanzar flujo de factura de servicio con IA
       if (isFinancialCategory && result.document.url && selectedFile) {
         setUploadedDocumentUrl(result.document.url);
         setIsUploadModalOpen(false);
@@ -863,6 +973,108 @@ export function BuildingGestion() {
       expiration_date: '',
     });
     showSuccess("Documento subido", "El documento se ha subido correctamente");
+  };
+
+  const handleConfirmCee = async () => {
+    if (!ceeSessionId || !buildingId) return;
+    if (
+      !ceeReviewData.rating ||
+      !ceeReviewData.certificateNumber ||
+      !ceeReviewData.issuerName ||
+      !ceeReviewData.issueDate ||
+      !ceeReviewData.expiryDate
+    ) {
+      showError("Campos requeridos", "Completa calificación, número, emisor, fecha emisión y vencimiento.");
+      return;
+    }
+    try {
+      const finalData = {
+        rating: ceeReviewData.rating as any,
+        primaryEnergyKwhPerM2Year:
+          typeof ceeReviewData.primaryEnergyKwhPerM2Year === "string"
+            ? parseFloat(ceeReviewData.primaryEnergyKwhPerM2Year || "0")
+            : ceeReviewData.primaryEnergyKwhPerM2Year,
+        emissionsKgCo2PerM2Year:
+          typeof ceeReviewData.emissionsKgCo2PerM2Year === "string"
+            ? parseFloat(ceeReviewData.emissionsKgCo2PerM2Year || "0")
+            : ceeReviewData.emissionsKgCo2PerM2Year,
+        certificateNumber: ceeReviewData.certificateNumber || undefined,
+        scope: ceeReviewData.scope as any,
+        issuerName: ceeReviewData.issuerName || undefined,
+        issueDate: ceeReviewData.issueDate || undefined,
+        expiryDate: ceeReviewData.expiryDate || undefined,
+        propertyReference: ceeReviewData.propertyReference || undefined,
+        notes: ceeReviewData.notes || undefined,
+        imageUrl: ceeReviewData.imageUrl || undefined,
+        imageFilename: ceeReviewData.imageFilename || undefined,
+        imageUploadedAt: ceeReviewData.imageUploadedAt || undefined,
+      };
+      await EnergyCertificatesService.confirmCertificate(ceeSessionId, finalData);
+      if (ceeUploadMeta && buildingId) {
+        try {
+          const { apiFetch } = await import("~/services/api");
+          await apiFetch("/building-documents", {
+            method: "POST",
+            body: JSON.stringify({
+              building_id: buildingId,
+              file_name: ceeUploadMeta.fileName,
+              file_size: ceeUploadMeta.fileSize,
+              mime_type: ceeUploadMeta.mimeType,
+              storage_bucket: "energy-certificates",
+              storage_path: ceeUploadMeta.storagePath,
+              storage_file_name: ceeUploadMeta.storageFileName,
+              category: "certificates",
+            }),
+          });
+        } catch (_) {}
+      }
+      showSuccess("Certificado guardado", "El certificado energético se ha guardado correctamente.");
+      reloadDocuments();
+      setIsCeeModalOpen(false);
+      setCeeSessionId(null);
+      setCeeStep("processing");
+      setCeeUploadMeta(null);
+      setCeeReviewData({
+        rating: "",
+        primaryEnergyKwhPerM2Year: "",
+        emissionsKgCo2PerM2Year: "",
+        certificateNumber: "",
+        scope: "building",
+        issuerName: "",
+        issueDate: "",
+        expiryDate: "",
+        propertyReference: "",
+        notes: "",
+        imageUrl: "",
+        imageFilename: "",
+        imageUploadedAt: "",
+      });
+    } catch (e: any) {
+      showError("Error al guardar", e?.message || "No se pudo guardar el certificado.");
+    }
+  };
+
+  const handleCancelCee = () => {
+    setIsCeeModalOpen(false);
+    setCeeSessionId(null);
+    setCeeStep("processing");
+    setCeeUploadMeta(null);
+    setCeeReviewData({
+      rating: "",
+      primaryEnergyKwhPerM2Year: "",
+      emissionsKgCo2PerM2Year: "",
+      certificateNumber: "",
+      scope: "building",
+      issuerName: "",
+      issueDate: "",
+      expiryDate: "",
+      propertyReference: "",
+      notes: "",
+      imageUrl: "",
+      imageFilename: "",
+      imageUploadedAt: "",
+    });
+    showSuccess("Documento subido", "El documento se ha subido. Puedes completar el certificado más tarde desde Certificados.");
   };
 
   // Funciones para acciones de documentos
@@ -1763,6 +1975,172 @@ export function BuildingGestion() {
                   }
                 >
                   {t("registerInvoice")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Certificado Energético (desde Gestión) */}
+      <Dialog open={isCeeModalOpen} onOpenChange={(open) => !open && handleCancelCee()}>
+        <DialogContent className="max-w-md shadow-xl bg-white flex flex-col max-h-[90vh]">
+          <DialogHeader className="!bg-white">
+            <DialogTitle className="mb-3">
+              {ceeStep === "processing"
+                ? "Procesando Certificado Energético"
+                : "Revisar y guardar certificado"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {ceeStep === "processing" ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Sparkles className="w-16 h-16 text-teal-600 animate-pulse" />
+              <p className="text-sm text-gray-600 text-center">
+                Extrayendo datos del certificado con IA...
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-2">
+                  <p className="text-xs text-teal-800">
+                    Revisa los datos extraídos y guarda el certificado para que se muestre en la vista general del edificio.
+                  </p>
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Calificación *</label>
+                  <select
+                    value={ceeReviewData.rating}
+                    onChange={(e) =>
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        rating: e.target.value as any,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  >
+                    <option value="">Seleccionar</option>
+                    {(["A", "B", "C", "D", "E", "F", "G"] as const).map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Nº registro *</label>
+                  <Input
+                    value={ceeReviewData.certificateNumber || ""}
+                    onChange={(e) =>
+                      setCeeReviewData({ ...ceeReviewData, certificateNumber: e.target.value })
+                    }
+                    className="w-full"
+                    placeholder="Código del certificado"
+                  />
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Técnico certificador *</label>
+                  <Input
+                    value={ceeReviewData.issuerName || ""}
+                    onChange={(e) =>
+                      setCeeReviewData({ ...ceeReviewData, issuerName: e.target.value })
+                    }
+                    className="w-full"
+                    placeholder="Nombre del emisor"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="!bg-white">
+                    <label className="block text-sm text-gray-700 mb-1">Fecha emisión *</label>
+                    <Input
+                      type="date"
+                      value={ceeReviewData.issueDate || ""}
+                      onChange={(e) =>
+                        setCeeReviewData({ ...ceeReviewData, issueDate: e.target.value })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="!bg-white">
+                    <label className="block text-sm text-gray-700 mb-1">Vencimiento *</label>
+                    <Input
+                      type="date"
+                      value={ceeReviewData.expiryDate || ""}
+                      onChange={(e) =>
+                        setCeeReviewData({ ...ceeReviewData, expiryDate: e.target.value })
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Consumo (kWh/m²·año)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={ceeReviewData.primaryEnergyKwhPerM2Year ?? ""}
+                    onChange={(e) =>
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        primaryEnergyKwhPerM2Year: e.target.value ? parseFloat(e.target.value) : "",
+                      })
+                    }
+                    className="w-full"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Emisiones (kg CO₂/m²·año)</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={ceeReviewData.emissionsKgCo2PerM2Year ?? ""}
+                    onChange={(e) =>
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        emissionsKgCo2PerM2Year: e.target.value ? parseFloat(e.target.value) : "",
+                      })
+                    }
+                    className="w-full"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="!bg-white">
+                  <label className="block text-sm text-gray-700 mb-1">Ref. catastral</label>
+                  <Input
+                    value={ceeReviewData.propertyReference || ""}
+                    onChange={(e) =>
+                      setCeeReviewData({ ...ceeReviewData, propertyReference: e.target.value })
+                    }
+                    className="w-full"
+                    placeholder="Opcional"
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex gap-2 mt-4 sm:flex-row !bg-white">
+                <Button variant="outline" onClick={handleCancelCee} className="flex-1 text-sm">
+                  Omitir
+                </Button>
+                <Button
+                  onClick={handleConfirmCee}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-sm"
+                  disabled={
+                    !ceeReviewData.rating ||
+                    !ceeReviewData.certificateNumber ||
+                    !ceeReviewData.issuerName ||
+                    !ceeReviewData.issueDate ||
+                    !ceeReviewData.expiryDate
+                  }
+                >
+                  Guardar certificado
                 </Button>
               </DialogFooter>
             </>
