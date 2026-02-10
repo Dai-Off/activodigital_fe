@@ -20,6 +20,7 @@ import type {
   CreateBuildingPayload,
   BuildingImage,
 } from "../../services/buildingsApi";
+import type { BuildingAddressData } from "../../types/location";
 
 import { uploadBuildingImages } from "../../services/imageUpload";
 import { SupportContactModal } from "../SupportContactModal";
@@ -28,6 +29,7 @@ import { SupportContactModal } from "../SupportContactModal";
 export interface BuildingStep1Data {
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   constructionYear: string;
   typology: "residential" | "mixed" | "commercial" | "";
   floors: string;
@@ -44,6 +46,7 @@ interface BuildingStep2Data {
   latitude: number;
   longitude: number;
   address: string;
+  addressData?: BuildingAddressData;
   photos: File[];
   mainPhotoIndex: number;
 }
@@ -51,6 +54,7 @@ interface BuildingStep2Data {
 interface CompleteBuildingData {
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   constructionYear: string;
   typology: "residential" | "mixed" | "commercial";
   floors: string;
@@ -129,6 +133,7 @@ const CreateBuildingWizard: React.FC = () => {
     // el paso 2 mostrará un mensaje para que el usuario marque la ubicación manualmente.
     const step2DataUpdate: BuildingStep2Data = {
       address: data.address || "",
+      addressData: data.addressData,
       latitude: coordinates?.lat ?? 0,
       longitude: coordinates?.lng ?? 0,
       photos: [],
@@ -190,6 +195,7 @@ const CreateBuildingWizard: React.FC = () => {
         latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
         address: data.address ?? "",
+        addressData: data.addressData ?? undefined,
         photos: data.photos ?? [],
         mainPhotoIndex: data.mainPhotoIndex ?? 0,
       };
@@ -249,9 +255,14 @@ const CreateBuildingWizard: React.FC = () => {
       const safeTypology =
         (step1Data.typology as "residential" | "mixed" | "commercial" | "") || "residential";
 
+      const fullAddress = step2Data.address.trim();
+      const addressData: BuildingAddressData | undefined =
+        step2Data.addressData ?? step1Data.addressData;
+
       const buildingPayload: CreateBuildingPayload = {
         name: step1Data.name,
-        address: step2Data.address,
+        address: fullAddress,
+        addressData,
         cadastralReference,
         constructionYear: year,
         typology: safeTypology,
