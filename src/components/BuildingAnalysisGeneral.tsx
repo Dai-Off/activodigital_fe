@@ -25,6 +25,7 @@ import {
   Link2,
   Sparkles
 } from 'lucide-react';
+import { useLanguage } from '~/contexts/LanguageContext';
 
 interface Recommendation {
   id: string;
@@ -121,6 +122,7 @@ export default function BuildingAnalysisGeneral() {
   const [analysisMessage, setAnalysisMessage] = useState('');
   const [analysisLoaded, setAnalysisLoaded] = useState(false);
   
+  const { t } = useLanguage()
   // Datos del análisis - solo datos reales del API, sin hardcodeo
   const [complianceData, setComplianceData] = useState<EBPDCompliance | null>(null);
   
@@ -331,7 +333,7 @@ export default function BuildingAnalysisGeneral() {
     
     console.log('🚀 Iniciando análisis EBPD para edificio:', currentId);
     setLoadingAnalysis(true);
-    setAnalysisMessage('Analizando cumplimiento EBPD y generando recomendaciones...');
+    setAnalysisMessage(t("analysisMessage"));
     
     try {
       // Obtener token de Supabase
@@ -807,10 +809,10 @@ export default function BuildingAnalysisGeneral() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12">
         <Loader2 className="w-12 h-12 text-gray-600 animate-spin mb-4" />
         <p className="text-lg font-medium text-gray-900 mb-2">
-          {loading ? 'Cargando información del edificio...' : analysisMessage || 'Generando análisis del edificio...'}
+          {loading ? t("loadingBuilding") : analysisMessage || t("analysisMessageBuilding")}
         </p>
         <p className="text-sm text-gray-500">
-          Esto puede tardar unos minutos
+          {t("analysisMessageDesc")}
         </p>
       </div>
     );
