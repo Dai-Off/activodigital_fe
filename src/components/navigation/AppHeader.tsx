@@ -187,6 +187,20 @@ export function AppHeader() {
     [location.pathname]
   );
 
+  // Determina si la ruta actual está claramente en contexto de un edificio
+  // para decidir si pasamos buildingId/buildingName al asistente de IA.
+  const isAIAssistantInBuildingContext = useMemo(() => {
+    const path = location.pathname;
+
+    return (
+      path.startsWith("/building/") ||
+      path.startsWith("/digital-book/hub/") ||
+      path.startsWith("/digital-book/section/") ||
+      path.startsWith("/cfo-intake/") ||
+      path.startsWith("/cfo-due-diligence/")
+    );
+  }, [location.pathname]);
+
   // Función para obtener la etiqueta traducida de un segmento de ruta
   const getBreadcrumbLabel = (segment: string) => {
     if (segment === selectedBuildingId && selectedBuildingName) {
@@ -846,8 +860,12 @@ export function AppHeader() {
       <AIAssistant
         isOpen={showAIAssistant}
         onClose={() => setShowAIAssistant(false)}
-        buildingId={selectedBuildingId ?? undefined}
-        buildingName={selectedBuildingName ?? undefined}
+        buildingId={
+          isAIAssistantInBuildingContext ? selectedBuildingId ?? undefined : undefined
+        }
+        buildingName={
+          isAIAssistantInBuildingContext ? selectedBuildingName ?? undefined : undefined
+        }
       />
 
       {/* Support Contact Modal */}
