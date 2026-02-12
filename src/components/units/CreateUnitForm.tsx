@@ -3,7 +3,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Building2, ArrowLeft, Save } from 'lucide-react';
 import { UnitsApiService } from '../../services/unitsApi';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,7 +10,6 @@ import { useToast } from '../../contexts/ToastContext';
 const CreateUnitForm: React.FC = () => {
   const { id: buildingId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const { showSuccess, showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
