@@ -279,15 +279,8 @@ export function BuildingGeneralView() {
           // Unidades
           UnitsApiService.listUnits(buildingData.id),
           
-          // Costes mensuales
-          (async () => {
-            const now = new Date();
-            return ServiceInvoicesService.getMonthlyCostsForBuilding(
-              buildingData.id,
-              now.getFullYear(),
-              now.getMonth() + 1
-            );
-          })(),
+          // Costes mensuales (usa el mes más reciente con datos)
+          ServiceInvoicesService.getLatestMonthlyCostsForBuilding(buildingData.id),
         ]);
 
         // Procesar resultados del libro digital
@@ -1051,7 +1044,7 @@ export function BuildingGeneralView() {
                       <Zap className="w-3 h-3 text-blue-600" />
                       <p className="text-xs text-blue-900">{t("electricity")}</p>
                     </div>
-                    <p className="text-sm text-blue-700">€{monthlyCosts?.byService['electricity'] || "-"}</p>
+                    <p className="text-sm text-blue-700">{monthlyCosts?.byService['electricity'] ? `€${monthlyCosts.byService['electricity'].toFixed(2)}` : "€-"}</p>
                     <p className="text-xs text-blue-600">{t("building")}</p>
                   </div>
                   <div className="p-1.5 border border-cyan-200 bg-cyan-50 rounded">
@@ -1059,7 +1052,7 @@ export function BuildingGeneralView() {
                       <Droplet className="w-3 h-3 text-cyan-600" />
                       <p className="text-xs text-cyan-900">{t("water")}</p>
                     </div>
-                    <p className="text-sm text-cyan-700">€{monthlyCosts?.byService['water'] || "-"}</p>
+                    <p className="text-sm text-cyan-700">{monthlyCosts?.byService['water'] ? `€${monthlyCosts.byService['water'].toFixed(2)}` : "€-"}</p>
                     <p className="text-xs text-cyan-600">{t("total")}</p>
                   </div>
                   <div className="p-1.5 border border-orange-200 bg-orange-50 rounded">
@@ -1067,7 +1060,7 @@ export function BuildingGeneralView() {
                       <Flame className="w-3 h-3 text-orange-600" />
                       <p className="text-xs text-orange-900">{t("gas")}</p>
                     </div>
-                    <p className="text-sm text-orange-700">€{monthlyCosts?.byService['gas'] || "-"}</p>
+                    <p className="text-sm text-orange-700">{monthlyCosts?.byService['gas'] ? `€${monthlyCosts.byService['gas'].toFixed(2)}` : "€-"}</p>
                     <p className="text-xs text-orange-600">{t("total")}</p>
                   </div>
                   <div className="p-1.5 border border-purple-200 bg-purple-50 rounded">
@@ -1075,7 +1068,7 @@ export function BuildingGeneralView() {
                       <FileText className="w-3 h-3 text-purple-600" />
                       <p className="text-xs text-purple-900">{t("ibi")}</p>
                     </div>
-                    <p className="text-sm text-purple-700">€{monthlyCosts?.byService['ibi'] || "-"}</p>
+                    <p className="text-sm text-purple-700">{monthlyCosts?.byService['ibi'] ? `€${monthlyCosts.byService['ibi'].toFixed(2)}` : "€-"}</p>
                     <p className="text-xs text-purple-600">{t("units")}</p>
                   </div>
                   <div className="p-1.5 border border-amber-200 bg-amber-50 rounded">
@@ -1083,7 +1076,7 @@ export function BuildingGeneralView() {
                       <Trash className="w-3 h-3 text-amber-600" />
                       <p className="text-xs text-amber-900">{t("waste")}</p>
                     </div>
-                    <p className="text-sm text-amber-700">€{monthlyCosts?.byService['waste'] || "-"}</p>
+                    <p className="text-sm text-amber-700">{monthlyCosts?.byService['waste'] ? `€${monthlyCosts.byService['waste'].toFixed(2)}` : "€-"}</p>
                     <p className="text-xs text-amber-600">{t("units")}</p>
                   </div>
                   <div className="p-1.5 border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100 rounded">
@@ -1091,8 +1084,8 @@ export function BuildingGeneralView() {
                       <Euro className="w-3 h-3 text-green-700" />
                       <p className="text-xs text-green-900">{t("total")}</p>
                     </div>
-                    <p className="text-sm text-green-800">€{monthlyCosts?.total || "-"}</p>
-                    <p className="text-xs text-green-700">{monthlyCosts?.total ? `€${monthlyCosts.total * 12}/año` : "-"}</p>
+                    <p className="text-sm text-green-800">{monthlyCosts?.total ? `€${monthlyCosts.total.toFixed(2)}` : "€-"}</p>
+                    <p className="text-xs text-green-700">{monthlyCosts?.total ? `€${(monthlyCosts.total * 12).toFixed(2)}/año` : "-"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
