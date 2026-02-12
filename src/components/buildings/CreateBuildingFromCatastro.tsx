@@ -292,20 +292,24 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     };
 
     // Pasar coordenadas si están disponibles y válidas
-    const hasValidCoords = 
+    // Validar y preparar coordenadas
+    let coordinates: { lat: number; lng: number } | undefined;
+    
+    if (
       catastroDataLoaded.lat != null && 
       catastroDataLoaded.lng != null &&
       catastroDataLoaded.lat !== 0 && 
-      catastroDataLoaded.lng !== 0;
-    
-    const coordinates = 
-      hasValidCoords &&
-      catastroDataLoaded.lat! >= -90 && 
-      catastroDataLoaded.lat! <= 90 &&
-      catastroDataLoaded.lng! >= -180 && 
-      catastroDataLoaded.lng! <= 180
-        ? { lat: catastroDataLoaded.lat!, lng: catastroDataLoaded.lng! }
-        : undefined;
+      catastroDataLoaded.lng !== 0 &&
+      catastroDataLoaded.lat >= -90 && 
+      catastroDataLoaded.lat <= 90 &&
+      catastroDataLoaded.lng >= -180 && 
+      catastroDataLoaded.lng <= 180
+    ) {
+      coordinates = { 
+        lat: catastroDataLoaded.lat, 
+        lng: catastroDataLoaded.lng 
+      };
+    }
 
     onDataLoaded(buildingData, coordinates, catastroUnitsLoaded);
   };
