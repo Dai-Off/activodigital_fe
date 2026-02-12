@@ -8,12 +8,10 @@ import { useToast } from '../../contexts/ToastContext';
 import {
   Building2,
   Wrench,
-  FileCheck,
   Settings,
   Zap,
   Hammer,
   Leaf,
-  Paperclip,
   CheckCircle2,
   Clock,
   Edit,
@@ -50,19 +48,6 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
         { name: 'structural_system', label: t('fields.structural_system', 'Sistema estructural'), type: 'text', required: true },
         { name: 'facade_type', label: t('fields.facade_type', 'Tipo de fachada'), type: 'text', required: true },
         { name: 'roof_type', label: t('fields.roof_type', 'Tipo de cubierta'), type: 'text', required: false },
-      ],
-    },
-    certificates: {
-      title: t('sections.certificates.title', 'Certificados y licencias'),
-      description: t('sections.certificates.description', 'Documentación legal y certificaciones'),
-      icon: FileCheck,
-      color: 'green',
-      fields: [
-        { name: 'energy_certificate', label: t('fields.energy_certificate', 'Certificado energético (CEE)'), type: 'text', required: true },
-        { name: 'building_permits', label: t('fields.building_permits', 'Licencias de obra'), type: 'textarea', required: true },
-        { name: 'habitability_license', label: t('fields.habitability_license', 'Licencia de habitabilidad'), type: 'text', required: true },
-        { name: 'fire_certificate', label: t('fields.fire_certificate', 'Certificado contra incendios'), type: 'text', required: false },
-        { name: 'accessibility_certificate', label: t('fields.accessibility_certificate', 'Certificado de accesibilidad'), type: 'text', required: false },
       ],
     },
     maintenance: {
@@ -125,19 +110,6 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
             { value: 'none', label: t('digitalbook.options.safetyCompliance.none', 'No cumple / en infracción') }
           ] as Array<{ value: string, label: string }>, required: true
         },
-      ],
-    },
-    documentation: {
-      title: t('digitalbook.sections.documentation.title', 'Documentación complementaria'),
-      description: t('digitalbook.sections.documentation.description', 'Archivos y documentos técnicos'),
-      icon: Paperclip,
-      color: 'indigo',
-      fields: [
-        { name: 'technical_drawings', label: t('digitalbook.fields.technical_drawings', 'Planos técnicos'), type: 'textarea', required: false },
-        { name: 'operation_manuals', label: t('digitalbook.fields.operation_manuals', 'Manuales de funcionamiento'), type: 'textarea', required: false },
-        { name: 'financial_reports', label: t('digitalbook.fields.financial_reports', 'Informes financieros'), type: 'textarea', required: false },
-        { name: 'insurance_policies', label: t('digitalbook.fields.insurance_policies', 'Pólizas de seguro'), type: 'textarea', required: false },
-        { name: 'legal_documents', label: t('digitalbook.fields.legal_documents', 'Documentos legales'), type: 'textarea', required: false },
       ],
     },
   } as const;
