@@ -459,7 +459,7 @@ export default function AssetsList() {
         const completedSections = book?.progress || 0;
 
         if (
-          completedSections === 8 &&
+          completedSections === 6 &&
           searchFilters.statusFilter.includes("completed")
         ) {
           return true;
@@ -878,7 +878,7 @@ export default function AssetsList() {
               {paginated.map((building, index) => {
                 const book = digitalBooks.get(building.id);
                 const completedSections = book?.progress || 0;
-                const totalSections = 8;
+                const totalSections = 6;
                 const ceeCerts = energyCertificates.filter(
                   (cert) => cert.buildingId === building.id
                 );

@@ -2,23 +2,31 @@
 
 import { apiFetch } from './api';
 
+// Secciones que ya no se deben mostrar ni procesar
+const EXCLUDED_SECTION_TYPES = ['certificates_and_licenses', 'annex_documents'];
+
+/**
+ * Filtra las secciones obsoletas que ya no deben mostrarse
+ */
+export function filterActiveSections(sections: DigitalBookSection[]): DigitalBookSection[] {
+  return sections.filter(s => !EXCLUDED_SECTION_TYPES.includes(s.type));
+}
+
 /**
  * Mapeo de IDs de sección (UI) → tipos de API.
  * Mantener sincronizado con el backend:
- *  general_data | construction_features | certificates_and_licenses
+ *  general_data | construction_features
  *  | maintenance_and_conservation | facilities_and_consumption
- *  | renovations_and_rehabilitations | sustainability_and_esg | annex_documents
+ *  | renovations_and_rehabilitations | sustainability_and_esg
  */
 export const sectionIdToApiType: Record<string, string> = {
   // UI → API
   general_data: 'general_data',
   construction_features: 'construction_features',
-  certificates: 'certificates_and_licenses',
   maintenance: 'maintenance_and_conservation',
   installations: 'facilities_and_consumption',
   reforms: 'renovations_and_rehabilitations',
   sustainability: 'sustainability_and_esg',
-  attachments: 'annex_documents',
 };
 
 export const calculateCompletionPercentage = (sections: DigitalBookSection[]): number => {
@@ -39,12 +47,10 @@ export const calculateCompletionPercentage = (sections: DigitalBookSection[]): n
 const API_TYPES = new Set([
   'general_data',
   'construction_features',
-  'certificates_and_licenses',
   'maintenance_and_conservation',
   'facilities_and_consumption',
   'renovations_and_rehabilitations',
   'sustainability_and_esg',
-  'annex_documents',
 ]);
 
 // ===== Tipos =====
@@ -54,12 +60,10 @@ export type DigitalBookSection = {
   type:
     | 'general_data'
     | 'construction_features'
-    | 'certificates_and_licenses'
     | 'maintenance_and_conservation'
     | 'facilities_and_consumption'
     | 'renovations_and_rehabilitations'
-    | 'sustainability_and_esg'
-    | 'annex_documents';
+    | 'sustainability_and_esg';
   complete: boolean;
   content: Record<string, any>;
 };
@@ -69,7 +73,7 @@ export type DigitalBook = {
   buildingId: string;
   source: 'manual' | 'pdf';
   status: 'draft' | 'in_progress' | 'complete';
-  progress: number; // 0-8
+  progress: number; // 0-6
   completedPercentage?: number;
   sections: DigitalBookSection[];
   createdAt: string;
@@ -131,8 +135,8 @@ const isUUID = (s: string) =>
 
 /**
  * Resuelve el tipo de sección de API a partir de:
- * - clave UI (p.ej. 'certificates') → mapeo
- * - tipo API directo (p.ej. 'certificates_and_licenses')
+ * - clave UI (p.ej. 'maintenance') → mapeo
+ * - tipo API directo (p.ej. 'maintenance_and_conservation')
  * - UUID de sección, si se provee `book` → busca en `book.sections`
  */
 function resolveApiType(
@@ -169,8 +173,8 @@ function resolveApiType(
  * - (book: Pick<DigitalBook,'id'|'sections'>, sectionKeyOrId: string, content, complete?)
  *
  * Donde `sectionKeyOrId` puede ser:
- *  - clave UI (ej. 'certificates')
- *  - tipo API (ej. 'certificates_and_licenses')
+ *  - clave UI (ej. 'maintenance')
+ *  - tipo API (ej. 'maintenance_and_conservation')
  *  - UUID de sección (si además pasas `book` para resolver)
  */
 export async function updateBookSection(

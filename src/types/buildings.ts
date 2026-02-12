@@ -45,7 +45,7 @@ export interface BuildingBook {
   id: string;
   buildingId: string;
   status: 'draft' | 'in_progress' | 'completed';
-  progress: number; // 0-8 secciones completadas
+  progress: number; // 0-6 secciones completadas
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,12 +56,10 @@ export interface BookSection {
   sectionType: 
     | 'general_data'           // Datos generales del edificio
     | 'construction_features'  // Características constructivas y técnicas
-    | 'certificates'           // Certificados y licencias
     | 'maintenance'            // Mantenimiento y conservación
     | 'installations'          // Instalaciones y consumos
     | 'reforms'                // Reformas y rehabilitaciones
-    | 'sustainability'         // Sostenibilidad y ESG
-    | 'attachments';           // Documentos anexos
+    | 'sustainability';        // Sostenibilidad y ESG
   
   content: Record<string, any>; // Contenido flexible por sección
   documents: BookDocument[];
@@ -226,11 +224,6 @@ export const BOOK_SECTIONS: Array<{
     description: 'Especificaciones técnicas de construcción'
   },
   {
-    type: 'certificates',
-    title: 'Certificados y licencias',
-    description: 'Documentación legal y certificaciones'
-  },
-  {
     type: 'maintenance',
     title: 'Mantenimiento y conservación',
     description: 'Historial y planes de mantenimiento'
@@ -249,10 +242,5 @@ export const BOOK_SECTIONS: Array<{
     type: 'sustainability',
     title: 'Sostenibilidad y ESG',
     description: 'Criterios ambientales y sostenibilidad'
-  },
-  {
-    type: 'attachments',
-    title: 'Documentos anexos',
-    description: 'Documentación adicional y anexos'
   }
 ];
