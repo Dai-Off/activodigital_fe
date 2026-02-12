@@ -2,14 +2,19 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertCircle, Loader2, Hash, MapPin } from 'lucide-react';
-import { CatastroApiService, type CatastroBuildingData } from '../../services/catastroApi';
+import { CatastroApiService, type CatastroBuildingData, fetchCatastroUnitsXmlByRC, fetchCatastroUnitsXmlByAddress } from '../../services/catastroApi';
 import type { BuildingStep1Data } from './CreateBuildingWizard';
 import { SupportContactModal } from '../SupportContactModal';
 import BuildingLocationForm from './BuildingLocationForm';
 import type { BuildingAddressData, BuildingLocationValue } from '../../types/location';
+import { parseCatastroUnitsFromXml, type FrontendUnit } from '../../utils/catastroUnits';
 
 interface CreateBuildingFromCatastroProps {
-  onDataLoaded: (data: BuildingStep1Data, coordinates?: { lat: number; lng: number }) => void;
+  onDataLoaded: (
+    data: BuildingStep1Data, 
+    coordinates?: { lat: number; lng: number },
+    units?: FrontendUnit[]
+  ) => void;
   onCancel: () => void;
 }
 
@@ -40,6 +45,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
   // Estados para datos adicionales después de cargar
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [catastroDataLoaded, setCatastroDataLoaded] = useState<CatastroBuildingData | null>(null);
+  const [catastroUnitsLoaded, setCatastroUnitsLoaded] = useState<FrontendUnit[]>([]);
   const [additionalData, setAdditionalData] = useState({
     name: '',
     price: '',
@@ -66,8 +72,18 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
       const catastroData = await CatastroApiService.mapToBuildingData(inmueble);
 
+      // Intentar obtener también las unidades del edificio
+      let units: FrontendUnit[] = [];
+      try {
+        const unitsXml = await fetchCatastroUnitsXmlByRC(trimmedRc);
+        units = parseCatastroUnitsFromXml(unitsXml);
+      } catch (unitsErr) {
+        // Si falla la obtención de unidades, no es crítico - el edificio se puede crear igual
+      }
+
       // Guardar los datos y mostrar formulario adicional
       setCatastroDataLoaded(catastroData);
+      setCatastroUnitsLoaded(units);
       setAddressData({
         fullAddress: catastroData.address,
         country: 'España',
@@ -179,7 +195,27 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
 
       const catastroData = await CatastroApiService.mapToBuildingData(inmueble);
 
+      // Intentar obtener también las unidades del edificio
+      let units: FrontendUnit[] = [];
+      try {
+        const unitsXml = await fetchCatastroUnitsXmlByAddress({
+          provincia,
+          municipio,
+          calle: nombreVia,
+          siglaVia: tipoVia,
+          numero,
+          bloque: undefined,
+          escalera: escalera || undefined,
+          planta: planta || undefined,
+          puerta: puerta || undefined,
+        });
+        units = parseCatastroUnitsFromXml(unitsXml);
+      } catch (unitsErr) {
+        // Si falla la obtención de unidades, no es crítico
+      }
+
       setCatastroDataLoaded(catastroData);
+      setCatastroUnitsLoaded(units);
       setAdditionalData({
         name: '',
         price: '',
@@ -256,19 +292,26 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     };
 
     // Pasar coordenadas si están disponibles y válidas
-    const coordinates = 
+    // Validar y preparar coordenadas
+    let coordinates: { lat: number; lng: number } | undefined;
+    
+    if (
       catastroDataLoaded.lat != null && 
-      catastroDataLoaded.lng != null && 
+      catastroDataLoaded.lng != null &&
       catastroDataLoaded.lat !== 0 && 
       catastroDataLoaded.lng !== 0 &&
       catastroDataLoaded.lat >= -90 && 
       catastroDataLoaded.lat <= 90 &&
       catastroDataLoaded.lng >= -180 && 
       catastroDataLoaded.lng <= 180
-        ? { lat: catastroDataLoaded.lat, lng: catastroDataLoaded.lng }
-        : undefined;
+    ) {
+      coordinates = { 
+        lat: catastroDataLoaded.lat, 
+        lng: catastroDataLoaded.lng 
+      };
+    }
 
-    onDataLoaded(buildingData, coordinates);
+    onDataLoaded(buildingData, coordinates, catastroUnitsLoaded);
   };
 
   return (
@@ -685,6 +728,7 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
               onClick={() => {
                 setShowAdditionalFields(false);
                 setCatastroDataLoaded(null);
+                setCatastroUnitsLoaded([]);
                 setAdditionalData({ name: '', price: '', technicianEmail: '', cfoEmail: '', propietarioEmail: '' });
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

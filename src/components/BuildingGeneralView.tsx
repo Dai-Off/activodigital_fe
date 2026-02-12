@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "~/contexts/ToastContext";
 import { BuildingsApiService, type Building } from "~/services/buildingsApi";
-import { getBookByBuilding, type DigitalBook } from "~/services/digitalbook";
+import { getBookByBuilding, filterActiveSections, type DigitalBook } from "~/services/digitalbook";
 import {
   calculateESGScore,
   getESGScore,
@@ -925,7 +925,12 @@ export function BuildingGeneralView() {
                     <div>
                       <h4 className="text-xs mb-0.5">{t("digitalBook")}</h4>
                       <p className="text-xs text-blue-100">
-                        {digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}% {t("completed")} • {docCount} {t("documents")}
+                        {digitalBook ? (() => {
+                          const activeSections = filterActiveSections(digitalBook.sections || []);
+                          const totalActive = activeSections.length || 6;
+                          const completedActive = activeSections.filter(s => s.complete).length;
+                          return Math.round((completedActive / totalActive) * 100);
+                        })() : 0}% {t("completed")} • {docCount} {t("documents")}
                       </p>
                     </div>
                   </div>
@@ -1265,15 +1270,30 @@ export function BuildingGeneralView() {
                       <FileText className="w-2.5 h-2.5 text-[#1e3a8a]" />
                       <span className="text-xs text-gray-700">{t("completed")}</span>
                     </div>
-                    <span className="text-xs text-[#1e3a8a]">{digitalBook ? Math.round(((digitalBook.progress || 0) / 8) * 100) : 0}%</span>
+                    <span className="text-xs text-[#1e3a8a]">{digitalBook ? (() => {
+                      const activeSections = filterActiveSections(digitalBook.sections || []);
+                      const totalActive = activeSections.length || 6;
+                      const completedActive = activeSections.filter(s => s.complete).length;
+                      return Math.round((completedActive / totalActive) * 100);
+                    })() : 0}%</span>
                   </div>
                   <div className="w-full bg-white rounded-full h-1">
                     <div
                       className="bg-[#1e3a8a] h-1 rounded-full"
-                      style={{ width: digitalBook ? `${((digitalBook.progress || 0) / 8) * 100}%` : '0%' }}
+                      style={{ width: digitalBook ? (() => {
+                        const activeSections = filterActiveSections(digitalBook.sections || []);
+                        const totalActive = activeSections.length || 6;
+                        const completedActive = activeSections.filter(s => s.complete).length;
+                        return `${Math.round((completedActive / totalActive) * 100)}%`;
+                      })() : '0%' }}
                     ></div>
                   </div>
-                  <div className="mt-0.5 text-xs text-gray-600">{digitalBook?.sections?.filter(s => s.complete).length || 0}/8 tareas</div>
+                  <div className="mt-0.5 text-xs text-gray-600">{digitalBook ? (() => {
+                    const activeSections = filterActiveSections(digitalBook.sections || []);
+                    const completedActive = activeSections.filter(s => s.complete).length;
+                    const totalActive = activeSections.length || 6;
+                    return `${completedActive}/${totalActive}`;
+                  })() : '0/6'} tareas</div>
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="text-xs text-gray-700">{t("improvements")}:</div>

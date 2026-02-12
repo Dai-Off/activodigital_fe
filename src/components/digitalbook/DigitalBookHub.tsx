@@ -10,6 +10,7 @@ import ProgressBar from "../ui/ProgressBar";
 import {
   getBookByBuilding,
   processPDFWithAI,
+  filterActiveSections,
   type DigitalBook,
 } from "../../services/digitalbook";
 import { useToast } from "../../contexts/ToastContext";
@@ -17,12 +18,10 @@ import { useTranslation } from "react-i18next";
 import {
   Building2,
   Wrench,
-  FileCheck,
   Settings,
   Zap,
   Hammer,
   Leaf,
-  Paperclip,
   CheckCircle2,
   Circle,
   ChevronRight,
@@ -48,15 +47,6 @@ const SECTION_CONFIG = (t: any) => ({
     color: "purple",
     gradient: "from-purple-500 to-purple-600",
     bgGradient: "from-purple-50 to-purple-100/50",
-  },
-  certificates_and_licenses: {
-    title: t("certificatesAndLicenses"),
-    description: t("certificatesAndLicensesDesc"),
-    uiId: "certificates",
-    icon: FileCheck,
-    color: "green",
-    gradient: "from-green-500 to-green-600",
-    bgGradient: "from-green-50 to-green-100/50",
   },
   maintenance_and_conservation: {
     title: t("maintenanceAndConservation"),
@@ -93,15 +83,6 @@ const SECTION_CONFIG = (t: any) => ({
     color: "emerald",
     gradient: "from-emerald-500 to-emerald-600",
     bgGradient: "from-emerald-50 to-emerald-100/50",
-  },
-  annex_documents: {
-    title: t("annexDocuments"),
-    description: t("annexDocumentsDesc"),
-    uiId: "attachments",
-    icon: Paperclip,
-    color: "indigo",
-    gradient: "from-indigo-500 to-indigo-600",
-    bgGradient: "from-indigo-50 to-indigo-100/50",
   },
 });
 
@@ -153,12 +134,15 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         bgGradient: meta.bgGradient,
       }));
     }
-    return book.sections.map((s) => {
+    // Filtrar secciones obsoletas usando la función helper
+    const activeSections = filterActiveSections(book.sections);
+    
+    return activeSections.map((s) => {
       const meta = config[s.type] || {
         title: s.type,
         description: "",
         uiId: s.type,
-        icon: FileCheck,
+        icon: Building2,
         color: "gray",
         gradient: "from-gray-500 to-gray-600",
         bgGradient: "from-gray-50 to-gray-100/50",
@@ -176,9 +160,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     });
   }, [book, t]);
 
-  const completedSections =
-    book?.sections.filter((s) => s.complete).length ?? 0;
-  const totalSections = book?.sections.length ?? 8;
+  const activeSections = book?.sections ? filterActiveSections(book.sections) : [];
+  const completedSections = activeSections.filter((s) => s.complete).length;
+  const totalSections = activeSections.length || 6;
 
   const isNewBuilding = location.state?.isNewBuilding || false;
 
@@ -711,7 +695,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                 ))
               : // Mostrar secciones normales con diseño acorde a la web
                 sections.map((section, index) => {
-                  const IconComponent = section.icon || FileCheck;
+                  const IconComponent = section.icon || Building2;
                   return (
                     <div
                       key={section.key}
@@ -826,13 +810,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
-        <div className="text-sm text-gray-600">
-          <p>
-            💡 {t("buildingBookSectionsMessage")}
-          </p>
-        </div>
-
+      <div className="flex flex-col sm:flex-row gap-4 justify-end items-start">
         <div className="flex gap-3">
           {completedSections === totalSections && (
             <button
