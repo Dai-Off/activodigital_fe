@@ -1,5 +1,5 @@
 // src/components/buildings/CreateBuildingWizard.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -26,6 +26,7 @@ import { uploadBuildingImages } from "../../services/imageUpload";
 import { SupportContactModal } from "../SupportContactModal";
 import { UnitsApiService } from "../../services/unitsApi";
 import type { FrontendUnit } from "../../utils/catastroUnits";
+import { CatastroApiService } from "../../services/catastroApi";
 
 // -------------------- Types --------------------
 export interface BuildingStep1Data {
@@ -98,6 +99,47 @@ const CreateBuildingWizard: React.FC = () => {
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
   const [catastroUnits, setCatastroUnits] = useState<FrontendUnit[]>([]);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isCadastreOnline, setIsCadastreOnline] = useState(false);
+  const [isCheckingCatastro, setIsCheckingCatastro] = useState(false);
+  /** Diagnóstico granular del estado de Catastro (ok, timeout, falso_200, etc.) */
+  const [catastroStatus, setCatastroStatus] = useState<string>('');
+
+  // -------------------- Verificación de salud: API de Catastro --------------------
+
+  /** Ejecuta la comprobación de estado de Catastro y actualiza el estado local. */
+  const recheckCatastroStatus = async () => {
+    setIsCheckingCatastro(true);
+    try {
+      const resultado = await CatastroApiService.checkCatastroStatus();
+      setIsCadastreOnline(resultado.online);
+      setCatastroStatus(resultado.status);
+    } catch {
+      // Ante cualquier error se asume fuera de línea por seguridad
+      setIsCadastreOnline(false);
+      setCatastroStatus('error_red');
+    } finally {
+      setIsCheckingCatastro(false);
+    }
+  };
+
+  // Verificar al montar el componente
+  useEffect(() => {
+    let cancelado = false;
+    CatastroApiService.checkCatastroStatus()
+      .then((resultado) => {
+        if (!cancelado) {
+          setIsCadastreOnline(resultado.online);
+          setCatastroStatus(resultado.status);
+        }
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setIsCadastreOnline(false);
+          setCatastroStatus('error_red');
+        }
+      });
+    return () => { cancelado = true; };
+  }, []);
 
   // -------------------- Steps (i18n) --------------------
   const wizardSteps = [
@@ -582,6 +624,10 @@ const CreateBuildingWizard: React.FC = () => {
             isOpen={selectedMethod === null}
             onSelectMethod={handleMethodSelection}
             onClose={handleMethodSelectionClose}
+            isCadastreOnline={isCadastreOnline}
+            catastroStatus={catastroStatus}
+            onRetryCatastro={recheckCatastroStatus}
+            isCheckingCatastro={isCheckingCatastro}
           />
         )}
 
