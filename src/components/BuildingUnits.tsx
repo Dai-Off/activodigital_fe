@@ -732,7 +732,7 @@ export default function BuildingUnits() {
                               No hay unidades disponibles
                             </h3>
                             <p className="text-sm text-gray-500 mb-6 max-w-md text-center">
-                              Comienza creando tu primera unidad para gestionar todas las unidades del edificio de forma organizada.
+                              Las unidades se crean automáticamente al registrar un edificio desde Catastro, o puedes crearlas manualmente.
                             </p>
                             <button
                               onClick={() => {

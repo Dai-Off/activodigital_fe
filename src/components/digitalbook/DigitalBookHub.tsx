@@ -10,6 +10,7 @@ import ProgressBar from "../ui/ProgressBar";
 import {
   getBookByBuilding,
   processPDFWithAI,
+  filterActiveSections,
   type DigitalBook,
 } from "../../services/digitalbook";
 import { useToast } from "../../contexts/ToastContext";
@@ -17,12 +18,10 @@ import { useTranslation } from "react-i18next";
 import {
   Building2,
   Wrench,
-  FileCheck,
   Settings,
   Zap,
   Hammer,
   Leaf,
-  Paperclip,
   CheckCircle2,
   Circle,
   ChevronRight,
@@ -48,15 +47,6 @@ const SECTION_CONFIG = (t: any) => ({
     color: "purple",
     gradient: "from-purple-500 to-purple-600",
     bgGradient: "from-purple-50 to-purple-100/50",
-  },
-  certificates_and_licenses: {
-    title: t("certificatesAndLicenses"),
-    description: t("certificatesAndLicensesDesc"),
-    uiId: "certificates",
-    icon: FileCheck,
-    color: "green",
-    gradient: "from-green-500 to-green-600",
-    bgGradient: "from-green-50 to-green-100/50",
   },
   maintenance_and_conservation: {
     title: t("maintenanceAndConservation"),
@@ -93,15 +83,6 @@ const SECTION_CONFIG = (t: any) => ({
     color: "emerald",
     gradient: "from-emerald-500 to-emerald-600",
     bgGradient: "from-emerald-50 to-emerald-100/50",
-  },
-  annex_documents: {
-    title: t("annexDocuments"),
-    description: t("annexDocumentsDesc"),
-    uiId: "attachments",
-    icon: Paperclip,
-    color: "indigo",
-    gradient: "from-indigo-500 to-indigo-600",
-    bgGradient: "from-indigo-50 to-indigo-100/50",
   },
 });
 
@@ -153,12 +134,15 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         bgGradient: meta.bgGradient,
       }));
     }
-    return book.sections.map((s) => {
+    // Filtrar secciones obsoletas usando la función helper
+    const activeSections = filterActiveSections(book.sections);
+    
+    return activeSections.map((s) => {
       const meta = config[s.type] || {
         title: s.type,
         description: "",
         uiId: s.type,
-        icon: FileCheck,
+        icon: Building2,
         color: "gray",
         gradient: "from-gray-500 to-gray-600",
         bgGradient: "from-gray-50 to-gray-100/50",
@@ -176,9 +160,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     });
   }, [book, t]);
 
-  const completedSections =
-    book?.sections.filter((s) => s.complete).length ?? 0;
-  const totalSections = book?.sections.length ?? 8;
+  const activeSections = book?.sections ? filterActiveSections(book.sections) : [];
+  const completedSections = activeSections.filter((s) => s.complete).length;
+  const totalSections = activeSections.length || 6;
 
   const isNewBuilding = location.state?.isNewBuilding || false;
 
@@ -196,8 +180,8 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     if (file.type !== "application/pdf") {
       showToast({
         type: "error",
-        title: "Tipo de archivo no válido",
-        message: "Solo se permiten archivos PDF",
+        title: t("invalidFileType"),
+        message: t("onlyPDFAllowed"),
         duration: 5000,
       });
       return;
@@ -207,8 +191,8 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
     if (file.size > 10 * 1024 * 1024) {
       showToast({
         type: "error",
-        title: "Archivo demasiado grande",
-        message: "El archivo no puede superar los 10MB",
+        title: t("fileTooLarge"),
+        message: t("fileSizeLimit"),
         duration: 5000,
       });
       return;
@@ -231,11 +215,11 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
       // Simular pasos de procesamiento
       const steps = [
-        "Subiendo archivo...",
-        "Extrayendo texto del PDF...",
-        "Procesando con IA...",
-        "Validando datos...",
-        "Creando libro del edificio...",
+        t("uploadingFile"),
+        t("extractingText"),
+        t("processingWithAI"),
+        t("validatingData"),
+        t("creatingBuildingBook"),
       ];
 
       let stepIndex = 0;
@@ -253,7 +237,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       clearInterval(progressInterval);
       clearInterval(stepInterval);
       setProgress(100);
-      setCurrentStep("¡Procesamiento completado!");
+      setCurrentStep(t("processingCompleted"));
 
       // El éxito se maneja a través de notificaciones del sistema
 
@@ -364,9 +348,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         setBackgroundProcessing(true);
         showToast({
           type: "info",
-          title: "Procesamiento en background",
+          title: t("processingInBackground"),
           message:
-            "El procesamiento continuará en segundo plano. Te notificaremos cuando termine.",
+            t("processingInBackgroundMessage"),
           duration: 8000,
         });
       }
@@ -377,9 +361,9 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
         setBackgroundProcessing(true);
         showToast({
           type: "info",
-          title: "Procesamiento en background",
+          title: t("processingInBackground"),
           message:
-            "El procesamiento continuará en segundo plano. Te notificaremos cuando termine.",
+            t("processingInBackgroundMessage"),
           duration: 8000,
         });
       }
@@ -410,10 +394,10 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
   const getStatusMessage = () => {
     if (completedSections === 0)
-      return "Libro en borrador – ninguna sección completada";
+      return t("bookInProgress");
     if (completedSections === totalSections)
-      return "¡Libro del Edificio completado!";
-    return `En progreso – ${completedSections} de ${totalSections} secciones completadas`;
+      return t("bookCompleted");
+    return `${t("inProgress")} – ${completedSections} ${t("of")} ${totalSections} ${t("sectionsCompleted")}`;
   };
 
   const getStatusColor = () => {
@@ -477,7 +461,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-            Libro del Edificio
+            {t("digitalBook")}
           </h1>
           <p className="text-sm text-gray-600">{buildingNameFinal}</p>
         </div>
@@ -489,7 +473,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
           {isNewBuilding && (
             <div className="mt-1">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Edificio recién creado
+                {t("newBuildingRecentlyCreated")}
               </span>
             </div>
           )}
@@ -503,10 +487,10 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
           <div className="flex items-start justify-between mb-5">
             <div className="flex-1">
               <h2 className="text-base font-medium text-gray-900 mb-1">
-                Progreso del Libro del Edificio
+                {t("buildingBookProgress")}
               </h2>
               <p className="text-xs text-gray-500">
-                Completar todas las secciones para finalizar el libro
+                {t("completeAllSectionsToFinishBook")}
               </p>
             </div>
             <div className="text-right ml-4">
@@ -514,8 +498,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                 {completedSections} de {totalSections}
               </div>
               <div className="text-xs text-gray-500 mt-0.5">
-                {Math.round((completedSections / totalSections) * 100)}%
-                completado
+                {Math.round((completedSections / totalSections) * 100)}% {t("completed")}
               </div>
             </div>
           </div>
@@ -569,13 +552,13 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-medium text-gray-900 mb-1">
                     {backgroundProcessing
-                      ? "Procesando en background..."
-                      : "Importar contenido desde PDF"}
+                      ? t("processingInBackground")
+                      : t("importContentFromPDF")}
                   </h3>
                   <p className="text-xs text-gray-500 leading-relaxed">
                     {backgroundProcessing
-                      ? "El procesamiento de IA continúa en segundo plano"
-                      : "Sube un PDF y mapea las páginas a cada sección del libro."}
+                      ? t("processingInBackgroundMessage")
+                      : t("importContentFromPDFMessage")}
                   </p>
                 </div>
               </div>
@@ -595,7 +578,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                     <path d="M12 5v14" />
                     <path d="M5 12h14" />
                   </svg>
-                  {isProcessing ? "Procesando..." : "Cargar PDF"}
+                  {isProcessing ? t("processing") : t("uploadPDF")}
                 </button>
               </div>
             </div>
@@ -640,7 +623,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span>{formatTime(timeElapsed)}</span>
-                <span>{Math.round(progress)}% completado</span>
+                <span>{Math.round(progress)}% {t("completed")}</span>
               </div>
             </div>
           </div>
@@ -649,7 +632,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>{currentStep || "Iniciando procesamiento..."}</span>
-              <span>Tiempo estimado: 30-90 segundos</span>
+              <span>{t("estimatedTime")}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -661,7 +644,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
 
           {/* Pasos */}
           <div className="flex gap-2 text-xs">
-            {["Subida", "Extracción", "IA", "Validación", "Creación"].map(
+            {[t("upload"), t("extraction"), t("ai"), t("validation"), t("creation")].map(
               (step, index) => (
                 <div
                   key={step}
@@ -687,13 +670,13 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
               <Sparkles className="w-4 h-4 text-gray-600" />
             </div>
             <h2 className="text-base font-medium text-gray-900">
-              Secciones del Libro del Edificio
+              {t("buildingBookSections")}
             </h2>
           </div>
           <p className="text-xs text-gray-500 ml-8">
             {canEdit
-              ? "Revisa y completa cada sección. Haz clic en cualquier sección para editarla directamente."
-              : "Revisa el contenido de cada sección completada por el técnico asignado."}
+              ? t("generalDataMessage")
+              : t("generalDataMessage2")}
           </p>
         </div>
 
@@ -712,7 +695,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                 ))
               : // Mostrar secciones normales con diseño acorde a la web
                 sections.map((section, index) => {
-                  const IconComponent = section.icon || FileCheck;
+                  const IconComponent = section.icon || Building2;
                   return (
                     <div
                       key={section.key}
@@ -786,12 +769,12 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
                               {section.isCompleted ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
                                   <CheckCircle2 className="w-3 h-3" />
-                                  Completado
+                                  {t('completed')}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-600">
                                   <Circle className="w-3 h-3" />
-                                  Pendiente
+                                  {t('pending')}
                                 </span>
                               )}
                             </div>
@@ -827,14 +810,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
-        <div className="text-sm text-gray-600">
-          <p>
-            💡 Puedes guardar tu progreso en cualquier momento y continuar más
-            tarde.
-          </p>
-        </div>
-
+      <div className="flex flex-col sm:flex-row gap-4 justify-end items-start">
         <div className="flex gap-3">
           {completedSections === totalSections && (
             <button
@@ -845,7 +821,7 @@ const DigitalBookHub: React.FC<DigitalBookHubProps> = ({
               }
               className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
-              Exportar Libro Completado
+              {t("exportBuildingBook")}
             </button>
           )}
         </div>

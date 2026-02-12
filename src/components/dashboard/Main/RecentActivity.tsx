@@ -279,7 +279,7 @@ export function RecentActivity() {
             ))
           ) : (
             <div className="text-center text-gray-500 py-12">
-              No hay actividades recientes
+              {t("noRecentActivities")}
             </div>
           )}
         </div>

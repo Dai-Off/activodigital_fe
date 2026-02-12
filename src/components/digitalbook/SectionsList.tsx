@@ -34,13 +34,6 @@ const DEFAULT_SECTIONS: Section[] = [
     status: "pending",
   },
   {
-    id: "certificates",
-    title: "sections.certificates.title",
-    description: "sections.certificates.description",
-    icon: "📜",
-    status: "pending",
-  },
-  {
     id: "maintenance",
     title: "sections.maintenance.title",
     description: "sections.maintenance.description",
@@ -66,13 +59,6 @@ const DEFAULT_SECTIONS: Section[] = [
     title: "sections.sustainability.title",
     description: "sections.sustainability.description",
     icon: "🌱",
-    status: "pending",
-  },
-  {
-    id: "attachments",
-    title: "sections.attachments.title",
-    description: "sections.attachments.description",
-    icon: "📎",
     status: "pending",
   },
 ];

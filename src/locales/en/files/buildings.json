@@ -409,6 +409,7 @@
   "medium": "medium",
   "low": "low",
   "esgScore": "ESG Score",
+   "technicalState": "Technical State",
   "squareMeters": "Square Meters",
   "searchAssets": "Search Assets...",
   "clearSearch": "Clear Search",
@@ -419,6 +420,7 @@
   "descendingSort": "Sort descending",
   "additionalFilters": "Additional Filters",
   "bookStatus": "Book Status",
+  "maintenancePlan" : "Maintenance Plan",
   "occupation": "Occupation",
   "activeFilters": "{{count}} filter{{s}} active{{s}}",
   "asset": "Asset",
@@ -429,5 +431,11 @@
   "audit": "Auditorías",
   "gestionGeneral": "General Management",
   "gestionGeneralDescription": "Consolidated view of all documents of buildings and units",
-  "more": "More"
+  "more": "More",
+  "analysisMessage": "Analyzing EBPD compliance and generating recommendations...",
+  "analysisMessageDesc": "This can take a few minutes",
+  "loadingBuilding" : "Loading building information...",
+  "analysisMessageBuilding" : "Generating building analysis...",
+  "buscarDocumentos" : "Search documents",
+  "documents" : "Documents"
 }

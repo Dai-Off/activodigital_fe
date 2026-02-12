@@ -47,7 +47,7 @@ const CATEGORY_MAP: Record<string, string> = {
   public: "Administración Pública",
   internal: "Gestión Interna",
   legal: "Jurídico/Legal",
-  certificates: "Certificaciones",
+  certificates: "Certificado Energético",
   technical: "Documentación Técnica",
 };
 

@@ -293,7 +293,7 @@ function _BuildingStatusIndicator({
   building: Building;
   digitalBooks: Map<string, DigitalBook>;
 }) {
-  const totalSections = 8;
+  const totalSections = 6;
   const book = digitalBooks.get(building.id);
   const completedSections = book?.progress || 0;
 
@@ -544,7 +544,7 @@ export default function CFOAssetsList() {
         const completedSections = book?.progress || 0;
 
         if (
-          completedSections === 8 &&
+          completedSections === 6 &&
           searchFilters.statusFilter.includes("completed")
         ) {
           return true;

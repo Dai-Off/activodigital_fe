@@ -20,14 +20,18 @@ import type {
   CreateBuildingPayload,
   BuildingImage,
 } from "../../services/buildingsApi";
+import type { BuildingAddressData } from "../../types/location";
 
 import { uploadBuildingImages } from "../../services/imageUpload";
 import { SupportContactModal } from "../SupportContactModal";
+import { UnitsApiService } from "../../services/unitsApi";
+import type { FrontendUnit } from "../../utils/catastroUnits";
 
 // -------------------- Types --------------------
 export interface BuildingStep1Data {
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   constructionYear: string;
   typology: "residential" | "mixed" | "commercial" | "";
   floors: string;
@@ -44,6 +48,7 @@ interface BuildingStep2Data {
   latitude: number;
   longitude: number;
   address: string;
+  addressData?: BuildingAddressData;
   photos: File[];
   mainPhotoIndex: number;
 }
@@ -51,6 +56,7 @@ interface BuildingStep2Data {
 interface CompleteBuildingData {
   name: string;
   address: string;
+  addressData?: BuildingAddressData;
   constructionYear: string;
   typology: "residential" | "mixed" | "commercial";
   floors: string;
@@ -90,6 +96,7 @@ const CreateBuildingWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [step1Data, setStep1Data] = useState<BuildingStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<BuildingStep2Data | null>(null);
+  const [catastroUnits, setCatastroUnits] = useState<FrontendUnit[]>([]);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   // -------------------- Steps (i18n) --------------------
@@ -121,20 +128,23 @@ const CreateBuildingWizard: React.FC = () => {
   // -------------------- Handlers: Catastro --------------------
   const handleCatastroDataLoaded = (
     data: BuildingStep1Data,
-    coordinates?: { lat: number; lng: number }
+    coordinates?: { lat: number; lng: number },
+    units?: FrontendUnit[]
   ) => {
     setStep1Data(data);
+    setCatastroUnits(units || []);
     // Inicializar step2Data con la dirección y coordenadas si están disponibles.
     // Si Catastro/geocodificación no devuelve coordenadas válidas,
     // el paso 2 mostrará un mensaje para que el usuario marque la ubicación manualmente.
     const step2DataUpdate: BuildingStep2Data = {
       address: data.address || "",
+      addressData: data.addressData,
       latitude: coordinates?.lat ?? 0,
       longitude: coordinates?.lng ?? 0,
       photos: [],
       mainPhotoIndex: 0,
     };
-
+    
     setStep2Data(step2DataUpdate);
     // A partir de este punto tratamos el flujo como "manual":
     // el paso 0 será el formulario de datos generales con los datos de Catastro pre-rellenados.
@@ -148,6 +158,7 @@ const CreateBuildingWizard: React.FC = () => {
     if (!methodFromState) {
       setSelectedMethod(null);
       setStep1Data(null);
+      setCatastroUnits([]);
       setCurrentStep(0);
     } else {
       // Si viene desde state, volver según el origen
@@ -166,6 +177,7 @@ const CreateBuildingWizard: React.FC = () => {
     if (!methodFromState) {
       setSelectedMethod(null);
       setStep1Data(null);
+      setCatastroUnits([]);
     } else {
       // Si viene desde state, volver según el origen
       navigate(fromDashboard ? "/dashboard" : "/assets");
@@ -190,6 +202,7 @@ const CreateBuildingWizard: React.FC = () => {
         latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
         address: data.address ?? "",
+        addressData: data.addressData ?? undefined,
         photos: data.photos ?? [],
         mainPhotoIndex: data.mainPhotoIndex ?? 0,
       };
@@ -249,9 +262,14 @@ const CreateBuildingWizard: React.FC = () => {
       const safeTypology =
         (step1Data.typology as "residential" | "mixed" | "commercial" | "") || "residential";
 
+      const fullAddress = step2Data.address.trim();
+      const addressData: BuildingAddressData | undefined =
+        step2Data.addressData ?? step1Data.addressData;
+
       const buildingPayload: CreateBuildingPayload = {
         name: step1Data.name,
-        address: step2Data.address,
+        address: fullAddress,
+        addressData,
         cadastralReference,
         constructionYear: year,
         typology: safeTypology,
@@ -271,6 +289,33 @@ const CreateBuildingWizard: React.FC = () => {
       const savedBuilding = await BuildingsApiService.createBuilding(
         buildingPayload
       );
+
+      // Crear unidades automáticamente si vienen de Catastro
+      if (catastroUnits.length > 0) {
+        try {
+          await UnitsApiService.upsertUnits(
+            savedBuilding.id,
+            catastroUnits.map(unit => ({
+              name: unit.name,
+              identifier: unit.identifier,
+              floor: unit.floor,
+              areaM2: unit.areaM2,
+              useType: unit.useType,
+              status: 'available',
+            }))
+          );
+          showInfo(
+            t('unitsCreated', 'Unidades creadas'),
+            t('unitsCreatedDesc', `Se crearon ${catastroUnits.length} unidades automáticamente desde Catastro`)
+          );
+        } catch (unitsErr) {
+          // No falla el flujo si hay error con las unidades
+          showError(
+            t('unitsError', 'Error al crear unidades'),
+            t('unitsErrorDesc', 'El edificio se creó correctamente, pero hubo un error al crear las unidades. Puedes crearlas manualmente.')
+          );
+        }
+      }
 
       // Upload images (if any)
       if (step2Data.photos?.length) {

@@ -205,6 +205,46 @@ export async function fetchCatastroUnitsXmlByAddress(
   return (response as any).xml;
 }
 
+/**
+ * Llama al backend para obtener las unidades de un inmueble a partir de su
+ * referencia catastral (RC), devolviendo únicamente el XML crudo que viene de Catastro.
+ */
+export async function fetchCatastroUnitsXmlByRC(rc: string): Promise<string> {
+  const params = new URLSearchParams({ rc: rc.trim() });
+
+  let response: any;
+  try {
+    response = await apiFetch(`/catastroApi/unidades-por-rc?${params.toString()}`, {
+      method: 'GET',
+    });
+  } catch (error: any) {
+    const message =
+      (error && error.message) ||
+      'No se pudieron obtener las unidades desde Catastro. Por favor, inténtalo de nuevo.';
+
+    if (error?.status === 403 || error?.status === 401) {
+      throw new Error(
+        'No se ha podido acceder a la información de Catastro para esta referencia catastral. ' +
+          'Por favor, verifica que tienes sesión iniciada y, si el problema persiste, contacta con soporte.'
+      );
+    }
+
+    throw new Error(
+      message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')
+        ? 'No se pudo conectar con el servicio de Catastro. Verifica tu conexión a internet e inténtalo de nuevo.'
+        : message
+    );
+  }
+
+  if (!response || typeof response !== 'object' || typeof (response as any).xml !== 'string') {
+    throw new Error(
+      'La respuesta del servicio de Catastro no es válida. Vuelve a intentarlo en unos minutos.'
+    );
+  }
+
+  return (response as any).xml;
+}
+
 // -------------------- Servicio de API de Catastro --------------------
 
 // Normalizadores defensivos para adaptarnos a distintos formatos de respuesta,
@@ -493,6 +533,9 @@ export class CatastroApiService {
         throw new Error(`No se encontró ningún edificio con el código catastral "${trimmedRc}".\n\nPor favor, verifica que:\n• El código esté completo y correcto\n• No haya espacios o caracteres adicionales\n• El código corresponda a un edificio, no a un terreno`);
       }
       
+      // 🔍 LOG: Respuesta completa del backend de catastro
+      console.log('🏢 [CATASTRO RC] Respuesta completa del inmueble:', JSON.stringify(inmueble, null, 2));
+      
       // Normalizar para compatibilidad
       return {
         ...inmueble,
@@ -558,6 +601,10 @@ export class CatastroApiService {
       // La API devuelve un objeto con inmuebles array, tomar el primero
       if (response.inmuebles && response.inmuebles.length > 0) {
         const inmueble = response.inmuebles[0];
+        
+        // 🔍 LOG: Respuesta completa del backend de catastro
+        console.log('🏢 [CATASTRO DIRECCIÓN] Respuesta completa del inmueble:', JSON.stringify(inmueble, null, 2));
+        
         return {
           ...inmueble,
           rc: inmueble.referenciaCatastral?.referenciaCatastral,
@@ -671,17 +718,69 @@ export class CatastroApiService {
   }
 
   /**
-   * Geocodifica una dirección usando Nominatim
+   * Geocodifica una dirección usando Nominatim con múltiples intentos progresivos
    */
   static async geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
     try {
+      console.log('🌍 [GEOCODING] Iniciando geocodificación para:', address);
+      
+      // Estrategia 1: Dirección completa con España
+      const queryAddress = /españa/i.test(address) ? address : `${address}, España`;
+      let result = await CatastroApiService.geocodeWithNominatim(queryAddress);
+      if (result) return result;
+      
+      // Estrategia 2: Quitar paréntesis pero mantener el resto
+      const withoutParenthesis = address.replace(/\s*\([^)]*\)/g, '').trim();
+      if (withoutParenthesis !== address) {
+        console.log('🔄 [GEOCODING] Estrategia 2: Sin paréntesis ->', withoutParenthesis);
+        result = await CatastroApiService.geocodeWithNominatim(withoutParenthesis + ', España');
+        if (result) return result;
+      }
+      
+      // Estrategia 3: Quitar escalera, planta, puerta
+      const simplified = CatastroApiService.simplifyAddressForGeocoding(address);
+      if (simplified !== address) {
+        console.log('🔄 [GEOCODING] Estrategia 3: Simplificada ->', simplified);
+        result = await CatastroApiService.geocodeWithNominatim(simplified + ', España');
+        if (result) return result;
+      }
+      
+      // Estrategia 4: Solo calle, número y ciudad principal
+      const minimal = CatastroApiService.extractMinimalAddress(address);
+      if (minimal) {
+        console.log('🔄 [GEOCODING] Estrategia 4: Mínima ->', minimal);
+        result = await CatastroApiService.geocodeWithNominatim(minimal);
+        if (result) return result;
+      }
+      
+      // Estrategia 5: Solo ciudad y código postal si está disponible
+      const cityOnly = CatastroApiService.extractCityAndPostalCode(address);
+      if (cityOnly) {
+        console.log('🔄 [GEOCODING] Estrategia 5: Solo ciudad ->', cityOnly);
+        result = await CatastroApiService.geocodeWithNominatim(cityOnly);
+        if (result) return result;
+      }
+      
+      console.warn('⚠️ [GEOCODING] Todas las estrategias fallaron para:', address);
+      return null;
+    } catch (error) {
+      console.error('❌ [GEOCODING] Error en geocodificación:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Realiza la petición a Nominatim con rate limiting
+   */
+  private static async geocodeWithNominatim(address: string): Promise<{ lat: number; lng: number } | null> {
+    try {
       const encodedAddress = encodeURIComponent(address);
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&countrycodes=es`,
         {
           headers: {
-            'User-Agent': 'ActivoDigital/1.0'
-          }
+            'User-Agent': 'ActivoDigital/1.0',
+          },
         }
       );
       
@@ -689,15 +788,133 @@ export class CatastroApiService {
       
       const data = await response.json();
       if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lng = parseFloat(data[0].lon);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          return { lat, lng };
-        }
+        const { lat, lon } = data[0];
+        const coords = { lat: parseFloat(lat), lng: parseFloat(lon) };
+        console.log('✅ [GEOCODING] Coordenadas encontradas:', coords);
+        return coords;
       }
+      
       return null;
     } catch (error) {
-      console.error('Error en geocodificación:', error);
+      console.error('❌ [GEOCODING] Error en petición:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Simplifica una dirección eliminando detalles que pueden dificultar la geocodificación
+   */
+  private static simplifyAddressForGeocoding(address: string): string {
+    // Eliminar escalera, planta, puerta y paréntesis
+    let simplified = address
+      .replace(/\s+Esc\.\s+\S+/gi, '')
+      .replace(/\s+Escalera\s+\S+/gi, '')
+      .replace(/\s+Pl\.\s+\S+/gi, '')
+      .replace(/\s+Planta\s+\S+/gi, '')
+      .replace(/\s+Puerta\s+\S+/gi, '')
+      .replace(/\s+\([^)]*\)/g, '') // Eliminar paréntesis con contenido
+      .replace(/\s{2,}/g, ' ') // Eliminar espacios múltiples
+      .trim();
+    
+    return simplified;
+  }
+
+  /**
+   * Extrae la dirección mínima: tipo vía + nombre + número + ciudad
+   * Ejemplo: "CL ALCALA 49 28014 MADRID (MADRID)" -> "CALLE ALCALA 49 MADRID España"
+   */
+  private static extractMinimalAddress(address: string): string | null {
+    try {
+      // Expandir abreviaturas comunes de tipo de vía
+      const typeExpansions: Record<string, string> = {
+        'CL': 'CALLE',
+        'AV': 'AVENIDA',
+        'PZ': 'PLAZA',
+        'PS': 'PASEO',
+        'CR': 'CARRETERA',
+        'CM': 'CAMINO',
+        'PJ': 'PASAJE',
+        'GL': 'GLORIETA',
+        'TR': 'TRAVESIA',
+        'RD': 'RONDA',
+      };
+      
+      // Patrón para extraer: tipo vía, nombre vía, número, ciudad
+      // Ejemplo: "CL ALCALA 49 28014 MADRID (MADRID)"
+      const parts = address.split(/\s+/);
+      if (parts.length < 3) return null;
+      
+      const streetType = parts[0];
+      const expandedType = typeExpansions[streetType.toUpperCase()] || streetType;
+      
+      // Buscar el número (primer elemento que sea solo dígitos)
+      let numberIndex = -1;
+      for (let i = 1; i < parts.length; i++) {
+        if (/^\d+$/.test(parts[i])) {
+          numberIndex = i;
+          break;
+        }
+      }
+      
+      if (numberIndex === -1) return null;
+      
+      // La calle es todo entre el tipo y el número
+      const streetName = parts.slice(1, numberIndex).join(' ');
+      const number = parts[numberIndex];
+      
+      // La ciudad suele estar después del código postal (5 dígitos)
+      let cityIndex = -1;
+      for (let i = numberIndex + 1; i < parts.length; i++) {
+        if (/^\d{5}$/.test(parts[i]) && i + 1 < parts.length) {
+          cityIndex = i + 1;
+          break;
+        }
+      }
+      
+      if (cityIndex === -1) {
+        // Si no hay código postal, la ciudad puede estar al final
+        cityIndex = parts.length - 1;
+      }
+      
+      const city = parts[cityIndex].replace(/[()]/g, '');
+      
+      return `${expandedType} ${streetName} ${number} ${city} España`;
+    } catch (error) {
+      console.error('Error extrayendo dirección mínima:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extrae solo la ciudad y código postal
+   */
+  private static extractCityAndPostalCode(address: string): string | null {
+    try {
+      const parts = address.split(/\s+/);
+      
+      // Buscar código postal (5 dígitos)
+      for (let i = 0; i < parts.length; i++) {
+        if (/^\d{5}$/.test(parts[i])) {
+          const postalCode = parts[i];
+          // La ciudad suele estar después
+          if (i + 1 < parts.length) {
+            const city = parts[i + 1].replace(/[()]/g, '');
+            return `${postalCode} ${city} España`;
+          }
+        }
+      }
+      
+      // Si no encontramos código postal, buscar MADRID, BARCELONA, etc.
+      const cities = ['MADRID', 'BARCELONA', 'VALENCIA', 'SEVILLA', 'ZARAGOZA', 'MALAGA', 'MURCIA', 'BILBAO'];
+      for (const city of cities) {
+        if (address.toUpperCase().includes(city)) {
+          return `${city} España`;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error extrayendo ciudad:', error);
       return null;
     }
   }
@@ -718,28 +935,43 @@ export class CatastroApiService {
       if (direccionObj.direccionCompleta) {
         address = direccionObj.direccionCompleta;
       } else {
-        // Construir dirección desde los campos
-        const addressParts: string[] = [];
-        if (direccionObj.tipoVia) addressParts.push(direccionObj.tipoVia);
-        if (direccionObj.nombreVia) addressParts.push(direccionObj.nombreVia);
-        if (direccionObj.numero) addressParts.push(direccionObj.numero);
-        if (direccionObj.escalera) addressParts.push(`Esc. ${direccionObj.escalera}`);
-        if (direccionObj.planta) addressParts.push(`Pl. ${direccionObj.planta}`);
-        if (direccionObj.puerta) addressParts.push(`Puerta ${direccionObj.puerta}`);
-        address = addressParts.join(' ');
+        // Construir dirección desde los campos, incluyendo localidad para mejorar la geocodificación
+        const streetParts: string[] = [];
+        if (direccionObj.tipoVia) streetParts.push(direccionObj.tipoVia);
+        if (direccionObj.nombreVia) streetParts.push(direccionObj.nombreVia);
+        if (direccionObj.numero) streetParts.push(direccionObj.numero);
+        if (direccionObj.escalera) streetParts.push(`Esc. ${direccionObj.escalera}`);
+        if (direccionObj.planta) streetParts.push(`Pl. ${direccionObj.planta}`);
+        if (direccionObj.puerta) streetParts.push(`Puerta ${direccionObj.puerta}`);
+
+        const localityParts: string[] = [];
+        if (direccionObj.nombreMunicipio) localityParts.push(direccionObj.nombreMunicipio);
+        if (direccionObj.codigoPostal) localityParts.push(direccionObj.codigoPostal);
+        if (direccionObj.nombreProvincia) localityParts.push(direccionObj.nombreProvincia);
+
+        const street = streetParts.join(' ');
+        const locality = localityParts.join(', ');
+        address = [street, locality].filter(Boolean).join(', ');
       }
     }
     
     // Si no hay dirección, construir desde campos individuales (compatibilidad)
     if (!address) {
-      const addressParts: string[] = [];
-      if (inmueble.tipoVia) addressParts.push(inmueble.tipoVia);
-      if (inmueble.nombreVia) addressParts.push(inmueble.nombreVia);
-      if (inmueble.numero) addressParts.push(inmueble.numero);
-      if (inmueble.escalera) addressParts.push(`Esc. ${inmueble.escalera}`);
-      if (inmueble.planta) addressParts.push(`Pl. ${inmueble.planta}`);
-      if (inmueble.puerta) addressParts.push(`Puerta ${inmueble.puerta}`);
-      address = addressParts.join(' ');
+      const streetParts: string[] = [];
+      if (inmueble.tipoVia) streetParts.push(inmueble.tipoVia);
+      if (inmueble.nombreVia) streetParts.push(inmueble.nombreVia);
+      if (inmueble.numero) streetParts.push(inmueble.numero);
+      if (inmueble.escalera) streetParts.push(`Esc. ${inmueble.escalera}`);
+      if (inmueble.planta) streetParts.push(`Pl. ${inmueble.planta}`);
+      if (inmueble.puerta) streetParts.push(`Puerta ${inmueble.puerta}`);
+
+      const localityParts: string[] = [];
+      if ((inmueble as any).municipio) localityParts.push((inmueble as any).municipio);
+      if ((inmueble as any).provincia) localityParts.push((inmueble as any).provincia);
+
+      const street = streetParts.join(' ');
+      const locality = localityParts.join(', ');
+      address = [street, locality].filter(Boolean).join(', ');
     }
     
     // Construir nombre del edificio
@@ -776,13 +1008,28 @@ export class CatastroApiService {
     let lat: number | undefined;
     let lng: number | undefined;
     
+    // 🔍 LOG: Campos disponibles en el inmueble para coordenadas
+    console.log('📍 [COORDENADAS] Campos disponibles en inmueble:', {
+      lat: inmueble.lat,
+      lng: inmueble.lng,
+      latitude: inmueble.latitude,
+      longitude: inmueble.longitude,
+      x: inmueble.x,
+      y: inmueble.y,
+      coordenadas: inmueble.coordenadas,
+      // Mostrar todas las propiedades del objeto para encontrar coordenadas
+      todasLasPropiedades: Object.keys(inmueble)
+    });
+    
     // Intentar diferentes campos posibles para coordenadas
     if (inmueble.lat != null && inmueble.lng != null) {
       lat = typeof inmueble.lat === 'string' ? parseFloat(inmueble.lat) : inmueble.lat;
       lng = typeof inmueble.lng === 'string' ? parseFloat(inmueble.lng) : inmueble.lng;
+      console.log('📍 [COORDENADAS] Extraídas de lat/lng:', { lat, lng });
     } else if (inmueble.latitude != null && inmueble.longitude != null) {
       lat = typeof inmueble.latitude === 'string' ? parseFloat(inmueble.latitude) : inmueble.latitude;
       lng = typeof inmueble.longitude === 'string' ? parseFloat(inmueble.longitude) : inmueble.longitude;
+      console.log('📍 [COORDENADAS] Extraídas de latitude/longitude:', { lat, lng });
     } else if (inmueble.x != null && inmueble.y != null) {
       const x = typeof inmueble.x === 'string' ? parseFloat(inmueble.x) : inmueble.x;
       const y = typeof inmueble.y === 'string' ? parseFloat(inmueble.y) : inmueble.y;
@@ -791,12 +1038,14 @@ export class CatastroApiService {
       // Podrían ser coordenadas geográficas o UTM/otro sistema
       lng = x;
       lat = y;
+      console.log('📍 [COORDENADAS] Extraídas de x/y:', { lat, lng });
     } else if (inmueble.coordenadas) {
       // Si viene como objeto coordenadas
       const coords = inmueble.coordenadas;
       if (coords.lat != null && coords.lng != null) {
         lat = typeof coords.lat === 'string' ? parseFloat(coords.lat) : coords.lat;
         lng = typeof coords.lng === 'string' ? parseFloat(coords.lng) : coords.lng;
+        console.log('📍 [COORDENADAS] Extraídas de objeto coordenadas:', { lat, lng });
       }
     }
     
@@ -810,6 +1059,8 @@ export class CatastroApiService {
         console.warn('⚠️ Coordenadas fuera de rango válido - descartando:', { lat, lng });
         lat = undefined;
         lng = undefined;
+      } else {
+        console.log('✅ [COORDENADAS] Coordenadas válidas encontradas:', { lat, lng });
       }
     } else {
       console.warn('⚠️ No se encontraron coordenadas en la respuesta - se intentará geocodificar la dirección');
@@ -855,10 +1106,12 @@ export class CatastroApiService {
 
     // Si no hay coordenadas, intentar geocodificar la dirección
     if ((lat == null || lng == null) && address) {
+      console.log('🌍 [GEOCODING] Intentando geocodificar dirección:', address);
       const geocoded = await this.geocodeAddress(address);
       if (geocoded) {
         lat = geocoded.lat;
         lng = geocoded.lng;
+        console.log('✅ [GEOCODING] Coordenadas obtenidas por geocodificación:', { lat, lng });
       } else {
         console.warn('⚠️ No se pudieron obtener coordenadas por geocodificación');
       }
@@ -874,7 +1127,7 @@ export class CatastroApiService {
     // Solo asignar si tiene valor (no string vacío después del trim)
     cadastralReference = cadastralReference && cadastralReference.length > 0 ? cadastralReference : undefined;
 
-    return {
+    const result = {
       name,
       address,
       cadastralReference,
@@ -886,5 +1139,10 @@ export class CatastroApiService {
       lng,
       squareMeters,
     };
+    
+    // 🔍 LOG: Datos finales mapeados para el edificio
+    console.log('🏗️ [MAPEO FINAL] Datos del edificio mapeados:', result);
+    
+    return result;
   }
 }
