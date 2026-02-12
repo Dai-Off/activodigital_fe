@@ -256,18 +256,35 @@ const CreateBuildingFromCatastro: React.FC<CreateBuildingFromCatastroProps> = ({
     };
 
     // Pasar coordenadas si están disponibles y válidas
-    const coordinates = 
+    const hasValidCoords = 
       catastroDataLoaded.lat != null && 
-      catastroDataLoaded.lng != null && 
+      catastroDataLoaded.lng != null &&
       catastroDataLoaded.lat !== 0 && 
-      catastroDataLoaded.lng !== 0 &&
-      catastroDataLoaded.lat >= -90 && 
-      catastroDataLoaded.lat <= 90 &&
-      catastroDataLoaded.lng >= -180 && 
-      catastroDataLoaded.lng <= 180
-        ? { lat: catastroDataLoaded.lat, lng: catastroDataLoaded.lng }
+      catastroDataLoaded.lng !== 0;
+    
+    console.log('🔍 [CATASTRO UI] Validando coordenadas antes de pasar al wizard:', {
+      lat: catastroDataLoaded.lat,
+      lng: catastroDataLoaded.lng,
+      esLatValida: catastroDataLoaded.lat != null,
+      esLngValida: catastroDataLoaded.lng != null,
+      noEsCero: hasValidCoords,
+      dentroDeRango: hasValidCoords && 
+        catastroDataLoaded.lat! >= -90 && 
+        catastroDataLoaded.lat! <= 90 && 
+        catastroDataLoaded.lng! >= -180 && 
+        catastroDataLoaded.lng! <= 180
+    });
+    
+    const coordinates = 
+      hasValidCoords &&
+      catastroDataLoaded.lat! >= -90 && 
+      catastroDataLoaded.lat! <= 90 &&
+      catastroDataLoaded.lng! >= -180 && 
+      catastroDataLoaded.lng! <= 180
+        ? { lat: catastroDataLoaded.lat!, lng: catastroDataLoaded.lng! }
         : undefined;
 
+    console.log('📤 [CATASTRO UI] Coordenadas que se envían al wizard:', coordinates);
     onDataLoaded(buildingData, coordinates);
   };
 

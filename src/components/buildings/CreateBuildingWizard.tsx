@@ -127,6 +127,14 @@ const CreateBuildingWizard: React.FC = () => {
     data: BuildingStep1Data,
     coordinates?: { lat: number; lng: number }
   ) => {
+    console.log('📥 [WIZARD] Datos recibidos de Catastro:', {
+      direccion: data.address,
+      coordenadasRecibidas: coordinates,
+      tieneCoords: !!coordinates,
+      lat: coordinates?.lat,
+      lng: coordinates?.lng
+    });
+    
     setStep1Data(data);
     // Inicializar step2Data con la dirección y coordenadas si están disponibles.
     // Si Catastro/geocodificación no devuelve coordenadas válidas,
@@ -140,6 +148,8 @@ const CreateBuildingWizard: React.FC = () => {
       mainPhotoIndex: 0,
     };
 
+    console.log('💾 [WIZARD] Step2Data configurado:', step2DataUpdate);
+    
     setStep2Data(step2DataUpdate);
     // A partir de este punto tratamos el flujo como "manual":
     // el paso 0 será el formulario de datos generales con los datos de Catastro pre-rellenados.
