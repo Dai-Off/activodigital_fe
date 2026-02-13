@@ -151,6 +151,81 @@ export class ServiceInvoicesService {
   }
 
   /**
+   * Obtiene los costes mensuales del mes más reciente con datos.
+   * Primero intenta el mes actual; si no hay facturas, busca el último mes con datos.
+   */
+  static async getLatestMonthlyCostsForBuilding(
+    buildingId: string
+  ): Promise<MonthlyServiceCosts> {
+    // Intentar primero con el mes actual
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    const currentMonthCosts = await this.getMonthlyCostsForBuilding(
+      buildingId,
+      currentYear,
+      currentMonth
+    );
+
+    // Si hay datos para el mes actual, usarlos
+    if (currentMonthCosts.total > 0) {
+      return currentMonthCosts;
+    }
+
+    // Si no hay datos para el mes actual, buscar el último mes con datos
+    const allInvoices = await this.getByBuilding(buildingId);
+
+    if (!allInvoices.length) {
+      return currentMonthCosts; // Devolver estructura vacía
+    }
+
+    // Encontrar la factura más reciente
+    const sorted = [...allInvoices].sort(
+      (a, b) => new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime()
+    );
+
+    const latestDate = new Date(sorted[0].invoice_date);
+    const latestYear = latestDate.getFullYear();
+    const latestMonth = latestDate.getMonth() + 1;
+
+    // Filtrar facturas de ese mes y agregar
+    const monthInvoices = allInvoices.filter((inv) => {
+      const d = new Date(inv.invoice_date);
+      return d.getFullYear() === latestYear && d.getMonth() + 1 === latestMonth;
+    });
+
+    const initialTotals: Record<ServiceType, number> = {
+      electricity: 0,
+      water: 0,
+      gas: 0,
+      ibi: 0,
+      waste: 0,
+    };
+
+    const byService = monthInvoices.reduce((acc, invoice) => {
+      const amount =
+        typeof invoice.amount_eur === "number" && !Number.isNaN(invoice.amount_eur)
+          ? invoice.amount_eur
+          : 0;
+      acc[invoice.service_type] += amount;
+      return acc;
+    }, initialTotals);
+
+    const total = Object.values(byService).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    return {
+      year: latestYear,
+      month: latestMonth,
+      byService,
+      total,
+    };
+  }
+
+  /**
    * Obtener una factura de servicio por ID
    * GET /service-invoices/:id
    */
