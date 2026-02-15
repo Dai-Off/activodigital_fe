@@ -146,6 +146,8 @@ export function AppHeader() {
         return "/green-financial";
       case "financial-twin":
         return "/financial-twin";
+      case "data-room":
+        return "/data-room";
       case "cfo-due-diligence":
         // Si hay un ID antes, construir la ruta correcta
         if (index > 0 && isUUID(segments[index - 1])) {
@@ -224,7 +226,9 @@ export function AppHeader() {
         return translate("greenFinancial", "Financiación Verde");
       case "financial-twin":
         return translate("financialTwin", "Gemelo Financiero");
-      case "cfo-due-diligence":
+      case "data-room":
+        return translate("dataRoom", "Data Room");
+        case "cfo-due-diligence":
         return translate("cfoDueDiligence", "CFO Due Diligence");
       case "cfo-simulation":
         return translate("cfoSimulation", "Simulación CFO");

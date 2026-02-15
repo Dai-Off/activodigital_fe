@@ -65,6 +65,7 @@ import { GeneralGestion } from "~/components/GeneralGestion";
 import { Events } from "~/components/Events";
 import Expired from "~/components/Expired";
 import Configuration from "~/components/Configuration";
+import DataRoom from "~/components/dashboard/GreenFinancial/DataRoom";
 
 // Componente para redirigir /building/:id a /building/:id/general-view
 const NavigateToGeneralView = () => {
@@ -123,9 +124,7 @@ const SectionsListPage = () => {
                   />
                 </svg>
               </li>
-              <li className="text-gray-900 font-medium">
-                {t("sections")}
-              </li>
+              <li className="text-gray-900 font-medium">{t("sections")}</li>
             </ol>
           </nav>
         </div>
@@ -245,6 +244,7 @@ export const AppRouter = () => {
         >
           <Route index element={<OpportunityRadar />} />
           <Route path="financial-twin" element={<FinancialTwin />}></Route>
+          <Route path="data-room" element={<DataRoom />}></Route>
         </Route>
         <Route
           path="/expired"

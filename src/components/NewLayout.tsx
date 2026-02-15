@@ -72,7 +72,7 @@ function NewLayoutContent() {
       } else if (location.pathname.startsWith("/digital-book/section/")) {
         // Ruta: /digital-book/section/:buildingId/:sectionId
         const match = location.pathname.match(
-          /\/digital-book\/section\/([^/]+)/
+          /\/digital-book\/section\/([^/]+)/,
         );
         buildingIdFromPath = match ? match[1] : null;
       } else if (location.pathname.startsWith("/cfo-intake/")) {
@@ -85,7 +85,7 @@ function NewLayoutContent() {
       ) {
         // Ruta: /building/:id/analysis-general
         const match = location.pathname.match(
-          /\/building\/([^/]+)\/analysis-general/
+          /\/building\/([^/]+)\/analysis-general/,
         );
         buildingIdFromPath = match ? match[1] : null;
       } else if (location.pathname.startsWith("/cfo-due-diligence/")) {
@@ -184,7 +184,6 @@ function NewLayoutContent() {
       return <Outlet />;
     }
 
-
     // Por defecto, usar Outlet para todas las rutas (incluyendo /assets)
     // Esto permite que el router maneje qué componente renderizar
     return <Outlet />;
@@ -215,7 +214,7 @@ function NewLayoutContent() {
     "NewLayout renderizando, ruta:",
     location.pathname,
     "showSecondaryNav:",
-    showSecondaryNav
+    showSecondaryNav,
   );
 
   console.log(location.pathname);
@@ -245,7 +244,8 @@ function NewLayoutContent() {
         >
           <ErrorBoundary>
             {location.pathname === "/green-financial" ||
-            location.pathname === "/green-financial/financial-twin" ? (
+            location.pathname === "/green-financial/financial-twin" ||
+            location.pathname === "/green-financial/data-room" ? (
               <HeaderGreenFinancial />
             ) : (
               <AppHeader />
@@ -254,20 +254,21 @@ function NewLayoutContent() {
 
           <main
             className={
-              location.pathname === "/green-financial"
+              location.pathname.startsWith("/green-financial")
                 ? `
               px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
               max-w-[1920px] mx-auto
             `
-                : location.pathname === "/expired" || location.pathname.startsWith("/expired/")
-                ? `
+                : location.pathname === "/expired" ||
+                    location.pathname.startsWith("/expired/")
+                  ? `
               px-2 md:px-4 lg:px-6
               py-6 md:py-8
               max-w-none
               pt-[140px] md:pt-[104px]
             `
-                : `
+                  : `
               px-3 md:px-6 lg:px-8 xl:px-12
               py-3 md:py-4 
               max-w-[1920px] mx-auto

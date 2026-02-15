@@ -88,25 +88,29 @@ const FinancialTwin: React.FC = () => {
         setBuildingData(res);
       });
     }
-  }, [selectedBuildingId, location])
-
+  }, [selectedBuildingId, location]);
 
   return (
     <div>
       <HelpersTwin
         active={showSection.showHelpers}
-        setActive={(value) => setShowSection((prev) => ({ ...prev, showHelpers: value }))}
+        setActive={(value) =>
+          setShowSection((prev) => ({ ...prev, showHelpers: value }))
+        }
       />
 
-      <ModalFinancial active={financialTwin} setActive={(value) => setFinancialTwin(value)} />
+      <ModalFinancial
+        active={financialTwin}
+        setActive={(value) => setFinancialTwin(value)}
+      />
 
-      <div style={{ marginTop: "-90px" }}>
+      <div>
         <div className="max-w-[1800px] mx-auto space-y-6 px-4 md:px-0">
           <HeaderControls
             t={t}
             isMobile={isMobile}
             onExport={() => {
-              return null
+              return null;
             }}
           />
           {buildingData ? (
