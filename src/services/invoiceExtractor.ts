@@ -26,6 +26,37 @@ export async function extractInvoiceData(file: File): Promise<InvoiceExtractorRe
   return response.data || response;
 }
 
+/** Encola el procesamiento de la factura; la app no se bloquea y el usuario recibe notificación al terminar. */
+export async function extractInvoiceDataAsync(params: {
+  document_url: string;
+  document_filename: string;
+  building_id: string;
+}): Promise<{ job_id: string }> {
+  const response = await apiFetch('/ai/extract-invoice-async', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return { job_id: response.job_id };
+}
+
+export interface InvoiceJobResponse {
+  job_id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  document_url?: string;
+  document_filename?: string;
+  extracted_data?: InvoiceExtractorResponse | null;
+  error_message?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Obtiene el estado y datos de un job de factura (para abrir el modal de revisión). */
+export async function getInvoiceJob(jobId: string): Promise<InvoiceJobResponse> {
+  const response = await apiFetch(`/ai/invoice-job/${jobId}`, { method: 'GET' });
+  return response as InvoiceJobResponse;
+}
+
 export async function checkInvoiceExtractorHealth(): Promise<boolean> {
   try {
     await apiFetch('/health', { method: 'GET' });

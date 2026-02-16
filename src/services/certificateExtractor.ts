@@ -1,4 +1,4 @@
-import { certificateExtractorFetch } from './api';
+import { certificateExtractorFetch, apiFetch } from './api';
 import type { EnergyCertificateReviewEditable, EnergyRatingLetter, EnergyCertificateKind } from '../types/buildings';
 
 // Tipos de respuesta del certificate extractor
@@ -65,7 +65,7 @@ export async function extractCertificateData(imageFile: File): Promise<Certifica
   }
 }
 
-// Función para verificar salud del servicio
+// Función para verificar salud del servicio (extractor externo)
 export async function checkCertificateExtractorHealth(): Promise<boolean> {
   try {
     await certificateExtractorFetch('/health', {
@@ -76,4 +76,45 @@ export async function checkCertificateExtractorHealth(): Promise<boolean> {
     console.warn('Certificate extractor service is not available:', error);
     return false;
   }
+}
+
+// ——— Procesamiento asíncrono vía backend (cola Redis) ———
+
+/** Encola el procesamiento del certificado; la app no se bloquea y el usuario recibe notificación al terminar. */
+export async function extractCertificateDataAsync(params: {
+  image_url: string;
+  document_filename: string;
+  building_id: string;
+  storage_path?: string;
+  storage_file_name?: string;
+  file_size?: number;
+  mime_type?: string;
+}): Promise<{ job_id: string }> {
+  const response = await apiFetch('/ai/extract-certificate-async', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return { job_id: response.job_id };
+}
+
+export interface CertificateJobResponse {
+  job_id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  image_url?: string;
+  document_filename?: string;
+  extracted_data?: CertificateExtractorResponse | null;
+  error_message?: string | null;
+  storage_path?: string;
+  storage_file_name?: string;
+  file_size?: number;
+  mime_type?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Obtiene el estado y datos de un job de certificado (para abrir el modal de revisión). */
+export async function getCertificateJob(jobId: string): Promise<CertificateJobResponse> {
+  const response = await apiFetch(`/ai/certificate-job/${jobId}`, { method: 'GET' });
+  return response as CertificateJobResponse;
 }

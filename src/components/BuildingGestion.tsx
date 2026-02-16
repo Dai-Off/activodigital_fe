@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { type Building, BuildingsApiService } from "~/services/buildingsApi";
 import { type Document, DocumentsApiService } from "~/services/documentsApi";
 import { BuildingCertificatesLoading } from "./ui/dashboardLoading";
@@ -56,16 +56,17 @@ import {
   getServiceTypeLabel
 } from "~/services/serviceInvoices";
 import { useLanguage } from "~/contexts/LanguageContext";
-import { extractInvoiceData } from "~/services/invoiceExtractor";
+import { extractInvoiceDataAsync, getInvoiceJob } from "~/services/invoiceExtractor";
+import { useProcessingJobPolling } from "~/hooks/useProcessingJobPolling";
 import { Sparkles } from "lucide-react";
 import { EnergyCertificatesService } from "~/services/energyCertificates";
 import {
-  extractCertificateData,
   mapAIResponseToReviewData,
-  checkCertificateExtractorHealth,
+  extractCertificateDataAsync,
+  getCertificateJob,
+  type CertificateJobResponse,
 } from "~/services/certificateExtractor";
 import { uploadCertificateImage } from "~/services/certificateUpload";
-import type { AIExtractedEnergyCertificateData } from "~/types/buildings";
 
 // Tipo para categorías de documentos
 type DocumentCategory = {
@@ -503,8 +504,10 @@ const DocumentsLoadingState = () => (
 export function BuildingGestion() {
   const { t } = useLanguage()
   const { id: buildingId } = useParams<{ id: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showInfo } = useToast();
   const [building, setBuilding] = useState<Building | null>(null);
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(true);
@@ -548,6 +551,7 @@ export function BuildingGestion() {
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(
     null,
   );
+  const [uploadedDocumentFilename, setUploadedDocumentFilename] = useState<string | null>(null);
   const [invoiceStep, setInvoiceStep] = useState<
     "upload" | "processing" | "review"
   >("upload");
@@ -638,6 +642,145 @@ export function BuildingGestion() {
       });
   }, [buildingId]);
 
+  // Helper: abrir modal de revisión con datos del job
+  const openReviewModalFromJob = (job: { extracted_data?: unknown; document_url?: string; document_filename?: string }) => {
+    const d = job.extracted_data as Record<string, unknown> | undefined;
+    if (!d || !job.document_url) return;
+    setUploadedDocumentUrl(job.document_url);
+    setUploadedDocumentFilename((job.document_filename as string) || null);
+    setServiceInvoiceData({
+      service_type: (d.service_type as ServiceType) || "electricity",
+      invoice_date: (d.invoice_date as string) || new Date().toISOString().split("T")[0],
+      amount_eur: (d.amount_eur as number) ?? 0,
+      units: (d.units as number | null) ?? null,
+      notes: (d.notes as string) ?? "",
+      provider: (d.provider as string) ?? "",
+      invoice_number: (d.invoice_number as string) ?? "",
+      period_start: (d.period_start as string) ?? "",
+      period_end: (d.period_end as string) ?? "",
+      expiration_date: (d.expiration_date as string) ?? "",
+      is_overdue: (d.is_overdue as boolean) ?? false,
+    });
+    setInvoiceStep("review");
+    setIsServiceInvoiceModalOpen(true);
+  };
+
+  // Hook reutilizable: polling de jobs de factura (fallback si el socket no conecta)
+  const { addPendingJob: addPendingInvoiceJob } = useProcessingJobPolling({
+    jobType: "invoice",
+    buildingId,
+    getJobStatus: getInvoiceJob,
+    onCompleted: (job, meta) => {
+      if (job.extracted_data && job.document_url) {
+        showInfo("Factura procesada", `El documento ${meta.documentFilename} ya ha sido procesado.`);
+        openReviewModalFromJob(job);
+      }
+    },
+    onFailed: (job) => {
+      showError("Error al procesar", job.error_message || "La factura no pudo ser procesada.");
+    },
+    pollingIntervalMs: 12000,
+  });
+
+  // Abrir modal de revisión cuando se llega desde la notificación "Factura procesada"
+  const openJobId = (location.state as { openJobId?: string } | null)?.openJobId;
+  useEffect(() => {
+    if (!openJobId || !buildingId) return;
+    getInvoiceJob(openJobId)
+      .then((job) => {
+        if (job.status === "completed" && job.extracted_data && job.document_url) {
+          openReviewModalFromJob(job);
+        } else if (job.status === "failed") {
+          showError("Error al procesar", job.error_message || "La factura no pudo ser procesada.");
+        }
+      })
+      .catch(() => {
+        showError("Error", "No se pudo cargar la factura procesada.");
+      })
+      .finally(() => {
+        navigate(location.pathname, { replace: true, state: {} });
+      });
+  }, [openJobId, buildingId, navigate, location.pathname, showError]);
+
+  // Helper: abrir modal CEE con datos del job de certificado (crea sesión y rellena formulario)
+  const openReviewModalFromCertificateJob = async (job: CertificateJobResponse) => {
+    if (!buildingId || job.status !== "completed" || !job.extracted_data || !job.image_url) return;
+    const aiResponse = job.extracted_data as Parameters<typeof mapAIResponseToReviewData>[0];
+    const mappedData = mapAIResponseToReviewData(aiResponse);
+    try {
+      const session = await EnergyCertificatesService.createSimpleSession(buildingId);
+      setCeeSessionId(session.id);
+      setCeeReviewData({
+        rating: (mappedData.rating as any) ?? "",
+        primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? "",
+        emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? "",
+        certificateNumber: mappedData.certificateNumber ?? "",
+        scope: mappedData.scope ?? "building",
+        issuerName: mappedData.issuerName ?? "",
+        issueDate: mappedData.issueDate ?? "",
+        expiryDate: mappedData.expiryDate ?? "",
+        propertyReference: mappedData.propertyReference ?? "",
+        notes: mappedData.notes ?? "",
+        imageUrl: job.image_url,
+        imageFilename: job.document_filename ?? "",
+        imageUploadedAt: new Date().toISOString(),
+      });
+      if (job.storage_path && job.storage_file_name && job.document_filename != null) {
+        setCeeUploadMeta({
+          storagePath: job.storage_path,
+          storageFileName: job.storage_file_name,
+          fileName: job.document_filename,
+          fileSize: job.file_size ?? 0,
+          mimeType: job.mime_type ?? "image/jpeg",
+        });
+      } else {
+        setCeeUploadMeta(null);
+      }
+      setCeeStep("review");
+      setIsCeeModalOpen(true);
+    } catch (e) {
+      console.error("Error abriendo modal CEE desde job:", e);
+      showError("Error", "No se pudo cargar el certificado procesado.");
+    }
+  };
+
+  // Hook: polling de jobs de certificado energético
+  const { addPendingJob: addPendingCertificateJob } = useProcessingJobPolling<CertificateJobResponse>({
+    jobType: "certificate",
+    buildingId,
+    getJobStatus: getCertificateJob,
+    onCompleted: (job, meta) => {
+      if (job.extracted_data && job.image_url) {
+        showInfo("Certificado procesado", `El certificado ${meta.documentFilename} ya ha sido procesado.`);
+        openReviewModalFromCertificateJob(job);
+      }
+    },
+    onFailed: (job) => {
+      showError("Error al procesar certificado", job.error_message || "No se pudo procesar el certificado.");
+    },
+    pollingIntervalMs: 12000,
+  });
+
+  // Abrir modal CEE cuando se llega desde la notificación "Certificado energético procesado"
+  const openCertificateJobId = (location.state as { openCertificateJobId?: string } | null)?.openCertificateJobId;
+  useEffect(() => {
+    if (!openCertificateJobId || !buildingId) return;
+    getCertificateJob(openCertificateJobId)
+      .then((job) => {
+        if (job.status === "completed" && job.extracted_data && job.image_url) {
+          openReviewModalFromCertificateJob(job);
+        } else if (job.status === "failed") {
+          showError("Error al procesar", job.error_message || "El certificado no pudo ser procesado.");
+        }
+      })
+      .catch(() => {
+        showError("Error", "No se pudo cargar el certificado procesado.");
+      })
+      .finally(() => {
+        navigate(location.pathname, { replace: true, state: {} });
+      });
+  }, [openCertificateJobId, buildingId, navigate, location.pathname, showError]);
+
   if (loading) {
     return <BuildingCertificatesLoading />;
   }
@@ -709,72 +852,37 @@ export function BuildingGestion() {
           showError("Error", "El certificado energético debe ser una imagen (JPG, PNG)");
           return;
         }
-        setIsUploadModalOpen(false);
-        setSelectedCategory("");
-        setIsCeeModalOpen(true);
-        setCeeStep("processing");
         try {
-          const healthOk = await checkCertificateExtractorHealth();
-          if (!healthOk) {
-            showError("Servicio de IA no disponible", "El extractor de certificados no está disponible. Intenta más tarde.");
-            setIsCeeModalOpen(false);
-            return;
-          }
           const uploadResult = await uploadCertificateImage(selectedFile, buildingId);
           if (!uploadResult.success || !uploadResult.image) {
             showError("Error al subir", uploadResult.error || "No se pudo subir la imagen");
-            setIsCeeModalOpen(false);
             return;
           }
-          setCeeUploadMeta({
-            storagePath: uploadResult.image.storagePath,
-            storageFileName: uploadResult.image.storageFileName,
-            fileName: selectedFile.name,
-            fileSize: selectedFile.size,
-            mimeType: selectedFile.type,
+          const { job_id } = await extractCertificateDataAsync({
+            image_url: uploadResult.image.url,
+            document_filename: selectedFile.name,
+            building_id: buildingId,
+            storage_path: uploadResult.image.storagePath,
+            storage_file_name: uploadResult.image.storageFileName,
+            file_size: selectedFile.size,
+            mime_type: selectedFile.type,
           });
-          const session = await EnergyCertificatesService.createSimpleSession(buildingId);
-          setCeeSessionId(session.id);
-          const aiResponse = await extractCertificateData(selectedFile);
-          const mappedData = mapAIResponseToReviewData(aiResponse);
-          const extractedData: AIExtractedEnergyCertificateData = {
-            rating: { value: aiResponse.rating_letter as any, confidence: 0.95, source: "AI OCR" },
-            primaryEnergyKwhPerM2Year: { value: aiResponse.energy_consumption_kwh_m2y, confidence: 0.95, source: "AI OCR" },
-            emissionsKgCo2PerM2Year: { value: aiResponse.co2_emissions_kg_m2y, confidence: 0.95, source: "AI OCR" },
-            certificateNumber: { value: aiResponse.registry_code, confidence: 0.95, source: "AI OCR" },
-            scope: { value: "building" as any, confidence: 0.95, source: "AI OCR" },
-            issuerName: { value: aiResponse.normative, confidence: 0.95, source: "AI OCR" },
-            issueDate: { value: aiResponse.registry_date, confidence: 0.95, source: "AI OCR" },
-            expiryDate: { value: aiResponse.valid_until, confidence: 0.95, source: "AI OCR" },
-            propertyReference: { value: aiResponse.cadastral_reference, confidence: 0.95, source: "AI OCR" },
-            notes: { value: mappedData.notes ?? null, confidence: 0.95, source: "AI OCR" },
-          };
-          await EnergyCertificatesService.updateWithAIData(session.id, extractedData);
-          setCeeReviewData({
-            rating: (mappedData.rating as any) ?? "",
-            primaryEnergyKwhPerM2Year: mappedData.primaryEnergyKwhPerM2Year ?? "",
-            emissionsKgCo2PerM2Year: mappedData.emissionsKgCo2PerM2Year ?? "",
-            certificateNumber: mappedData.certificateNumber ?? "",
-            scope: mappedData.scope ?? "building",
-            issuerName: mappedData.issuerName ?? "",
-            issueDate: mappedData.issueDate ?? "",
-            expiryDate: mappedData.expiryDate ?? "",
-            propertyReference: mappedData.propertyReference ?? "",
-            notes: mappedData.notes ?? "",
-            imageUrl: uploadResult.image.url,
-            imageFilename: uploadResult.image.filename,
-            imageUploadedAt: uploadResult.image.uploadedAt.toISOString(),
-          });
-          setCeeStep("review");
-        } catch (err) {
-          console.error("Error procesando certificado energético:", err);
-          showError(
-            "Advertencia",
-            "No se pudieron extraer los datos. Completa los campos manualmente y guarda.",
+          addPendingCertificateJob(job_id, buildingId, selectedFile.name);
+          showInfo(
+            "Certificado en proceso",
+            `${selectedFile.name} se está procesando. Puedes seguir usando la app. Recibirás una notificación cuando esté listo.`,
           );
-          setCeeStep("review");
-        } finally {
+          reloadDocuments();
+          setIsUploadModalOpen(false);
           setSelectedFile(null);
+          setSelectedCategory("");
+        } catch (err) {
+          console.error("Error al encolar certificado:", err);
+          showError(
+            "Error",
+            "No se pudo encolar el procesamiento. Intenta de nuevo más tarde.",
+          );
+        } finally {
           setIsUploading(false);
         }
         return;
@@ -801,44 +909,30 @@ export function BuildingGestion() {
           (cat) => cat.value === selectedCategory,
         )?.label === "Financiero/Contable";
 
-      if (isFinancialCategory && result.document.url && selectedFile) {
-        setUploadedDocumentUrl(result.document.url);
-        setIsUploadModalOpen(false);
-        setSelectedCategory("");
-
-        setIsServiceInvoiceModalOpen(true);
-        setInvoiceStep("processing");
-
+      if (isFinancialCategory && result.document.url) {
         try {
-          const aiResponse = await extractInvoiceData(selectedFile);
-
-          setServiceInvoiceData({
-            service_type: aiResponse.service_type || "electricity",
-            invoice_date:
-              aiResponse.invoice_date ||
-              new Date().toISOString().split("T")[0],
-            amount_eur: aiResponse.amount_eur || 0,
-            units: aiResponse.units,
-            notes: aiResponse.notes || "",
-            provider: aiResponse.provider || "",
-            invoice_number: aiResponse.invoice_number || "",
-            period_start: aiResponse.period_start || "",
-            period_end: aiResponse.period_end || "",
-            expiration_date: aiResponse.expiration_date || "",
-            is_overdue: aiResponse.is_overdue || false,
+          const { job_id } = await extractInvoiceDataAsync({
+            document_url: result.document.url,
+            document_filename: result.document.fileName || selectedFile.name,
+            building_id: buildingId,
           });
-
-          setInvoiceStep("review");
-        } catch (error) {
-          console.error("Error procesando factura con IA:", error);
-          showError(
-            "Advertencia",
-            "No se pudieron extraer los datos automáticamente. Por favor, complétalos manualmente.",
+          const docName = result.document.fileName || selectedFile.name;
+          addPendingInvoiceJob(job_id, buildingId, docName);
+          showInfo(
+            "Documento en proceso",
+            `${docName} se está procesando. Puedes seguir usando la app. Recibirás una notificación cuando esté listo.`,
           );
-          setInvoiceStep("review");
-        } finally {
-          setSelectedFile(null);
+        } catch (error) {
+          console.error("Error al encolar factura:", error);
+          showError(
+            "Error",
+            "No se pudo encolar el procesamiento. Intenta de nuevo más tarde.",
+          );
         }
+        reloadDocuments();
+        setIsUploadModalOpen(false);
+        setSelectedFile(null);
+        setSelectedCategory("");
       } else {
         // Cualquier otra categoría: simplemente mostrar éxito
         showSuccess(
@@ -894,6 +988,7 @@ export function BuildingGestion() {
 
     try {
       const documentFilename =
+        uploadedDocumentFilename ||
         selectedFile?.name ||
         uploadedDocumentUrl?.split("/").pop()?.split("?")[0] ||
         null;
@@ -928,6 +1023,7 @@ export function BuildingGestion() {
       setSelectedFile(null);
       setSelectedCategory("");
       setUploadedDocumentUrl(null);
+      setUploadedDocumentFilename(null);
       setServiceInvoiceData({
         service_type: "electricity",
         invoice_date: new Date().toISOString().split("T")[0],
@@ -959,6 +1055,7 @@ export function BuildingGestion() {
     setSelectedFile(null);
     setSelectedCategory("");
     setUploadedDocumentUrl(null);
+    setUploadedDocumentFilename(null);
     setServiceInvoiceData({
       service_type: "electricity",
       invoice_date: new Date().toISOString().split("T")[0],
