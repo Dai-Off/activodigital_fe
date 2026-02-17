@@ -1,10 +1,12 @@
 import {
   Building2,
+  ChevronDown,
   ChevronRight,
   CircleAlert,
   CircleCheck,
   Clock,
   Download,
+  FileText,
   Info,
   LucideAward,
   LucideScale,
@@ -12,8 +14,9 @@ import {
   TriangleAlert,
   Upload,
 } from "lucide-react";
+import { DataRoomExportService } from "~/services/dataRoomExport";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DocumentItem from "./componentes/DocumentItem";
 
 const DataRoom = () => {
@@ -31,17 +34,22 @@ const DataRoom = () => {
     subcategories: number;
   }
 
-  const categories: Category[] = [
+  interface Document {
+    name: string;
+    category: string;
+    subcategory: string;
+    type: "mandatory" | "optional";
+    status: "verified" | "pending" | "rejected";
+  }
+
+  // Definición base de categorías (sin conteos)
+  const categoryDefs = [
     {
       id: "technical",
       name: t("dataRoom.technicalDocs"),
       icon: LucideWrench,
       guide: t("dataRoom.guideTechnical"),
       color: "blue",
-      mandatory: 10,
-      verified: 7,
-      optional: 2,
-      subcategories: 5,
     },
     {
       id: "legal",
@@ -49,10 +57,6 @@ const DataRoom = () => {
       icon: LucideScale,
       guide: t("dataRoom.guideLegal"),
       color: "purple",
-      mandatory: 9,
-      verified: 10,
-      optional: 1,
-      subcategories: 4,
     },
     {
       id: "financial",
@@ -60,10 +64,6 @@ const DataRoom = () => {
       icon: LucideAward,
       guide: t("dataRoom.guideFinancial"),
       color: "green",
-      mandatory: 25,
-      verified: 22,
-      optional: 3,
-      subcategories: 6,
     },
     {
       id: "fiscal",
@@ -71,12 +71,2581 @@ const DataRoom = () => {
       icon: LucideAward,
       guide: t("dataRoom.guideFiscal"),
       color: "orange",
-      mandatory: 2,
-      verified: 4,
-      optional: 6,
-      subcategories: 4,
     },
   ];
+
+  const documents: Document[] = [
+    {
+      name: "Escritura de constitución de la sociedad",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estatutos sociales vigentes (última versión actualizada)",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "CIF y registro mercantil",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Composición accionarial actualizada (últimos 5 años)",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Poderes de representación vigentes",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Actas del Consejo de Administración (últimos 3 años)",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Actas de Juntas Generales (últimos 3 años)",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Registro de administradores y beneficiarios finales (UBO)",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de operaciones vinculadas",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Organigrama corporativo actualizado",
+      category: "legal",
+      subcategory: "Constitución y gobernanza",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Escritura pública de compraventa del inmueble",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Nota simple registral actualizada (máx. 3 meses)",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de dominio y cargas",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Título de propiedad completo con trazabilidad",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaración de obra nueva y división horizontal",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Libro del edificio completo",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Reglamento de régimen interior (si aplica comunidad)",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Actas de la comunidad de propietores (últimos 5 años)",
+      category: "legal",
+      subcategory: "Propiedad del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de estar al corriente con AEAT",
+      category: "fiscal",
+      subcategory: "Compliance y regulatorio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de estar al corriente con Seguridad Social",
+      category: "fiscal",
+      subcategory: "Compliance y regulatorio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaraciones fiscales (últimos 3 ejercicios): IVA, IS, IRPF",
+      category: "fiscal",
+      subcategory: "Compliance y regulatorio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de no tener deudas con ayuntamiento",
+      category: "fiscal",
+      subcategory: "Compliance y regulatorio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado prevención blanqueo de capitales",
+      category: "legal",
+      subcategory: "Compliance y regulatorio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Política de compliance y prevención de delitos",
+      category: "legal",
+      subcategory: "Compliance y regulatorio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Registro de sanciones y procedimientos administrativos",
+      category: "legal",
+      subcategory: "Compliance y regulatorio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de no estar en situación concursal",
+      category: "legal",
+      subcategory: "Compliance y regulatorio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyecto básico y de ejecución completo",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Licencia de obra y actividad",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado final de obra",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cédula de habitabilidad",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Licencia de primera ocupación (si edificio nuevo)",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Planos as-built completos (arquitectura, instalaciones)",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Memoria constructiva detallada",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cálculo de estructuras firmado por técnico competente",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Libro del edificio con mantenimiento actualizado",
+      category: "technical",
+      subcategory: "Proyecto y construcción",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Proyecto de instalaciones eléctricas (baja tensión)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Boletines eléctricos y certificados de instalador autorizado",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyecto de instalaciones térmicas (calefacción/climatización)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificados RITE y registro en Industria",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyecto de instalaciones de fontanería y saneamiento",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Legionela: protocolo y analíticas (último año)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Instalaciones de protección contra incendios (RIPCI)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificados de mantenimiento de ascensores (último año)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de eficiencia energética (CEE) vigente",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Auditoría energética según EPBD (si >500m²)",
+      category: "technical",
+      subcategory: "Instalaciones y sistemas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "ITE (Inspección Técnica del Edificio) vigente",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de evaluación del edificio (IEE) completo",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Inspección de fachadas y elementos estructurales",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Inspección de cubiertas e impermeabilizaciones",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Informe de patologías estructurales (solo si existen)",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio geotécnico del terreno (solo si edificio nuevo)",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de resistencia al fuego de elementos constructivos",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Inspección de instalaciones eléctricas (cada 5 años si >edificio antiguo)",
+      category: "technical",
+      subcategory: "Inspecciones técnicas",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de Eficiencia Energética (CEE) registrado",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Etiqueta energética vigente",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Auditoría energética EPBD completa",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de mejoras energéticas recomendadas",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cálculo de emisiones de CO2 (actual y proyectado)",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estudio de demanda energética (kWh/m²·año)",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Balance térmico del edificio",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de la envolvente térmica",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de puentes térmicos",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Test de infiltraciones (Blower Door Test)",
+      category: "technical",
+      subcategory: "Certificación energética EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Informe de alineación con Taxonomía Europea",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis DNSH (Do No Significant Harm)",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificación LEED / BREEAM / VERDE (si existe)",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de descarbonización del edificio",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estrategia Net Zero 2030/2050",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Inventario de gases de efecto invernadero (GEI)",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de ciclo de vida (ACV) del edificio",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de gestión de residuos de construcción",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de economía circular",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de biodiversidad y espacios verdes",
+      category: "technical",
+      subcategory: "Sostenibilidad y taxonomía EU",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificación ISO 14001 (gestión ambiental)",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificación ISO 50001 (gestión energética)",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Auditoría de calidad del aire interior",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado WELL Building Standard (si aplica)",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de confort térmico y lumínico",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Mediciones acústicas y certificado de aislamiento",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificado de ausencia de amianto",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de radón (si zona de riesgo)",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de agua (calidad y legionela)",
+      category: "technical",
+      subcategory: "Certificaciones ambientales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cuentas anuales auditadas (últimos 3 ejercicios)",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Balance de situación detallado",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cuenta de pérdidas y ganancias",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estado de cambios en el patrimonio neto",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estado de flujos de efectivo (cash flow)",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Memoria contable completa",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de auditoría externa (últimos 3 años)",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaraciones fiscales completas (IS, IVA)",
+      category: "fiscal",
+      subcategory: "Estados financieros",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Libro mayor y diario contable",
+      category: "financial",
+      subcategory: "Estados financieros",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Valoración actualizada del inmueble (tasación <6 meses)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de rent roll (ingresos por arrendamiento)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de rentabilidad (ROI, TIR, VAN)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyección de ingresos y gastos (5-10 años)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de sensibilidad financiera",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de viabilidad económica",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de punto de equilibrio (break-even)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cálculo de ratios financieros (LTV, DSCR, ICR)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Desglose de gastos operativos (OPEX)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Planificación de inversiones (CAPEX)",
+      category: "financial",
+      subcategory: "Análisis financiero del activo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Detalle de toda la deuda existente",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Contratos de préstamos y líneas de crédito vigentes",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Calendario de amortizaciones y vencimientos",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Garantías otorgadas (hipotecas, avales, prendas)",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Rating crediticio (si disponible)",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Historial de pagos y cumplimiento de covenants",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de situación financiera neta",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado bancario de saldos y operaciones",
+      category: "financial",
+      subcategory: "Deuda y financiación actual",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Informe ejecutivo de auditoría energética",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Inventario de consumos energéticos (últimos 3 años)",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de instalaciones térmicas",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de envolvente térmica",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Termografías infrarrojas del edificio",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Mediciones de infiltraciones de aire",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de sistemas de iluminación",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de equipos consumidores",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Propuesta de mejoras energéticas jerarquizadas",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis coste-beneficio de cada mejora",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Simulación energética dinámica",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Proyección de ahorro energético (kWh y €)",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estimación de reducción de emisiones CO2",
+      category: "technical",
+      subcategory: "Auditoría energética EPBD completa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de estado de conservación general",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Evaluación estructural (cimentación, pilares, forjados)",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estado de fachadas y cerramientos",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estado de cubiertas e impermeabilizaciones",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Evaluación de instalaciones (vida útil restante)",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Detección de patologías (humedades, grietas, fisuras)",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de accesibilidad universal",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cumplimiento CTE (Código Técnico de la Edificación)",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan de mantenimiento preventivo",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Presupuesto de reparaciones necesarias",
+      category: "technical",
+      subcategory: "Auditoría técnica del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe legal completo del inmueble",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Comprobación de cargas y gravámenes",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Verificación de licencias y permisos",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cumplimiento normativa urbanística",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Revisión de contratos de arrendamiento",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Verificación de servidumbres",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de litigios y reclamaciones",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Revisión de seguros contratados",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Verificación de compliance regulatorio",
+      category: "legal",
+      subcategory: "Due diligence técnico-legal",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de conformidad con EPBD 2024",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de eficiencia energética (mínimo clase D)",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Auditoría energética obligatoria (si >500m²)",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan de mejora hasta clase B antes de 2030",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Roadmap de descarbonización hasta 2050",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Justificación de exenciones (si aplica)",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Informe de integración de renovables",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estrategia de eliminación de combustibles fósiles",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Smart readiness indicator (SRI) del edificio",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de instalación de puntos de recarga VE",
+      category: "technical",
+      subcategory: "Cumplimiento EPBD",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Informe de elegibilidad Taxonomía EU",
+      category: "technical",
+      subcategory: "Taxonomía europea de actividades sostenibles",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Verificación de criterios técnicos de selección",
+      category: "technical",
+      subcategory: "Taxonomía europea de actividades sostenibles",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Verificación de salvaguardas mínimas sociales",
+      category: "technical",
+      subcategory: "Taxonomía europea de actividades sostenibles",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de alineación con Reglamento (UE) 2020/852",
+      category: "technical",
+      subcategory: "Taxonomía europea de actividades sostenibles",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificación de auditor independiente",
+      category: "technical",
+      subcategory: "Taxonomía europea de actividades sostenibles",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaración SFDR (Sustainable Finance Disclosure)",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Reporte de principales impactos adversos (PAI)",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Alineación con EU Green Bond Standard",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cumplimiento de Green Loan Principles (LMA)",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "KPIs de sostenibilidad para sustainability-linked loan",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Informe de Second Party Opinion (SPO)",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de reporting ESG continuo",
+      category: "technical",
+      subcategory: "Regulación financiera sostenible",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Contratos de alquiler vigentes (todos los inquilinos)",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Fianzas depositadas y avales",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Rent roll actualizado con vencimientos",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Historial de impagos (últimos 5 años)",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Comunicaciones con inquilinos (últimos 2 años)",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Acuerdos de modificación o renovación",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cesiones de contrato autorizadas",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías adicionales contratadas",
+      category: "legal",
+      subcategory: "Contratos de arrendamiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contrato de mantenimiento integral del edificio",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Contrato de limpieza y conservación",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contrato de seguridad y vigilancia",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contrato de gestión de residuos",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Mantenimiento de instalaciones térmicas (climatización)",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Mantenimiento de ascensores",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Mantenimiento de instalaciones eléctricas",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Control de legionela y plagas",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Jardinería y zonas comunes",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Suministros (agua, luz, gas, telecomunicaciones)",
+      category: "legal",
+      subcategory: "Contratos de servicios y mantenimiento",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contratos con empresas constructoras (si obra en curso)",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías decenales de construcción (si edificio < 10 años)",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Seguros de daños materiales durante obra",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contratos con proveedores de materiales",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Acuerdos con ingenierías y consultoras",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contratos con arquitectos y técnicos",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Pólizas de responsabilidad civil profesional",
+      category: "legal",
+      subcategory: "Contratos de obra y proveedores",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Acuerdos de financiación existentes",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Contratos de asesoramiento (legal, fiscal, técnico)",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Acuerdos de joint venture o colaboración",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contratos de gestión de activos (property management)",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Contratos de comercialización",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Acuerdos de confidencialidad (NDAs)",
+      category: "legal",
+      subcategory: "Otros acuerdos relevantes",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Póliza de seguro multirriesgo del inmueble",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Seguro de daños materiales (incendio, agua, explosión)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Seguro de responsabilidad civil general",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Seguro de pérdida de rentas por siniestro",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Seguro de todo riesgo construcción (si obra)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Seguro decenal de daños (si edificio < 10 años)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Seguro de contenido y equipamiento",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Coberturas específicas (inundación, terremoto, etc.)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificados de pago de primas (al corriente)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Historial de siniestros (últimos 5 años)",
+      category: "legal",
+      subcategory: "Seguros del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías bancarias otorgadas",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Avales de cumplimiento de contratos",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Fianzas depositadas ante organismos públicos",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías constructoras (obras recientes)",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías de proveedores y fabricantes",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Retenciones de garantía en contratos",
+      category: "legal",
+      subcategory: "Garantías y avales",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Memoria técnica del proyecto de rehabilitación",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Planos de intervención (arquitectura e instalaciones)",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Presupuesto detallado por partidas (certificado)",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Mediciones y valoraciones",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan de ejecución y cronograma (GANTT)",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Estudios de seguridad y salud",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Gestión de residuos de construcción",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Permisos y licencias necesarias",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración responsable de obras",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Seguros de la obra",
+      category: "technical",
+      subcategory: "Proyecto de rehabilitación energética",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Listado priorizado de medidas de mejora",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Coste estimado por mejora",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Ahorro energético proyectado (kWh/año)",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Ahorro económico proyectado (€/año)",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Reducción de emisiones CO2 (ton/año)",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Periodo de retorno de inversión (payback)",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Salto de calificación energética esperado",
+      category: "technical",
+      subcategory: "Propuesta de mejoras energéticas",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan de inversión (CAPEX) total",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Desglose por fases y anualidades",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Fuentes de financiación previstas",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Sensibilidad a variaciones de costes",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Impacto en valoración del inmueble",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Incremento de renta potencial post-reforma",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cumplimiento de EPBD y Taxonomía EU",
+      category: "technical",
+      subcategory: "Análisis de viabilidad del CAPEX",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Ficha completa del edificio",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Instrucciones de uso y mantenimiento",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Manual de usuario del edificio",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Registro de intervenciones y reparaciones",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Planificación de mantenimiento preventivo",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Garantías de equipos e instalaciones",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Manuales técnicos de equipos",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Esquemas unifilares y planos de instalaciones",
+      category: "technical",
+      subcategory: "Libro del edificio",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de mantenimiento preventivo anual",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Registro de mantenimientos realizados (3 años)",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Partes de trabajo e incidencias",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Consumos energéticos monitorizados",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Facturas de suministros (últimos 3 años)",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Gestión de residuos y reciclaje",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Control de accesos y seguridad",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Protocolos de emergencia",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Planes de contingencia",
+      category: "technical",
+      subcategory: "Gestión operativa",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Indicadores de desempeño (KPIs) del edificio",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Benchmarking con edificios similares",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Satisfacción de inquilinos/usuarios",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Tasa de ocupación histórica",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Gestión de espacios y optimización",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Reporting operativo mensual/trimestral",
+      category: "technical",
+      subcategory: "Facility management",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Tasación oficial por sociedad homologada (< 6 meses)",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Metodología de valoración utilizada",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Comparables de mercado (transacciones similares)",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Valor de mercado actual",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Valor de reposición/reconstrucción",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Valor residual del suelo",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Valoración por método de capitalización de rentas",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Valoración post-rehabilitación proyectada",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis del highest and best use",
+      category: "financial",
+      subcategory: "Valoración del inmueble",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de mercado de la zona",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de oferta y demanda local",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Evolución de precios de venta (últimos 5 años)",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Evolución de rentas de alquiler (últimos 5 años)",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Yields de mercado por zona y tipología",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de competidores directos",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Proyección de crecimiento del mercado",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Factores de riesgo del mercado local",
+      category: "financial",
+      subcategory: "Análisis de mercado inmobiliario",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis DAFO (fortalezas, debilidades, oportunidades, amenazas)",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Ventajas competitivas del activo",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estrategia de valor añadido (value-add)",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de reposicionamiento en el mercado",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estrategia de comercialización",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Target de inquilinos/compradores",
+      category: "financial",
+      subcategory: "Posicionamiento estratégico",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Ficha urbanística del inmueble",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan General de Ordenación Urbana (PGOU)",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Clasificación del suelo",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Calificación urbanística",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Condiciones de edificabilidad",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Coeficientes de ocupación y edificabilidad",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Alturas máximas permitidas",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Retranqueos y alineaciones",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Uso permitido del inmueble",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cargas urbanísticas pendientes",
+      category: "legal",
+      subcategory: "Normativa urbanística aplicable",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Licencia urbanística de obra mayor (si aplica)",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Licencia de actividad vigente",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Licencia de apertura",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración responsable (si aplica)",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Comunicación previa obras menores",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Autorización de la comunidad de propietarios",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Permisos de ocupación de vía pública (si necesario)",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Autorizaciones patrimoniales (edificio catalogado)",
+      category: "legal",
+      subcategory: "Licencias y permisos",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaración de catalogación (si aplica)",
+      category: "legal",
+      subcategory: "Protección y catalogación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Nivel de protección patrimonial",
+      category: "legal",
+      subcategory: "Protección y catalogación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Elementos protegidos del edificio",
+      category: "legal",
+      subcategory: "Protección y catalogación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Condiciones de intervención en edificio protegido",
+      category: "legal",
+      subcategory: "Protección y catalogación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Autorizaciones especiales de patrimonio",
+      category: "legal",
+      subcategory: "Protección y catalogación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Fase I: Environmental Site Assessment (ESA)",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Fase II: Análisis de suelos y aguas subterráneas (si necesario)",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de presencia de PCBs",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estudio de radón (zonas de riesgo)",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Evaluación de calidad del aire interior",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de contaminación acústica",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Evaluación de CEM (campos electromagnéticos)",
+      category: "technical",
+      subcategory: "Estudio de contaminación",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de gestión de residuos peligrosos",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Certificados de gestión de residuos",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Autorizaciones ambientales",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Control de emisiones atmosféricas",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Gestión de aguas residuales",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Registro de productores de residuos",
+      category: "technical",
+      subcategory: "Gestión ambiental",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Resumen ejecutivo del business case",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Supuestos del modelo financiero",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyección de ingresos (5-10 años)",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyección de gastos operativos (OPEX)",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Proyección de inversiones (CAPEX)",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cash flow proyectado completo",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Cuenta de resultados previsional",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Balance previsional",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Cálculo de ratios financieros clave",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de sensibilidad (escenarios)",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Análisis de riesgos y mitigación",
+      category: "financial",
+      subcategory: "Modelo financiero completo",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Estructura de financiación propuesta",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Importe solicitado y destino de fondos",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plazo de amortización propuesto",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Garantías ofrecidas",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Covenants financieros propuestos",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Justificación de elegibilidad verde",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Framework de bonos/préstamos verdes",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "KPIs de sostenibilidad",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Plan de reporting ESG",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Compromiso de verificación externa",
+      category: "financial",
+      subcategory: "Análisis de financiación verde",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Retorno de inversión (ROI) proyectado",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Tasa interna de retorno (TIR)",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Valor actual neto (VAN)",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Payback period (periodo de recuperación)",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Análisis de creación de valor",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Impacto en NOI (Net Operating Income)",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Impacto en valoración del activo",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Exit strategy y valoración de salida",
+      category: "financial",
+      subcategory: "ROI y rentabilidad",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Formulario KYC (Know Your Client) completo",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de beneficiarios finales (UBO)",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de origen de fondos",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Certificado de no ser PEP (Persona Políticamente Expuesta)",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración FATCA y CRS",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Autorizaciones para consulta CIRBE",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Consentimiento tratamiento de datos (GDPR)",
+      category: "financial",
+      subcategory: "KYC y compliance bancario",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Carta de intenciones / LOI firmada",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaración de veracidad de la información",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Declaración de solvencia y situación financiera",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Referencias bancarias y comerciales",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "CV de equipo gestor / promotor",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Track record de proyectos similares",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Declaración de operaciones relacionadas",
+      category: "financial",
+      subcategory: "Información complementaria",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Green Finance Framework",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Allocación de fondos a proyectos elegibles",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Impact reporting template",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "Compromiso de reporting periódico",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "mandatory",
+      status: "pending",
+    },
+    {
+      name: "External review (Second Party Opinion)",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "optional",
+      status: "pending",
+    },
+    {
+      name: "Plan de verificación post-desembolso",
+      category: "financial",
+      subcategory: "Documentos específicos green finance",
+      type: "optional",
+      status: "pending",
+    },
+  ];
+
+  // Conteos dinámicos calculados desde el array documents
+  const categories: Category[] = categoryDefs.map((cat) => {
+    const catDocs = documents.filter((doc) => doc.category === cat.id);
+    const mandatoryCount = catDocs.filter((d) => d.type === "mandatory").length;
+    const optionalCount = catDocs.filter((d) => d.type === "optional").length;
+    const subcategoriesCount = new Set(catDocs.map((d) => d.subcategory)).size;
+    return {
+      ...cat,
+      mandatory: mandatoryCount,
+      verified: 0,
+      optional: optionalCount,
+      subcategories: subcategoriesCount,
+    };
+  });
 
   const [selectedCategory, setSelectedCategory] = useState<Category>(
     categories[0],
@@ -84,6 +2653,122 @@ const DataRoom = () => {
 
   const handleCategorySelect = (id: string) => {
     setSelectedCategory(categories.find((category) => category.id === id)!);
+    setOpenSubcategories([]);
+  };
+
+  // Estado para controlar qué subcategorías están abiertas
+  const [openSubcategories, setOpenSubcategories] = useState<string[]>([]);
+
+  const toggleSubcategory = (subcategory: string) => {
+    setOpenSubcategories((prev) =>
+      prev.includes(subcategory)
+        ? prev.filter((s) => s !== subcategory)
+        : [...prev, subcategory],
+    );
+  };
+
+  // Agrupar documentos por subcategoría según la categoría seleccionada
+  const groupedDocuments = useMemo(() => {
+    const filtered = documents.filter(
+      (doc) => doc.category === selectedCategory.id,
+    );
+    const groups: Record<string, Document[]> = {};
+    filtered.forEach((doc) => {
+      if (!groups[doc.subcategory]) {
+        groups[doc.subcategory] = [];
+      }
+      groups[doc.subcategory].push(doc);
+    });
+    return groups;
+  }, [selectedCategory.id]);
+
+  // Mapa de nombre de subcategoría (español) a clave de traducción
+  const subcategoryKeyMap: Record<string, string> = {
+    "Constitución y gobernanza": "constitucionGobernanza",
+    "Propiedad del edificio": "propiedadEdificio",
+    "Compliance y regulatorio": "complianceRegulatorio",
+    "Proyecto y construcción": "proyectoConstruccion",
+    "Instalaciones y sistemas": "instalacionesSistemas",
+    "Inspecciones técnicas": "inspeccionesTecnicas",
+    "Certificación energética EPBD": "certificacionEnergeticaEPBD",
+    "Sostenibilidad y taxonomía EU": "sostenibilidadTaxonomiaEU",
+    "Certificaciones ambientales": "certificacionesAmbientales",
+    "Auditoría energética EPBD completa": "auditoriaEnergeticaEPBD",
+    "Auditoría técnica del edificio": "auditoriaTecnicaEdificio",
+    "Cumplimiento EPBD": "cumplimientoEPBD",
+    "Taxonomía europea de actividades sostenibles": "taxonomiaEuropea",
+    "Regulación financiera sostenible": "regulacionFinancieraSostenible",
+    "Due diligence técnico-legal": "dueDiligenceTecnicoLegal",
+    "Contratos de arrendamiento": "contratosArrendamiento",
+    "Contratos de servicios y mantenimiento": "contratosServiciosMantenimiento",
+    "Contratos de obra y proveedores": "contratosObraProveedores",
+    "Otros acuerdos relevantes": "otrosAcuerdos",
+    "Seguros del edificio": "segurosEdificio",
+    "Garantías y avales": "garantiasAvales",
+    "Estados financieros": "estadosFinancieros",
+    "Análisis financiero del activo": "analisisFinancieroActivo",
+    "Deuda y financiación actual": "deudaFinanciacionActual",
+    "Valoración del inmueble": "valoracionInmueble",
+    "Análisis de mercado inmobiliario": "analisisMercadoInmobiliario",
+    "Posicionamiento estratégico": "posicionamientoEstrategico",
+    "Modelo financiero completo": "modeloFinancieroCompleto",
+    "Análisis de financiación verde": "analisisFinanciacionVerde",
+    "ROI y rentabilidad": "roiRentabilidad",
+    "KYC y compliance bancario": "kycComplianceBancario",
+    "Información complementaria": "informacionComplementaria",
+    "Documentos específicos green finance": "documentosGreenFinance",
+    "Proyecto de rehabilitación energética": "proyectoRehabilitacionEnergetica",
+    "Propuesta de mejoras energéticas": "propuestaMejorasEnergeticas",
+    "Análisis de viabilidad del CAPEX": "analisisViabilidadCAPEX",
+    "Libro del edificio": "libroEdificio",
+    "Gestión operativa": "gestionOperativa",
+    "Facility management": "facilityManagement",
+    "Estudio de contaminación": "estudioContaminacion",
+    "Gestión ambiental": "gestionAmbiental",
+    "Normativa urbanística aplicable": "normativaUrbanistica",
+    "Licencias y permisos": "licenciasPermisos",
+    "Protección y catalogación": "proteccionCatalogacion",
+  };
+
+  // Función para obtener el nombre traducido de una subcategoría
+  const getSubcategoryName = (rawName: string): string => {
+    const key = subcategoryKeyMap[rawName];
+    if (key) {
+      return t(`dataRoom.subcategories.${key}`);
+    }
+    return rawName; // Fallback al nombre original
+  };
+
+  // Mapa de categoría a clave de notas
+  const notesKeyMap: Record<string, string> = {
+    technical: "notesTechnical",
+    legal: "notesLegal",
+    financial: "notesFinancial",
+    fiscal: "notesFiscal",
+  };
+
+  const handleDownloadChecklist = () => {
+    const categoryKeyMap: Record<string, string> = {
+      technical: "technicalDocs",
+      legal: "legalDocs",
+      financial: "financialDocs",
+      fiscal: "fiscalDocs",
+    };
+
+    const filteredDocuments = documents.filter(
+      (doc) => doc.category === selectedCategory.id,
+    );
+    DataRoomExportService.exportChecklist(filteredDocuments, {
+      translateSubcategory: getSubcategoryName,
+      translateCategory: (catId: string) =>
+        t(`dataRoom.${categoryKeyMap[catId]}`) || catId,
+      translateType: (type: string) =>
+        type === "mandatory"
+          ? t("dataRoom.obligatory")
+          : t("dataRoom.optionalLabel"),
+      translateStatus: (status: string) => t(`dataRoom.${status}Status`),
+      fileName: `Checklist_${selectedCategory.name}_${new Date().toISOString().split("T")[0]}`,
+    });
   };
 
   return (
@@ -345,9 +3030,9 @@ const DataRoom = () => {
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6">
-        <div className="lg:col-span-8 space-y-3 md:space-y-4">
-          <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-3 md:p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 lg:h-[950px]">
+        <div className="lg:col-span-8 min-h-0">
+          <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-3 md:p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
                 <div
@@ -393,75 +3078,27 @@ const DataRoom = () => {
                 </button>
               </div>
             </div>
-            <div id="containerDocuments" className="space-y-2 md:space-y-3">
-              {/* Caso 1: Documento pendiente y obligatorio */}
-              <DocumentItem
-                id="dnsh"
-                title={t("dataRoom.dnshJustification")}
-                description={t("dataRoom.dnshJustificationDesc")}
-                status="pending"
-                isObligatory={true}
-              />
-
-              {/* Caso 2: Documento en revisión/validándose */}
-              <DocumentItem
-                id="licencia"
-                title={t("dataRoom.buildingLicense")}
-                description={t("dataRoom.buildingLicenseDesc")}
-                status="review"
-                isObligatory={true}
-              />
-
-              {/* Caso 3: Documento verificado sin datos extraídos */}
-              <DocumentItem
-                id="seguridad"
-                title={t("dataRoom.safetyStudy")}
-                description={t("dataRoom.safetyStudyDesc")}
-                status="verified"
-                isObligatory={true}
-                metadata={{
-                  filename: "ESS_Rehabilitacion.pdf",
-                  size: "3.8 MB",
-                  date: "22/11/2024",
-                }}
-              />
-
-              {/* Caso 4: Documento verificado con datos extraídos */}
-              <DocumentItem
-                id="pem"
-                title={t("dataRoom.pem")}
-                description={t("dataRoom.pemDesc")}
-                status="verified"
-                isObligatory={true}
-                metadata={{
-                  filename: "Presupuesto_Detallado.xlsx",
-                  size: "1.2 MB",
-                  date: "18/11/2024",
-                }}
-                extractedData={[
-                  { label: "Total", value: "1.500.000€" },
-                  { label: "Partidas", value: "127" },
-                  { label: "Validación", value: "CYPE" },
-                ]}
-              />
-
-              {/* Caso 5: Documento rechazado */}
-              <DocumentItem
-                id="ite"
-                title={t("dataRoom.iteReport")}
-                description={t("dataRoom.iteReportDesc")}
-                status="rejected"
-                isObligatory={true}
-                metadata={{
-                  filename: "ite_caducada.pdf",
-                  size: "5.6 MB",
-                  date: "10/01/2024",
-                }}
-              />
+            <div className="space-y-2 md:space-y-3 flex-1 overflow-y-auto min-h-0 pr-1">
+              {documents
+                .filter(
+                  (doc) =>
+                    doc.category === selectedCategory.id &&
+                    doc.type === "mandatory",
+                )
+                .map((doc, index) => (
+                  <DocumentItem
+                    key={`${selectedCategory.id}-${index}`}
+                    id={`${selectedCategory.id}-doc-${index}`}
+                    title={doc.name}
+                    description={getSubcategoryName(doc.subcategory)}
+                    status="pending"
+                    isObligatory={true}
+                  />
+                ))}
             </div>
           </div>
         </div>
-        <div className="lg:col-span-4 space-y-3 md:space-y-4">
+        <div className="lg:col-span-4 min-h-0 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-3 md:p-6">
             <div className="space-y-4">
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
@@ -471,7 +3108,7 @@ const DataRoom = () => {
                       {t("dataRoom.guideTitle")}
                     </h3>
                     <p className="text-xs text-gray-600">
-                      {t("dataRoom.guideTechnical")}
+                      {selectedCategory.guide}
                     </p>
                   </div>
                   <div className="text-right">
@@ -505,140 +3142,83 @@ const DataRoom = () => {
                       {t("dataRoom.categoriesCount")}
                     </div>
                     <div className="text-xl text-blue-600">
-                      {selectedCategory.subcategories}
+                      {Object.keys(groupedDocuments).length}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight className=" w-5 h-5 text-gray-400" />
-                      <div className="text-left">
-                        <h4 className="text-sm text-gray-900 mb-0.5">
-                          {t("dataRoom.energyCertsTitle")}
-                        </h4>
-                        <p className="text-xs text-gray-600">
-                          {t("dataRoom.energyCertsDesc")}
-                        </p>
+                {Object.entries(groupedDocuments).map(
+                  ([subcategoryName, docs]) => {
+                    const mandatoryCount = docs.filter(
+                      (d) => d.type === "mandatory",
+                    ).length;
+                    const isOpen = openSubcategories.includes(subcategoryName);
+                    return (
+                      <div
+                        key={subcategoryName}
+                        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => toggleSubcategory(subcategoryName)}
+                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isOpen ? (
+                              <ChevronDown className="w-5 h-5 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5 text-gray-400" />
+                            )}
+                            <div className="text-left">
+                              <h4 className="text-sm text-gray-900 mb-0.5">
+                                {getSubcategoryName(subcategoryName)}
+                              </h4>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className="text-xs text-gray-600">
+                                {docs.length}{" "}
+                                {t("dataRoom.docsCount", {
+                                  count: docs.length,
+                                })}
+                              </div>
+                              <div className="text-xs text-red-600">
+                                {mandatoryCount} {t("dataRoom.obligatoryItems")}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                        {isOpen && (
+                          <div className="px-4 pb-3 space-y-2">
+                            {docs.map((doc, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                              >
+                                <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-800 flex-1">
+                                  {doc.name}
+                                </span>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded whitespace-nowrap ${
+                                    doc.type === "mandatory"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-gray-100 text-gray-600"
+                                  }`}
+                                >
+                                  {doc.type === "mandatory"
+                                    ? t("dataRoom.obligatory")
+                                    : t("dataRoom.optionalLabel")}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-600">
-                          {2} {t("dataRoom.docsCount", { count: 2 })}
-                        </div>
-                        <div className="text-xs text-red-600">
-                          {2} {t("dataRoom.obligatoryItems")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight className=" w-5 h-5 text-gray-400" />
-                      <div className="text-left">
-                        <h4 className="text-sm text-gray-900 mb-0.5">
-                          {t("dataRoom.projectsAndMemories")}
-                        </h4>
-                        <p className="text-xs text-gray-600">
-                          {t("dataRoom.projectsAndMemoriesDesc")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-600">
-                          {3} {t("dataRoom.docsCount", { count: 3 })}
-                        </div>
-                        <div className="text-xs text-red-600">
-                          {3} {t("dataRoom.obligatoryItems")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight className=" w-5 h-5 text-gray-400" />
-                      <div className="text-left">
-                        <h4 className="text-sm text-gray-900 mb-0.5">
-                          {t("dataRoom.safetyAndEnvironment")}
-                        </h4>
-                        <p className="text-xs text-gray-600">
-                          {t("dataRoom.safetyAndEnvironmentDesc")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-600">
-                          {3} {t("dataRoom.docsCount", { count: 3 })}
-                        </div>
-                        <div className="text-xs text-red-600">
-                          {3} {t("dataRoom.obligatoryItems")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight className=" w-5 h-5 text-gray-400" />
-                      <div className="text-left">
-                        <h4 className="text-sm text-gray-900 mb-0.5">
-                          {t("dataRoom.adminDocs")}
-                        </h4>
-                        <p className="text-xs text-gray-600">
-                          {t("dataRoom.adminDocsDesc")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-600">
-                          {3} {t("dataRoom.docsCount", { count: 3 })}
-                        </div>
-                        <div className="text-xs text-red-600">
-                          {2} {t("dataRoom.obligatoryItems")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChevronRight
-                        className="lucide lucide-chevron-right w-5 h-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                      <div className="text-left">
-                        <h4 className="text-sm text-gray-900 mb-0.5">
-                          {t("dataRoom.complementaryStudies")}
-                        </h4>
-                        <p className="text-xs text-gray-600">
-                          {t("dataRoom.complementaryStudiesDesc")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-xs text-gray-600">
-                          {1} {t("dataRoom.docsCount", { count: 1 })}
-                        </div>
-                        <div className="text-xs text-red-600">
-                          {0} {t("dataRoom.obligatoryItems")}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
+                    );
+                  },
+                )}
               </div>
               <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
@@ -653,7 +3233,10 @@ const DataRoom = () => {
                     <p className="text-xs text-gray-700 mb-3">
                       {t("dataRoom.downloadChecklistDesc")}
                     </p>
-                    <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                    <button
+                      onClick={handleDownloadChecklist}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2"
+                    >
                       <Download
                         className="lucide lucide-download w-4 h-4"
                         aria-hidden="true"
@@ -673,27 +3256,56 @@ const DataRoom = () => {
                   <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <h4 className="text-sm text-gray-900 mb-2">
-                      {t("dataRoom.importantNotes")}
+                      {t(`dataRoom.${notesKeyMap[selectedCategory.id]}.title`)}
                     </h4>
                     <ul className="space-y-1 text-xs text-gray-700">
                       <li>
-                        • <strong>CEE:</strong>{" "}
-                        {t("dataRoom.noteCEE").replace("CEE: ", "")}
-                      </li>
-                      <li>
-                        • <strong>Proyecto Ejecutivo:</strong>{" "}
-                        {t("dataRoom.noteExecutive").replace(
-                          "Proyecto Ejecutivo: ",
-                          "",
+                        •{" "}
+                        <strong>
+                          {t(
+                            `dataRoom.${notesKeyMap[selectedCategory.id]}.note1Label`,
+                          )}
+                          :
+                        </strong>{" "}
+                        {t(
+                          `dataRoom.${notesKeyMap[selectedCategory.id]}.note1`,
                         )}
                       </li>
                       <li>
-                        • <strong>PGR:</strong>{" "}
-                        {t("dataRoom.notePGR").replace("PGR: ", "")}
+                        •{" "}
+                        <strong>
+                          {t(
+                            `dataRoom.${notesKeyMap[selectedCategory.id]}.note2Label`,
+                          )}
+                          :
+                        </strong>{" "}
+                        {t(
+                          `dataRoom.${notesKeyMap[selectedCategory.id]}.note2`,
+                        )}
                       </li>
                       <li>
-                        • <strong>ITE:</strong>{" "}
-                        {t("dataRoom.noteITE").replace("ITE: ", "")}
+                        •{" "}
+                        <strong>
+                          {t(
+                            `dataRoom.${notesKeyMap[selectedCategory.id]}.note3Label`,
+                          )}
+                          :
+                        </strong>{" "}
+                        {t(
+                          `dataRoom.${notesKeyMap[selectedCategory.id]}.note3`,
+                        )}
+                      </li>
+                      <li>
+                        •{" "}
+                        <strong>
+                          {t(
+                            `dataRoom.${notesKeyMap[selectedCategory.id]}.note4Label`,
+                          )}
+                          :
+                        </strong>{" "}
+                        {t(
+                          `dataRoom.${notesKeyMap[selectedCategory.id]}.note4`,
+                        )}
                       </li>
                     </ul>
                   </div>
