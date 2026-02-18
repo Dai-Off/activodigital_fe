@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { notificationApiService } from "../services/notifications";
 import type { Notification, NotificationFilters } from "../types/notifications";
 import { useAuth } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { toast } from "sonner";
 import { getApiBaseUrl } from "../services/api";
@@ -54,6 +55,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [activeBuildingIds, setActiveBuildingIds] = useState<string[]>([]);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const setNotificationBuildingFilters = useCallback((ids: string[]) => {
     setActiveBuildingIds(ids);
@@ -69,10 +71,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const connectSocket = async () => {
       const backendUrl = await getApiBaseUrl();
       
-      // Conectar al socket
+      // Conectar al socket (polling primero, luego upgrade a websocket; más fiable que solo websocket)
       socket = io(backendUrl, {
         path: "/socket.io",
-        transports: ["websocket"], // Forzar websocket para evitar polling inicial si es posible
+        transports: ["polling", "websocket"],
+        withCredentials: true,
       });
 
       socket.on("connect", () => {
@@ -81,18 +84,42 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       });
 
       socket.on("notification:new", (newNotification: Notification) => {
-        // Mostrar toast
+        const isFacturaProcesada =
+          newNotification.type === "financial" &&
+          newNotification.metadata?.jobId &&
+          newNotification.buildingId;
+        const isCertificadoProcesado =
+          newNotification.type === "certificate" &&
+          newNotification.metadata?.certificateJobId &&
+          newNotification.buildingId;
+
         toast.info(newNotification.title, {
           description: newNotification.message || "Nueva notificación recibida",
+          action: isFacturaProcesada
+            ? {
+                label: "Revisar",
+                onClick: () => {
+                  navigate(
+                    `/building/${newNotification.buildingId}/gestion`,
+                    { state: { openJobId: newNotification.metadata!.jobId } }
+                  );
+                },
+              }
+            : isCertificadoProcesado
+              ? {
+                  label: "Revisar",
+                  onClick: () => {
+                    navigate(
+                      `/building/${newNotification.buildingId}/gestion`,
+                      { state: { openCertificateJobId: newNotification.metadata!.certificateJobId } }
+                    );
+                  },
+                }
+              : undefined,
         });
 
-        // Actualizar contador
         setUnreadCount((prev) => prev + 1);
-
-        // Actualizar lista de notificaciones (si estamos viendo todas o si coincide con los filtros actuales)
         setNotifications((prev) => [newNotification, ...prev]);
-
-        // Actualizar lista de no leídas
         setUnreadNot((prev) => [newNotification, ...prev]);
       });
     };
