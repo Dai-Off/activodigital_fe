@@ -62,7 +62,7 @@
     "categoriesCount": "Subcategorías",
     "downloadChecklistTitle": "Descargar Checklist Completo",
     "downloadChecklistDesc": "Descarga el checklist en Excel con todas las categorías y documentos.",
-    "downloadChecklistBtn": "Descargar Técnica.xlsx",
+    "downloadChecklistBtn": "Descargar {{category}}.xlsx",
     "importantNotes": "Notas Importantes",
     "validating": "Validando...",
     "inReview": "En Revisión",

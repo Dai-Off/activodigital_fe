@@ -62,7 +62,7 @@
     "categoriesCount": "Subcategories",
     "downloadChecklistTitle": "Download Full Checklist",
     "downloadChecklistDesc": "Download the checklist in Excel with all categories and documents.",
-    "downloadChecklistBtn": "Download Technical.xlsx",
+    "downloadChecklistBtn": "Download {{category}}.xlsx",
     "importantNotes": "Important Notes",
     "validating": "Validating...",
     "inReview": "In Review",

@@ -2,7 +2,6 @@ import React from "react";
 import {
   CircleCheck,
   CircleAlert,
-  Clock,
   TriangleAlert,
   FileText,
   Upload,
@@ -10,7 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type DocumentStatus = "pending" | "review" | "verified" | "rejected";
+export type DocumentStatus = "pending" | "verified" | "rejected";
 
 export interface DocumentData {
   label: string;
@@ -31,6 +30,7 @@ export interface DocumentProps {
   isObligatory?: boolean;
   metadata?: DocumentMetadata;
   extractedData?: DocumentData[];
+  onUpload?: (file: File) => void;
 }
 
 const DocumentItem: React.FC<DocumentProps> = ({
@@ -40,8 +40,31 @@ const DocumentItem: React.FC<DocumentProps> = ({
   isObligatory,
   metadata,
   extractedData,
+  onUpload,
 }) => {
   const { t } = useTranslation();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    console.log(
+      "📂 Archivo seleccionado:",
+      file?.name,
+      "onUpload existe:",
+      !!onUpload,
+    );
+    if (file && onUpload) {
+      onUpload(file);
+    }
+    // Reset input value to allow uploading the same file again if needed
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
 
   const getStatusStyles = () => {
     switch (status) {
@@ -51,18 +74,13 @@ const DocumentItem: React.FC<DocumentProps> = ({
           icon: <CircleCheck className="w-5 h-5 text-green-600" />,
           statusLabel: t("dataRoom.verifiedStatus"),
         };
-      case "review":
-        return {
-          container: "bg-orange-100 text-orange-700 border-orange-200",
-          icon: <Clock className="w-5 h-5 text-orange-600" />,
-          statusLabel: t("dataRoom.inReview"),
-        };
       case "rejected":
         return {
           container: "bg-red-100 text-red-700 border-red-200",
           icon: <CircleAlert className="w-5 h-5 text-red-600" />,
           statusLabel: t("dataRoom.rejectedStatus") || "Rechazado",
         };
+      case "pending":
       default:
         return {
           container: "bg-gray-100 text-gray-700 border-gray-200",
@@ -94,22 +112,27 @@ const DocumentItem: React.FC<DocumentProps> = ({
               {description}
             </p>
 
-            {status === "pending" && (
+            {(status === "pending" ||
+              status === "verified" ||
+              status === "rejected") && (
               <div className="flex items-center gap-2 mt-1 md:mt-2">
-                <button className="px-2 md:px-3 py-1 md:py-1.5 bg-[#1e3a8a] text-white rounded text-[10px] md:text-xs hover:bg-blue-700 transition-colors flex items-center gap-1 whitespace-nowrap">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+                />
+                <button
+                  onClick={handleUploadClick}
+                  className="px-2 md:px-3 py-1 md:py-1.5 bg-[#1e3a8a] text-white rounded text-[10px] md:text-xs hover:bg-blue-700 transition-colors flex items-center gap-1 whitespace-nowrap"
+                >
                   <Upload className="w-2.5 h-2.5 md:w-3 md:h-3" />
                   <span className="hidden sm:inline">
                     {t("dataRoom.uploadDocument")}
                   </span>
                   <span className="sm:hidden">{t("dataRoom.upload")}</span>
                 </button>
-              </div>
-            )}
-
-            {status === "review" && (
-              <div className="flex items-start gap-1 md:gap-2 text-[10px] md:text-xs text-orange-600 mt-1 md:mt-2">
-                <Clock className="w-2.5 h-2.5 md:w-3 md:h-3 flex-shrink-0 mt-0.5" />
-                <span className="break-words">{t("dataRoom.validating")}</span>
               </div>
             )}
 
