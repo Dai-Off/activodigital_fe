@@ -7,6 +7,7 @@ export const NotificationType = {
   FINANCIAL: "financial",
   EXPIRATION: "expiration",
   RENEWAL: "renewal",
+  CERTIFICATE: "certificate",
 } as const;
 
 export type NotificationType =
@@ -32,6 +33,7 @@ export interface Notification {
   message?: string;
   created_at: string;
   status?: NotificationStatus;
+  metadata?: { jobId?: string; document_filename?: string; certificateJobId?: string };
 }
 
 export interface CreateNotificationRequest {

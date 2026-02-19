@@ -20,13 +20,13 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <NotificationProvider>
-          <Router>
+        <Router>
+          <NotificationProvider>
             <ScrollToTop />
             <AppRouter />
             <ToastContainer />
-          </Router>
-        </NotificationProvider>
+          </NotificationProvider>
+        </Router>
       </AuthProvider>
     </ToastProvider>
   );

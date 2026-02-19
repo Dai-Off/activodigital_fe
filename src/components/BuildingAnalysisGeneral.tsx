@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { BuildingsApiService, type Building } from '../services/buildingsApi';
+import { getBookByBuilding } from '../services/digitalbook';
+import { getESGScore } from '../services/esg';
+import { EnergyCertificatesService } from '../services/energyCertificates';
 import { Badge } from './ui/badge';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
@@ -125,6 +128,7 @@ export default function BuildingAnalysisGeneral() {
   const { t } = useLanguage()
   // Datos del análisis - solo datos reales del API, sin hardcodeo
   const [complianceData, setComplianceData] = useState<EBPDCompliance | null>(null);
+  const [missingDataError, setMissingDataError] = useState<string | null>(null);
   
   // Ref para rastrear el id actual y evitar condiciones de carrera
   const currentIdRef = useRef<string | undefined>(id);
@@ -309,6 +313,57 @@ export default function BuildingAnalysisGeneral() {
       .join(' ');
   };
 
+  // Verificar que todos los datos críticos estén presentes antes de ejecutar el análisis
+  const validateRequiredData = async (buildingId: string): Promise<{ valid: boolean; missingData: string[] }> => {
+    const missingData: string[] = [];
+    
+    try {
+      // Verificar libro digital
+      const digitalBook = await getBookByBuilding(buildingId).catch(() => null);
+      if (!digitalBook || !digitalBook.status) {
+        missingData.push('Libro digital del edificio');
+      }
+      
+      // Verificar certificado energético
+      const certificatesData = await EnergyCertificatesService.getByBuilding(buildingId).catch(() => null);
+      const certificate = certificatesData?.certificates?.[0];
+      if (!certificate) {
+        missingData.push('Certificado energético (CEE)');
+      } else {
+        if (!certificate.rating) {
+          missingData.push('Rating del certificado energético');
+        }
+        if (!certificate.primaryEnergyKwhPerM2Year) {
+          missingData.push('Consumo energético primario (kWh/m²·año)');
+        }
+        if (!certificate.emissionsKgCo2PerM2Year) {
+          missingData.push('Emisiones CO₂ (kg CO₂eq/m²·año)');
+        }
+      }
+      
+      // Verificar ESG completo
+      const esgResult = await getESGScore(buildingId).catch(() => null);
+      if (!esgResult || esgResult.status !== 'complete') {
+        if (esgResult?.status === 'incomplete' && esgResult.missingData) {
+          // Agregar cada dato faltante del ESG como elemento separado
+          esgResult.missingData.forEach((item: string) => {
+            missingData.push(item);
+          });
+        } else {
+          missingData.push('Score ESG completo');
+        }
+      }
+    } catch (error) {
+      console.error('Error validando datos:', error);
+      missingData.push('Error al verificar datos');
+    }
+    
+    return {
+      valid: missingData.length === 0,
+      missingData
+    };
+  };
+
   const loadAnalysis = async () => {
     const currentId = currentIdRef.current;
     if (!currentId || !building) {
@@ -330,6 +385,22 @@ export default function BuildingAnalysisGeneral() {
       console.log('⚠️ El id cambió durante la verificación, cancelando carga');
       return;
     }
+    
+    // VALIDAR DATOS CRÍTICOS ANTES DE EJECUTAR EL ANÁLISIS
+    console.log('🔍 Validando datos críticos para edificio:', currentId);
+    const validation = await validateRequiredData(currentId);
+    
+    if (!validation.valid) {
+      console.log('❌ Faltan datos críticos, no se puede ejecutar el análisis:', validation.missingData);
+      // Guardar los datos faltantes para mostrarlos en una lista
+      setMissingDataError(validation.missingData.join('|')); // Usar separador especial para parsear después
+      setLoadingAnalysis(false);
+      setAnalysisLoaded(true); // Marcar como "cargado" para evitar reintentos
+      return;
+    }
+    
+    // Limpiar error si los datos están completos
+    setMissingDataError(null);
     
     console.log('🚀 Iniciando análisis EBPD para edificio:', currentId);
     setLoadingAnalysis(true);
@@ -802,7 +873,57 @@ export default function BuildingAnalysisGeneral() {
 
   // Spinner dentro del área de contenido (respeta la sidebar)
   // Solo mostrar spinner si realmente está cargando O si no hay datos Y está intentando cargar
-  const shouldShowSpinner = loading || (loadingAnalysis && !complianceData) || (!complianceData && !analysisLoaded);
+  const shouldShowSpinner = loading || (loadingAnalysis && !complianceData && !missingDataError) || (!complianceData && !analysisLoaded && !missingDataError);
+  
+  // Mostrar error si faltan datos críticos
+  if (missingDataError && analysisLoaded) {
+    // Parsear los datos faltantes (separados por |)
+    const missingItems = missingDataError.split('|').filter(Boolean).map(item => item.trim());
+    
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <Card className="border-amber-200 bg-amber-50/50 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  No se puede realizar la auditoría técnica
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600 mt-1">
+                  Faltan datos críticos necesarios para generar el análisis
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0">
+            {missingItems.length > 0 && (
+              <div className="bg-white rounded-lg border border-amber-200 p-4">
+                <p className="text-sm font-semibold text-gray-900 mb-3">
+                  Datos faltantes:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {missingItems.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                      <span className="flex-1 break-words">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="bg-blue-50 rounded-lg border border-blue-200 p-3">
+              <p className="text-sm text-gray-700">
+                <strong className="font-semibold text-gray-900">Solución:</strong> Complete el libro digital, el certificado energético y asegúrese de que el ESG esté calculado correctamente.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   if (shouldShowSpinner) {
     return (
@@ -979,8 +1100,7 @@ export default function BuildingAnalysisGeneral() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
         <Card className="border border-gray-200 shadow-sm">
           <CardHeader className="pb-4">
@@ -1047,8 +1167,8 @@ export default function BuildingAnalysisGeneral() {
                     className="h-full bg-gray-600 rounded-full"
                     style={{ width: `${complianceData.score}%` }}
                   ></div>
-            </div>
-            </div>
+                </div>
+              </div>
               {complianceData.currentRating && (
                 <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
                   <p className="text-sm font-medium text-gray-600 mb-2 flex items-center gap-2">
@@ -1067,7 +1187,7 @@ export default function BuildingAnalysisGeneral() {
                   <p className="text-3xl font-bold text-gray-900">{displayValue(complianceData.targetRating)}</p>
                 </div>
               )}
-          </div>
+            </div>
 
           {!complianceData.complies && (
               <Alert className="bg-red-50 border-red-200">
@@ -1480,7 +1600,6 @@ export default function BuildingAnalysisGeneral() {
           })}
         </div>
       </div>
-    </div>
   );
 }
 
