@@ -12,7 +12,6 @@ export interface PendingJobMeta {
 export interface JobStatusResult {
   status: "queued" | "processing" | "completed" | "failed";
   error_message?: string | null;
-  [key: string]: unknown;
 }
 
 export interface UseProcessingJobPollingOptions<TJob extends JobStatusResult> {

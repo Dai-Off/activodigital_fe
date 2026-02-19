@@ -6,6 +6,7 @@ import { getBookByBuilding, filterActiveSections, type DigitalBook } from "~/ser
 import {
   calculateESGScore,
   getESGScore,
+  getESGLabelColor,
   type ESGResponse,
 } from "~/services/esg";
 import { FinancialSnapshotsService } from "~/services/financialSnapshots";
@@ -24,6 +25,7 @@ import {
   Book,
   Building2,
   Calendar,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -53,6 +55,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { BuildingGeneralViewLoading } from "./ui/dashboardLoading";
 import { countBuildingDocuments } from "~/services/gestionDocuments";
 import { useLanguage } from "~/contexts/LanguageContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 
 
 export function BuildingGeneralView() {
@@ -66,8 +69,8 @@ export function BuildingGeneralView() {
   const [loading, setLoading] = useState(true);
   const [building, setBuilding] = useState<Building | null>(null);
   const [digitalBook, setDigitalBook] = useState<DigitalBook | null>(null);
-  const [_esgData, setEsgData] = useState<ESGResponse | null>(null);
-  const [_esgLoading, setEsgLoading] = useState(false);
+  const [esgData, setEsgData] = useState<ESGResponse | null>(null);
+  const [esgLoading, setEsgLoading] = useState(false);
   const [_hasFinancialData, setHasFinancialData] = useState<boolean | null>(
     null
   );
@@ -87,6 +90,7 @@ export function BuildingGeneralView() {
   const [isEditingCadastralRef, setIsEditingCadastralRef] = useState(false);
   const [tempCadastralRef, setTempCadastralRef] = useState("");
   const [isSavingCadastralRef, setIsSavingCadastralRef] = useState(false);
+  const [isMissingDataOpen, setIsMissingDataOpen] = useState(false);
 
   const buildingImages = useMemo(() => {
     const fallback = "/image.png";
@@ -909,6 +913,161 @@ export function BuildingGeneralView() {
             </div>
           </div>
         </div>
+        {/* Tarjeta ESG completa - Fuera de todos los grids, después de Información General */}
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-gray-900">
+              {t("ESGScore") || "ESG Score"}
+            </h4>
+          </div>
+          {esgLoading && (
+            <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+              <span className="inline-block h-3 w-3 rounded-full border-2 border-gray-300 border-t-transparent animate-spin" />
+              <span>{t("loading") ?? "Cargando ESG..."}</span>
+            </div>
+          )}
+          {esgData?.status === 'complete' && esgData.data ? (
+            <div className="space-y-4">
+              {/* Score Principal */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-16 h-16 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+                    style={{ backgroundColor: getESGLabelColor(esgData.data.label) }}
+                  >
+                    {esgData.data.total}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Score Total</p>
+                    <p className="text-lg font-bold text-gray-900 mt-0.5">{esgData.data.total}/100</p>
+                    <p className="text-xs text-gray-500 mt-0.5">puntos</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill={getESGLabelColor(esgData.data.label)}
+                      className="w-5 h-5"
+                      style={{ filter: 'drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.15))' }}
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-900">{esgData.data.label}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Barra de progreso principal */}
+              <div className="space-y-1">
+                <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500 shadow-sm"
+                    style={{ 
+                      width: `${esgData.data.total}%`,
+                      backgroundColor: getESGLabelColor(esgData.data.label),
+                      backgroundImage: `linear-gradient(90deg, ${getESGLabelColor(esgData.data.label)} 0%, ${getESGLabelColor(esgData.data.label)}dd 100%)`
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Desglose por categorías */}
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Ambiental</p>
+                    <span className="text-xs font-bold text-gray-900">{((esgData.data.environmental.normalized / 50) * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-green-500 transition-all duration-500"
+                      style={{ width: `${(esgData.data.environmental.normalized / 50) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-600">{esgData.data.environmental.normalized.toFixed(1)}/50 puntos</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Social</p>
+                    <span className="text-xs font-bold text-gray-900">{((esgData.data.social.normalized / 30) * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-blue-500 transition-all duration-500"
+                      style={{ width: `${(esgData.data.social.normalized / 30) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-600">{esgData.data.social.normalized.toFixed(1)}/30 puntos</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Gobernanza</p>
+                    <span className="text-xs font-bold text-gray-900">{((esgData.data.governance.normalized / 20) * 100).toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-purple-500 transition-all duration-500"
+                      style={{ width: `${(esgData.data.governance.normalized / 20) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-600">{esgData.data.governance.normalized.toFixed(1)}/20 puntos</p>
+                </div>
+              </div>
+            </div>
+          ) : esgData?.status === 'incomplete' ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <TriangleAlert className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    Faltan datos para calcular el ESG
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {esgData.missingData?.length || 0} {esgData.missingData?.length === 1 ? "campo faltante" : "campos faltantes"} para calcular el score completo
+                  </p>
+                </div>
+              </div>
+              {esgData.missingData && esgData.missingData.length > 0 && (
+                <Collapsible open={isMissingDataOpen} onOpenChange={setIsMissingDataOpen}>
+                  <CollapsibleTrigger className="w-full flex items-center justify-between p-2 text-left hover:bg-gray-50 rounded-md transition-colors">
+                    <span className="text-xs font-medium text-gray-700">
+                      Ver datos faltantes ({esgData.missingData.length})
+                    </span>
+                    <ChevronDown 
+                      className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                        isMissingDataOpen ? 'transform rotate-180' : ''
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2 overflow-hidden">
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {esgData.missingData.map((missing, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <span className="w-1 h-1 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                              <span className="text-xs text-gray-700 leading-relaxed">{missing}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white bg-gray-400">
+                —
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">No disponible</p>
+                <p className="text-xs text-gray-500">No se ha calculado el score ESG para este edificio</p>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div>
             <div className="flex items-center gap-1.5 mb-1.5">
@@ -940,10 +1099,10 @@ export function BuildingGeneralView() {
                         ? handleViewDigitalBook
                         : handleCreateDigitalBook
                     }
-                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                    className="bg-white text-[#1e3a8a] px-2.5 py-1 rounded flex items-center justify-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7 w-[120px]"
                   >
-                    <Eye className="w-3 h-3" />
-                    {digitalBook ? t("seeBook") : t("createBook")}
+                    <Eye className="w-3 h-3 flex-shrink-0" />
+                    <span>Cargar</span>
                   </button>
                 </div>
               </div>
@@ -959,10 +1118,10 @@ export function BuildingGeneralView() {
                   </div>
                   <button
                     onClick={() => navigate(`/cfo-intake/${id}`)}
-                    className="bg-white text-[#1e3a8a] px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7"
+                    className="bg-white text-[#1e3a8a] px-2.5 py-1 rounded flex items-center justify-center gap-1 hover:bg-blue-50 transition-colors whitespace-nowrap text-xs h-7 w-[120px]"
                   >
-                    <Eye className="w-3 h-3" />
-                    {t("loadFinancialData")}
+                    <Eye className="w-3 h-3 flex-shrink-0" />
+                    <span>Cargar</span>
                   </button>
                 </div>
               </div>
@@ -1201,7 +1360,7 @@ export function BuildingGeneralView() {
                       {t("currentGrade")}
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs">{_esgData?.status === 'complete' ? _esgData.data.label : "-"}</span>
+                      <span className="text-xs">{esgData?.status === 'complete' ? esgData.data.label : "-"}</span>
                       <span className="text-xs text-gray-500">
                         -
                       </span>

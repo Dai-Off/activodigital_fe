@@ -110,6 +110,7 @@ function getSectionConfigs(t: ReturnType<typeof useTranslation>['t']) {
             { value: 'none', label: t('digitalbook.options.safetyCompliance.none', 'No cumple / en infracción') }
           ] as Array<{ value: string, label: string }>, required: true
         },
+        { name: 'regulatoryCompliancePercent', label: t('digitalbook.fields.regulatoryCompliancePercent', 'Porcentaje de cumplimiento normativo (%)'), type: 'number', required: true, min: 0, max: 100 },
       ],
     },
   } as const;

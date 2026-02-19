@@ -56,7 +56,7 @@ import {
   getServiceTypeLabel
 } from "~/services/serviceInvoices";
 import { useLanguage } from "~/contexts/LanguageContext";
-import { extractInvoiceDataAsync, getInvoiceJob } from "~/services/invoiceExtractor";
+import { extractInvoiceDataAsync, getInvoiceJob, type InvoiceJobResponse } from "~/services/invoiceExtractor";
 import { useProcessingJobPolling } from "~/hooks/useProcessingJobPolling";
 import { Sparkles } from "lucide-react";
 import { EnergyCertificatesService } from "~/services/energyCertificates";
@@ -642,9 +642,9 @@ export function BuildingGestion() {
       });
   }, [buildingId]);
 
-  // Helper: abrir modal de revisión con datos del job
-  const openReviewModalFromJob = (job: { extracted_data?: unknown; document_url?: string; document_filename?: string }) => {
-    const d = job.extracted_data as Record<string, unknown> | undefined;
+  // Helper: abrir modal de revisión con datos del job de factura
+  const openReviewModalFromJob = (job: InvoiceJobResponse) => {
+    const d = job.extracted_data;
     if (!d || !job.document_url) return;
     setUploadedDocumentUrl(job.document_url);
     setUploadedDocumentFilename((job.document_filename as string) || null);
@@ -666,7 +666,7 @@ export function BuildingGestion() {
   };
 
   // Hook reutilizable: polling de jobs de factura (fallback si el socket no conecta)
-  const { addPendingJob: addPendingInvoiceJob } = useProcessingJobPolling({
+  const { addPendingJob: addPendingInvoiceJob } = useProcessingJobPolling<InvoiceJobResponse>({
     jobType: "invoice",
     buildingId,
     getJobStatus: getInvoiceJob,
