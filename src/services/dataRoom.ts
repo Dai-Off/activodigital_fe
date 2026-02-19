@@ -26,16 +26,21 @@ export async function fetchDataRoomAudit(buildingId: string) {
  * Dispara el diálogo de descarga del navegador.
  */
 export async function downloadDossierPdf(buildingId: string): Promise<void> {
-  const apiBase = import.meta.env.VITE_API_BASE ?? "";
-  const token =
-    localStorage.getItem("token") ?? sessionStorage.getItem("token") ?? "";
+  const { getApiBaseUrl } = await import("./api");
+  const baseUrl = await getApiBaseUrl();
 
-  const response = await fetch(
-    `${apiBase}/api/data-room/dossier/${buildingId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
+  // Misma lógica de token que apiFetch
+  const token =
+    window.sessionStorage.getItem("access_token") ||
+    window.localStorage.getItem("access_token") ||
+    "";
+
+  const response = await fetch(`${baseUrl}/data-room/dossier/${buildingId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Cache-Control": "no-store",
     },
-  );
+  });
 
   if (!response.ok) {
     const errBody = await response.json().catch(() => ({}));

@@ -7,6 +7,7 @@ import {
   Clock,
   Download,
   Info,
+  Loader2,
   LucideAward,
   LucideScale,
   LucideWrench,
@@ -3377,10 +3378,14 @@ const DataRoom = () => {
           }}
           className="px-3 md:px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm flex items-center gap-2 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <Download
-            className={`lucide lucide-download w-3 h-3 md:w-4 md:h-4 ${isDownloadingDossier ? "animate-spin" : ""}`}
-            aria-hidden="true"
-          />
+          {isDownloadingDossier ? (
+            <Loader2
+              className="w-3 h-3 md:w-4 md:h-4 animate-spin"
+              aria-hidden="true"
+            />
+          ) : (
+            <Download className="w-3 h-3 md:w-4 md:h-4" aria-hidden="true" />
+          )}
           <span className="hidden sm:inline">
             {isDownloadingDossier
               ? "Generando..."
