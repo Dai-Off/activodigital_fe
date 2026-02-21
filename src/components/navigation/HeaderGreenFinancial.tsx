@@ -94,7 +94,6 @@ export function HeaderGreenFinancial() {
                   ? "border-[#1e3a8a] text-[#1e3a8a]"
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
-              disabled={true}
             >
               <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Data Room</span>

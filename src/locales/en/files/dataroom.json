@@ -69,6 +69,10 @@
     "verifiedStatus": "Verified",
     "pendingStatus": "Pending",
     "rejectedStatus": "Rejected",
+    "queuedStatus": "Queued",
+    "processingStatus": "Analyzing...",
+    "queuedHint": "Waiting for analysis turn...",
+    "processingHint": "Analyzing document...",
     "dataLabel": "Data:",
 
     "subcategories": {

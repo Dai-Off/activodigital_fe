@@ -250,22 +250,7 @@ export const AppRouter = () => {
           >
             <Route index element={<Navigate to="financial-twin" replace />} />
             <Route path="financial-twin" element={<FinancialTwin />} />
-            <Route
-              path="data-room"
-              element={
-                <div className="max-w-[1800px] mx-auto p-6">
-                  <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-8 text-center">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                      Data Room
-                    </h2>
-                    <p className="text-gray-600">
-                      Próximamente. Documentación estructurada para
-                      financiación.
-                    </p>
-                  </div>
-                </div>
-              }
-            />
+            <Route path="data-room" element={<DataRoom />} />
             <Route
               path="requerimientos"
               element={
@@ -282,7 +267,6 @@ export const AppRouter = () => {
               }
             />
           </Route>
-          <Route path="data-room" element={<DataRoom />}></Route>
         </Route>
         <Route
           path="/expired"

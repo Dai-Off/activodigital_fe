@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { DataRoomExportService } from "~/services/dataRoomExport";
 import { useTranslation } from "react-i18next";
-import { useState, useMemo, useEffect, useCallback } from "react";
-import DocumentItem from "./componentes/DocumentItem";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useParams } from "react-router-dom";
+import DocumentItem, { type DocumentStatus } from "./componentes/DocumentItem";
 // import { useNavigation } from "~/contexts/NavigationContext";
 import {
   fetchDataRoomAudit,
@@ -28,9 +29,7 @@ import { toast } from "sonner";
 
 const DataRoom = () => {
   const { t } = useTranslation();
-  // TODO: reemplazar por selectedBuildingId dinámico cuando el selector de OpportunityRadar esté integrado
-  // const { selectedBuildingId } = useNavigation();
-  const selectedBuildingId = "9614dbd4-2ee3-4ed1-bfb3-b2431f27f58c";
+  const { buildingId: selectedBuildingId } = useParams<{ buildingId: string }>();
   const [auditData, setAuditData] = useState<Record<string, any>>({});
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [isDownloadingDossier, setIsDownloadingDossier] = useState(false);
@@ -3096,7 +3095,6 @@ const DataRoom = () => {
     setIsLoadingAudit(true);
     try {
       const data = await fetchDataRoomAudit(selectedBuildingId);
-      console.log("Raw Audit Data:", data);
       const auditMap = (data || []).reduce((acc: any, audit: any) => {
         // Try both camelCase and snake_case just in case
         const key = audit.checklist_id || audit.checklistId;
@@ -3105,7 +3103,6 @@ const DataRoom = () => {
         }
         return acc;
       }, {});
-      console.log("Audit Map:", auditMap);
       setAuditData(auditMap);
     } catch (error) {
       console.error("Error loading audit data:", error);
@@ -3116,6 +3113,69 @@ const DataRoom = () => {
 
   useEffect(() => {
     loadAuditData();
+  }, [loadAuditData]);
+
+  // ─── Cola de procesamiento simulada ──────────────────────────────────────
+  // Mapa: checklistId → 'queued' | 'processing'
+  const [processingQueue, setProcessingQueue] = useState<Map<string, 'queued' | 'processing'>>(new Map());
+  const queueRef = useRef<Map<string, 'queued' | 'processing'>>(new Map());
+  const isProcessingRef = useRef(false);
+
+  // Estados para simulación de demo (useRef para evitar stale closures en setTimeout)
+  const uploadCountRef = useRef(0);
+  const [sessionStatuses, setSessionStatuses] = useState<Map<string, DocumentStatus>>(new Map());
+
+  /** Sincroniza queueRef → state para forzar re-render */
+  const syncQueueToState = () => {
+    setProcessingQueue(new Map(queueRef.current));
+  };
+
+  /** Procesa la cola secuencialmente: toma el primer 'queued', lo pasa a 'processing',
+   *  simula 5s de IA y luego lo marca como completado o rechazado. */
+  const processQueue = useCallback(() => {
+    if (isProcessingRef.current) return;
+
+    const currentQueue = queueRef.current;
+    const nextId = Array.from(currentQueue.entries()).find(([, status]) => status === 'queued')?.[0];
+    if (!nextId) return;
+
+    isProcessingRef.current = true;
+
+    // Marcar como 'processing'
+    const updated = new Map(currentQueue);
+    updated.set(nextId, 'processing');
+    queueRef.current = updated;
+    syncQueueToState();
+
+    // ── SIMULACIÓN DE IA (5 segundos) ──
+    setTimeout(() => {
+      // Incrementar conteo y evaluar rechazo (useRef = siempre valor actual)
+      uploadCountRef.current += 1;
+      const shouldReject = uploadCountRef.current % 3 === 0;
+
+      // Leer el estado MÁS RECIENTE de la cola
+      const latestQueue = new Map(queueRef.current);
+      latestQueue.delete(nextId);
+      queueRef.current = latestQueue;
+      syncQueueToState();
+      isProcessingRef.current = false;
+
+      // Si se rechaza, guardar en sessionStatuses
+      if (shouldReject) {
+        setSessionStatuses(prev => new Map(prev).set(nextId, 'rejected'));
+        toast.error(t("dataRoom.rejectedStatus") || "Documento rechazado por falta de claridad o datos incompletos", {
+          description: "Por favor, elimine e intente con un archivo de mejor calidad.",
+          duration: 5000
+        });
+      }
+
+      // Recargar datos de auditoría
+      loadAuditData();
+
+      // Procesar el siguiente en cola
+      processQueue();
+    }, 5000);
+    // ── FIN SIMULACIÓN ──
   }, [loadAuditData]);
 
   const handleUpload = async (checklistId: string, file: File) => {
@@ -3132,12 +3192,28 @@ const DataRoom = () => {
     );
 
     try {
+      // 1. Subir archivo al backend
       await uploadDataRoomFile(selectedBuildingId, checklistId, file);
       toast.success(
         t("dataRoom.uploadSuccess") || "Archivo subido correctamente",
         { id: toastId },
       );
-      loadAuditData();
+
+      // 2. Limpiar cualquier override de sesión previo (rechazado/pending)
+      setSessionStatuses(prev => {
+        const next = new Map(prev);
+        next.delete(checklistId);
+        return next;
+      });
+
+      // 3. Añadir a la cola de procesamiento simulado (crear copia limpia)
+      const newQueue = new Map(queueRef.current);
+      newQueue.set(checklistId, 'queued');
+      queueRef.current = newQueue;
+      syncQueueToState();
+
+      // 3. Iniciar procesamiento si no hay otro en curso
+      processQueue();
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(
@@ -3149,12 +3225,30 @@ const DataRoom = () => {
     }
   };
 
-  // Mapear el estado del documento basado en los datos de auditoría
+  // Acción de eliminar para la simulación (softdelete visual)
+  const handleDeleteSimulated = (docId: string) => {
+    setSessionStatuses(prev => {
+      const next = new Map(prev);
+      next.set(docId, 'pending'); // Forzar estado 'pending' para ignorar el backend
+      return next;
+    });
+    toast.info("Documento eliminado. Puede volver a subirlo.");
+  };
+
+  // Mapear el estado del documento: primero consulta la cola, luego overrides de sesión, luego auditoría
   const getDocumentStatus = (
     docId: string,
-  ): "verified" | "pending" | "rejected" => {
+  ): DocumentStatus => {
+    // 1. Si está en la cola de procesamiento
+    const queueStatus = processingQueue.get(docId);
+    if (queueStatus) return queueStatus;
+
+    // 2. Si hay un override de sesión (rechazo simulado)
+    const sessionStatus = sessionStatuses.get(docId);
+    if (sessionStatus) return sessionStatus;
+
+    // 3. Datos reales del backend
     const audit = auditData[docId];
-    // console.log(`Checking status for ${docId}:`, audit);
     if (!audit) return "pending";
     if (
       audit.status === "uploaded" ||
@@ -3169,27 +3263,66 @@ const DataRoom = () => {
     return "pending";
   };
 
+  // Extraer metadatos del documento (nombre de archivo, fecha, etc.)
+  const getDocumentMetadata = (docId: string) => {
+    const audit = auditData[docId];
+    if (!audit || !audit.file_name) return undefined;
+
+    return {
+      filename: audit.file_name,
+      size: audit.size || "N/A",
+      date: audit.uploaded_at
+        ? new Date(audit.uploaded_at).toLocaleDateString()
+        : "N/A",
+    };
+  };
+
+  // Extraer datos extraídos por la IA si existen
+  const getDocumentExtractedData = (docId: string) => {
+    const audit = auditData[docId];
+    if (!audit || !audit.extracted_data) return undefined;
+
+    // Convertir el objeto de datos extraídos en el formato que espera DocumentItem [{label, value}]
+    try {
+      const data = typeof audit.extracted_data === 'string' 
+        ? JSON.parse(audit.extracted_data) 
+        : audit.extracted_data;
+      
+      return Object.entries(data).map(([key, val]) => ({
+        label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: String(val)
+      }));
+    } catch (e) {
+      console.error("Error parsing extracted_data:", e);
+      return undefined;
+    }
+  };
+
   // Conteos dinámicos calculados desde el array documents
   const categories: Category[] = categoryDefs.map((cat) => {
     const catDocs = documents.filter((doc) => doc.category === cat.id);
     const mandatoryCount = catDocs.filter((d) => d.type === "mandatory").length;
     const optionalCount = catDocs.filter((d) => d.type === "optional").length;
     const subcategoriesCount = new Set(catDocs.map((d) => d.subcategory)).size;
+    const verifiedCount = catDocs.filter((d) => getDocumentStatus(d.id) === "verified").length;
+    
     return {
       ...cat,
       mandatory: mandatoryCount,
-      verified: 0,
+      verified: verifiedCount,
       optional: optionalCount,
       subcategories: subcategoriesCount,
     };
   });
 
-  const [selectedCategory, setSelectedCategory] = useState<Category>(
-    categories[0],
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    categories[0].id,
   );
+  
+  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0];
 
   const handleCategorySelect = (id: string) => {
-    setSelectedCategory(categories.find((category) => category.id === id)!);
+    setSelectedCategoryId(id);
     setOpenSubcategories([]);
   };
 
@@ -3346,11 +3479,11 @@ const DataRoom = () => {
     mandatoryDocs.length > 0
       ? Math.round((mandatoryVerifiedCount / mandatoryDocs.length) * 100)
       : 0;
-  // DEMO: indica si una categoría tiene algún documento processándose actualmente
+  // Indica si una categoría tiene algún documento en cola o procesándose
   const categoryHasUploading = (categoryId: string): boolean =>
     documents
       .filter((d) => d.category === categoryId)
-      .some((d) => auditData[d.id]?.status === "processing");
+      .some((d) => processingQueue.has(d.id) || auditData[d.id]?.status === "processing");
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
@@ -3725,8 +3858,11 @@ const DataRoom = () => {
                       title={doc.name}
                       description={getSubcategoryName(doc.subcategory)}
                       status={getDocumentStatus(doc.id)}
+                      metadata={getDocumentMetadata(doc.id)}
+                      extractedData={getDocumentExtractedData(doc.id)}
                       isObligatory={true}
                       onUpload={(file) => handleUpload(doc.id, file)}
+                      onDelete={() => handleDeleteSimulated(doc.id)}
                     />
                   ))
               )}
@@ -3835,8 +3971,11 @@ const DataRoom = () => {
                                   doc.subcategory,
                                 )}
                                 status={getDocumentStatus(doc.id)}
+                                metadata={getDocumentMetadata(doc.id)}
+                                extractedData={getDocumentExtractedData(doc.id)}
                                 isObligatory={doc.type === "mandatory"}
                                 onUpload={(file) => handleUpload(doc.id, file)}
+                                onDelete={() => handleDeleteSimulated(doc.id)}
                               />
                             ))}
                           </div>

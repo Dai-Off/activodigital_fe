@@ -243,9 +243,7 @@ function NewLayoutContent() {
           `}
         >
           <ErrorBoundary>
-            {location.pathname === "/green-financial" ||
-            location.pathname === "/green-financial/financial-twin" ||
-            location.pathname === "/green-financial/data-room" ? (
+            {location.pathname.startsWith("/green-financial/building/") ? (
               <HeaderGreenFinancial />
             ) : (
               <AppHeader />

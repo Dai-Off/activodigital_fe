@@ -6,10 +6,13 @@ import {
   FileText,
   Upload,
   Zap,
+  Clock,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type DocumentStatus = "pending" | "verified" | "rejected";
+export type DocumentStatus = "pending" | "verified" | "rejected" | "queued" | "processing";
 
 export interface DocumentData {
   label: string;
@@ -31,6 +34,7 @@ export interface DocumentProps {
   metadata?: DocumentMetadata;
   extractedData?: DocumentData[];
   onUpload?: (file: File) => void;
+  onDelete?: () => void;
 }
 
 const DocumentItem: React.FC<DocumentProps> = ({
@@ -41,6 +45,7 @@ const DocumentItem: React.FC<DocumentProps> = ({
   metadata,
   extractedData,
   onUpload,
+  onDelete,
 }) => {
   const { t } = useTranslation();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -51,16 +56,10 @@ const DocumentItem: React.FC<DocumentProps> = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    console.log(
-      "📂 Archivo seleccionado:",
-      file?.name,
-      "onUpload existe:",
-      !!onUpload,
-    );
     if (file && onUpload) {
       onUpload(file);
     }
-    // Reset input value to allow uploading the same file again if needed
+    // Reset para permitir subir el mismo archivo de nuevo
     if (event.target) {
       event.target.value = "";
     }
@@ -80,6 +79,18 @@ const DocumentItem: React.FC<DocumentProps> = ({
           icon: <CircleAlert className="w-5 h-5 text-red-600" />,
           statusLabel: t("dataRoom.rejectedStatus") || "Rechazado",
         };
+      case "queued":
+        return {
+          container: "bg-amber-50 text-amber-700 border-amber-200",
+          icon: <Clock className="w-5 h-5 text-amber-500" />,
+          statusLabel: t("dataRoom.queuedStatus") || "En cola",
+        };
+      case "processing":
+        return {
+          container: "bg-blue-50 text-blue-700 border-blue-200",
+          icon: <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />,
+          statusLabel: t("dataRoom.processingStatus") || "Analizando...",
+        };
       case "pending":
       default:
         return {
@@ -91,6 +102,12 @@ const DocumentItem: React.FC<DocumentProps> = ({
   };
 
   const styles = getStatusStyles();
+
+  // No mostrar botón de subir si ya está verificado, en cola o procesando
+  const showUploadButton = status === "pending" || status === "rejected";
+
+  // Mostrar botón de eliminar si está rechazado (para simular softdelete de demo)
+  const showDeleteButton = status === "rejected";
 
   return (
     <div className={`border-2 rounded-lg p-2 md:p-4 ${styles.container}`}>
@@ -112,9 +129,7 @@ const DocumentItem: React.FC<DocumentProps> = ({
               {description}
             </p>
 
-            {(status === "pending" ||
-              status === "verified" ||
-              status === "rejected") && (
+            {showUploadButton && (
               <div className="flex items-center gap-2 mt-1 md:mt-2">
                 <input
                   type="file"
@@ -133,6 +148,31 @@ const DocumentItem: React.FC<DocumentProps> = ({
                   </span>
                   <span className="sm:hidden">{t("dataRoom.upload")}</span>
                 </button>
+
+                {showDeleteButton && onDelete && (
+                  <button
+                    onClick={onDelete}
+                    className="px-2 md:px-3 py-1 md:py-1.5 bg-white text-red-600 border border-red-200 rounded text-[10px] md:text-xs hover:bg-red-50 transition-colors flex items-center gap-1 whitespace-nowrap"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                    <span>Eliminar</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Indicador visual para cola/procesamiento */}
+            {status === "queued" && (
+              <div className="flex items-center gap-2 mt-1 md:mt-2 text-[10px] md:text-xs text-amber-600">
+                <Clock className="w-3 h-3" />
+                <span>{t("dataRoom.queuedHint") || "Esperando turno de análisis..."}</span>
+              </div>
+            )}
+            {status === "processing" && (
+              <div className="flex items-center gap-2 mt-1 md:mt-2 text-[10px] md:text-xs text-blue-600">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>{t("dataRoom.processingHint") || "Analizando documento..."}</span>
               </div>
             )}
 
