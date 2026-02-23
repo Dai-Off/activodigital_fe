@@ -8,7 +8,6 @@ import {
   Zap,
   Clock,
   Loader2,
-  Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -34,7 +33,6 @@ export interface DocumentProps {
   metadata?: DocumentMetadata;
   extractedData?: DocumentData[];
   onUpload?: (file: File) => void;
-  onDelete?: () => void;
 }
 
 const DocumentItem: React.FC<DocumentProps> = ({
@@ -45,7 +43,6 @@ const DocumentItem: React.FC<DocumentProps> = ({
   metadata,
   extractedData,
   onUpload,
-  onDelete,
 }) => {
   const { t } = useTranslation();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -106,9 +103,6 @@ const DocumentItem: React.FC<DocumentProps> = ({
   // No mostrar botón de subir si ya está verificado, en cola o procesando
   const showUploadButton = status === "pending" || status === "rejected";
 
-  // Mostrar botón de eliminar si está rechazado (para simular softdelete de demo)
-  const showDeleteButton = status === "rejected";
-
   return (
     <div className={`border-2 rounded-lg p-2 md:p-4 ${styles.container}`}>
       <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-4">
@@ -148,17 +142,6 @@ const DocumentItem: React.FC<DocumentProps> = ({
                   </span>
                   <span className="sm:hidden">{t("dataRoom.upload")}</span>
                 </button>
-
-                {showDeleteButton && onDelete && (
-                  <button
-                    onClick={onDelete}
-                    className="px-2 md:px-3 py-1 md:py-1.5 bg-white text-red-600 border border-red-200 rounded text-[10px] md:text-xs hover:bg-red-50 transition-colors flex items-center gap-1 whitespace-nowrap"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                    <span>Eliminar</span>
-                  </button>
-                )}
               </div>
             )}
 

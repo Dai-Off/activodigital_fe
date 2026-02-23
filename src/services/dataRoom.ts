@@ -10,7 +10,7 @@ export async function uploadDataRoomFile(
   formData.append("buildingId", buildingId);
   formData.append("checklistId", checklistId);
 
-  return apiFetch("/data-room/upload", {
+  return apiFetch("/data-room/upload-async", {
     method: "POST",
     body: formData,
   });

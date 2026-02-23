@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { DataRoomExportService } from "~/services/dataRoomExport";
 import { useTranslation } from "react-i18next";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import DocumentItem, { type DocumentStatus } from "./componentes/DocumentItem";
 // import { useNavigation } from "~/contexts/NavigationContext";
@@ -3090,13 +3090,16 @@ const DataRoom = () => {
     },
   ];
 
-  const loadAuditData = useCallback(async () => {
+  const loadAuditData = useCallback(async (isInitial: boolean = false) => {
     if (!selectedBuildingId) return;
-    setIsLoadingAudit(true);
+    
+    if (isInitial) {
+      setIsLoadingAudit(true);
+    }
+
     try {
       const data = await fetchDataRoomAudit(selectedBuildingId);
       const auditMap = (data || []).reduce((acc: any, audit: any) => {
-        // Try both camelCase and snake_case just in case
         const key = audit.checklist_id || audit.checklistId;
         if (key) {
           acc[key] = audit;
@@ -3109,74 +3112,26 @@ const DataRoom = () => {
     } finally {
       setIsLoadingAudit(false);
     }
-  }, [selectedBuildingId, setIsLoadingAudit, setAuditData]);
+  }, [selectedBuildingId, setAuditData]); // Eliminamos auditData de dependencias para evitar recursividad
 
+  // Carga inicial
   useEffect(() => {
-    loadAuditData();
+    loadAuditData(true);
   }, [loadAuditData]);
 
-  // ─── Cola de procesamiento simulada ──────────────────────────────────────
-  // Mapa: checklistId → 'queued' | 'processing'
-  const [processingQueue, setProcessingQueue] = useState<Map<string, 'queued' | 'processing'>>(new Map());
-  const queueRef = useRef<Map<string, 'queued' | 'processing'>>(new Map());
-  const isProcessingRef = useRef(false);
+  // Polling para actualizar estados cuando hay archivos en cola o procesándose
+  useEffect(() => {
+    const hasActiveJobs = Object.values(auditData).some(
+      (audit) => audit.status === "queued" || audit.status === "processing"
+    );
 
-  // Estados para simulación de demo (useRef para evitar stale closures en setTimeout)
-  const uploadCountRef = useRef(0);
-  const [sessionStatuses, setSessionStatuses] = useState<Map<string, DocumentStatus>>(new Map());
-
-  /** Sincroniza queueRef → state para forzar re-render */
-  const syncQueueToState = () => {
-    setProcessingQueue(new Map(queueRef.current));
-  };
-
-  /** Procesa la cola secuencialmente: toma el primer 'queued', lo pasa a 'processing',
-   *  simula 5s de IA y luego lo marca como completado o rechazado. */
-  const processQueue = useCallback(() => {
-    if (isProcessingRef.current) return;
-
-    const currentQueue = queueRef.current;
-    const nextId = Array.from(currentQueue.entries()).find(([, status]) => status === 'queued')?.[0];
-    if (!nextId) return;
-
-    isProcessingRef.current = true;
-
-    // Marcar como 'processing'
-    const updated = new Map(currentQueue);
-    updated.set(nextId, 'processing');
-    queueRef.current = updated;
-    syncQueueToState();
-
-    // ── SIMULACIÓN DE IA (5 segundos) ──
-    setTimeout(() => {
-      // Incrementar conteo y evaluar rechazo (useRef = siempre valor actual)
-      uploadCountRef.current += 1;
-      const shouldReject = uploadCountRef.current % 3 === 0;
-
-      // Leer el estado MÁS RECIENTE de la cola
-      const latestQueue = new Map(queueRef.current);
-      latestQueue.delete(nextId);
-      queueRef.current = latestQueue;
-      syncQueueToState();
-      isProcessingRef.current = false;
-
-      // Si se rechaza, guardar en sessionStatuses
-      if (shouldReject) {
-        setSessionStatuses(prev => new Map(prev).set(nextId, 'rejected'));
-        toast.error(t("dataRoom.rejectedStatus") || "Documento rechazado por falta de claridad o datos incompletos", {
-          description: "Por favor, elimine e intente con un archivo de mejor calidad.",
-          duration: 5000
-        });
-      }
-
-      // Recargar datos de auditoría
-      loadAuditData();
-
-      // Procesar el siguiente en cola
-      processQueue();
-    }, 5000);
-    // ── FIN SIMULACIÓN ──
-  }, [loadAuditData]);
+    if (hasActiveJobs) {
+      const interval = setInterval(() => {
+        loadAuditData(false);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [auditData, loadAuditData]);
 
   const handleUpload = async (checklistId: string, file: File) => {
     if (!selectedBuildingId) {
@@ -3199,21 +3154,8 @@ const DataRoom = () => {
         { id: toastId },
       );
 
-      // 2. Limpiar cualquier override de sesión previo (rechazado/pending)
-      setSessionStatuses(prev => {
-        const next = new Map(prev);
-        next.delete(checklistId);
-        return next;
-      });
-
-      // 3. Añadir a la cola de procesamiento simulado (crear copia limpia)
-      const newQueue = new Map(queueRef.current);
-      newQueue.set(checklistId, 'queued');
-      queueRef.current = newQueue;
-      syncQueueToState();
-
-      // 3. Iniciar procesamiento si no hay otro en curso
-      processQueue();
+      // 2. Recargar datos de auditoría
+      loadAuditData(false);
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(
@@ -3225,31 +3167,17 @@ const DataRoom = () => {
     }
   };
 
-  // Acción de eliminar para la simulación (softdelete visual)
-  const handleDeleteSimulated = (docId: string) => {
-    setSessionStatuses(prev => {
-      const next = new Map(prev);
-      next.set(docId, 'pending'); // Forzar estado 'pending' para ignorar el backend
-      return next;
-    });
-    toast.info("Documento eliminado. Puede volver a subirlo.");
-  };
 
-  // Mapear el estado del documento: primero consulta la cola, luego overrides de sesión, luego auditoría
   const getDocumentStatus = (
     docId: string,
   ): DocumentStatus => {
-    // 1. Si está en la cola de procesamiento
-    const queueStatus = processingQueue.get(docId);
-    if (queueStatus) return queueStatus;
-
-    // 2. Si hay un override de sesión (rechazo simulado)
-    const sessionStatus = sessionStatuses.get(docId);
-    if (sessionStatus) return sessionStatus;
-
-    // 3. Datos reales del backend
+    // Datos reales del backend
     const audit = auditData[docId];
     if (!audit) return "pending";
+
+    if (audit.status === "queued") return "queued";
+    if (audit.status === "processing") return "processing";
+
     if (
       audit.status === "uploaded" ||
       audit.status === "verified" ||
@@ -3468,7 +3396,11 @@ const DataRoom = () => {
     rejectedStatuses.has(a.status),
   ).length;
 
-  const pendingCount = totalDocs - verifiedCount - rejectedCount;
+  const inReviewCount = Object.values(auditData).filter((a: any) =>
+    a.status === "queued" || a.status === "processing",
+  ).length;
+
+  const pendingCount = totalDocs - verifiedCount - rejectedCount - inReviewCount;
 
   const mandatoryVerifiedCount = mandatoryDocs.filter((d) => {
     const audit = auditData[d.id];
@@ -3483,7 +3415,7 @@ const DataRoom = () => {
   const categoryHasUploading = (categoryId: string): boolean =>
     documents
       .filter((d) => d.category === categoryId)
-      .some((d) => processingQueue.has(d.id) || auditData[d.id]?.status === "processing");
+      .some((d) => auditData[d.id]?.status === "processing");
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
@@ -3569,7 +3501,7 @@ const DataRoom = () => {
               {t("dataRoom.review")}
             </p>
           </div>
-          <p className="text-lg md:text-2xl text-orange-600">{pendingCount}</p>
+          <p className="text-lg md:text-2xl text-orange-600">{inReviewCount}</p>
         </div>
         <div className="bg-white rounded-lg shadow border-2 border-gray-200 p-2 md:p-4">
           <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
@@ -3590,7 +3522,7 @@ const DataRoom = () => {
               aria-hidden="true"
             />
             <p className="text-[10px] md:text-sm text-gray-600">
-              {t("dataRoom.obligatory")}
+              {t("dataRoom.rejected")}
             </p>
           </div>
           <p className="text-lg md:text-2xl text-red-600">{rejectedCount}</p>
@@ -3862,7 +3794,6 @@ const DataRoom = () => {
                       extractedData={getDocumentExtractedData(doc.id)}
                       isObligatory={true}
                       onUpload={(file) => handleUpload(doc.id, file)}
-                      onDelete={() => handleDeleteSimulated(doc.id)}
                     />
                   ))
               )}
@@ -3975,7 +3906,6 @@ const DataRoom = () => {
                                 extractedData={getDocumentExtractedData(doc.id)}
                                 isObligatory={doc.type === "mandatory"}
                                 onUpload={(file) => handleUpload(doc.id, file)}
-                                onDelete={() => handleDeleteSimulated(doc.id)}
                               />
                             ))}
                           </div>
