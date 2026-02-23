@@ -66,6 +66,7 @@ import { GeneralGestion } from "~/components/GeneralGestion";
 import { Events } from "~/components/Events";
 import Expired from "~/components/Expired";
 import Configuration from "~/components/Configuration";
+import DataRoom from "~/components/dashboard/GreenFinancial/DataRoom";
 
 // Componente para redirigir /building/:id a /building/:id/general-view
 const NavigateToGeneralView = () => {
@@ -124,9 +125,7 @@ const SectionsListPage = () => {
                   />
                 </svg>
               </li>
-              <li className="text-gray-900 font-medium">
-                {t("sections")}
-              </li>
+              <li className="text-gray-900 font-medium">{t("sections")}</li>
             </ol>
           </nav>
         </div>
@@ -251,24 +250,18 @@ export const AppRouter = () => {
           >
             <Route index element={<Navigate to="financial-twin" replace />} />
             <Route path="financial-twin" element={<FinancialTwin />} />
-            <Route
-              path="data-room"
-              element={
-                <div className="max-w-[1800px] mx-auto p-6">
-                  <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-8 text-center">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Data Room</h2>
-                    <p className="text-gray-600">Próximamente. Documentación estructurada para financiación.</p>
-                  </div>
-                </div>
-              }
-            />
+            <Route path="data-room" element={<DataRoom />} />
             <Route
               path="requerimientos"
               element={
                 <div className="max-w-[1800px] mx-auto p-6">
                   <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 p-8 text-center">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Requerimientos</h2>
-                    <p className="text-gray-600">Próximamente. Gestión de requisitos para la operación.</p>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                      Requerimientos
+                    </h2>
+                    <p className="text-gray-600">
+                      Próximamente. Gestión de requisitos para la operación.
+                    </p>
                   </div>
                 </div>
               }
