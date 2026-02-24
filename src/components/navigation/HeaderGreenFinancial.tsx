@@ -1,5 +1,6 @@
 import {
   Building2,
+  ChartColumn,
   LucideLeaf,
   MessagesSquare,
   Shield,
@@ -11,7 +12,8 @@ export function HeaderGreenFinancial() {
   const location = useLocation();
   const navigate = useNavigate();
   const { buildingId } = useParams<{ buildingId: string }>();
-  const isInBuildingView = !!buildingId && location.pathname.includes("/green-financial/building/");
+  const isInBuildingView =
+    !!buildingId && location.pathname.includes("/green-financial/building/");
   const isFinancialTwin = location.pathname.includes("/financial-twin");
   const isDataRoom = location.pathname.includes("/data-room");
   const isRequerimientos = location.pathname.includes("/requerimientos");
@@ -59,33 +61,55 @@ export function HeaderGreenFinancial() {
         <div className="bg-white border-b border-gray-200 px-4 sm:px-6 flex-shrink-0 overflow-x-auto">
           <div className="flex gap-1 -mb-px min-w-max">
             <button
-              onClick={() => buildingId && navigate(`/green-financial/building/${buildingId}/financial-twin`)}
-              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isFinancialTwin
-                ? "border-[#1e3a8a] text-[#1e3a8a]"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+              onClick={() => navigate("/green-financial")}
+              className="px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap border-transparent text-gray-600 hover:text-gray-900"
+            >
+              <ChartColumn className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Radar</span>
+            </button>
+            <button
+              onClick={() =>
+                buildingId &&
+                navigate(
+                  `/green-financial/building/${buildingId}/financial-twin`,
+                )
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isFinancialTwin
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Financial Twin</span>
               <span className="sm:hidden">Twin</span>
             </button>
             <button
-              onClick={() => buildingId && navigate(`/green-financial/building/${buildingId}/data-room`)}
-              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isDataRoom
-                ? "border-[#1e3a8a] text-[#1e3a8a]"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
-              disabled={true}
+              onClick={() =>
+                buildingId &&
+                navigate(`/green-financial/building/${buildingId}/data-room`)
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isDataRoom
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               <Shield className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Data Room</span>
             </button>
             <button
-              onClick={() => buildingId && navigate(`/green-financial/building/${buildingId}/requerimientos`)}
-              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isRequerimientos
-                ? "border-[#1e3a8a] text-[#1e3a8a]"
-                : "border-transparent text-gray-600 hover:text-gray-900"
-                }`}
+              onClick={() =>
+                buildingId &&
+                navigate(
+                  `/green-financial/building/${buildingId}/requerimientos`,
+                )
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isRequerimientos
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               <MessagesSquare className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Requerimientos</span>
@@ -93,6 +117,6 @@ export function HeaderGreenFinancial() {
           </div>
         </div>
       )}
-    </header >
+    </header>
   );
 }

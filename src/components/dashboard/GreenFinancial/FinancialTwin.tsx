@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  BookOpen,
-  Download,
-  Eye,
-  FileText,
-  TriangleAlert,
-} from "lucide-react";
+import { BookOpen, Download, Eye, FileText, TriangleAlert } from "lucide-react";
 
 import { useIsMobile } from "~/components/ui/use-mobile";
 
@@ -108,12 +102,13 @@ const FinancialTwin: React.FC = () => {
     }
   }, [buildingId]);
 
-
   return (
     <div>
       <HelpersTwin
         active={showSection.showHelpers}
-        setActive={(value) => setShowSection((prev) => ({ ...prev, showHelpers: value }))}
+        setActive={(value) =>
+          setShowSection((prev) => ({ ...prev, showHelpers: value }))
+        }
       />
 
       <ModalFinancial active={financialTwin} setActive={(value) => setFinancialTwin(value)} />
@@ -121,13 +116,13 @@ const FinancialTwin: React.FC = () => {
       <ModalCalidades active={showCalidadesModal} setActive={setShowCalidadesModal} buildingData={buildingData} />
       <ModalLicenciaDR active={showLicenciaDRModal} setActive={setShowLicenciaDRModal} buildingData={buildingData} />
 
-      <div style={{ marginTop: "-90px" }}>
+      <div>
         <div className="max-w-[1800px] mx-auto space-y-6 px-4 md:px-0">
           <HeaderControls
             t={t}
             isMobile={isMobile}
             onExport={() => {
-              return null
+              return null;
             }}
           />
 
@@ -147,12 +142,21 @@ const FinancialTwin: React.FC = () => {
                     className={`w-5 h-5 md:w-6 md:h-6 rounded flex items-center justify-center text-white flex-shrink-0 ${bankReadyProgress ? (bankReadyProgress.percent >= 100 ? "bg-green-500" : "bg-red-500") : "bg-gray-400"}`}
                     aria-hidden="true"
                   >
-                    <TriangleAlert className="w-3 h-3 md:w-3.5 md:h-3.5" aria-hidden="true" />
+                    <TriangleAlert
+                      className="w-3 h-3 md:w-3.5 md:h-3.5"
+                      aria-hidden="true"
+                    />
                   </div>
                   <div>
-                    <div className="text-[9px] md:text-[10px] text-gray-600 leading-tight">Bank-Ready</div>
-                    <div className={`text-[10px] md:text-xs leading-tight ${bankReadyProgress ? "text-red-600" : "text-gray-500"}`}>
-                      {bankReadyProgress ? `${bankReadyProgress.completed}/${bankReadyProgress.total} â€¢ ${bankReadyProgress.percent}%` : "-"}
+                    <div className="text-[9px] md:text-[10px] text-gray-600 leading-tight">
+                      Bank-Ready
+                    </div>
+                    <div
+                      className={`text-[10px] md:text-xs leading-tight ${bankReadyProgress ? "text-red-600" : "text-gray-500"}`}
+                    >
+                      {bankReadyProgress
+                        ? `${bankReadyProgress.completed}/${bankReadyProgress.total} âÿ¢ ${bankReadyProgress.percent}%`
+                        : "-"}
                     </div>
                   </div>
                 </div>
@@ -167,7 +171,11 @@ const FinancialTwin: React.FC = () => {
                   >
                     <div
                       className={`h-1 md:h-1.5 rounded-full transition-all duration-500 ${bankReadyProgress ? (bankReadyProgress.percent >= 100 ? "bg-green-500" : "bg-red-500") : "bg-gray-400"}`}
-                      style={{ width: bankReadyProgress ? `${bankReadyProgress.percent}%` : "0%" }}
+                      style={{
+                        width: bankReadyProgress
+                          ? `${bankReadyProgress.percent}%`
+                          : "0%",
+                      }}
                     />
                   </div>
                 </div>
