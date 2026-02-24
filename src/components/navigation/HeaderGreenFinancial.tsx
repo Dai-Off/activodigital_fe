@@ -1,6 +1,5 @@
 import {
   Building2,
-  ChartColumn,
   LucideLeaf,
   MessagesSquare,
   Shield,
@@ -59,13 +58,6 @@ export function HeaderGreenFinancial() {
       {isInBuildingView && (
         <div className="bg-white border-b border-gray-200 px-4 sm:px-6 flex-shrink-0 overflow-x-auto">
           <div className="flex gap-1 -mb-px min-w-max">
-            <button
-              onClick={() => navigate("/green-financial")}
-              className="px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap border-transparent text-gray-600 hover:text-gray-900"
-            >
-              <ChartColumn className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Radar</span>
-            </button>
             <button
               onClick={() => buildingId && navigate(`/green-financial/building/${buildingId}/financial-twin`)}
               className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isFinancialTwin

@@ -6,9 +6,9 @@ const FooterAction: React.FC<{ onOpen: () => void}> = ({ onOpen }) => {
     <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
       <button
         onClick={onOpen}
-        className="pointer-events-auto px-8 py-4 rounded-xl shadow-2xl text-lg flex items-center gap-3 transition-all bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white hover:shadow-xl hover:scale-105"
+        className="pointer-events-auto px-5 py-2.5 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2 transition-all bg-[#1e3a8a] text-white hover:shadow-xl hover:bg-blue-800"
       >
-        <SendIcon className="w-6 h-6" />
+        <SendIcon className="w-4 h-4" />
         Solicitar Financiación a Partners
       </button>
     </div>
