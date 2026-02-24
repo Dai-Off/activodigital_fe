@@ -7,6 +7,9 @@ import { useIsMobile } from "~/components/ui/use-mobile";
 /* Componentes ya existentes en tu repo (los dejo como import) */
 import HelpersTwin from "./componentes/HelpersTwin";
 import ModalFinancial from "./componentes/ModalFinancial";
+import ModalLEE from "./componentes/ModalLEE";
+import ModalCalidades from "./componentes/ModalCalidades";
+import ModalLicenciaDR from "./componentes/ModalLicenciaDR";
 import HeroCard from "./HeroCard";
 import RightColumn from "./RightColumn";
 
@@ -48,6 +51,9 @@ const FinancialTwin: React.FC = () => {
   const isMobile = useIsMobile();
 
   const [financialTwin, setFinancialTwin] = useState<boolean>(false);
+  const [showLEEModal, setShowLEEModal] = useState<boolean>(false);
+  const [showCalidadesModal, setShowCalidadesModal] = useState<boolean>(false);
+  const [showLicenciaDRModal, setShowLicenciaDRModal] = useState<boolean>(false);
 
   const [metricHelp, setMetricHelp] = useState<HelpMetricas>({
     General: false,
@@ -105,10 +111,10 @@ const FinancialTwin: React.FC = () => {
         }
       />
 
-      <ModalFinancial
-        active={financialTwin}
-        setActive={(value) => setFinancialTwin(value)}
-      />
+      <ModalFinancial active={financialTwin} setActive={(value) => setFinancialTwin(value)} />
+      <ModalLEE active={showLEEModal} setActive={setShowLEEModal} buildingData={buildingData} />
+      <ModalCalidades active={showCalidadesModal} setActive={setShowCalidadesModal} buildingData={buildingData} />
+      <ModalLicenciaDR active={showLicenciaDRModal} setActive={setShowLicenciaDRModal} buildingData={buildingData} />
 
       <div>
         <div className="max-w-[1800px] mx-auto space-y-6 px-4 md:px-0">
@@ -149,7 +155,7 @@ const FinancialTwin: React.FC = () => {
                       className={`text-[10px] md:text-xs leading-tight ${bankReadyProgress ? "text-red-600" : "text-gray-500"}`}
                     >
                       {bankReadyProgress
-                        ? `${bankReadyProgress.completed}/${bankReadyProgress.total} â€¢ ${bankReadyProgress.percent}%`
+                        ? `${bankReadyProgress.completed}/${bankReadyProgress.total} âÿ¢ ${bankReadyProgress.percent}%`
                         : "-"}
                     </div>
                   </div>
@@ -177,6 +183,7 @@ const FinancialTwin: React.FC = () => {
             </div>
             <button
               type="button"
+              onClick={() => setShowLEEModal(true)}
               className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
               title="Libro del Edificio Existente (Opcional)"
               aria-label="Abrir generador del Libro del Edificio Existente"
@@ -186,6 +193,7 @@ const FinancialTwin: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() => setShowCalidadesModal(true)}
               className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
               title="Memoria de Calidades"
               aria-label="Abrir gestor de Memoria de Calidades"
@@ -195,6 +203,7 @@ const FinancialTwin: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={() => setShowLicenciaDRModal(true)}
               className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
               title="Licencia/DeclaraciÃ³n Responsable"
               aria-label="Abrir detector de Licencia o DeclaraciÃ³n Responsable"

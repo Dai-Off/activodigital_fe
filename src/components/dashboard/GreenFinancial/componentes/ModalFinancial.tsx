@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { CircleAlertIcon, CircleCheckIcon, SendIcon, XIcon } from "lucide-react";
 
 interface HelpersTwinProps {
@@ -63,6 +64,19 @@ const FinancialEntityCard = ({ entity }: { entity: FinancialEntity }) => {
 };
 
 const ModalFinancial = ({ active, setActive }: HelpersTwinProps) => {
+    useEffect(() => {
+        if (active) {
+            const prevHtml = document.documentElement.style.overflow;
+            const prevBody = document.body.style.overflow;
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+            return () => {
+                document.documentElement.style.overflow = prevHtml;
+                document.body.style.overflow = prevBody;
+            };
+        }
+    }, [active]);
+
     if (!active) return null;
 
     const financialEntities: FinancialEntity[] = [
@@ -121,7 +135,7 @@ const ModalFinancial = ({ active, setActive }: HelpersTwinProps) => {
 
     return (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-90 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-90 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
 
                 <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] text-white p-6 flex items-center justify-between">
