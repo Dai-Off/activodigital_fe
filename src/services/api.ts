@@ -12,15 +12,15 @@ let detectionPromise: Promise<string> | null = null;
 export const clearBackendCache = () => {
   cachedApiBaseUrl = null;
   detectionPromise = null;
-  console.log('🧹 Caché de backend limpiada');
+  console.log("🧹 Caché de backend limpiada");
 };
 
 const detectBackendAvailability = async (url: string): Promise<boolean> => {
   try {
     console.log(`🔍 Probando conectividad con: ${url}/health`);
     const response = await fetch(`${url}/health`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000) // 5 segundos timeout (aumentado)
+      method: "GET",
+      signal: AbortSignal.timeout(5000), // 5 segundos timeout (aumentado)
     });
     console.log(`📡 Respuesta de ${url}:`, response.status, response.ok);
     return response.ok;
@@ -32,21 +32,25 @@ const detectBackendAvailability = async (url: string): Promise<boolean> => {
 
 export const getApiBaseUrl = async (): Promise<string> => {
   const isLocalhost =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
 
   // 1. Si hay VITE_API_BASE, usarlo SOLO si:
   //    - Estamos en localhost, O
   //    - No apunta a localhost (evita usar localhost en producción)
   const viteApiBase = import.meta.env.VITE_API_BASE;
   if (viteApiBase) {
-    const isLocalhostUrl = viteApiBase.includes('localhost') || viteApiBase.includes('127.0.0.1');
+    const isLocalhostUrl =
+      viteApiBase.includes("localhost") || viteApiBase.includes("127.0.0.1");
     // Solo usar VITE_API_BASE si estamos en localhost o si no apunta a localhost
     if (isLocalhost || !isLocalhostUrl) {
-      console.log('✅ Usando VITE_API_BASE:', viteApiBase);
+      console.log("✅ Usando VITE_API_BASE:", viteApiBase);
       return viteApiBase;
     } else {
-      console.log('⚠️ Ignorando VITE_API_BASE (localhost en producción):', viteApiBase);
+      console.log(
+        "⚠️ Ignorando VITE_API_BASE (localhost en producción):",
+        viteApiBase,
+      );
     }
   }
 
@@ -54,8 +58,8 @@ export const getApiBaseUrl = async (): Promise<string> => {
   if (isLocalhost) {
     // Si hay un parámetro ?backend=prod en la URL, usar producción
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('backend') === 'prod') {
-      return 'https://activodigital-be.fly.dev';
+    if (urlParams.get("backend") === "prod") {
+      return "https://activodigital-be.fly.dev";
     }
 
     // Si ya tenemos un resultado cacheado, usarlo
@@ -66,34 +70,38 @@ export const getApiBaseUrl = async (): Promise<string> => {
 
     // Iniciar detección
     detectionPromise = (async () => {
-      console.log('🔍 Iniciando detección automática de backend...');
-      
+      console.log("🔍 Iniciando detección automática de backend...");
+
       // Intentar backend local primero
-      const isLocalAvailable = await detectBackendAvailability('http://localhost:3000');
-      
+      const isLocalAvailable = await detectBackendAvailability(
+        "http://localhost:3000",
+      );
+
       if (isLocalAvailable) {
-        console.log('✅ Backend local disponible: http://localhost:3000');
-        cachedApiBaseUrl = 'http://localhost:3000';
-        return 'http://localhost:3000';
+        console.log("✅ Backend local disponible: http://localhost:3000");
+        cachedApiBaseUrl = "http://localhost:3000";
+        return "http://localhost:3000";
       } else {
-        console.log('❌ Backend local no disponible, usando producción: https://activodigital-be.fly.dev');
-        cachedApiBaseUrl = 'https://activodigital-be.fly.dev';
-        return 'https://activodigital-be.fly.dev';
+        console.log(
+          "❌ Backend local no disponible, usando producción: https://activodigital-be.fly.dev",
+        );
+        cachedApiBaseUrl = "https://activodigital-be.fly.dev";
+        return "https://activodigital-be.fly.dev";
       }
     })();
 
     return detectionPromise;
   }
-  
+
   // 3. Si estamos en producción → backend de producción
-  return 'https://activodigital-be.fly.dev';
+  return "https://activodigital-be.fly.dev";
 };
 
 // No podemos exportar directamente porque ahora es async
 // Se calculará dinámicamente en cada petición
 export const CERTIFICATE_EXTRACTOR_URL =
   import.meta.env.VITE_CERTIFICATE_EXTRACTOR_URL ||
-  'https://energy-certificate-extractor.fly.dev';
+  "https://energy-certificate-extractor.fly.dev";
 
 //
 // 2) Utilidades
@@ -104,8 +112,8 @@ let _loggedOnce = false;
 function getAccessToken(): string | null {
   // Preferencia: sessionStorage > localStorage (evita tokens “pegados” entre sesiones)
   return (
-    window.sessionStorage.getItem('access_token') ||
-    window.localStorage.getItem('access_token')
+    window.sessionStorage.getItem("access_token") ||
+    window.localStorage.getItem("access_token")
   );
 }
 
@@ -115,7 +123,7 @@ export class HttpError extends Error {
   body?: any;
   constructor(message: string, status: number, body?: any) {
     super(message);
-    this.name = 'HttpError';
+    this.name = "HttpError";
     this.status = status;
     this.body = body;
   }
@@ -127,38 +135,49 @@ export class HttpError extends Error {
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
-  timeoutMs: number = DEFAULT_TIMEOUT_MS
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ) {
   // Obtener la URL base dinámicamente
   const baseUrl = await getApiBaseUrl();
-  
+
   // Normaliza URL
-  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
   // Headers base
   const headers = new Headers(options.headers || {});
-  if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+  if (!headers.has("Accept")) headers.set("Accept", "application/json");
 
   // Content-Type automático salvo que venga FormData
   const isFormData = options.body instanceof FormData;
-  if (!isFormData && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
+  console.log(`🌐 apiFetch: ${options.method || "GET"} ${url}`, { isFormData });
 
   // Adjunta token
   try {
     const token = getAccessToken();
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`);
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
     }
     if (import.meta.env.DEV && !_loggedOnce) {
-      console.log('🔧 API_BASE_URL (DINÁMICO):', baseUrl);
-      console.log('🔧 Hostname:', window.location.hostname);
-      console.log('🔧 Is Localhost:', window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      console.log('🔧 URL Params:', window.location.search);
-      console.log('🔧 Backend param:', new URLSearchParams(window.location.search).get('backend'));
-      console.log('🔧 VITE_API_BASE:', import.meta.env.VITE_API_BASE);
-      console.log('🔑 Authorization header (apiFetch):', headers.get('Authorization'));
+      console.log("🔧 API_BASE_URL (DINÁMICO):", baseUrl);
+      console.log("🔧 Hostname:", window.location.hostname);
+      console.log(
+        "🔧 Is Localhost:",
+        window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1",
+      );
+      console.log("🔧 URL Params:", window.location.search);
+      console.log(
+        "🔧 Backend param:",
+        new URLSearchParams(window.location.search).get("backend"),
+      );
+      console.log("🔧 VITE_API_BASE:", import.meta.env.VITE_API_BASE);
+      console.log(
+        "🔑 Authorization header (apiFetch):",
+        headers.get("Authorization"),
+      );
       _loggedOnce = true;
     }
   } catch {
@@ -166,7 +185,7 @@ export async function apiFetch(
   }
 
   // Evitar cache intermedio (mitiga 304 con contenido cambiado por usuario)
-  if (!headers.has('Cache-Control')) headers.set('Cache-Control', 'no-store');
+  if (!headers.has("Cache-Control")) headers.set("Cache-Control", "no-store");
 
   // Abort/timeout
   const controller = new AbortController();
@@ -178,79 +197,91 @@ export async function apiFetch(
       ...options,
       headers,
       signal: controller.signal,
-      cache: 'no-store', // evita reusar respuestas
-      credentials: 'omit', // no cookies
+      cache: "no-store", // evita reusar respuestas
+      credentials: "omit", // no cookies
     });
   } catch (err: any) {
     clearTimeout(timeoutId);
-    if (err?.name === 'AbortError') {
+    if (err?.name === "AbortError") {
       throw new Error(
-        'Tiempo de espera agotado. El servidor puede estar iniciándose. Intenta de nuevo.'
+        "Tiempo de espera agotado. El servidor puede estar iniciándose. Intenta de nuevo.",
       );
     }
-    throw new Error('No se pudo conectar con el servidor. Verifica tu red o CORS.');
+    throw new Error(
+      "No se pudo conectar con el servidor. Verifica tu red o CORS.",
+    );
   } finally {
     clearTimeout(timeoutId);
   }
 
   // Intento de parseo (JSON si corresponde)
-  const contentType = response.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
-  const payload = isJson ? await response.json().catch(() => null) : await response.text().catch(() => '');
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson
+    ? await response.json().catch(() => null)
+    : await response.text().catch(() => "");
 
   if (!response.ok) {
     const msgFromBody =
-      (isJson && payload && (payload.message || payload.error)) || response.statusText || 'Request failed';
-    
+      (isJson && payload && (payload.message || payload.error)) ||
+      response.statusText ||
+      "Request failed";
+
     // Si es un error 401 (Unauthorized), verificar si es un problema de autenticación del usuario
     // o un error de la API externa (como Catastro)
     if (response.status === 401) {
       // Verificar si el error viene de una API externa (como Catastro)
       // Las APIs externas pueden devolver 401, pero no significa que el usuario esté deslogueado
-      const isExternalApiError = path.includes('/CatastroApi/') || 
-                                 path.includes('/PVGISApi/') || 
-                                 path.includes('/MITECOApi/');
-      
+      const isExternalApiError =
+        path.includes("/CatastroApi/") ||
+        path.includes("/PVGISApi/") ||
+        path.includes("/MITECOApi/");
+
       if (isExternalApiError) {
         // Es un error de API externa, no limpiar tokens ni redirigir
         // Simplemente lanzar el error para que el componente lo maneje
         throw new HttpError(
-          typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody),
+          typeof msgFromBody === "string"
+            ? msgFromBody
+            : JSON.stringify(msgFromBody),
           response.status,
-          payload
+          payload,
         );
       }
-      
+
       // Es un error de autenticación del usuario, limpiar tokens y redirigir
-      localStorage.removeItem('access_token');
-      sessionStorage.removeItem('access_token');
-      
+      localStorage.removeItem("access_token");
+      sessionStorage.removeItem("access_token");
+
       // Redirigir al login solo si no estamos ya en la página de login/register/auth
       // Y solo si estamos en una ruta protegida (no en rutas públicas)
-      const isPublicRoute = window.location.pathname === '/' || 
-                            window.location.pathname.includes('/terms') ||
-                            window.location.pathname.includes('/login') ||
-                            window.location.pathname.includes('/register') ||
-                            window.location.pathname.includes('/auth/');
-      
+      const isPublicRoute =
+        window.location.pathname === "/" ||
+        window.location.pathname.includes("/terms") ||
+        window.location.pathname.includes("/login") ||
+        window.location.pathname.includes("/register") ||
+        window.location.pathname.includes("/auth/");
+
       if (!isPublicRoute) {
         // Guardar la ruta actual para redirigir después del login
         const currentPath = window.location.pathname + window.location.search;
         window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         // Lanzar error después de redirigir (el redirect ya se ejecutó)
         throw new HttpError(
-          'Sesión expirada. Redirigiendo al login...',
+          "Sesión expirada. Redirigiendo al login...",
           response.status,
-          payload
+          payload,
         );
       }
     }
-    
+
     // Lanza HttpError preservando status y body (útil para manejar 401 arriba)
     throw new HttpError(
-      typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody),
+      typeof msgFromBody === "string"
+        ? msgFromBody
+        : JSON.stringify(msgFromBody),
       response.status,
-      payload
+      payload,
     );
   }
 
@@ -263,9 +294,9 @@ export async function apiFetch(
 export async function certificateExtractorFetch(
   path: string,
   options: RequestInit = {},
-  timeoutMs: number = DEFAULT_TIMEOUT_MS
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ) {
-  const url = `${CERTIFICATE_EXTRACTOR_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const url = `${CERTIFICATE_EXTRACTOR_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -275,27 +306,39 @@ export async function certificateExtractorFetch(
     response = await fetch(url, {
       ...options,
       signal: controller.signal,
-      cache: 'no-store',
-      credentials: 'omit',
+      cache: "no-store",
+      credentials: "omit",
     });
   } catch (err: any) {
     clearTimeout(timeoutId);
-    if (err?.name === 'AbortError') {
-      throw new Error('Tiempo de espera agotado. El servicio de extracción puede estar iniciándose.');
+    if (err?.name === "AbortError") {
+      throw new Error(
+        "Tiempo de espera agotado. El servicio de extracción puede estar iniciándose.",
+      );
     }
-    throw new Error('No se pudo conectar con el servicio de extracción de certificados.');
+    throw new Error(
+      "No se pudo conectar con el servicio de extracción de certificados.",
+    );
   } finally {
     clearTimeout(timeoutId);
   }
 
-  const contentType = response.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
-  const payload = isJson ? await response.json().catch(() => null) : await response.text().catch(() => '');
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson
+    ? await response.json().catch(() => null)
+    : await response.text().catch(() => "");
 
   if (!response.ok) {
     const msgFromBody =
-      (isJson && payload && (payload.message || payload.error)) || response.statusText || 'Request failed';
-    throw new Error(typeof msgFromBody === 'string' ? msgFromBody : JSON.stringify(msgFromBody));
+      (isJson && payload && (payload.message || payload.error)) ||
+      response.statusText ||
+      "Request failed";
+    throw new Error(
+      typeof msgFromBody === "string"
+        ? msgFromBody
+        : JSON.stringify(msgFromBody),
+    );
   }
 
   return payload;
