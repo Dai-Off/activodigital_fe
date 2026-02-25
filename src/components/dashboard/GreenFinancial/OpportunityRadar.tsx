@@ -191,16 +191,26 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
               </div>
             </td>
             <td className="px-4 py-3 text-right">
-              <div className="text-sm text-[#1e3a8a]">{value.tir?.valor != null && value.tir.valor !== 0 ? `${value.tir.valor}%` : "-"}</div>
-              <div className="text-xs text-gray-500">{value.tir?.plazo && value.tir.plazo !== "-" ? value.tir.plazo : "-"}</div>
+              {value.tir?.valor != null && value.tir.valor !== 0 ? (
+                <>
+                  <div className="text-sm text-[#1e3a8a]">{value.tir.valor}%</div>
+                  <div className="text-xs text-gray-500">{value.tir?.plazo && value.tir.plazo !== "-" ? value.tir.plazo : "-"}</div>
+                </>
+              ) : (
+                <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">Falta INFO financiera</div>
+              )}
             </td>
             <td className="px-4 py-3 text-right">
-              <div className="text-sm text-emerald-700">
-                {value.cash_on_cash?.valor && value.cash_on_cash.valor !== "-" && value.cash_on_cash.valor !== "0" ? `${value.cash_on_cash.valor}%` : "-"}
-              </div>
-              <div className="text-xs text-gray-500">
-                {value.cash_on_cash?.multiplicador && value.cash_on_cash.multiplicador !== "-" ? `${value.cash_on_cash.multiplicador}x mult.` : "-"}
-              </div>
+              {value.cash_on_cash?.valor != null && value.cash_on_cash.valor !== "-" && value.cash_on_cash.valor !== "0" ? (
+                <>
+                  <div className="text-sm text-emerald-700">{value.cash_on_cash.valor}%</div>
+                  <div className="text-xs text-gray-500">
+                    {value.cash_on_cash?.multiplicador && value.cash_on_cash.multiplicador !== "-" ? `${value.cash_on_cash.multiplicador}x mult.` : "-"}
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">Falta INFO financiera</div>
+              )}
             </td>
             <td className="px-4 py-3 text-right">
               <div className="text-sm text-gray-900">
