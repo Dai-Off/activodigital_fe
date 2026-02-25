@@ -1145,4 +1145,30 @@ export class CatastroApiService {
     
     return result;
   }
+
+  /**
+   * Verificación de salud: comprueba si la API de Catastro está en línea.
+   *
+   * Devuelve:
+   *  - online:    boolean — si la API está operativa
+   *  - latencyMs: number — tiempo de respuesta en milisegundos
+   *  - status:    string — diagnóstico granular:
+   *      'ok' | 'timeout' | 'error_http' | 'falso_200' | 'error_red' | 'forzado_offline'
+   *
+   * Si la llamada falla o excede el tiempo de espera, devuelve online: false por seguridad.
+   */
+  static async checkCatastroStatus(): Promise<{
+    online: boolean;
+    latencyMs: number;
+    status: string;
+  }> {
+    try {
+      const resultado = await apiFetch('/health/catastro');
+      return resultado as { online: boolean; latencyMs: number; status: string };
+    } catch {
+      // Ante cualquier error (red, timeout, etc.) se asume fuera de línea
+      return { online: false, latencyMs: 0, status: 'error_red' };
+    }
+  }
 }
+
