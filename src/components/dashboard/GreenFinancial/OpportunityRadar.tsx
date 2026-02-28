@@ -186,7 +186,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                   {value.potencial?.letra || "-"}
                 </div>
                 <div className="text-xs text-gray-600">
-                  {value.potencial?.variacion != null && value.potencial.variacion !== "0" ? `${value.potencial.variacion}%` : "-"}
+                  {value.potencial?.letra && value.potencial.letra !== "-" && value.potencial?.variacion != null && value.potencial.variacion !== "0" ? `${value.potencial.variacion}% prob.` : "-"}
                 </div>
               </div>
             </td>

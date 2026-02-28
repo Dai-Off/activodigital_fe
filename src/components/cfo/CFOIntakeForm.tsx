@@ -619,9 +619,9 @@ export default function CFOIntakeForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reducción Estimada de Consumo Energético (%)
+                Probabilidad de Mejora (%)
               </label>
-              <p className="text-xs text-gray-500 mb-2">Porcentaje de ahorro energético esperado tras rehabilitación</p>
+              <p className="text-xs text-gray-500 mb-2">Probabilidad de alcanzar la clasificación energética potencial proyectada</p>
               <input
                 type="number"
                 min="0"
