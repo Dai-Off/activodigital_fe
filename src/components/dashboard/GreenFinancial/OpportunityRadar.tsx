@@ -12,8 +12,6 @@ import { useNavigate } from "react-router-dom";
 import MetricTooltip from "./componentes/MetricTooltip";
 import { FinancialGreenService } from "~/services/GreenFinancialServices";
 import { BuildingsApiService, getBuildingTypologyLabel } from "~/services/buildingsApi";
-import { EnergyCertificatesService } from "~/services/energyCertificates";
-import { getLatestRating } from "~/utils/energyCalculations";
 import type { Building } from "~/services/buildingsApi";
 import { exportToPdf } from "./componentes/exportarData";
 import {
@@ -73,6 +71,7 @@ export interface RegistroTable {
 export interface Potencial {
   letra: string;
   variacion: string;
+  is_simulated?: boolean;
 }
 
 export interface TIR {
@@ -186,8 +185,15 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                   {value.potencial?.letra || "-"}
                 </div>
                 <div className="text-xs text-gray-600">
-                  {value.potencial?.letra && value.potencial.letra !== "-" && value.potencial?.variacion != null && value.potencial.variacion !== "0" ? `${value.potencial.variacion}% prob.` : "-"}
+                  {value.potencial?.letra && value.potencial.letra !== "-" && value.potencial?.variacion != null && value.potencial.variacion !== "0" 
+                    ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : "prob."}` 
+                    : "-"}
                 </div>
+                {value.estado_actual === value.potencial?.letra && Number(value.potencial?.variacion) >= 15 && (
+                  <div className="text-[10px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded-sm mt-0.5" title="Ahorro energético significativo pero que no alcanza el umbral de la siguiente letra.">
+                    Mantiene clasificación
+                  </div>
+                )}
               </div>
             </td>
             <td className="px-4 py-3 text-right">
@@ -429,41 +435,22 @@ export function OpportunityRadar() {
           if (bid) snapshotByBuildingId.set(bid, s);
         }
 
-        const certsByBuildingId = new Map<string, string>();
-        await Promise.all(
-          buildings.map(async (b) => {
-            try {
-              const res = await EnergyCertificatesService.getByBuilding(b.id);
-              const certs = res?.certificates ?? [];
-              const rating = certs.length > 0 ? getLatestRating(certs) : "-";
-              certsByBuildingId.set(b.id, rating);
-            } catch {
-              certsByBuildingId.set(b.id, "-");
-            }
-          })
-        );
-
-        const CEE_LETTERS = ["A", "B", "C", "D", "E", "F", "G"];
         const merged: RegistroTable[] = buildings.map((b) => {
           const snapshot = snapshotByBuildingId.get(b.id);
-          const row = snapshot ?? buildingToRegistroTable(b);
-          const ceeFromApi = certsByBuildingId.get(b.id) ?? "-";
-          const estadoActual =
-            ceeFromApi !== "-" && CEE_LETTERS.includes(ceeFromApi) ? ceeFromApi : "-";
-          const estado: Estado = {
-            etiqueta: row.estado?.etiqueta === "Bank-Ready" ? "Bank-Ready" : "Pendiente",
-            score: row.estado?.score ?? 0,
-            pendientes:
-              row.estado?.etiqueta === "Bank-Ready"
-                ? (row.estado?.score != null ? `${row.estado.score}%` : "-")
-                : (row.estado?.pendientes || "Crear snapshot"),
-          };
-          return { ...row, estado_actual: estadoActual, estado };
+          // Si el backend ya nos da el snapshot (real o virtual), lo usamos directamente
+          if (snapshot) {
+            return {
+              ...snapshot,
+              estado_actual: snapshot.estado_actual || "-", // El backend ya calcula esto
+            };
+          }
+          // Fallback de seguridad (no debería ocurrir con el nuevo backend)
+          return buildingToRegistroTable(b);
         });
 
-        setSummary({ ...summaryFromApi, total_activos: merged.length });
         setDataOriginal(merged);
         setDataFiltrada(merged);
+        setSummary({ ...summaryFromApi, total_activos: merged.length });
       } catch (error) {
         console.error("Error al cargar los datos:", error);
       } finally {
