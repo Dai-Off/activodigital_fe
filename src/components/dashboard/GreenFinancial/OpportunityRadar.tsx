@@ -14,6 +14,8 @@ import { FinancialGreenService } from "~/services/GreenFinancialServices";
 import { BuildingsApiService, getBuildingTypologyLabel } from "~/services/buildingsApi";
 import type { Building } from "~/services/buildingsApi";
 import { exportToPdf } from "./componentes/exportarData";
+import EnergyPotentialModal from "./componentes/EnergyPotentialModal";
+import IRRExplanationModal from "./componentes/IRRExplanationModal";
 import {
   formatMoneyShort,
   getEnergyRatingColorClass,
@@ -186,7 +188,7 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                 </div>
                 <div className="text-xs text-gray-600">
                   {value.potencial?.letra && value.potencial.letra !== "-" && value.potencial?.variacion != null && value.potencial.variacion !== "0" 
-                    ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : "prob."}` 
+                    ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : ""}` 
                     : "-"}
                 </div>
                 {value.estado_actual === value.potencial?.letra && Number(value.potencial?.variacion) >= 15 && (
@@ -398,6 +400,9 @@ export function OpportunityRadar() {
     TotalActivos: false,
     ValorCreado: false,
   });
+
+  const [isPotentialModalOpen, setIsPotentialModalOpen] = useState(false);
+  const [isIRRModalOpen, setIsIRRModalOpen] = useState(false);
 
   const [dataOriginal, setDataOriginal] = useState<RegistroTable[]>([]);
   const [summary, setSummary] = useState<FinancialSnapshotSummary>({
@@ -644,10 +649,34 @@ export function OpportunityRadar() {
                   Actual
                 </th>
                 <th className="px-4 py-3 text-center text-xs text-gray-700">
-                  Potencial
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Potencial</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPotentialModalOpen(true);
+                      }}
+                      className="p-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                      title="Haz clic para ver la metodología del cálculo"
+                    >
+                      <LucideCircleQuestionMark className="w-3 h-3 text-blue-600" />
+                    </button>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-right text-xs text-gray-700">
-                  TIR
+                  <div className="flex items-center justify-end gap-1">
+                    <span>TIR</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsIRRModalOpen(true);
+                      }}
+                      className="p-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                      title="Haz clic para ver la metodología del cálculo"
+                    >
+                      <LucideCircleQuestionMark className="w-3 h-3 text-blue-600" />
+                    </button>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-right text-xs text-gray-700">
                   Cash on Cash
@@ -705,6 +734,16 @@ export function OpportunityRadar() {
           </div>
         </div>
       </div>
+
+      <EnergyPotentialModal 
+        active={isPotentialModalOpen} 
+        onClose={() => setIsPotentialModalOpen(false)} 
+      />
+
+      <IRRExplanationModal
+        active={isIRRModalOpen}
+        onClose={() => setIsIRRModalOpen(false)}
+      />
     </div>
   );
 }
