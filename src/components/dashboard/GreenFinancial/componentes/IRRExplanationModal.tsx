@@ -1,4 +1,13 @@
-import { TrendingUp, Info, DollarSign, PieChart, ArrowUpRight, AlertCircle, Calendar, Calculator } from "lucide-react";
+import {
+  TrendingUp,
+  Info,
+  DollarSign,
+  PieChart,
+  ArrowUpRight,
+  AlertCircle,
+  Calendar,
+  Calculator,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import ModalFrame from "./ModalFrame";
 
@@ -7,13 +16,16 @@ interface IRRExplanationModalProps {
   onClose: () => void;
 }
 
-const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClose }) => {
+const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({
+  active,
+  onClose,
+}) => {
   return (
     <ModalFrame
       active={active}
       onClose={onClose}
-      title="Metodología de Cálculo: TIR (Internal Rate of Return)"
-      subtitle="Explicación financiera para el análisis de inversión a 5 años"
+      title="Metodología de Cálculo: TIR y Cash on Cash"
+      subtitle="Explicación financiera para el análisis de rentabilidad y flujo de caja"
       icon={<TrendingUp className="w-4 h-4 text-white" />}
       maxWidth="4xl"
     >
@@ -23,8 +35,11 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
           <div className="flex gap-3">
             <Info className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm leading-relaxed">
-              La <strong>TIR (Tasa Interna de Retorno)</strong> representa la rentabilidad anualizada esperada de la inversión. 
-              El sistema utiliza un modelo de <strong>Flujos de Caja Descontados (DCF)</strong> a un horizonte de 5 años.
+              La <strong>TIR (Tasa Interna de Retorno)</strong> representa la
+              rentabilidad anualizada esperada de la inversión. El sistema
+              utiliza un modelo de{" "}
+              <strong>Flujos de Caja Descontados (DCF)</strong> a un horizonte
+              de 5 años.
             </p>
           </div>
         </section>
@@ -37,7 +52,9 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
               1. Horizonte Temporal
             </h3>
             <p className="text-xs">
-              Se proyectan flujos de caja durante <strong>5 años</strong>, considerando la operación anual y un evento final de desinversión o revalorización en el quinto año.
+              Se proyectan flujos de caja durante <strong>5 años</strong>,
+              considerando la operación anual y un evento final de desinversión
+              o revalorización en el quinto año.
             </p>
 
             <h3 className="flex items-center gap-2 font-bold text-gray-900 border-b pb-2 pt-2">
@@ -45,7 +62,9 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
               2. Flujo Operativo (NOI)
             </h3>
             <p className="text-xs">
-              Calculado como <strong>Ingresos Brutos - OPEX</strong>. El sistema utiliza los datos cargados en el Snapshot Financiero para determinar el flujo neto anual que genera el edificio.
+              Calculado como <strong>Ingresos Brutos - OPEX</strong>. El sistema
+              utiliza los datos cargados en el Snapshot Financiero para
+              determinar el flujo neto anual que genera el edificio.
             </p>
           </div>
 
@@ -55,7 +74,9 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
               3. Evento de Salida
             </h3>
             <p className="text-xs">
-              En el Año 5 se suma el valor de reventa. Este se calcula aplicando un <strong>Exit Cap Rate</strong> sobre el NOI o mediante una tasa de revalorización anual sobre el valor total invertido.
+              En el Año 5 se suma el valor de reventa. Este se calcula aplicando
+              un <strong>Exit Cap Rate</strong> sobre el NOI o mediante una tasa
+              de revalorización anual sobre el valor total invertido.
             </p>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -64,7 +85,10 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
                 <span className="text-xs">Inversión Inicial (Año 0)</span>
               </div>
               <p className="text-[11px] text-blue-800 leading-tight">
-                Se computa como la suma del <strong>Precio de Adquisición</strong> más el <strong>CAPEX de Rehabilitación</strong> estimado. Toda la inversión se considera desembolsada al inicio del proyecto.
+                Se computa como la suma del{" "}
+                <strong>Precio de Adquisición</strong> más el{" "}
+                <strong>CAPEX de Rehabilitación</strong> estimado. Toda la
+                inversión se considera desembolsada al inicio del proyecto.
               </p>
             </div>
           </div>
@@ -72,7 +96,9 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
 
         {/* Tabla de Inputs */}
         <div className="pt-2">
-          <h3 className="font-bold text-gray-900 mb-3 text-sm">Variables Clave del Modelo</h3>
+          <h3 className="font-bold text-gray-900 mb-3 text-sm">
+            Variables Clave del Modelo
+          </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-[11px] border-collapse">
               <thead>
@@ -84,24 +110,38 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
               </thead>
               <tbody>
                 <tr>
-                  <td className="p-2 border font-medium">Capex de Rehabilitación</td>
+                  <td className="p-2 border font-medium">
+                    Capex de Rehabilitación
+                  </td>
                   <td className="p-2 border">Presupuesto Técnico</td>
-                  <td className="p-2 border">Reduce flujo inicial (TIR) pero aumenta valor de salida.</td>
+                  <td className="p-2 border">
+                    Reduce flujo inicial (TIR) pero aumenta valor de salida.
+                  </td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="p-2 border font-medium">Deuda / Apalancamiento</td>
+                  <td className="p-2 border font-medium">
+                    Deuda / Apalancamiento
+                  </td>
                   <td className="p-2 border">Snapshot Financiero</td>
-                  <td className="p-2 border">Permite calcular la TIR del Equity (Levered IRR).</td>
+                  <td className="p-2 border">
+                    Permite calcular la TIR del Equity (Levered IRR).
+                  </td>
                 </tr>
                 <tr>
                   <td className="p-2 border font-medium">Exit Cap Rate</td>
                   <td className="p-2 border">Mercado / Tipo de Activo</td>
-                  <td className="p-2 border">Determina el valor de perpetuidad al final del ciclo.</td>
+                  <td className="p-2 border">
+                    Determina el valor de perpetuidad al final del ciclo.
+                  </td>
                 </tr>
                 <tr className="bg-gray-50">
-                  <td className="p-2 border font-medium">Crecimiento de Rentas</td>
+                  <td className="p-2 border font-medium">
+                    Crecimiento de Rentas
+                  </td>
                   <td className="p-2 border">Cláusulas de Indexación</td>
-                  <td className="p-2 border">Mejora el NOI proyectado año a año.</td>
+                  <td className="p-2 border">
+                    Mejora el NOI proyectado año a año.
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -112,7 +152,10 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
         <div className="bg-amber-50 border border-amber-200 rounded p-3 flex gap-2 items-start">
           <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
           <p className="text-[10px] text-amber-800">
-            Si el activo no cuenta con <strong>Precio de Adquisición</strong> o <strong>Ingresos Brutos</strong>, el sistema no podrá realizar la proyección y mostrará el aviso de "Falta INFO financiera".
+            Si el activo no cuenta con <strong>Precio de Adquisición</strong> o{" "}
+            <strong>Ingresos Brutos</strong>, el sistema no podrá realizar la
+            proyección y mostrará un valor predeterminado de <strong>0%</strong>
+            .
           </p>
         </div>
         {/* Nota Calculadora Personalizada */}
@@ -121,14 +164,15 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({ active, onClo
             <Calculator className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <p className="text-xs text-blue-900">
               ¿Deseas realizar un análisis más profundo? Puedes utilizar nuestra{" "}
-              <Link 
-                to="/cfo-simulation" 
+              <Link
+                to="/cfo-simulation"
                 className="font-bold underline cursor-pointer hover:text-blue-700 transition-colors"
                 onClick={onClose}
               >
                 Calculadora Financiera
               </Link>{" "}
-              para modelar escenarios personalizados y ajustar cada variable de tu inversión.
+              para modelar escenarios personalizados y ajustar cada variable de
+              tu inversión.
             </p>
           </div>
         </div>

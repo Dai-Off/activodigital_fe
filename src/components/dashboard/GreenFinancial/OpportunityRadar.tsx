@@ -11,15 +11,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import MetricTooltip from "./componentes/MetricTooltip";
 import { FinancialGreenService } from "~/services/GreenFinancialServices";
-import { BuildingsApiService, getBuildingTypologyLabel } from "~/services/buildingsApi";
+import {
+  BuildingsApiService,
+  getBuildingTypologyLabel,
+} from "~/services/buildingsApi";
 import type { Building } from "~/services/buildingsApi";
 import { exportToPdf } from "./componentes/exportarData";
 import EnergyPotentialModal from "./componentes/EnergyPotentialModal";
 import IRRExplanationModal from "./componentes/IRRExplanationModal";
-import {
-  formatMoneyShort,
-  getEnergyRatingColorClass,
-} from "~/lib/utils";
+import CoCExplanationModal from "./componentes/CoCExplanationModal";
+import { formatMoneyShort, getEnergyRatingColorClass } from "~/lib/utils";
 import {
   SkeletonCardsHeader,
   SkeletonOpportunityTableBody,
@@ -142,13 +143,16 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
 
   return (
     <>
-      {data && data.length > 0 &&
+      {data &&
+        data.length > 0 &&
         data.map((value, idx) => (
           <tr
             key={idx}
             className={`border-b border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors ${selectedBuildingId === value.building_id ? "bg-blue-100" : ""}`}
             onClick={() => {
-              navigate(`/green-financial/building/${value.building_id}/financial-twin`);
+              navigate(
+                `/green-financial/building/${value.building_id}/financial-twin`,
+              );
             }}
           >
             <td className="px-3 py-3 w-[180px] max-w-[180px]">
@@ -165,8 +169,12 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-gray-900 truncate">{value?.activo || "-"}</div>
-                  <div className="text-xs text-gray-500 truncate">{value?.direccion || "-"}</div>
+                  <div className="text-sm text-gray-900 truncate">
+                    {value?.activo || "-"}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {value?.direccion || "-"}
+                  </div>
                 </div>
               </div>
             </td>
@@ -187,73 +195,104 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                   {value.potencial?.letra || "-"}
                 </div>
                 <div className="text-xs text-gray-600">
-                  {value.potencial?.letra && value.potencial.letra !== "-" && value.potencial?.variacion != null && value.potencial.variacion !== "0" 
-                    ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : ""}` 
+                  {value.potencial?.letra &&
+                  value.potencial.letra !== "-" &&
+                  value.potencial?.variacion != null &&
+                  value.potencial.variacion !== "0"
+                    ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : ""}`
                     : "-"}
                 </div>
-                {value.estado_actual === value.potencial?.letra && Number(value.potencial?.variacion) >= 15 && (
-                  <div className="text-[10px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded-sm mt-0.5" title="Ahorro energético significativo pero que no alcanza el umbral de la siguiente letra.">
-                    Mantiene clasificación
-                  </div>
-                )}
+                {value.estado_actual === value.potencial?.letra &&
+                  Number(value.potencial?.variacion) >= 15 && (
+                    <div
+                      className="text-[10px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded-sm mt-0.5"
+                      title="Ahorro energético significativo pero que no alcanza el umbral de la siguiente letra."
+                    >
+                      Mantiene clasificación
+                    </div>
+                  )}
               </div>
             </td>
             <td className="px-4 py-3 text-right">
-              {value.tir?.valor != null && value.tir.valor !== 0 ? (
-                <>
-                  <div className="text-sm text-[#1e3a8a]">{value.tir.valor}%</div>
-                  <div className="text-xs text-gray-500">{value.tir?.plazo && value.tir.plazo !== "-" ? value.tir.plazo : "-"}</div>
-                </>
-              ) : (
-                <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">Falta INFO financiera</div>
-              )}
+              <div className="text-sm text-[#1e3a8a]">
+                {value.tir?.valor ?? 0}%
+              </div>
+              <div className="text-xs text-gray-500">
+                {value.tir?.plazo && value.tir.plazo !== "-"
+                  ? value.tir.plazo
+                  : "-"}
+              </div>
             </td>
             <td className="px-4 py-3 text-right">
-              {value.cash_on_cash?.valor != null && value.cash_on_cash.valor !== "-" && value.cash_on_cash.valor !== "0" ? (
-                <>
-                  <div className="text-sm text-emerald-700">{value.cash_on_cash.valor}%</div>
-                  <div className="text-xs text-gray-500">
-                    {value.cash_on_cash?.multiplicador && value.cash_on_cash.multiplicador !== "-" ? `${value.cash_on_cash.multiplicador}x mult.` : "-"}
-                  </div>
-                </>
-              ) : (
-                <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded inline-block">Falta INFO financiera</div>
-              )}
+              <div className="text-sm text-emerald-700">
+                {value.cash_on_cash?.valor != null &&
+                value.cash_on_cash.valor !== "-" &&
+                value.cash_on_cash.valor !== "0"
+                  ? `${value.cash_on_cash.valor}%`
+                  : "0%"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {value.cash_on_cash?.multiplicador &&
+                value.cash_on_cash.multiplicador !== "-"
+                  ? `${value.cash_on_cash.multiplicador}x`
+                  : "-"}
+              </div>
             </td>
             <td className="px-4 py-3 text-right">
               <div className="text-sm text-gray-900">
-                {value.capex?.total != null && value.capex.total !== 0 ? `${formatMoneyShort(value.capex.total)}€` : "-"}
+                {value.capex?.total != null && value.capex.total !== 0
+                  ? `${formatMoneyShort(value.capex.total)}€`
+                  : "-"}
               </div>
               <div className="text-xs text-gray-500">
-                {value.capex?.descripcion && value.capex.descripcion !== "Sin datos" ? value.capex.descripcion : "-"}
+                {value.capex?.descripcion &&
+                value.capex.descripcion !== "Sin datos"
+                  ? value.capex.descripcion
+                  : "-"}
               </div>
             </td>
             <td className="px-4 py-3 text-right">
               <div className="text-sm text-green-600">
-                {value.subvencion?.valor != null && value.subvencion.valor !== 0 ? `${formatMoneyShort(value.subvencion.valor)}€` : "-"}
+                {value.subvencion?.valor != null && value.subvencion.valor !== 0
+                  ? `${formatMoneyShort(value.subvencion.valor)}€`
+                  : "-"}
               </div>
               <div className="text-xs text-gray-500">
-                {value.subvencion?.porcentaje != null && value.subvencion.porcentaje !== 0 ? `${value.subvencion.porcentaje}% CAPEX` : "-"}
+                {value.subvencion?.porcentaje != null &&
+                value.subvencion.porcentaje !== 0
+                  ? `${value.subvencion.porcentaje}% CAPEX`
+                  : "-"}
               </div>
             </td>
             <td className="px-4 py-3 text-right">
               <div className="text-sm text-green-700">
-                {value.green_premium?.valor != null && value.green_premium.valor !== 0 ? `${formatMoneyShort(value.green_premium.valor)}€` : "-"}
+                {value.green_premium?.valor != null &&
+                value.green_premium.valor !== 0
+                  ? `${formatMoneyShort(value.green_premium.valor)}€`
+                  : "-"}
               </div>
               <div className="text-xs text-gray-500">
-                {value.green_premium?.roi != null && value.green_premium.roi !== 0 ? `${value.green_premium.roi}% ROI` : "-"}
+                {value.green_premium?.roi != null &&
+                value.green_premium.roi !== 0
+                  ? `${value.green_premium.roi}% ROI`
+                  : "-"}
               </div>
             </td>
             <td className="px-4 py-3 text-center">
               <div className="flex items-center justify-center gap-1">
                 <Clock className="w-3 h-3 text-gray-400" />
-                <span className="text-sm text-gray-700">{value.plazo && value.plazo !== "-" ? value.plazo : "-"}</span>
+                <span className="text-sm text-gray-700">
+                  {value.plazo && value.plazo !== "-" ? value.plazo : "-"}
+                </span>
               </div>
             </td>
             <td className="px-4 py-3">
               <div className="flex flex-col items-center gap-1">
                 <div className="text-sm text-gray-900">
-                  {value.taxonomia?.porcentaje != null && value.taxonomia.porcentaje !== 0 ? `${value.taxonomia.porcentaje}%` : "-"}
+                  {value.taxonomia?.porcentaje != null &&
+                  value.taxonomia.porcentaje !== 0
+                    ? `${value.taxonomia.porcentaje}%`
+                    : "-"}
                 </div>
                 <div className="w-16 bg-gray-200 rounded-full h-1">
                   <div
@@ -266,10 +305,11 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
             <td className="px-4 py-3 min-w-[110px]">
               <div className="flex flex-col items-center gap-1">
                 <div
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap ${value?.estado?.etiqueta === "Bank-Ready"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap ${
+                    value?.estado?.etiqueta === "Bank-Ready"
                       ? "bg-green-100 text-green-700"
                       : "bg-orange-100 text-orange-700"
-                    }`}
+                  }`}
                 >
                   {value?.estado?.etiqueta === "Bank-Ready" ? (
                     <CircleCheck className="w-3.5 h-3.5 flex-shrink-0" />
@@ -280,7 +320,9 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                 </div>
                 <div className="text-xs text-gray-500">
                   {value?.estado?.etiqueta === "Bank-Ready"
-                    ? (value?.estado?.score != null ? `${value.estado.score}%` : "-")
+                    ? value?.estado?.score != null
+                      ? `${value.estado.score}%`
+                      : "-"
                     : value?.estado?.pendientes || "-"}
                 </div>
               </div>
@@ -300,7 +342,7 @@ interface StatusIParams {
 const CardsHeader = ({ helpStatus, setHelpStatus, summary }: StatusIParams) => {
   const handleToggle = (
     e: React.MouseEvent<HTMLButtonElement>, // Tipamos el evento de clic
-    key: keyof SectionHelpersRadar
+    key: keyof SectionHelpersRadar,
   ) => {
     e.stopPropagation(); // <--- LA CLAVE ES ESTA LÍNEA
     setHelpStatus((prev) => ({
@@ -403,6 +445,7 @@ export function OpportunityRadar() {
 
   const [isPotentialModalOpen, setIsPotentialModalOpen] = useState(false);
   const [isIRRModalOpen, setIsIRRModalOpen] = useState(false);
+  const [isCoCModalOpen, setIsCoCModalOpen] = useState(false);
 
   const [dataOriginal, setDataOriginal] = useState<RegistroTable[]>([]);
   const [summary, setSummary] = useState<FinancialSnapshotSummary>({
@@ -420,7 +463,7 @@ export function OpportunityRadar() {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"todos" | "bank" | "pendientes">(
-    "todos"
+    "todos",
   );
   const [dataFiltrada, setDataFiltrada] = useState<RegistroTable[]>([]);
 
@@ -500,14 +543,14 @@ export function OpportunityRadar() {
 
     if (tipo === "bank") {
       setDataFiltrada(
-        dataOriginal?.filter((r) => r?.estado?.etiqueta === "Bank-Ready")
+        dataOriginal?.filter((r) => r?.estado?.etiqueta === "Bank-Ready"),
       );
       return;
     }
 
     if (tipo === "pendientes") {
       setDataFiltrada(
-        dataOriginal?.filter((r) => r?.estado?.etiqueta !== "Bank-Ready")
+        dataOriginal?.filter((r) => r?.estado?.etiqueta !== "Bank-Ready"),
       );
       return;
     }
@@ -551,7 +594,7 @@ export function OpportunityRadar() {
   return (
     <div
       onClick={closeAllHelpers}
-      onKeyDown={(e) => e.key === 'Escape' && closeAllHelpers()}
+      onKeyDown={(e) => e.key === "Escape" && closeAllHelpers()}
       role="presentation"
       className="max-w-[1800px] mx-auto space-y-6"
     >
@@ -600,28 +643,31 @@ export function OpportunityRadar() {
           <div className="flex gap-2">
             <button
               onClick={() => aplicarFiltroEstado("todos")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "todos"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                filter === "todos"
                   ? "bg-blue-900 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              }`}
             >
               Todos ({dataOriginal?.length})
             </button>
             <button
               onClick={() => aplicarFiltroEstado("bank")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "bank"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                filter === "bank"
                   ? "bg-green-700 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              }`}
             >
               Bank-Ready ({summary?.bankReady})
             </button>
             <button
               onClick={() => aplicarFiltroEstado("pendientes")}
-              className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === "pendientes"
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                filter === "pendientes"
                   ? "bg-orange-500 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              }`}
             >
               Pendientes ({pendientes})
             </button>
@@ -651,7 +697,7 @@ export function OpportunityRadar() {
                 <th className="px-4 py-3 text-center text-xs text-gray-700">
                   <div className="flex items-center justify-center gap-1">
                     <span>Potencial</span>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsPotentialModalOpen(true);
@@ -666,7 +712,7 @@ export function OpportunityRadar() {
                 <th className="px-4 py-3 text-right text-xs text-gray-700">
                   <div className="flex items-center justify-end gap-1">
                     <span>TIR</span>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsIRRModalOpen(true);
@@ -679,7 +725,19 @@ export function OpportunityRadar() {
                   </div>
                 </th>
                 <th className="px-4 py-3 text-right text-xs text-gray-700">
-                  Cash on Cash
+                  <div className="flex items-center justify-end gap-1">
+                    <span>Cash on Cash</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCoCModalOpen(true);
+                      }}
+                      className="p-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                      title="Haz clic para ver la metodología del cálculo"
+                    >
+                      <LucideCircleQuestionMark className="w-3 h-3 text-emerald-600" />
+                    </button>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-right text-xs text-gray-700">
                   CAPEX
@@ -735,14 +793,19 @@ export function OpportunityRadar() {
         </div>
       </div>
 
-      <EnergyPotentialModal 
-        active={isPotentialModalOpen} 
-        onClose={() => setIsPotentialModalOpen(false)} 
+      <EnergyPotentialModal
+        active={isPotentialModalOpen}
+        onClose={() => setIsPotentialModalOpen(false)}
       />
 
       <IRRExplanationModal
         active={isIRRModalOpen}
         onClose={() => setIsIRRModalOpen(false)}
+      />
+
+      <CoCExplanationModal
+        active={isCoCModalOpen}
+        onClose={() => setIsCoCModalOpen(false)}
       />
     </div>
   );
