@@ -53,10 +53,14 @@ import {
   ServiceInvoicesService,
   type ServiceType,
   SERVICE_TYPE_LABELS,
-  getServiceTypeLabel
+  getServiceTypeLabel,
 } from "~/services/serviceInvoices";
 import { useLanguage } from "~/contexts/LanguageContext";
-import { extractInvoiceDataAsync, getInvoiceJob, type InvoiceJobResponse } from "~/services/invoiceExtractor";
+import {
+  extractInvoiceDataAsync,
+  getInvoiceJob,
+  type InvoiceJobResponse,
+} from "~/services/invoiceExtractor";
 import { useProcessingJobPolling } from "~/hooks/useProcessingJobPolling";
 import { Sparkles } from "lucide-react";
 import { EnergyCertificatesService } from "~/services/energyCertificates";
@@ -78,7 +82,6 @@ type DocumentCategory = {
   iconColor: string;
   isCustom?: boolean; // Para distinguir categorías personalizadas
 };
-
 
 // Categorías base predefinidas
 const BASE_DOCUMENT_CATEGORIES: DocumentCategory[] = [
@@ -342,7 +345,7 @@ const getStatusBadge = (status: Document["status"]) => {
 const DocumentItem = ({
   document,
   onDownload,
-  onDelete
+  onDelete,
 }: {
   document: Document;
   onDownload: (url: string, fileName: string) => void;
@@ -502,7 +505,7 @@ const DocumentsLoadingState = () => (
 );
 
 export function BuildingGestion() {
-  const { t } = useLanguage()
+  const { t } = useLanguage();
   const { id: buildingId } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -536,8 +539,12 @@ export function BuildingGestion() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Estado para categorías (base + personalizadas)
-  const [customCategories, setCustomCategories] = useState<DocumentCategory[]>([]);
-  const [documentCategories, setDocumentCategories] = useState<DocumentCategory[]>(BASE_DOCUMENT_CATEGORIES);
+  const [customCategories, setCustomCategories] = useState<DocumentCategory[]>(
+    [],
+  );
+  const [documentCategories, setDocumentCategories] = useState<
+    DocumentCategory[]
+  >(BASE_DOCUMENT_CATEGORIES);
 
   // Estado para modal de crear categoría
   const [isCreateCategoryModalOpen, setIsCreateCategoryModalOpen] =
@@ -551,7 +558,9 @@ export function BuildingGestion() {
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(
     null,
   );
-  const [uploadedDocumentFilename, setUploadedDocumentFilename] = useState<string | null>(null);
+  const [uploadedDocumentFilename, setUploadedDocumentFilename] = useState<
+    string | null
+  >(null);
   const [invoiceStep, setInvoiceStep] = useState<
     "upload" | "processing" | "review"
   >("upload");
@@ -650,7 +659,8 @@ export function BuildingGestion() {
     setUploadedDocumentFilename((job.document_filename as string) || null);
     setServiceInvoiceData({
       service_type: (d.service_type as ServiceType) || "electricity",
-      invoice_date: (d.invoice_date as string) || new Date().toISOString().split("T")[0],
+      invoice_date:
+        (d.invoice_date as string) || new Date().toISOString().split("T")[0],
       amount_eur: (d.amount_eur as number) ?? 0,
       units: (d.units as number | null) ?? null,
       notes: (d.notes as string) ?? "",
@@ -666,32 +676,47 @@ export function BuildingGestion() {
   };
 
   // Hook reutilizable: polling de jobs de factura (fallback si el socket no conecta)
-  const { addPendingJob: addPendingInvoiceJob } = useProcessingJobPolling<InvoiceJobResponse>({
-    jobType: "invoice",
-    buildingId,
-    getJobStatus: getInvoiceJob,
-    onCompleted: (job, meta) => {
-      if (job.extracted_data && job.document_url) {
-        showInfo("Factura procesada", `El documento ${meta.documentFilename} ya ha sido procesado.`);
-        openReviewModalFromJob(job);
-      }
-    },
-    onFailed: (job) => {
-      showError("Error al procesar", job.error_message || "La factura no pudo ser procesada.");
-    },
-    pollingIntervalMs: 12000,
-  });
+  const { addPendingJob: addPendingInvoiceJob } =
+    useProcessingJobPolling<InvoiceJobResponse>({
+      jobType: "invoice",
+      buildingId,
+      getJobStatus: getInvoiceJob,
+      onCompleted: (job, meta) => {
+        if (job.extracted_data && job.document_url) {
+          showInfo(
+            "Factura procesada",
+            `El documento ${meta.documentFilename} ya ha sido procesado.`,
+          );
+          openReviewModalFromJob(job);
+        }
+      },
+      onFailed: (job) => {
+        showError(
+          "Error al procesar",
+          job.error_message || "La factura no pudo ser procesada.",
+        );
+      },
+      pollingIntervalMs: 12000,
+    });
 
   // Abrir modal de revisión cuando se llega desde la notificación "Factura procesada"
-  const openJobId = (location.state as { openJobId?: string } | null)?.openJobId;
+  const openJobId = (location.state as { openJobId?: string } | null)
+    ?.openJobId;
   useEffect(() => {
     if (!openJobId || !buildingId) return;
     getInvoiceJob(openJobId)
       .then((job) => {
-        if (job.status === "completed" && job.extracted_data && job.document_url) {
+        if (
+          job.status === "completed" &&
+          job.extracted_data &&
+          job.document_url
+        ) {
           openReviewModalFromJob(job);
         } else if (job.status === "failed") {
-          showError("Error al procesar", job.error_message || "La factura no pudo ser procesada.");
+          showError(
+            "Error al procesar",
+            job.error_message || "La factura no pudo ser procesada.",
+          );
         }
       })
       .catch(() => {
@@ -703,12 +728,23 @@ export function BuildingGestion() {
   }, [openJobId, buildingId, navigate, location.pathname, showError]);
 
   // Helper: abrir modal CEE con datos del job de certificado (crea sesión y rellena formulario)
-  const openReviewModalFromCertificateJob = async (job: CertificateJobResponse) => {
-    if (!buildingId || job.status !== "completed" || !job.extracted_data || !job.image_url) return;
-    const aiResponse = job.extracted_data as Parameters<typeof mapAIResponseToReviewData>[0];
+  const openReviewModalFromCertificateJob = async (
+    job: CertificateJobResponse,
+  ) => {
+    if (
+      !buildingId ||
+      job.status !== "completed" ||
+      !job.extracted_data ||
+      !job.image_url
+    )
+      return;
+    const aiResponse = job.extracted_data as Parameters<
+      typeof mapAIResponseToReviewData
+    >[0];
     const mappedData = mapAIResponseToReviewData(aiResponse);
     try {
-      const session = await EnergyCertificatesService.createSimpleSession(buildingId);
+      const session =
+        await EnergyCertificatesService.createSimpleSession(buildingId);
       setCeeSessionId(session.id);
       setCeeReviewData({
         rating: (mappedData.rating as any) ?? "",
@@ -725,7 +761,11 @@ export function BuildingGestion() {
         imageFilename: job.document_filename ?? "",
         imageUploadedAt: new Date().toISOString(),
       });
-      if (job.storage_path && job.storage_file_name && job.document_filename != null) {
+      if (
+        job.storage_path &&
+        job.storage_file_name &&
+        job.document_filename != null
+      ) {
         setCeeUploadMeta({
           storagePath: job.storage_path,
           storageFileName: job.storage_file_name,
@@ -745,24 +785,33 @@ export function BuildingGestion() {
   };
 
   // Hook: polling de jobs de certificado energético
-  const { addPendingJob: addPendingCertificateJob } = useProcessingJobPolling<CertificateJobResponse>({
-    jobType: "certificate",
-    buildingId,
-    getJobStatus: getCertificateJob,
-    onCompleted: (job, meta) => {
-      if (job.extracted_data && job.image_url) {
-        showInfo("Certificado procesado", `El certificado ${meta.documentFilename} ya ha sido procesado.`);
-        openReviewModalFromCertificateJob(job);
-      }
-    },
-    onFailed: (job) => {
-      showError("Error al procesar certificado", job.error_message || "No se pudo procesar el certificado.");
-    },
-    pollingIntervalMs: 12000,
-  });
+  const { addPendingJob: addPendingCertificateJob } =
+    useProcessingJobPolling<CertificateJobResponse>({
+      jobType: "certificate",
+      buildingId,
+      getJobStatus: getCertificateJob,
+      onCompleted: (job, meta) => {
+        if (job.extracted_data && job.image_url) {
+          showInfo(
+            "Certificado procesado",
+            `El certificado ${meta.documentFilename} ya ha sido procesado.`,
+          );
+          openReviewModalFromCertificateJob(job);
+        }
+      },
+      onFailed: (job) => {
+        showError(
+          "Error al procesar certificado",
+          job.error_message || "No se pudo procesar el certificado.",
+        );
+      },
+      pollingIntervalMs: 12000,
+    });
 
   // Abrir modal CEE cuando se llega desde la notificación "Certificado energético procesado"
-  const openCertificateJobId = (location.state as { openCertificateJobId?: string } | null)?.openCertificateJobId;
+  const openCertificateJobId = (
+    location.state as { openCertificateJobId?: string } | null
+  )?.openCertificateJobId;
   useEffect(() => {
     if (!openCertificateJobId || !buildingId) return;
     getCertificateJob(openCertificateJobId)
@@ -770,7 +819,10 @@ export function BuildingGestion() {
         if (job.status === "completed" && job.extracted_data && job.image_url) {
           openReviewModalFromCertificateJob(job);
         } else if (job.status === "failed") {
-          showError("Error al procesar", job.error_message || "El certificado no pudo ser procesado.");
+          showError(
+            "Error al procesar",
+            job.error_message || "El certificado no pudo ser procesado.",
+          );
         }
       })
       .catch(() => {
@@ -779,7 +831,13 @@ export function BuildingGestion() {
       .finally(() => {
         navigate(location.pathname, { replace: true, state: {} });
       });
-  }, [openCertificateJobId, buildingId, navigate, location.pathname, showError]);
+  }, [
+    openCertificateJobId,
+    buildingId,
+    navigate,
+    location.pathname,
+    showError,
+  ]);
 
   if (loading) {
     return <BuildingCertificatesLoading />;
@@ -849,13 +907,22 @@ export function BuildingGestion() {
 
       if (isCertificateCategory) {
         if (!selectedFile.type.startsWith("image/")) {
-          showError("Error", "El certificado energético debe ser una imagen (JPG, PNG)");
+          showError(
+            "Error",
+            "El certificado energético debe ser una imagen (JPG, PNG)",
+          );
           return;
         }
         try {
-          const uploadResult = await uploadCertificateImage(selectedFile, buildingId);
+          const uploadResult = await uploadCertificateImage(
+            selectedFile,
+            buildingId,
+          );
           if (!uploadResult.success || !uploadResult.image) {
-            showError("Error al subir", uploadResult.error || "No se pudo subir la imagen");
+            showError(
+              "Error al subir",
+              uploadResult.error || "No se pudo subir la imagen",
+            );
             return;
           }
           const { job_id } = await extractCertificateDataAsync({
@@ -905,9 +972,8 @@ export function BuildingGestion() {
 
       const isFinancialCategory =
         selectedCategory === "financial" ||
-        documentCategories.find(
-          (cat) => cat.value === selectedCategory,
-        )?.label === "Financiero/Contable";
+        documentCategories.find((cat) => cat.value === selectedCategory)
+          ?.label === "Financiero/Contable";
 
       if (isFinancialCategory && result.document.url) {
         try {
@@ -950,15 +1016,13 @@ export function BuildingGestion() {
     } finally {
       setIsUploading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
     setIsUploadModalOpen(false);
     setSelectedFile(null);
     setSelectedCategory("");
   };
-
-
 
   // Manejar creación de factura de servicio
   const isValidUuid = (value: string) =>
@@ -1041,7 +1105,7 @@ export function BuildingGestion() {
       console.error("Error creando factura de servicio:", error);
       showError(
         "Error",
-        error?.message || "Ocurrió un error al crear la factura de servicio"
+        error?.message || "Ocurrió un error al crear la factura de servicio",
       );
     }
   };
@@ -1061,13 +1125,13 @@ export function BuildingGestion() {
       invoice_date: new Date().toISOString().split("T")[0],
       amount_eur: 0,
       units: null,
-      notes: '',
-      provider: '',
-      invoice_number: '',
-      period_start: '',
-      period_end: '',
+      notes: "",
+      provider: "",
+      invoice_number: "",
+      period_start: "",
+      period_end: "",
       is_overdue: false,
-      expiration_date: '',
+      expiration_date: "",
     });
     showSuccess("Documento subido", "El documento se ha subido correctamente");
   };
@@ -1081,7 +1145,10 @@ export function BuildingGestion() {
       !ceeReviewData.issueDate ||
       !ceeReviewData.expiryDate
     ) {
-      showError("Campos requeridos", "Completa calificación, número, emisor, fecha emisión y vencimiento.");
+      showError(
+        "Campos requeridos",
+        "Completa calificación, número, emisor, fecha emisión y vencimiento.",
+      );
       return;
     }
     try {
@@ -1106,7 +1173,10 @@ export function BuildingGestion() {
         imageFilename: ceeReviewData.imageFilename || undefined,
         imageUploadedAt: ceeReviewData.imageUploadedAt || undefined,
       };
-      await EnergyCertificatesService.confirmCertificate(ceeSessionId, finalData);
+      await EnergyCertificatesService.confirmCertificate(
+        ceeSessionId,
+        finalData,
+      );
       if (ceeUploadMeta && buildingId) {
         try {
           const { apiFetch } = await import("~/services/api");
@@ -1125,7 +1195,10 @@ export function BuildingGestion() {
           });
         } catch (_) {}
       }
-      showSuccess("Certificado guardado", "El certificado energético se ha guardado correctamente.");
+      showSuccess(
+        "Certificado guardado",
+        "El certificado energético se ha guardado correctamente.",
+      );
       reloadDocuments();
       setIsCeeModalOpen(false);
       setCeeSessionId(null);
@@ -1147,7 +1220,10 @@ export function BuildingGestion() {
         imageUploadedAt: "",
       });
     } catch (e: any) {
-      showError("Error al guardar", e?.message || "No se pudo guardar el certificado.");
+      showError(
+        "Error al guardar",
+        e?.message || "No se pudo guardar el certificado.",
+      );
     }
   };
 
@@ -1171,7 +1247,10 @@ export function BuildingGestion() {
       imageFilename: "",
       imageUploadedAt: "",
     });
-    showSuccess("Documento subido", "El documento se ha subido. Puedes completar el certificado más tarde desde Certificados.");
+    showSuccess(
+      "Documento subido",
+      "El documento se ha subido. Puedes completar el certificado más tarde desde Certificados.",
+    );
   };
 
   // Funciones para acciones de documentos
@@ -1208,8 +1287,11 @@ export function BuildingGestion() {
 
       // El nombre del archivo en storage está en el ID después de buildingId_category_
       // Obtener el valor de la categoría desde el nombre de categoría
-      const categoryValue = deletingDocument.categoryValue ||
-        documentCategories.find((cat: DocumentCategory) => cat.label === deletingDocument.category)?.value ||
+      const categoryValue =
+        deletingDocument.categoryValue ||
+        documentCategories.find(
+          (cat: DocumentCategory) => cat.label === deletingDocument.category,
+        )?.value ||
         idParts[1];
 
       // Necesitamos el nombre completo del archivo en storage
@@ -1230,7 +1312,10 @@ export function BuildingGestion() {
       );
 
       if (result.success) {
-        showSuccess("Documento eliminado", "El documento se ha eliminado correctamente");
+        showSuccess(
+          "Documento eliminado",
+          "El documento se ha eliminado correctamente",
+        );
 
         // Recargar documentos
         setDocumentsLoading(true);
@@ -1349,16 +1434,21 @@ export function BuildingGestion() {
   };
 
   // Generar mapeo dinámico de valores de categoría a nombres completos
-  const CATEGORY_VALUE_TO_NAME: Record<string, string> = documentCategories.reduce((acc, cat) => {
-    // Si usas traducción, envuelve cat.label en t()
-    acc[cat.value] = t(cat.label);
-    return acc;
-  }, {} as Record<string, string>);
+  const CATEGORY_VALUE_TO_NAME: Record<string, string> =
+    documentCategories.reduce(
+      (acc, cat) => {
+        // Si usas traducción, envuelve cat.label en t()
+        acc[cat.value] = t(cat.label);
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
   // Filtrar documentos según búsqueda, filtros y categoría seleccionada
   const filteredDocuments = documents.filter((doc) => {
     // Filtro por categoría
-    const matchesCategory = selectedCategoryFilter === null ||
+    const matchesCategory =
+      selectedCategoryFilter === null ||
       doc.category === CATEGORY_VALUE_TO_NAME[selectedCategoryFilter];
 
     // Filtro por búsqueda
@@ -1412,7 +1502,9 @@ export function BuildingGestion() {
               </div>
               <div className="grid grid-cols-5 gap-3 mt-4">
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">{t("totalDocumentos")}</p>
+                  <p className="text-xs text-gray-600 mb-1">
+                    {t("totalDocumentos")}
+                  </p>
                   <p className="text-blue-600">{stats.total}</p>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg">
@@ -1424,7 +1516,9 @@ export function BuildingGestion() {
                   <p className="text-blue-600">{stats.activos}</p>
                 </div>
                 <div className="p-3 bg-yellow-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-1">{t("pendientes")}</p>
+                  <p className="text-xs text-gray-600 mb-1">
+                    {t("pendientes")}
+                  </p>
                   <p className="text-yellow-600">{stats.pendientes}</p>
                 </div>
                 <div className="p-3 bg-orange-50 rounded-lg">
@@ -1465,10 +1559,7 @@ export function BuildingGestion() {
                   const isCustom = category.isCustom || false;
 
                   return (
-                    <div
-                      key={category.value}
-                      className="relative group"
-                    >
+                    <div key={category.value} className="relative group">
                       {/* Botón de eliminar - posicionado absolutamente en la esquina superior derecha */}
                       {isCustom && (
                         <button
@@ -1487,10 +1578,11 @@ export function BuildingGestion() {
                       )}
 
                       <div
-                        className={`w-full p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${isSelected
-                          ? `border-blue-500 bg-blue-50 ${category.bgColor}`
-                          : "border-gray-200 hover:border-gray-300"
-                          }`}
+                        className={`w-full p-3 rounded-lg border-2 transition-all text-left cursor-pointer ${
+                          isSelected
+                            ? `border-blue-500 bg-blue-50 ${category.bgColor}`
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
                         onClick={() => {
                           // Si ya está seleccionada, deseleccionar (mostrar todas)
                           if (isSelected) {
@@ -1508,16 +1600,22 @@ export function BuildingGestion() {
                             />
                           </div>
                           <ChevronRight
-                            className={`w-4 h-4 transition-transform ${isSelected ? "text-blue-600" : "text-gray-400"
-                              }`}
+                            className={`w-4 h-4 transition-transform ${
+                              isSelected ? "text-blue-600" : "text-gray-400"
+                            }`}
                             aria-hidden="true"
                           />
                         </div>
-                        <p className={`text-xs mb-1 ${isSelected ? "font-semibold text-blue-900" : ""}`}>
+                        <p
+                          className={`text-xs mb-1 ${isSelected ? "font-semibold text-blue-900" : ""}`}
+                        >
                           {t(category.traduct)}
                         </p>
-                        <p className={`text-xs ${isSelected ? "text-blue-700" : "text-gray-500"}`}>
-                          {categoryFileCount} {t("files")}{categoryFileCount !== 1 ? "s" : ""}
+                        <p
+                          className={`text-xs ${isSelected ? "text-blue-700" : "text-gray-500"}`}
+                        >
+                          {categoryFileCount} {t("files")}
+                          {categoryFileCount !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>
@@ -1543,16 +1641,18 @@ export function BuildingGestion() {
                     />
                   </div>
                   <p className="text-xs text-gray-500">
-                    {filteredDocuments.length} {t("of")} {stats.total} {t("documents")}
+                    {filteredDocuments.length} {t("of")} {stats.total}{" "}
+                    {t("documents")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs hover:bg-gray-50 ${showFilters
-                      ? "border-blue-500 bg-blue-50 text-blue-600"
-                      : "border-gray-300"
-                      }`}
+                    className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-xs hover:bg-gray-50 ${
+                      showFilters
+                        ? "border-blue-500 bg-blue-50 text-blue-600"
+                        : "border-gray-300"
+                    }`}
                   >
                     <Funnel className="w-3 h-3" aria-hidden="true" />
                     <span>{t("filters")}</span>
@@ -1643,7 +1743,9 @@ export function BuildingGestion() {
               </select>
             </div>
             <div className="!bg-white">
-              <label className="block text-sm text-gray-700 mb-1">{t("file")}</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                {t("file")}
+              </label>
               <FileUpload
                 onFilesSelected={handleFilesSelected}
                 acceptedTypes={[
@@ -1662,12 +1764,15 @@ export function BuildingGestion() {
                 maxFiles={1}
                 maxSizeInMB={10}
                 label={t("uploadDocument")}
-                description={selectedFile ? selectedFile.name : t("dragOrClickToSelect")}
-                disabled={isUploading}
+                description={
+                  selectedFile ? selectedFile.name : t("dragOrClickToSelect")
+                }
+                disabled={isUploading || !selectedCategory}
               />
               {selectedFile && (
                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                  ✓ {t("fileSelected")} {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                  ✓ {t("fileSelected")} {selectedFile.name} (
+                  {(selectedFile.size / 1024).toFixed(2)} KB)
                 </div>
               )}
               {!selectedCategory && (
@@ -1759,7 +1864,7 @@ export function BuildingGestion() {
         <DialogContent className="max-w-md shadow-xl bg-white !bg-white">
           <DialogHeader className="!bg-white">
             <DialogTitle className="!bg-white mb-3">
-             {t("create")} {t("newCategory")}
+              {t("create")} {t("newCategory")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 !bg-white">
@@ -1787,10 +1892,11 @@ export function BuildingGestion() {
                       key={index}
                       type="button"
                       onClick={() => setNewCategoryColor(color)}
-                      className={`h-10 rounded border-2 transition-all ${isSelected
-                        ? "border-gray-900 scale-110"
-                        : "border-gray-200 hover:border-gray-300"
-                        } ${color.solidColor}`}
+                      className={`h-10 rounded border-2 transition-all ${
+                        isSelected
+                          ? "border-gray-900 scale-110"
+                          : "border-gray-200 hover:border-gray-300"
+                      } ${color.solidColor}`}
                     />
                   );
                 })}
@@ -2017,7 +2123,8 @@ export function BuildingGestion() {
 
                 <div className="!bg-white">
                   <label className="block text-sm text-gray-700 mb-1">
-                    {t("expirationDate")} <span className="text-red-500">*</span>
+                    {t("expirationDate")}{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="date"
@@ -2080,7 +2187,10 @@ export function BuildingGestion() {
       </Dialog>
 
       {/* Modal Certificado Energético (desde Gestión) */}
-      <Dialog open={isCeeModalOpen} onOpenChange={(open) => !open && handleCancelCee()}>
+      <Dialog
+        open={isCeeModalOpen}
+        onOpenChange={(open) => !open && handleCancelCee()}
+      >
         <DialogContent className="max-w-md shadow-xl bg-white flex flex-col max-h-[90vh]">
           <DialogHeader className="!bg-white">
             <DialogTitle className="mb-3">
@@ -2102,12 +2212,15 @@ export function BuildingGestion() {
               <div className="space-y-4 !bg-white overflow-y-auto pr-2 flex-1 px-1">
                 <div className="bg-teal-50 border border-teal-200 rounded-lg p-2">
                   <p className="text-xs text-teal-800">
-                    Revisa los datos extraídos y guarda el certificado para que se muestre en la vista general del edificio.
+                    Revisa los datos extraídos y guarda el certificado para que
+                    se muestre en la vista general del edificio.
                   </p>
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Calificación *</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Calificación *
+                  </label>
                   <select
                     value={ceeReviewData.rating}
                     onChange={(e) =>
@@ -2120,17 +2233,24 @@ export function BuildingGestion() {
                   >
                     <option value="">Seleccionar</option>
                     {(["A", "B", "C", "D", "E", "F", "G"] as const).map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Nº registro *</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Nº registro *
+                  </label>
                   <Input
                     value={ceeReviewData.certificateNumber || ""}
                     onChange={(e) =>
-                      setCeeReviewData({ ...ceeReviewData, certificateNumber: e.target.value })
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        certificateNumber: e.target.value,
+                      })
                     }
                     className="w-full"
                     placeholder="Código del certificado"
@@ -2138,11 +2258,16 @@ export function BuildingGestion() {
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Técnico certificador *</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Técnico certificador *
+                  </label>
                   <Input
                     value={ceeReviewData.issuerName || ""}
                     onChange={(e) =>
-                      setCeeReviewData({ ...ceeReviewData, issuerName: e.target.value })
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        issuerName: e.target.value,
+                      })
                     }
                     className="w-full"
                     placeholder="Nombre del emisor"
@@ -2151,23 +2276,33 @@ export function BuildingGestion() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="!bg-white">
-                    <label className="block text-sm text-gray-700 mb-1">Fecha emisión *</label>
+                    <label className="block text-sm text-gray-700 mb-1">
+                      Fecha emisión *
+                    </label>
                     <Input
                       type="date"
                       value={ceeReviewData.issueDate || ""}
                       onChange={(e) =>
-                        setCeeReviewData({ ...ceeReviewData, issueDate: e.target.value })
+                        setCeeReviewData({
+                          ...ceeReviewData,
+                          issueDate: e.target.value,
+                        })
                       }
                       className="w-full"
                     />
                   </div>
                   <div className="!bg-white">
-                    <label className="block text-sm text-gray-700 mb-1">Vencimiento *</label>
+                    <label className="block text-sm text-gray-700 mb-1">
+                      Vencimiento *
+                    </label>
                     <Input
                       type="date"
                       value={ceeReviewData.expiryDate || ""}
                       onChange={(e) =>
-                        setCeeReviewData({ ...ceeReviewData, expiryDate: e.target.value })
+                        setCeeReviewData({
+                          ...ceeReviewData,
+                          expiryDate: e.target.value,
+                        })
                       }
                       className="w-full"
                     />
@@ -2175,7 +2310,9 @@ export function BuildingGestion() {
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Consumo (kWh/m²·año)</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Consumo (kWh/m²·año)
+                  </label>
                   <Input
                     type="number"
                     step="0.01"
@@ -2184,7 +2321,9 @@ export function BuildingGestion() {
                     onChange={(e) =>
                       setCeeReviewData({
                         ...ceeReviewData,
-                        primaryEnergyKwhPerM2Year: e.target.value ? parseFloat(e.target.value) : "",
+                        primaryEnergyKwhPerM2Year: e.target.value
+                          ? parseFloat(e.target.value)
+                          : "",
                       })
                     }
                     className="w-full"
@@ -2193,7 +2332,9 @@ export function BuildingGestion() {
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Emisiones (kg CO₂/m²·año)</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Emisiones (kg CO₂/m²·año)
+                  </label>
                   <Input
                     type="number"
                     step="0.01"
@@ -2202,7 +2343,9 @@ export function BuildingGestion() {
                     onChange={(e) =>
                       setCeeReviewData({
                         ...ceeReviewData,
-                        emissionsKgCo2PerM2Year: e.target.value ? parseFloat(e.target.value) : "",
+                        emissionsKgCo2PerM2Year: e.target.value
+                          ? parseFloat(e.target.value)
+                          : "",
                       })
                     }
                     className="w-full"
@@ -2211,11 +2354,16 @@ export function BuildingGestion() {
                 </div>
 
                 <div className="!bg-white">
-                  <label className="block text-sm text-gray-700 mb-1">Ref. catastral</label>
+                  <label className="block text-sm text-gray-700 mb-1">
+                    Ref. catastral
+                  </label>
                   <Input
                     value={ceeReviewData.propertyReference || ""}
                     onChange={(e) =>
-                      setCeeReviewData({ ...ceeReviewData, propertyReference: e.target.value })
+                      setCeeReviewData({
+                        ...ceeReviewData,
+                        propertyReference: e.target.value,
+                      })
                     }
                     className="w-full"
                     placeholder="Opcional"
@@ -2223,7 +2371,11 @@ export function BuildingGestion() {
                 </div>
               </div>
               <DialogFooter className="flex gap-2 mt-4 sm:flex-row !bg-white">
-                <Button variant="outline" onClick={handleCancelCee} className="flex-1 text-sm">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelCee}
+                  className="flex-1 text-sm"
+                >
                   Omitir
                 </Button>
                 <Button

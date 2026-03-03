@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BookOpen, Download, Eye, FileText, TriangleAlert } from "lucide-react";
 
 import { useIsMobile } from "~/components/ui/use-mobile";
 
 /* Componentes ya existentes en tu repo (los dejo como import) */
 import HelpersTwin from "./componentes/HelpersTwin";
 import ModalFinancial from "./componentes/ModalFinancial";
+import ModalLEE from "./componentes/ModalLEE";
+import ModalCalidades from "./componentes/ModalCalidades";
+import ModalLicenciaDR from "./componentes/ModalLicenciaDR";
 import HeroCard from "./HeroCard";
 import RightColumn from "./RightColumn";
 
 import LeftColumn from "./LeftColumn";
 import HeaderControls from "./componentes/HeaderControls";
 import FooterAction from "./componentes/FooterAction";
-import useHeaderContext from "~/contexts/HeaderContext";
 import { BuildingsApiService, type Building } from "~/services/buildingsApi";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { HeroCardSkeleton } from "~/components/ui/LoadingSystem";
 
 interface SectionI {
@@ -48,6 +51,9 @@ const FinancialTwin: React.FC = () => {
   const isMobile = useIsMobile();
 
   const [financialTwin, setFinancialTwin] = useState<boolean>(false);
+  const [showLEEModal, setShowLEEModal] = useState<boolean>(false);
+  const [showCalidadesModal, setShowCalidadesModal] = useState<boolean>(false);
+  const [showLicenciaDRModal, setShowLicenciaDRModal] = useState<boolean>(false);
 
   const [metricHelp, setMetricHelp] = useState<HelpMetricas>({
     General: false,
@@ -77,38 +83,149 @@ const FinancialTwin: React.FC = () => {
 
   const cardBase = "bg-white rounded-xl shadow-lg border-2 border-gray-200 p-6";
 
-  const { selectedBuildingId } = useHeaderContext();
+  const { buildingId } = useParams<{ buildingId: string }>();
 
   const [buildingData, setBuildingData] = useState<Building | null>(null);
-  const location = useLocation();
+  const [bankReadyProgress] = useState<{
+    completed: number;
+    total: number;
+    percent: number;
+  } | null>(null);
 
   useEffect(() => {
-    if (selectedBuildingId && location.pathname.includes("financial-twin")) {
-      BuildingsApiService.getBuildingById(selectedBuildingId).then((res) => {
+    if (buildingId) {
+      BuildingsApiService.getBuildingById(buildingId).then((res) => {
         setBuildingData(res);
       });
+    } else {
+      setBuildingData(null);
     }
-  }, [selectedBuildingId, location])
-
+  }, [buildingId]);
 
   return (
     <div>
       <HelpersTwin
         active={showSection.showHelpers}
-        setActive={(value) => setShowSection((prev) => ({ ...prev, showHelpers: value }))}
+        setActive={(value) =>
+          setShowSection((prev) => ({ ...prev, showHelpers: value }))
+        }
       />
 
       <ModalFinancial active={financialTwin} setActive={(value) => setFinancialTwin(value)} />
+      <ModalLEE active={showLEEModal} setActive={setShowLEEModal} buildingData={buildingData} />
+      <ModalCalidades active={showCalidadesModal} setActive={setShowCalidadesModal} buildingData={buildingData} />
+      <ModalLicenciaDR active={showLicenciaDRModal} setActive={setShowLicenciaDRModal} buildingData={buildingData} />
 
-      <div style={{ marginTop: "-90px" }}>
+      <div>
         <div className="max-w-[1800px] mx-auto space-y-6 px-4 md:px-0">
           <HeaderControls
             t={t}
             isMobile={isMobile}
             onExport={() => {
-              return null
+              return null;
             }}
           />
+
+          <div className="flex items-center justify-end gap-2">
+            <div className="hidden md:flex">
+              <div
+                className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 bg-white border border-gray-200 rounded-lg"
+                role="status"
+                aria-label={
+                  bankReadyProgress
+                    ? `Progreso de documentaciÃ³n Bank-Ready: ${bankReadyProgress.completed} de ${bankReadyProgress.total} requisitos completados, ${bankReadyProgress.percent} por ciento`
+                    : "Sin datos de Bank-Ready"
+                }
+              >
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <div
+                    className={`w-5 h-5 md:w-6 md:h-6 rounded flex items-center justify-center text-white flex-shrink-0 ${bankReadyProgress ? (bankReadyProgress.percent >= 100 ? "bg-green-500" : "bg-red-500") : "bg-gray-400"}`}
+                    aria-hidden="true"
+                  >
+                    <TriangleAlert
+                      className="w-3 h-3 md:w-3.5 md:h-3.5"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[9px] md:text-[10px] text-gray-600 leading-tight">
+                      Bank-Ready
+                    </div>
+                    <div
+                      className={`text-[10px] md:text-xs leading-tight ${bankReadyProgress ? "text-red-600" : "text-gray-500"}`}
+                    >
+                      {bankReadyProgress
+                        ? `${bankReadyProgress.completed}/${bankReadyProgress.total} âÿ¢ ${bankReadyProgress.percent}%`
+                        : "-"}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-12 md:w-24">
+                  <div
+                    className="w-full bg-gray-200 rounded-full h-1 md:h-1.5 overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={bankReadyProgress?.percent ?? 0}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Barra de progreso"
+                  >
+                    <div
+                      className={`h-1 md:h-1.5 rounded-full transition-all duration-500 ${bankReadyProgress ? (bankReadyProgress.percent >= 100 ? "bg-green-500" : "bg-red-500") : "bg-gray-400"}`}
+                      style={{
+                        width: bankReadyProgress
+                          ? `${bankReadyProgress.percent}%`
+                          : "0%",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLEEModal(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
+              title="Libro del Edificio Existente (Opcional)"
+              aria-label="Abrir generador del Libro del Edificio Existente"
+            >
+              <BookOpen className="w-4 h-4" aria-hidden="true" />
+              <span>Generador LEE</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCalidadesModal(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
+              title="Memoria de Calidades"
+              aria-label="Abrir gestor de Memoria de Calidades"
+            >
+              <Eye className="w-4 h-4" aria-hidden="true" />
+              <span>Memoria de Calidades</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLicenciaDRModal(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs relative focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
+              title="Licencia/DeclaraciÃ³n Responsable"
+              aria-label="Abrir detector de Licencia o DeclaraciÃ³n Responsable"
+            >
+              <FileText className="w-4 h-4" aria-hidden="true" />
+              <span>Licencia/DR</span>
+            </button>
+            <div
+              className="hidden md:block w-px h-6 bg-gray-300"
+              role="separator"
+              aria-orientation="vertical"
+            />
+            <button
+              type="button"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 whitespace-nowrap"
+              aria-label="Exportar anÃ¡lisis financiero completo"
+            >
+              <Download className="w-4 h-4" aria-hidden="true" />
+              <span>Exportar AnÃ¡lisis</span>
+            </button>
+          </div>
+
           {buildingData ? (
             <HeroCard buildingData={buildingData} alignmentScore={92} />
           ) : (

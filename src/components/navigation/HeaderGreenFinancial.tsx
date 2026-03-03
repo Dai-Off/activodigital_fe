@@ -6,16 +6,17 @@ import {
   Shield,
   TriangleAlert,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import useHeaderContext from "~/contexts/HeaderContext";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 export function HeaderGreenFinancial() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { selectedBuildingId } = useHeaderContext();
-  const isFinancialTwin =
-    location.pathname === "/green-financial/financial-twin";
-  const isGreenFianncial = location.pathname === "/green-financial";
+  const { buildingId } = useParams<{ buildingId: string }>();
+  const isInBuildingView =
+    !!buildingId && location.pathname.includes("/green-financial/building/");
+  const isFinancialTwin = location.pathname.includes("/financial-twin");
+  const isDataRoom = location.pathname.includes("/data-room");
+  const isRequerimientos = location.pathname.includes("/requerimientos");
 
   return (
     <header className="w-full text-white shadow-lg">
@@ -56,47 +57,66 @@ export function HeaderGreenFinancial() {
           </div>
         </div>
       </div>
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 flex-shrink-0 overflow-x-auto">
-        <div className="flex gap-1 -mb-px min-w-max">
-          <button
-            onClick={() => {
-              navigate("/green-financial");
-            }}
-            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isGreenFianncial
-              ? "border-[#1e3a8a] text-[#1e3a8a]"
-              : "border-transparent text-gray-600 hover:text-gray-900"
+      {isInBuildingView && (
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 flex-shrink-0 overflow-x-auto">
+          <div className="flex gap-1 -mb-px min-w-max">
+            <button
+              onClick={() => navigate("/green-financial")}
+              className="px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap border-transparent text-gray-600 hover:text-gray-900"
+            >
+              <ChartColumn className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Radar</span>
+            </button>
+            <button
+              onClick={() =>
+                buildingId &&
+                navigate(
+                  `/green-financial/building/${buildingId}/financial-twin`,
+                )
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isFinancialTwin
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
-          >
-            <ChartColumn className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Radar</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (selectedBuildingId) navigate("/green-financial/financial-twin");
-            }}
-            className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${isFinancialTwin
-              ? "border-[#1e3a8a] text-[#1e3a8a]"
-              : selectedBuildingId ? "border-transparent text-gray-600 hover:text-gray-900" : "border-transparent text-gray-600 hover:text-gray-900 cursor-not-allowed"
+            >
+              <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">Financial Twin</span>
+              <span className="sm:hidden">Twin</span>
+            </button>
+            <button
+              onClick={() =>
+                buildingId &&
+                navigate(`/green-financial/building/${buildingId}/data-room`)
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isDataRoom
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
-          >
-            <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="hidden sm:inline">Financial Twin</span>
-            <span className="sm:hidden">Twin</span>
-          </button>
-          <button
-            className="px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap border-transparent text-gray-600 hover:text-gray-900"
-            disabled={true}
-          >
-            <Shield className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Data Room</span>
-          </button>
-          <button className="px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap border-transparent text-gray-600 hover:text-gray-900">
-            <MessagesSquare className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Requerimientos</span>
-          </button>
+            >
+              <Shield className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Data Room</span>
+            </button>
+            <button
+              onClick={() =>
+                buildingId &&
+                navigate(
+                  `/green-financial/building/${buildingId}/requerimientos`,
+                )
+              }
+              className={`px-3 py-2 text-xs border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                isRequerimientos
+                  ? "border-[#1e3a8a] text-[#1e3a8a]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <MessagesSquare className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Requerimientos</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </header >
+      )}
+    </header>
   );
 }
