@@ -426,7 +426,7 @@ export default function CFOFinancialAnalysisSimulation() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ahorro Energía Estimado (%)
+                Probabilidad de Mejora (%)
               </label>
               <input
                 type="number"
