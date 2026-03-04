@@ -20,14 +20,34 @@ interface ModalCalidadesProps {
   buildingData?: Building | null;
 }
 
+/* ─── Especificaciones técnicas esperadas ────────────────────────────── */
+const SPEC_ITEMS = [
+  { key: "sate", emoji: "🏠", label: "SATE - Aislamiento térmico" },
+  { key: "ventanas", emoji: "🪟", label: "Ventanas - PVC bajo emisivo" },
+  { key: "calefaccion", emoji: "🔥", label: "Calefacción - Aerotermia" },
+  { key: "fotovoltaica", emoji: "☀️", label: "Fotovoltaica - Paneles solares" },
+  { key: "griferia", emoji: "💧", label: "Grifería - Bajo consumo agua" },
+  { key: "acabados", emoji: "🎨", label: "Acabados - Sin COVs" },
+];
+
 const CATEGORIA_TECNICA = "technical";
 
-const ModalCalidades: React.FC<ModalCalidadesProps> = ({ active, setActive, buildingData }) => {
+/* ─── Pasos del timeline ─────────────────────────────────────────────── */
+const TIMELINE_STEPS = [
+  { label: "Cargada", number: 1 },
+  { label: "Validada", number: 2 },
+  { label: "Confirmada", number: 3 },
+];
+
+const ModalCalidades: React.FC<ModalCalidadesProps> = ({
+  active,
+  setActive,
+  buildingData,
+}) => {
   const navigate = useNavigate();
   const [docs, setDocs] = useState<GestionDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
 
   const buildingId = buildingData?.id;
   const subtitulo = buildingData?.address ?? null;
@@ -46,7 +66,7 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({ active, setActive, buil
           (d) =>
             d.category === CATEGORIA_TECNICA ||
             d.category?.toLowerCase().includes("technical") ||
-            d.category?.toLowerCase().includes("técnic")
+            d.category?.toLowerCase().includes("técnic"),
         );
         setDocs(tecnicos);
       })
@@ -57,14 +77,24 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({ active, setActive, buil
       .finally(() => setLoading(false));
   }, [active, buildingId]);
 
-  const totalDocs = docs.length;
-  const tieneDocumentacion = totalDocs > 0;
+  /* ── Checklist: marcar ítems que tienen al menos 1 doc asociado ───── */
+  const matchedSpecs = new Set<string>();
+  for (const doc of docs) {
+    const nameLower = (doc.fileName ?? "").toLowerCase();
+    for (const spec of SPEC_ITEMS) {
+      if (nameLower.includes(spec.key.toLowerCase())) {
+        matchedSpecs.add(spec.key);
+      }
+    }
+  }
+  const checkedCount = matchedSpecs.size;
+  const checklistPercent =
+    SPEC_ITEMS.length > 0
+      ? Math.round((checkedCount / SPEC_ITEMS.length) * 100)
+      : 0;
 
-  const handleGenerar = () => {
-    setGenerating(true);
-    // TODO: integración API generación ARKIA
-    setTimeout(() => setGenerating(false), 1500);
-  };
+  /* ── Derivar paso del timeline ─────────────────────────────────────── */
+  const currentStepIndex = docs.length > 0 ? 0 : -1; // -1 = ninguno alcanzado
 
   const handleSubir = () => {
     setActive(false);
@@ -72,6 +102,23 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({ active, setActive, buil
       navigate(`/building/${buildingId}/gestion`);
     }
   };
+
+  /* ── Estado ─────────────────────────────────────────────────────────── */
+  const getEstado = () => {
+    if (loading)
+      return { title: "Cargando…", desc: "Obteniendo datos de documentación" };
+    if (error) return { title: "Error", desc: error };
+    if (docs.length > 0)
+      return {
+        title: "Documentación técnica disponible",
+        desc: `${docs.length} documento${docs.length !== 1 ? "s" : ""} en esta categoría`,
+      };
+    return {
+      title: "Estado: Pendiente de Cargar",
+      desc: "Aún no se ha cargado la Memoria de Calidades",
+    };
+  };
+  const estado = getEstado();
 
   return (
     <ModalFrame
@@ -83,136 +130,156 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({ active, setActive, buil
       maxWidth="4xl"
     >
       <div className="space-y-3">
-        {/* Estado - derivado de documentos API */}
+        {/* ── Estado ──────────────────────────────────────────── */}
         <div className="border rounded-lg p-3 bg-gray-50 border-gray-300">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-gray-100">
               <Clock className="w-5 h-5 text-gray-600" aria-hidden />
             </div>
-            <div className="flex-1 min-w-0">
-              {loading ? (
-                <>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">Cargando…</h3>
-                  <p className="text-xs text-gray-700">Obteniendo datos de documentación</p>
-                </>
-              ) : error ? (
-                <>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">Error</h3>
-                  <p className="text-xs text-gray-700">{error}</p>
-                </>
-              ) : tieneDocumentacion ? (
-                <>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">
-                    Documentación técnica disponible
-                  </h3>
-                  <p className="text-xs text-gray-700">
-                    {totalDocs} documento{totalDocs !== 1 ? "s" : ""} en esta categoría
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">Pendiente de cargar</h3>
-                  <p className="text-xs text-gray-700">
-                    No hay documentación técnica asociada. Sube documentos desde Gestión.
-                  </p>
-                </>
-              )}
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-gray-900 mb-1">
+                {estado.title}
+              </h3>
+              <p className="text-xs text-gray-700">{estado.desc}</p>
             </div>
           </div>
         </div>
 
-        {/* Timeline - no hay API de seguimiento */}
+        {/* ── Timeline del Proceso ───────────────────────────── */}
         <div className="border border-gray-200 rounded-lg p-3">
           <h3 className="text-xs font-bold text-gray-900 mb-3 flex items-center gap-1.5">
             <Calendar className="w-4 h-4 text-emerald-600" aria-hidden />
             Timeline del Proceso
           </h3>
-          <div className="text-xs text-gray-500 py-2">
-            No hay datos de seguimiento disponibles.
+          <div className="relative">
+            {/* Línea horizontal conectora */}
+            <div className="absolute left-0 right-0 top-5 h-0.5 bg-gray-300" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {TIMELINE_STEPS.map((step, idx) => {
+                const isReached = currentStepIndex >= idx;
+                return (
+                  <div
+                    key={step.label}
+                    className="relative flex flex-col items-center"
+                  >
+                    <div
+                      className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 shadow transition-all ${
+                        isReached
+                          ? "bg-emerald-50 border-emerald-500"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <span
+                        className={`text-xs font-bold ${
+                          isReached ? "text-emerald-700" : "text-gray-400"
+                        }`}
+                      >
+                        {step.number}
+                      </span>
+                    </div>
+                    <div className="mt-3 text-center">
+                      <p
+                        className={`text-xs font-bold ${
+                          isReached ? "text-gray-900" : "text-gray-500"
+                        }`}
+                      >
+                        {step.label}
+                      </p>
+                      <p
+                        className={`text-xs mt-0.5 ${
+                          isReached ? "text-emerald-600" : "text-gray-400"
+                        }`}
+                      >
+                        {isReached ? "Completado" : "Pendiente"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Checklist - documentos técnicos desde API */}
+        {/* ── Checklist de Especificaciones Técnicas ──────────── */}
         <div className="border border-gray-200 rounded-lg p-3">
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-              <SquareCheckBig className="w-4 h-4 text-emerald-600" aria-hidden />
-              Documentación Técnica
+              <SquareCheckBig
+                className="w-4 h-4 text-emerald-600"
+                aria-hidden
+              />
+              Checklist de Especificaciones Técnicas
             </h3>
-            {!loading && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-700">
-                  {totalDocs} documento{totalDocs !== 1 ? "s" : ""}
-                </span>
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-medium text-gray-700">
+                {checkedCount}/{SPEC_ITEMS.length}
               </div>
-            )}
-          </div>
-          {loading ? (
-            <div className="text-xs text-gray-500 py-2">Cargando…</div>
-          ) : docs.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {docs.map((doc) => (
+              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  key={doc.id}
-                  className="border rounded-lg p-2 bg-gray-50 border-gray-300"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" aria-hidden />
-                    <p className="text-xs font-medium text-gray-900 truncate" title={doc.fileName}>
-                      {doc.fileName}
+                  className="h-full bg-emerald-600 transition-all"
+                  style={{ width: `${checklistPercent}%` }}
+                />
+              </div>
+              <div className="text-xs font-bold text-emerald-600">
+                {checklistPercent}%
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {SPEC_ITEMS.map((spec) => (
+              <div
+                key={spec.key}
+                className="border rounded-lg p-2 bg-gray-50 border-gray-300"
+              >
+                <div className="flex items-center gap-2">
+                  <Clock
+                    className="w-4 h-4 text-gray-400 flex-shrink-0"
+                    aria-hidden
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-900 truncate">
+                      {spec.emoji} {spec.label}
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-xs text-gray-500 py-2 bg-gray-50 rounded-lg px-3">
-              No hay documentos técnicos. Añade documentación desde Gestión.
-            </div>
-          )}
-        </div>
-
-        {/* Acciones */}
-        <div className="border border-gray-200 rounded-lg p-3">
-          <h3 className="text-xs font-bold text-gray-900 mb-3 flex items-center gap-1.5">
-            <Wrench className="w-4 h-4 text-emerald-600" aria-hidden />
-            Acciones
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleGenerar}
-              disabled={generating}
-              className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow text-xs font-medium flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Wrench className="w-3.5 h-3.5" aria-hidden />
-              <span className="hidden md:inline">
-                {generating ? "Generando…" : "Generar con ARKIA (Automático)"}
-              </span>
-              <span className="md:hidden">{generating ? "…" : "Generar ARKIA"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleSubir}
-              className="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
-            >
-              <Upload className="w-3.5 h-3.5" aria-hidden />
-              <span className="hidden sm:inline">Subir Memoria Propia</span>
-              <span className="sm:hidden">Subir</span>
-            </button>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Info - texto informativo sobre el documento */}
+        {/* ── Acciones Disponibles ────────────────────────────── */}
+        <div className="border border-gray-200 rounded-lg p-3">
+          <h3 className="text-xs font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+            <Wrench className="w-4 h-4 text-emerald-600" aria-hidden />
+            Acciones Disponibles
+          </h3>
+          <button
+            type="button"
+            onClick={handleSubir}
+            className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-xs font-medium flex items-center justify-center gap-1.5"
+          >
+            <Upload className="w-3.5 h-3.5" aria-hidden />
+            <span>Cargar Memoria de Calidades</span>
+          </button>
+        </div>
+
+        {/* ── Info – Documento protagonista para el banco ─────── */}
         <div className="bg-amber-50 border border-amber-300 rounded-lg p-3">
           <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" aria-hidden />
+            <Info
+              className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0"
+              aria-hidden
+            />
             <div className="text-xs text-amber-900">
-              <p className="font-bold mb-1">Documento clave para el banco</p>
+              <p className="font-bold mb-1">
+                📋 Documento protagonista para el banco
+              </p>
               <p>
-                La Memoria de Calidades es el documento que el tasador y el banco necesitan para
-                validar que la rehabilitación cumple con los criterios de Préstamo Verde y
-                Taxonomía EU. Asegúrate de tenerla confirmada antes de enviar al banco.
+                La Memoria de Calidades es el <strong>documento clave</strong>{" "}
+                que el tasador y el banco necesitan para validar que la
+                rehabilitación cumple con los criterios de{" "}
+                <strong>Préstamo Verde</strong> y Taxonomía EU. Asegúrate de que
+                esté confirmada antes de enviar al banco.
               </p>
             </div>
           </div>
