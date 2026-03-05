@@ -80,7 +80,7 @@
     "aiClassification": "La IA clasificará automáticamente tus documentos",
     "uploadingBatch": "Subiendo archivos...",
     "uploadBatchSuccess": "Archivos encolados para clasificación IA",
-    "batchJobsTitle": "Archivos subidos por Drag & Drop",
+    "batchJobsTitle": "Documentos sin clasificar",
     "unclassified": "No clasificado",
     "classifying": "Clasificando...",
     "classifyPlaceholder": "Buscar tipo de documento...",

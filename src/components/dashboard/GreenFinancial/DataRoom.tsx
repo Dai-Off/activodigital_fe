@@ -94,7 +94,17 @@ function ManualClassifyCombobox({
         className="w-[320px] p-0 shadow-2xl border-gray-200 bg-white z-[100]"
         align="start"
       >
-        <Command className="bg-white">
+        <Command
+          filter={(value, search) => {
+            const normalize = (s: string) =>
+              s
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
+            return normalize(value).includes(normalize(search)) ? 1 : 0;
+          }}
+          className="bg-white"
+        >
           <CommandInput
             placeholder={
               t("dataRoom.classifyPlaceholder") || "Buscar tipo de doc..."
@@ -675,16 +685,23 @@ const DataRoom = () => {
   ]);
   const rejectedStatuses = new Set(["rejected", "failed"]);
 
-  const verifiedCount = Object.values(auditData).filter((a: any) =>
+  // Solo contar audits que correspondan a documentos clasificados (excluir __auto__ y claves no reconocidas)
+  const knownDocIds = new Set(documents.map((d) => d.id));
+  const classifiedAudits = Object.entries(auditData).filter(([key]) =>
+    knownDocIds.has(key),
+  );
+
+  const verifiedCount = classifiedAudits.filter(([, a]: [string, any]) =>
     verifiedStatuses.has(a.status),
   ).length;
 
-  const rejectedCount = Object.values(auditData).filter((a: any) =>
+  const rejectedCount = classifiedAudits.filter(([, a]: [string, any]) =>
     rejectedStatuses.has(a.status),
   ).length;
 
-  const inReviewCount = Object.values(auditData).filter(
-    (a: any) => a.status === "queued" || a.status === "processing",
+  const inReviewCount = classifiedAudits.filter(
+    ([, a]: [string, any]) =>
+      a.status === "queued" || a.status === "processing",
   ).length;
 
   const pendingCount =
@@ -1106,94 +1123,104 @@ const DataRoom = () => {
                     "Archivos subidos por Drag & Drop"}
                 </h4>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  {batchJobs.map((job: any) => {
-                    const statusConfig: Record<
-                      string,
-                      {
-                        color: string;
-                        bg: string;
-                        icon: React.ReactNode;
-                        label: string;
-                      }
-                    > = {
-                      queued: {
-                        color: "text-yellow-700",
-                        bg: "bg-yellow-50 border-yellow-200",
-                        icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
-                        label: t("dataRoom.queuedStatus") || "En cola",
-                      },
-                      processing: {
-                        color: "text-blue-700",
-                        bg: "bg-blue-50 border-blue-200",
-                        icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
-                        label:
-                          t("dataRoom.processingStatus") || "Analizando...",
-                      },
-                      completed: {
-                        color: "text-green-700",
-                        bg: "bg-green-50 border-green-200",
-                        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-                        label: t("dataRoom.verifiedStatus") || "Verificado",
-                      },
-                      failed: {
-                        color: "text-red-700",
-                        bg: "bg-red-50 border-red-200",
-                        icon: <AlertCircle className="w-3.5 h-3.5" />,
-                        label: t("dataRoom.rejectedStatus") || "Rechazado",
-                      },
-                      rejected: {
-                        color: "text-red-700",
-                        bg: "bg-red-50 border-red-200",
-                        icon: <AlertCircle className="w-3.5 h-3.5" />,
-                        label: t("dataRoom.rejectedStatus") || "Rechazado",
-                      },
-                    };
-                    const cfg = statusConfig[job.status] || statusConfig.queued;
-                    const isAutoUnresolved = job.checklistId === "__auto__";
+                  {batchJobs
+                    .filter((job: any) => job.checklistId === "__auto__")
+                    .map((job: any) => {
+                      const statusConfig: Record<
+                        string,
+                        {
+                          color: string;
+                          bg: string;
+                          icon: React.ReactNode;
+                          label: string;
+                        }
+                      > = {
+                        queued: {
+                          color: "text-yellow-700",
+                          bg: "bg-yellow-50 border-yellow-200",
+                          icon: (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ),
+                          label: t("dataRoom.queuedStatus") || "En cola",
+                        },
+                        processing: {
+                          color: "text-blue-700",
+                          bg: "bg-blue-50 border-blue-200",
+                          icon: (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ),
+                          label:
+                            t("dataRoom.processingStatus") || "Analizando...",
+                        },
+                        completed: {
+                          color: "text-green-700",
+                          bg: "bg-green-50 border-green-200",
+                          icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.verifiedStatus") || "Verificado",
+                        },
+                        failed: {
+                          color: "text-red-700",
+                          bg: "bg-red-50 border-red-200",
+                          icon: <AlertCircle className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.rejectedStatus") || "Rechazado",
+                        },
+                        rejected: {
+                          color: "text-red-700",
+                          bg: "bg-red-50 border-red-200",
+                          icon: <AlertCircle className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.rejectedStatus") || "Rechazado",
+                        },
+                      };
+                      const cfg =
+                        statusConfig[job.status] || statusConfig.queued;
+                      const isAutoUnresolved = job.checklistId === "__auto__";
 
-                    return (
-                      <div
-                        key={job.id}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${cfg.bg}`}
-                      >
-                        <FileText
-                          className={`w-4 h-4 flex-shrink-0 ${cfg.color}`}
-                        />
-                        <span className="flex-1 truncate text-gray-800 font-medium">
-                          {job.fileName}
-                        </span>
-                        {isAutoUnresolved &&
-                          (job.status === "completed" ||
-                            job.status === "failed") && (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] text-gray-500 italic">
-                                {t("dataRoom.unclassified") || "No clasificado"}
-                              </span>
-                              <ManualClassifyCombobox
-                                jobId={job.id}
-                                options={allDocsOptions}
-                                onClassify={handleManualClassify}
-                                t={t}
-                              />
-                            </div>
-                          )}
-                        {!isAutoUnresolved &&
-                          job.checklistId &&
-                          job.status === "completed" && (
-                            <span className="text-[10px] text-green-600 truncate max-w-[120px]">
-                              →{" "}
-                              {job.checklistId.replace(/_/g, " ").slice(0, 40)}
-                            </span>
-                          )}
-                        <span
-                          className={`flex items-center gap-1 flex-shrink-0 font-semibold ${cfg.color}`}
+                      return (
+                        <div
+                          key={job.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${cfg.bg}`}
                         >
-                          {cfg.icon}
-                          {cfg.label}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <FileText
+                            className={`w-4 h-4 flex-shrink-0 ${cfg.color}`}
+                          />
+                          <span className="flex-1 truncate text-gray-800 font-medium">
+                            {job.fileName}
+                          </span>
+                          {isAutoUnresolved &&
+                            (job.status === "completed" ||
+                              job.status === "failed") && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] text-gray-500 italic">
+                                  {t("dataRoom.unclassified") ||
+                                    "No clasificado"}
+                                </span>
+                                <ManualClassifyCombobox
+                                  jobId={job.id}
+                                  options={allDocsOptions}
+                                  onClassify={handleManualClassify}
+                                  t={t}
+                                />
+                              </div>
+                            )}
+                          {!isAutoUnresolved &&
+                            job.checklistId &&
+                            job.status === "completed" && (
+                              <span className="text-[10px] text-green-600 truncate max-w-[120px]">
+                                →{" "}
+                                {job.checklistId
+                                  .replace(/_/g, " ")
+                                  .slice(0, 40)}
+                              </span>
+                            )}
+                          <span
+                            className={`flex items-center gap-1 flex-shrink-0 font-semibold ${cfg.color}`}
+                          >
+                            {cfg.icon}
+                            {cfg.label}
+                          </span>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}

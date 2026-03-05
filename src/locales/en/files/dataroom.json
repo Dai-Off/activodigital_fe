@@ -80,7 +80,7 @@
     "aiClassification": "AI will automatically classify your documents",
     "uploadingBatch": "Uploading files...",
     "uploadBatchSuccess": "Files queued for AI classification",
-    "batchJobsTitle": "Files uploaded via Drag & Drop",
+    "batchJobsTitle": "Unclassified documents",
     "unclassified": "Unclassified",
     "classifying": "Classifying...",
     "classifyPlaceholder": "Search document type...",
