@@ -2,7 +2,7 @@ interface EditableFieldProps {
   label: string;
   value: string | number | null | undefined;
   fieldKey: string;
-  type?: "text" | "number" | "select" | "date";
+  type?: "text" | "number" | "select" | "date" | "textarea";
   options?: { value: string; label: string }[];
   suffix?: string;
   isEditing: boolean;
@@ -79,6 +79,13 @@ export function EditableField({
             </option>
           ))}
         </select>
+      ) : type === "textarea" ? (
+        <textarea
+          className={`${inputClasses} mt-1 min-h-[80px] resize-y`}
+          value={value?.toString() ?? ""}
+          onChange={(e) => onChange(fieldKey, e.target.value)}
+          placeholder={label}
+        />
       ) : (
         <input
           type={

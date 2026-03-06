@@ -29,12 +29,21 @@ export interface LeeScenario {
   savingsEuroYear: number | null;
   simplePaybackYears: number | null;
 }
+const formatTypology = (t?: string) => {
+  if (!t) return null;
+  const map: Record<string, string> = {
+    residential: "Residencial Colectivo",
+    mixed: "Mixto",
+    commercial: "Terciario",
+  };
+  return map[t] || t;
+};
 
 function addTextBlock(
   pdf: jsPDF,
   text: string,
   options: { fontSize?: number; bold?: boolean } = {},
-  state: { y: number; margin: number }
+  state: { y: number; margin: number },
 ) {
   const { fontSize = 11, bold = false } = options;
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -58,18 +67,19 @@ function addTextBlock(
 export function buildLeeScenarios(params: LeeGenerationParams): LeeScenario[] {
   const { building, cee } = params;
 
-  const area = typeof building.squareMeters === "number" ? building.squareMeters : null;
+  const area =
+    typeof building.squareMeters === "number" ? building.squareMeters : null;
 
   // Coste base de rehabilitación (si no hay dato, estimación simple por m²)
   const baseCapexFull =
-    typeof building.rehabilitationCost === "number" && building.rehabilitationCost > 0
+    typeof building.rehabilitationCost === "number" &&
+    building.rehabilitationCost > 0
       ? building.rehabilitationCost
       : area
-      ? area * 400 // 400 €/m² como orden de magnitud para rehabilitación profunda
-      : 0;
+        ? area * 400 // 400 €/m² como orden de magnitud para rehabilitación profunda
+        : 0;
 
-  const baseEnergyKwhYear =
-    cee && area && cee.kwh > 0 ? cee.kwh * area : null;
+  const baseEnergyKwhYear = cee && area && cee.kwh > 0 ? cee.kwh * area : null;
 
   const pricePerKwh = 0.2; // €/kWh aproximado
 
@@ -108,7 +118,9 @@ export function buildLeeScenarios(params: LeeGenerationParams): LeeScenario[] {
 
   return defs.map((def) => {
     const capex =
-      baseCapexFull && baseCapexFull > 0 ? baseCapexFull * def.capexFactor : null;
+      baseCapexFull && baseCapexFull > 0
+        ? baseCapexFull * def.capexFactor
+        : null;
 
     const savingsPercent = baseEnergyKwhYear ? def.savingsPercent : null;
 
@@ -139,7 +151,9 @@ export function buildLeeScenarios(params: LeeGenerationParams): LeeScenario[] {
   });
 }
 
-export async function generateLeePdf(params: LeeGenerationParams): Promise<void> {
+export async function generateLeePdf(
+  params: LeeGenerationParams,
+): Promise<void> {
   const { building, cee, ite } = params;
 
   const pdf = new jsPDF("p", "mm", "a4");
@@ -152,17 +166,27 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
   // Título
   pdf.setFontSize(18);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Libro del Edificio Existente (LEE)", pdf.internal.pageSize.getWidth() / 2, state.y, {
-    align: "center",
-  });
+  pdf.text(
+    "Libro del Edificio Existente (LEE)",
+    pdf.internal.pageSize.getWidth() / 2,
+    state.y,
+    {
+      align: "center",
+    },
+  );
   state.y += 10;
 
   // Subtítulo / edificio
   pdf.setFontSize(13);
   pdf.setFont("helvetica", "bold");
-  pdf.text(building.name || "Edificio sin nombre", pdf.internal.pageSize.getWidth() / 2, state.y, {
-    align: "center",
-  });
+  pdf.text(
+    building.name || "Edificio sin nombre",
+    pdf.internal.pageSize.getWidth() / 2,
+    state.y,
+    {
+      align: "center",
+    },
+  );
   state.y += 8;
 
   pdf.setFontSize(10);
@@ -171,24 +195,36 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
     `Generado el ${now.toLocaleDateString("es-ES")} a las ${now.toLocaleTimeString("es-ES")}`,
     pdf.internal.pageSize.getWidth() / 2,
     state.y,
-    { align: "center" }
+    { align: "center" },
   );
   state.y += 10;
 
   // Bloque I - Datos generales
-  addTextBlock(pdf, "BLOQUE I · Documentación general", { fontSize: 14, bold: true }, state);
+  addTextBlock(
+    pdf,
+    "BLOQUE I · Documentación general",
+    { fontSize: 14, bold: true },
+    state,
+  );
 
   const identificativos: string[] = [];
   if (building.address) identificativos.push(`Dirección: ${building.address}`);
-  if (building.cadastralReference) identificativos.push(`Ref. catastral: ${building.cadastralReference}`);
-  if (building.addressData?.municipality) identificativos.push(`Municipio: ${building.addressData.municipality}`);
-  if (building.addressData?.province) identificativos.push(`Provincia: ${building.addressData.province}`);
+  if (building.cadastralReference)
+    identificativos.push(`Ref. catastral: ${building.cadastralReference}`);
+  if (building.addressData?.municipality)
+    identificativos.push(`Municipio: ${building.addressData.municipality}`);
+  if (building.addressData?.province)
+    identificativos.push(`Provincia: ${building.addressData.province}`);
   if (typeof building.constructionYear === "number")
     identificativos.push(`Año de construcción: ${building.constructionYear}`);
   if (typeof building.squareMeters === "number")
-    identificativos.push(`Superficie: ${building.squareMeters.toLocaleString("es-ES")} m²`);
+    identificativos.push(
+      `Superficie: ${building.squareMeters.toLocaleString("es-ES")} m²`,
+    );
   if (typeof building.numUnits === "number")
     identificativos.push(`Nº de viviendas/unidades: ${building.numUnits}`);
+  const uso = formatTypology(building.typology);
+  if (uso) identificativos.push(`Uso: ${uso}`);
 
   addTextBlock(
     pdf,
@@ -196,25 +232,56 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
       ? `1.1 Datos identificativos\n- ${identificativos.join("\n- ")}`
       : "1.1 Datos identificativos\nSin datos disponibles en la ficha del edificio.",
     { fontSize: 11 },
-    state
+    state,
   );
+
+  const urbanisticos: string[] = [];
+  if (building.customData?.calificacion)
+    urbanisticos.push(`Calificación: ${building.customData.calificacion}`);
+  if (building.customData?.proteccion)
+    urbanisticos.push(`Protección: ${building.customData.proteccion}`);
+  if (building.customData?.ordenanza)
+    urbanisticos.push(`Ordenanza: ${building.customData.ordenanza}`);
+  if (building.customData?.edificabilidad != null)
+    urbanisticos.push(
+      `Edificabilidad: ${building.customData.edificabilidad} m²/m²`,
+    );
 
   addTextBlock(
     pdf,
-    "1.2 Datos urbanísticos\nSin datos específicos. Completar con planeamiento y fichas urbanísticas municipales.",
+    urbanisticos.length
+      ? `1.2 Datos urbanísticos\n- ${urbanisticos.join("\n- ")}`
+      : "1.2 Datos urbanísticos\nSin datos específicos. Completar con planeamiento y fichas urbanísticas municipales.",
     { fontSize: 11 },
-    state
+    state,
   );
+
+  const titularidad: string[] = [];
+  if (building.customData?.regimen)
+    titularidad.push(`Régimen: ${building.customData.regimen}`);
+  if (building.customData?.cif)
+    titularidad.push(`CIF: ${building.customData.cif}`);
+  if (building.customData?.presidente)
+    titularidad.push(`Presidente: ${building.customData.presidente}`);
+  if (building.customData?.administrador)
+    titularidad.push(`Administrador: ${building.customData.administrador}`);
 
   addTextBlock(
     pdf,
-    "1.3 Titularidad y representación\nSin datos específicos. Completar con escrituras, contratos y datos de comunidad.",
+    titularidad.length
+      ? `1.3 Titularidad y representación\n- ${titularidad.join("\n- ")}`
+      : "1.3 Titularidad y representación\nSin datos específicos. Completar con escrituras, contratos y datos de comunidad.",
     { fontSize: 11 },
-    state
+    state,
   );
 
   // Bloque II - Diagnóstico (resumen de CEE + ITE)
-  addTextBlock(pdf, "BLOQUE II · Diagnóstico", { fontSize: 14, bold: true }, state);
+  addTextBlock(
+    pdf,
+    "BLOQUE II · Diagnóstico",
+    { fontSize: 14, bold: true },
+    state,
+  );
 
   const fuente: string[] = [];
   fuente.push("2.1 Fuentes de información utilizadas:");
@@ -232,7 +299,9 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
     }
     fuente.push(ceeLinea.join(""));
   } else {
-    fuente.push("- Certificado energético: no se ha encontrado ningún certificado vinculado.");
+    fuente.push(
+      "- Certificado energético: no se ha encontrado ningún certificado vinculado.",
+    );
   }
 
   if (ite) {
@@ -243,7 +312,9 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
     partes.push(".");
     fuente.push(partes.join(""));
   } else {
-    fuente.push("- Informe ITE: no se ha encontrado ningún documento con ITE en la Gestión del activo.");
+    fuente.push(
+      "- Informe ITE: no se ha encontrado ningún documento con ITE en la Gestión del activo.",
+    );
   }
 
   addTextBlock(pdf, fuente.join("\n"), { fontSize: 11 }, state);
@@ -252,11 +323,16 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
     pdf,
     "2.2 Estado de conservación y comportamiento energético\n\nEste apartado se completará a partir del análisis detallado de la ITE, el CEE y otros informes técnicos anexos.",
     { fontSize: 11 },
-    state
+    state,
   );
 
   // Bloque III - Plan de actuaciones (marco básico)
-  addTextBlock(pdf, "BLOQUE III · Plan de actuaciones", { fontSize: 14, bold: true }, state);
+  addTextBlock(
+    pdf,
+    "BLOQUE III · Plan de actuaciones",
+    { fontSize: 14, bold: true },
+    state,
+  );
 
   const scenarios = buildLeeScenarios(params);
 
@@ -279,11 +355,11 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
 
     if (scenario.savingsPercent != null) {
       let ahorroLinea = `Ahorro energético estimado: ~${scenario.savingsPercent.toFixed(
-        0
+        0,
       )}%`;
       if (scenario.savingsKwhYear != null) {
         ahorroLinea += ` (~${numFormatter.format(
-          scenario.savingsKwhYear
+          scenario.savingsKwhYear,
         )} kWh/año).`;
       } else {
         ahorroLinea += ".";
@@ -294,16 +370,16 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
     if (scenario.savingsEuroYear != null) {
       lines.push(
         `Ahorro económico aproximado: ${eurFormatter.format(
-          scenario.savingsEuroYear
-        )}/año.`
+          scenario.savingsEuroYear,
+        )}/año.`,
       );
     }
 
     if (scenario.simplePaybackYears != null) {
       lines.push(
         `Payback simple estimado: ~${numFormatter.format(
-          scenario.simplePaybackYears
-        )} años.`
+          scenario.simplePaybackYears,
+        )} años.`,
       );
     }
 
@@ -317,10 +393,9 @@ export async function generateLeePdf(params: LeeGenerationParams): Promise<void>
   pdf.text(
     "Documento generado automáticamente como borrador. Validar contenido antes de su uso oficial.",
     margin,
-    pageHeight - 10
+    pageHeight - 10,
   );
 
   const safeName = (building.name || "edificio").replace(/[^\w\d-_]+/g, "_");
   pdf.save(`LEE_${safeName}.pdf`);
 }
-

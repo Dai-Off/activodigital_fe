@@ -65,6 +65,7 @@ export function useAssetEdit(
       cadastralReference: building?.cadastralReference ?? "",
       address: building?.address ?? "",
       addressData: { ...(building?.addressData ?? {}) },
+      customData: { ...(building?.customData ?? {}) },
       lat: building?.lat ?? "",
       lng: building?.lng ?? "",
       typology: building?.typology ?? "",
@@ -125,6 +126,14 @@ export function useAssetEdit(
               addressData: { ...prev.addressData, [subKey]: value },
             };
           }
+          // Support nested keys like "customData.cartera"
+          if (key.startsWith("customData.")) {
+            const subKey = key.replace("customData.", "");
+            return {
+              ...prev,
+              customData: { ...prev.customData, [subKey]: value },
+            };
+          }
           return { ...prev, [key]: value };
         });
         break;
@@ -156,9 +165,15 @@ export function useAssetEdit(
               ? snapshotDraft
               : certificateDraft;
 
-        if (source === "building" && key.startsWith("addressData.")) {
-          const subKey = key.replace("addressData.", "");
-          return draft.addressData?.[subKey] ?? "";
+        if (source === "building") {
+          if (key.startsWith("addressData.")) {
+            const subKey = key.replace("addressData.", "");
+            return draft.addressData?.[subKey] ?? "";
+          }
+          if (key.startsWith("customData.")) {
+            const subKey = key.replace("customData.", "");
+            return draft.customData?.[subKey] ?? "";
+          }
         }
         return draft[key] ?? "";
       }
@@ -169,6 +184,10 @@ export function useAssetEdit(
           if (key.startsWith("addressData.")) {
             const subKey = key.replace("addressData.", "");
             return (building?.addressData as any)?.[subKey];
+          }
+          if (key.startsWith("customData.")) {
+            const subKey = key.replace("customData.", "");
+            return (building?.customData as any)?.[subKey];
           }
           return (building as any)?.[key];
         case "snapshot":
