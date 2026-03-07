@@ -232,7 +232,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
     }
   };
 
-  const handleGoToInformation = () => {
+  const handleGoToInformation = (fieldKey?: string) => {
     if (!buildingId) return;
 
     setSelectedBuildingId(buildingId);
@@ -240,7 +240,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
     setActiveTab("information");
     setViewMode("detail");
 
-    navigate(`/building/${buildingId}/information`);
+    navigate(`/building/${buildingId}/information`, {
+      state: { focusField: fieldKey },
+    });
     setActive(false); // Cerrar el modal al navegar
   };
 
@@ -528,7 +530,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Dirección:</span>{" "}
                         {direccion || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() => handleGoToInformation("address")}
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -540,7 +542,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Ref. Catastral:</span>{" "}
                         {refCatastral || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("cadastralRef")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -552,7 +556,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Municipio:</span>{" "}
                         {municipio || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() => handleGoToInformation("city")}
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -564,7 +568,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Provincia:</span>{" "}
                         {provincia || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() => handleGoToInformation("province")}
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -576,7 +580,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Año Construcción:</span>{" "}
                         {yearConstruccion || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("buildingYear")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -590,7 +596,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           `${superficie.toLocaleString("es-ES")} m²`
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() => handleGoToInformation("totalArea")}
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -602,7 +608,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Nº Viviendas:</span>{" "}
                         {numViviendas || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() => handleGoToInformation("units")}
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -614,7 +620,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Uso:</span>{" "}
                         {uso || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("buildingType")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -634,7 +642,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Calificación:</span>{" "}
                         {buildingData.customData?.calificacion || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.calificacion",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -646,7 +658,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Protección:</span>{" "}
                         {buildingData.customData?.proteccion || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.proteccion",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -658,7 +674,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Ordenanza:</span>{" "}
                         {buildingData.customData?.ordenanza || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.ordenanza",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -672,7 +692,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           `${buildingData.customData.edificabilidad} m²/m²`
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.edificabilidad",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -692,7 +716,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Régimen:</span>{" "}
                         {buildingData.customData?.regimen || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.regimen",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -704,7 +732,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">CIF:</span>{" "}
                         {buildingData.customData?.cif || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("building.customData.cif")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -716,7 +746,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Presidente:</span>{" "}
                         {buildingData.customData?.presidente || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.presidente",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -728,7 +762,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         <span className="font-semibold">Administrador:</span>{" "}
                         {buildingData.customData?.administrador || (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("propertyManager")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -790,7 +826,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           `${iteInfo.issueDate} (válido hasta ${iteInfo.expiryDate || "---"})`
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.actuaciones_urgentes",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -822,7 +862,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </span>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.actuaciones_urgentes",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -845,7 +889,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             ))
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.actuaciones_urgentes",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-1 transition-colors"
                           >
                             <span className="flex items-center gap-1">
@@ -869,7 +917,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           `${buildingData.customData.coste_reparaciones}k€`
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.coste_reparaciones",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -894,7 +946,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </p>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation("certificate.rating")
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1 transition-colors"
                           >
                             <span className="text-sm">No disponible</span>
@@ -912,7 +966,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </p>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "certificate.primaryEnergyKwhPerM2Year",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1 transition-colors"
                           >
                             <span className="text-sm">---</span>
@@ -930,7 +988,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </p>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.emisiones",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1 transition-colors"
                           >
                             <span className="text-sm">---</span>
@@ -953,7 +1015,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </span>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.demandaCalefaccion",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -970,7 +1036,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </span>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.demandaRefrigeracion",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -988,7 +1058,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           </span>
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.costeEnergetico",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
                           >
                             No disponible{" "}
@@ -1016,7 +1090,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             ))
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.envolvente",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors"
                           >
                             <span className="flex items-center gap-1">
@@ -1043,7 +1121,11 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             ))
                         ) : (
                           <button
-                            onClick={handleGoToInformation}
+                            onClick={() =>
+                              handleGoToInformation(
+                                "building.customData.instalaciones",
+                              )
+                            }
                             className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors"
                           >
                             <span className="flex items-center gap-1">

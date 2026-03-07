@@ -68,6 +68,7 @@ export function EditableField({
       </label>
       {type === "select" && options ? (
         <select
+          id={htmlFor || fieldKey}
           className={inputClasses}
           value={value?.toString() ?? ""}
           onChange={handleChange}
@@ -81,6 +82,7 @@ export function EditableField({
         </select>
       ) : type === "textarea" ? (
         <textarea
+          id={htmlFor || fieldKey}
           className={`${inputClasses} mt-1 min-h-[80px] resize-y`}
           value={value?.toString() ?? ""}
           onChange={(e) => onChange(fieldKey, e.target.value)}
@@ -88,6 +90,7 @@ export function EditableField({
         />
       ) : (
         <input
+          id={htmlFor || fieldKey}
           type={
             type === "number" ? "number" : type === "date" ? "date" : "text"
           }

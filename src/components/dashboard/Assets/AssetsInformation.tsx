@@ -14,7 +14,7 @@ import {
   Search,
   Activity,
 } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import {
   BuildingsApiService,
@@ -87,6 +87,29 @@ export function AssetsInformation() {
     getFieldValue,
     saveChanges,
   } = useAssetEdit(building, snapshot, certificate, fetchData);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && location.state?.focusField) {
+      const fieldId = location.state.focusField;
+
+      if (!isEditing) {
+        startEditing();
+      }
+
+      setTimeout(() => {
+        const el = document.getElementById(fieldId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.focus();
+        }
+      }, 150);
+
+      navigate(".", { replace: true, state: {} });
+    }
+  }, [loading, location.state, isEditing, startEditing, navigate]);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -755,7 +778,10 @@ export function AssetsInformation() {
                 "Instalaciones",
               ]) && (
                 <div className="bg-white rounded-lg p-5 shadow-sm border border-blue-100">
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div
+                    id="lee-section"
+                    className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200"
+                  >
                     <Activity className="w-5 h-5 text-blue-600" />
                     <h3 className="text-gray-900">
                       Diagnóstico y Eficiencia (LEE)
