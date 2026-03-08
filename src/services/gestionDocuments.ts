@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { apiFetch } from "./api";
+import { apiFetch, apiFetchBlob } from "./api";
 
 // Configuración de Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -60,6 +60,7 @@ export interface GestionDocument {
   category: string;
   buildingId: string;
   storageFileName?: string; // Nombre completo del archivo en storage
+  storagePath?: string; // Ruta completa en el bucket de storage
   // Campos adicionales de la BD
   status?: string;
   expirationDate?: string;
@@ -373,6 +374,7 @@ export async function listGestionDocuments(
         category: doc.category,
         buildingId: doc.building_id,
         storageFileName: doc.storage_file_name,
+        storagePath: doc.storage_path,
         // Campos adicionales de la BD
         status: doc.status || "activo",
         expirationDate: doc.expiration_date || undefined,
@@ -698,4 +700,56 @@ export function formatFileSize(bytes: number): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+}
+
+/**
+ * AI Processing for Licencia/DR
+ */
+export async function extractLicenciaDRRequirements(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiFetch("/ai/extract-licencia-dr", {
+    method: "POST",
+    body: formData,
+  });
+
+  return (response as any)?.data;
+}
+
+export async function extractLicenciaDRDocData(file: File, requirementName: string): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("requirementName", requirementName);
+
+  const response = await apiFetch("/ai/extract-licencia-dr-doc", {
+    method: "POST",
+    body: formData,
+  });
+
+  return (response as any)?.data;
+}
+
+export async function generateLicenciaDraft(buildingData: any, extractedData: any): Promise<Blob> {
+  const response = await apiFetchBlob("/ai/generate-licencia-draft", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ buildingData, extractedData }),
+  });
+
+  return response;
+}
+
+export async function updateBuildingDocMetadata(documentId: string, metadata: any): Promise<any> {
+  const response = await apiFetch(`/building-documents/${documentId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ metadata }),
+  });
+
+  return (response as any)?.data;
 }
