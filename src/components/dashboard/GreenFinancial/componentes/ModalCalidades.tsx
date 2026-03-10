@@ -15,6 +15,7 @@ import {
   listGestionDocuments,
   uploadGestionDocument,
   extractMemoriaCalidadesData,
+  updateBuildingDocMetadata,
 } from "~/services/gestionDocuments";
 import ModalFrame from "./ModalFrame";
 
@@ -57,6 +58,10 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [simulatedStep, setSimulatedStep] = useState(-1);
 
+  // Estados para validación manual
+  const [manualInputs, setManualInputs] = useState<Record<string, string>>({});
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+
   const buildingId = buildingData?.id;
   const subtitulo = buildingData?.address ?? null;
 
@@ -89,19 +94,23 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({
   let checkedCount = 0;
   let checklistPercent = 0;
   const matchedSpecs = new Set<string>();
+  const aiMatchedSpecs = new Set<string>();
+  let latestDoc: GestionDocument | null = null;
 
   if (docs.length > 0) {
     // Si hay documentos, intentamos sacar el checklist de la metadata del más reciente
-    const latestDoc = docs[0];
-    const aiChecklist = latestDoc.metadata?.checklist;
+    latestDoc = docs[0];
+    const aiChecklist = latestDoc.metadata?.checklist || {};
+    const manualChecks = latestDoc.metadata?.manual_checks || {};
 
-    if (aiChecklist) {
-      SPEC_ITEMS.forEach((spec) => {
-        if (aiChecklist[spec.key]) {
-          matchedSpecs.add(spec.key);
-        }
-      });
-    }
+    SPEC_ITEMS.forEach((spec) => {
+      if (aiChecklist[spec.key]) {
+        matchedSpecs.add(spec.key);
+        aiMatchedSpecs.add(spec.key);
+      } else if (manualChecks[spec.key]) {
+        matchedSpecs.add(spec.key);
+      }
+    });
 
     checkedCount = matchedSpecs.size;
     checklistPercent =
@@ -109,6 +118,41 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({
         ? Math.round((checkedCount / SPEC_ITEMS.length) * 100)
         : 0;
   }
+
+  const handleSaveManualCheck = async (specKey: string) => {
+    if (!latestDoc || !manualInputs[specKey] || !manualInputs[specKey].trim())
+      return;
+
+    setSavingKey(specKey);
+    try {
+      const currentMetadata = latestDoc.metadata || {};
+      const currentManualChecks = currentMetadata.manual_checks || {};
+
+      const newMetadata = {
+        ...currentMetadata,
+        manual_checks: {
+          ...currentManualChecks,
+          [specKey]: manualInputs[specKey].trim(),
+        },
+      };
+
+      await updateBuildingDocMetadata(latestDoc.id, newMetadata);
+
+      setDocs((prev) => {
+        if (prev.length === 0) return prev;
+        const newDocs = [...prev];
+        newDocs[0] = { ...newDocs[0], metadata: newMetadata };
+        return newDocs;
+      });
+
+      setManualInputs((prev) => ({ ...prev, [specKey]: "" }));
+    } catch (error) {
+      console.error("Error guardando validación manual:", error);
+      alert("Error al guardar la validación manual.");
+    } finally {
+      setSavingKey(null);
+    }
+  };
 
   /* ── Derivar paso del timeline ─────────────────────────────────────── */
   const realStepIndex = docs.length > 0 ? 2 : -1;
@@ -317,10 +361,16 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 {SPEC_ITEMS.map((spec) => {
                   const isMatched = matchedSpecs.has(spec.key);
+                  const isAiMatched = aiMatchedSpecs.has(spec.key);
+                  const manualText =
+                    !isAiMatched &&
+                    isMatched &&
+                    latestDoc?.metadata?.manual_checks?.[spec.key];
+
                   return (
                     <div
                       key={spec.key}
-                      className={`border rounded-lg p-2 ${isMatched ? "bg-emerald-50 border-emerald-300" : "bg-gray-50 border-gray-300"}`}
+                      className={`border rounded-lg p-2 flex flex-col justify-between ${isMatched ? "bg-emerald-50 border-emerald-300" : "bg-gray-50 border-gray-300"}`}
                     >
                       <div className="flex items-center gap-2">
                         {isMatched ? (
@@ -337,11 +387,54 @@ const ModalCalidades: React.FC<ModalCalidadesProps> = ({
                         <div className="flex-1 min-w-0">
                           <p
                             className={`text-xs font-medium truncate ${isMatched ? "text-emerald-900" : "text-gray-900"}`}
+                            title={spec.label}
                           >
                             {spec.emoji} {spec.label}
                           </p>
                         </div>
                       </div>
+
+                      {latestDoc && !isMatched && (
+                        <div className="mt-2 pl-6">
+                          <textarea
+                            className="w-full text-[11px] p-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-1 focus:ring-purple-500 min-h-[80px] max-h-[200px] resize-y bg-white"
+                            placeholder="Añadir justificación manual..."
+                            value={manualInputs[spec.key] || ""}
+                            onChange={(e) =>
+                              setManualInputs((prev) => ({
+                                ...prev,
+                                [spec.key]: e.target.value,
+                              }))
+                            }
+                            disabled={savingKey === spec.key}
+                          />
+                          <div className="flex justify-end mt-1">
+                            <button
+                              onClick={() => handleSaveManualCheck(spec.key)}
+                              disabled={
+                                savingKey === spec.key ||
+                                !(manualInputs[spec.key] || "").trim()
+                              }
+                              className="px-2 py-1 bg-gray-900 text-white text-[10px] rounded hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                            >
+                              {savingKey === spec.key
+                                ? "Guardando..."
+                                : "Validar manual"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {manualText && (
+                        <div className="mt-1.5 pl-6">
+                          <div className="text-[10px] bg-white border border-emerald-100 text-emerald-800 p-1.5 rounded">
+                            <span className="font-semibold block mb-0.5">
+                              Validación manual:
+                            </span>
+                            {manualText}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

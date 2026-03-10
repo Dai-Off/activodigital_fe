@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Shield, MapPin, Zap, Clock, CircleCheck, Info, Upload, CheckCircle2, AlertTriangle, Download, FileText, Loader2 } from "lucide-react";
+import {
+  Shield,
+  MapPin,
+  Zap,
+  Clock,
+  CircleCheck,
+  Info,
+  Upload,
+  CheckCircle2,
+  AlertTriangle,
+  Download,
+  FileText,
+  Loader2,
+  Save,
+  Edit2,
+  X,
+} from "lucide-react";
 import type { Building } from "~/services/buildingsApi";
 import type { GestionDocument } from "~/services/gestionDocuments";
 import {
@@ -8,7 +24,7 @@ import {
   extractLicenciaDRRequirements,
   extractLicenciaDRDocData,
   generateLicenciaDraft,
-  updateBuildingDocMetadata
+  updateBuildingDocMetadata,
 } from "~/services/gestionDocuments";
 import ModalFrame from "./ModalFrame";
 
@@ -20,7 +36,11 @@ interface ModalLicenciaDRProps {
 
 const CATEGORY = "licenciadr";
 
-const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, buildingData }) => {
+const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({
+  active,
+  setActive,
+  buildingData,
+}) => {
   const [verProcedimiento, setVerProcedimiento] = useState(false);
   const [docs, setDocs] = useState<GestionDocument[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,18 +56,24 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Manual data inputs state (for type 'data' requirements)
-  const [manualDataInputs, setManualDataInputs] = useState<Record<string, string>>({});
+  const [manualDataInputs, setManualDataInputs] = useState<
+    Record<string, string>
+  >({});
   const [isSavingManualData, setIsSavingManualData] = useState(false);
+
+  // Hybrid cost states
+  const [taxPercentage, setTaxPercentage] = useState<number>(0.4);
+  const [taxAmount, setTaxAmount] = useState<number>(0);
+  const [isEditingCost, setIsEditingCost] = useState(false);
+  const [isSavingCost, setIsSavingCost] = useState(false);
 
   const buildingId = buildingData?.id;
 
   const ubicacion =
-    buildingData?.addressData?.municipality ?? buildingData?.addressData?.province ?? null;
+    buildingData?.addressData?.municipality ??
+    buildingData?.addressData?.province ??
+    null;
   const pem = buildingData?.rehabilitationCost;
-  const costeEstimado =
-    pem != null && pem > 0
-      ? `${(pem * 0.004).toLocaleString("es-ES", { maximumFractionDigits: 0 })} € (≈0.4% sobre PEM)`
-      : null;
 
   useEffect(() => {
     if (!active || !buildingId) {
@@ -64,10 +90,13 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
     try {
       const all = await listGestionDocuments(buildingId!, CATEGORY);
       // Parsear metadatos si vienen como string
-      const parsedDocs = all.map(d => {
+      const parsedDocs = all.map((d) => {
         let meta: any = d.metadata;
         // Intentar parsear si es string, incluso si está doblemente encodeado
-        while (typeof meta === 'string' && (meta.startsWith('{') || meta.startsWith('['))) {
+        while (
+          typeof meta === "string" &&
+          (meta.startsWith("{") || meta.startsWith("["))
+        ) {
           try {
             meta = JSON.parse(meta);
           } catch (e) {
@@ -84,18 +113,81 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
     }
   };
 
-  const municipalDoc = docs.find((d) =>
-    d.metadata?.is_municipal_regulation === true || 
-    d.metadata?.is_municipal_regulation === "true" ||
-    (d.metadata?.requirements && Array.isArray(d.metadata.requirements))
+  const municipalDoc = docs.find(
+    (d) =>
+      d.metadata?.is_municipal_regulation === true ||
+      d.metadata?.is_municipal_regulation === "true" ||
+      (d.metadata?.requirements && Array.isArray(d.metadata.requirements)),
   );
   const requirements = municipalDoc?.metadata?.requirements || [];
   const summary = municipalDoc?.metadata?.summary || "";
-  const workType = municipalDoc?.metadata?.work_type || "Declaración Responsable (DR)";
+  const workType =
+    municipalDoc?.metadata?.work_type || "Declaración Responsable (DR)";
+
+  // Sync tax states when municipalDoc or PEM changes
+  useEffect(() => {
+    if (municipalDoc) {
+      const savedPct = municipalDoc.metadata?.custom_tax_percentage;
+      const savedAmt = municipalDoc.metadata?.custom_tax_amount;
+
+      if (savedPct !== undefined) {
+        setTaxPercentage(savedPct);
+      } else {
+        setTaxPercentage(0.4);
+      }
+
+      if (savedAmt !== undefined) {
+        setTaxAmount(savedAmt);
+      } else if (pem && (savedPct !== undefined || true)) {
+        const pct = savedPct !== undefined ? savedPct : 0.4;
+        setTaxAmount(Number((pem * (pct / 100)).toFixed(2)));
+      }
+    } else if (pem) {
+      setTaxAmount(Number((pem * 0.004).toFixed(2)));
+      setTaxPercentage(0.4);
+    }
+  }, [municipalDoc, pem]);
+
+  const handlePercentageChange = (val: string) => {
+    const num = parseFloat(val) || 0;
+    setTaxPercentage(num);
+    if (pem) {
+      setTaxAmount(Number((pem * (num / 100)).toFixed(2)));
+    }
+  };
+
+  const handleAmountChange = (val: string) => {
+    const num = parseFloat(val) || 0;
+    setTaxAmount(num);
+    if (pem && pem > 0) {
+      setTaxPercentage(Number(((num / pem) * 100).toFixed(3)));
+    }
+  };
+
+  const handleSaveTaxData = async () => {
+    if (!municipalDoc?.id) return;
+    setIsSavingCost(true);
+    try {
+      const currentMetadata = municipalDoc.metadata || {};
+      const newMetadata = {
+        ...currentMetadata,
+        custom_tax_percentage: taxPercentage,
+        custom_tax_amount: taxAmount,
+      };
+      await updateBuildingDocMetadata(municipalDoc.id, newMetadata);
+      await fetchDocs();
+      setIsEditingCost(false);
+    } catch (error) {
+      console.error("Error saving tax data:", error);
+      alert("Error al guardar las tasas.");
+    } finally {
+      setIsSavingCost(false);
+    }
+  };
 
   // Check functions
   const checkRequirementStatus = (req: any) => {
-    if (req.type === 'data') {
+    if (req.type === "data") {
       if (!buildingData) return false;
 
       // 1. Check if it exists in manual_data of the municipal document
@@ -109,8 +201,14 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
       if (searchStr.includes("propietario") || searchStr.includes("titular")) {
         return !!buildingData.propietarioEmail;
       }
-      if (searchStr.includes("ubicacion") || searchStr.includes("direccion") || searchStr.includes("localizacion")) {
-        return !!buildingData.address || !!buildingData.addressData?.municipality;
+      if (
+        searchStr.includes("ubicacion") ||
+        searchStr.includes("direccion") ||
+        searchStr.includes("localizacion")
+      ) {
+        return (
+          !!buildingData.address || !!buildingData.addressData?.municipality
+        );
       }
       if (searchStr.includes("catastral")) {
         return !!buildingData.cadastralReference;
@@ -122,15 +220,18 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
       return false;
     }
 
-    if (req.type === 'document') {
+    if (req.type === "document") {
       return docs.some((d) => d.metadata?.requirementKey === req.key);
     }
     return false;
   };
 
-  const allSatisfied = requirements.length > 0 && requirements.every(checkRequirementStatus);
+  const allSatisfied =
+    requirements.length > 0 && requirements.every(checkRequirementStatus);
 
-  const handleUploadMunicipalPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadMunicipalPdf = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!e.target.files || e.target.files.length === 0 || !buildingId) return;
     const file = e.target.files[0];
     setIsUploadingMain(true);
@@ -144,10 +245,12 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
         "system",
         {
           is_municipal_regulation: true,
-          ...aiData
-        }
+          ...aiData,
+        },
       );
 
+      if (!res.success) throw new Error(res.error);
+      await fetchDocs();
       return res;
     } catch (err: any) {
       alert("Error al procesar el PDF Municipal: " + err.message);
@@ -158,7 +261,7 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
   };
 
   const getRequirementValue = (req: any): string | null => {
-    if (req.type === 'data') {
+    if (req.type === "data") {
       if (!buildingData) return null;
 
       // 1. Manual data
@@ -169,13 +272,13 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
       const lowerKey = req.key.toLowerCase();
       const lowerLabel = req.label.toLowerCase();
 
-      if (lowerKey.includes('pem') || lowerLabel.includes('presupuesto')) {
+      if (lowerKey.includes("pem") || lowerLabel.includes("presupuesto")) {
         return buildingData.rehabilitationCost?.toString() || null;
       }
-      if (lowerKey.includes('suelo') || lowerLabel.includes('superficie')) {
+      if (lowerKey.includes("suelo") || lowerLabel.includes("superficie")) {
         return buildingData.squareMeters?.toString() || null;
       }
-      if (lowerKey.includes('tecnico') || lowerLabel.includes('proyectista')) {
+      if (lowerKey.includes("tecnico") || lowerLabel.includes("proyectista")) {
         return buildingData.technicianEmail || null;
       }
     }
@@ -189,7 +292,11 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
     return null;
   };
 
-  const handleUploadRequirement = async (e: React.ChangeEvent<HTMLInputElement>, reqKey: string, reqLabel: string) => {
+  const handleUploadRequirement = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    reqKey: string,
+    reqLabel: string,
+  ) => {
     if (!e.target.files || e.target.files.length === 0 || !buildingId) return;
     const file = e.target.files[0];
 
@@ -205,8 +312,8 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
         "system",
         {
           requirementKey: reqKey,
-          draft_data: aiData
-        }
+          draft_data: aiData,
+        },
       );
 
       if (!res.success) throw new Error(res.error);
@@ -230,14 +337,14 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
         ...currentMetadata,
         manual_data: {
           ...(currentMetadata.manual_data || {}),
-          [reqKey]: manualDataInputs[reqKey]
-        }
+          [reqKey]: manualDataInputs[reqKey],
+        },
       };
 
       await updateBuildingDocMetadata(municipalDoc.id, newMetadata);
       await fetchDocs(); // Refresh
       // Clear local input after success
-      setManualDataInputs(prev => {
+      setManualDataInputs((prev) => {
         const next = { ...prev };
         delete next[reqKey];
         return next;
@@ -254,9 +361,9 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
     setIsGenerating(true);
     try {
       const extractedData: any = {};
-      
+
       // 1. Data from requirement documents
-      docs.forEach(d => {
+      docs.forEach((d) => {
         if (d.metadata?.draft_data) {
           Object.assign(extractedData, d.metadata.draft_data);
         }
@@ -264,40 +371,43 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
 
       // 2. Manual data from municipal doc
       if (municipalDoc?.metadata?.manual_data) {
-        Object.assign(extractedData, { manual_inputs: municipalDoc.metadata.manual_data });
+        Object.assign(extractedData, {
+          manual_inputs: municipalDoc.metadata.manual_data,
+        });
       }
 
       // 3. Status summary
       const statusSummary = requirements.map((req: any) => ({
         label: req.label,
         satisfied: checkRequirementStatus(req),
-        value: getRequirementValue(req)
+        value: getRequirementValue(req),
       }));
 
       // 4. Collect satisfied document paths for merging
       const docPaths = requirements
-        .filter((req: any) => req.type === 'document' && checkRequirementStatus(req))
+        .filter(
+          (req: any) => req.type === "document" && checkRequirementStatus(req),
+        )
         .map((req: any) => {
-          const doc = docs.find(d => d.metadata?.requirementKey === req.key);
+          const doc = docs.find((d) => d.metadata?.requirementKey === req.key);
           return doc?.storagePath;
         })
         .filter(Boolean);
 
-      const blob = await generateLicenciaDraft(buildingData, { 
-        ...extractedData, 
+      const blob = await generateLicenciaDraft(buildingData, {
+        ...extractedData,
         status_summary: statusSummary,
-        doc_paths: docPaths
+        doc_paths: docPaths,
       });
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Borrador_Licencia_${buildingData.address || 'Edificio'}.pdf`;
+      a.download = `Borrador_Licencia_${buildingData.address || "Edificio"}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
     } catch (err: any) {
       alert("Error al generar el borrador: " + err.message);
     } finally {
@@ -340,12 +450,16 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
     <ModalFrame
       active={active}
       onClose={() => setActive(false)}
-      icon={<Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" aria-hidden />}
+      icon={
+        <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" aria-hidden />
+      }
       title="Detector de Licencia / Declaración Responsable"
       subtitle="Análisis automático de requisitos administrativos"
       maxWidth="5xl"
     >
-      <div className={`border rounded-lg p-2.5 sm:p-3 min-h-[300px] ${loading ? "bg-gray-50 border-gray-200" : "bg-green-50 border-green-300"}`}>
+      <div
+        className={`border rounded-lg p-2.5 sm:p-3 min-h-[300px] ${loading ? "bg-gray-50 border-gray-200" : "bg-green-50 border-green-300"}`}
+      >
         {loading ? (
           <div className="flex flex-col py-6 space-y-4 w-full">
             <div className="flex justify-center mb-4">
@@ -388,18 +502,85 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                   1-2 semanas (inicio inmediato si documentación completa)
                 </p>
               </div>
-              <div className="bg-white rounded-lg p-2 border border-gray-200">
-                <div className="flex items-center gap-1 text-xs text-gray-600 mb-0.5">
-                  <span>💰</span>
-                  <span className="font-semibold">Coste estimado</span>
+              <div className="bg-white rounded-lg p-2 border border-gray-200 relative">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                    <span>💰</span>
+                    <span className="font-semibold uppercase tracking-wider">
+                      Coste estimado
+                    </span>
+                  </div>
+                  {municipalDoc && !isEditingCost && (
+                    <button
+                      onClick={() => setIsEditingCost(true)}
+                      className="text-gray-400 hover:text-indigo-600 transition-colors"
+                      title="Editar tasas"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
-                {costeEstimado ? (
-                  <p className="text-xs font-bold text-gray-900">
-                    Tasas: {costeEstimado}
-                  </p>
+
+                {isEditingCost ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 flex items-center gap-1 bg-gray-50 border border-gray-200 rounded px-1.5 py-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="w-full bg-transparent text-xs font-bold text-gray-900 focus:outline-none"
+                        value={taxPercentage}
+                        onChange={(e) => handlePercentageChange(e.target.value)}
+                      />
+                      <span className="text-[10px] text-gray-400 font-bold">
+                        %
+                      </span>
+                    </div>
+                    <div className="text-gray-400">≈</div>
+                    <div className="flex-[1.5] flex items-center gap-1 bg-gray-50 border border-gray-200 rounded px-1.5 py-1">
+                      <input
+                        type="number"
+                        className="w-full bg-transparent text-xs font-bold text-gray-900 focus:outline-none"
+                        value={taxAmount}
+                        onChange={(e) => handleAmountChange(e.target.value)}
+                      />
+                      <span className="text-[10px] text-gray-400 font-bold">
+                        €
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={handleSaveTaxData}
+                        disabled={isSavingCost}
+                        className="p-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {isSavingCost ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Save className="w-3 h-3" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setIsEditingCost(false)}
+                        className="p-1 bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-xs text-gray-500">
-                    Introduce el coste de rehabilitación (PEM) en el edificio para estimar.
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-sm font-bold text-gray-900">
+                      {taxAmount.toLocaleString("es-ES")} €
+                    </p>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      ({taxPercentage}% de tasas)
+                    </span>
+                  </div>
+                )}
+
+                {!pem && !isEditingCost && (
+                  <p className="text-[10px] text-orange-600 mt-1 font-medium bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 italic">
+                    ⚠ Falta PEM en el edificio para el cálculo automático.
                   </p>
                 )}
               </div>
@@ -407,26 +588,35 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
 
             {summary && (
               <div className="bg-white rounded-lg p-3 border border-blue-200 mb-3 text-xs text-blue-800">
-                <p className="font-semibold mb-1">Resumen del trámite detectado:</p>
+                <p className="font-semibold mb-1">
+                  Resumen del trámite detectado:
+                </p>
                 <p>{summary}</p>
               </div>
             )}
 
             <div className="bg-white rounded-lg p-3 border-2 border-gray-200 mb-3">
               <p className="text-xs text-gray-700">
-                Para obras de rehabilitación energética en fachadas, cubiertas e instalaciones sin
-                afectar estructura ni aumentar volumen edificable.
+                Para obras de rehabilitación energética en fachadas, cubiertas e
+                instalaciones sin afectar estructura ni aumentar volumen
+                edificable.
               </p>
             </div>
 
             <div className="bg-green-100 border-2 border-green-300 rounded-lg p-3 mb-3 flex justify-between items-center">
               <div className="flex items-start gap-2">
-                <CircleCheck className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" aria-hidden />
+                <CircleCheck
+                  className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"
+                  aria-hidden
+                />
                 <div className="text-xs">
-                  <p className="font-bold text-green-900 mb-1">Ventaja: Inicio Inmediato</p>
+                  <p className="font-bold text-green-900 mb-1">
+                    Ventaja: Inicio Inmediato
+                  </p>
                   <p className="text-green-800">
-                    Con Declaración Responsable puedes iniciar las obras inmediatamente tras presentar
-                    la documentación. Acelera el desembolso bancario y reduce el time-to-market.
+                    Con Declaración Responsable puedes iniciar las obras
+                    inmediatamente tras presentar la documentación. Acelera el
+                    desembolso bancario y reduce el time-to-market.
                   </p>
                 </div>
               </div>
@@ -448,8 +638,12 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
             {verProcedimiento && (
               <div className="bg-white border-2 border-gray-300 rounded-lg p-4 mb-3 space-y-4 shadow-sm">
                 <p className="text-xs text-gray-600">
-                  Consulta y gestiona la documentación requerida para el ayuntamiento de{" "}
-                  <span className="font-bold">{ubicacion ?? "tu municipio"}</span>.
+                  Consulta y gestiona la documentación requerida para el
+                  ayuntamiento de{" "}
+                  <span className="font-bold">
+                    {ubicacion ?? "tu municipio"}
+                  </span>
+                  .
                 </p>
 
                 {!municipalDoc ? (
@@ -457,8 +651,13 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <FileText className="w-5 h-5 text-gray-500" />
                     </div>
-                    <h4 className="text-sm font-bold text-gray-700 mb-1">Cargar Requisitos del Ayuntamiento</h4>
-                    <p className="text-xs text-gray-500 mb-4">Sube la ordenanza o el PDF municipal para extraer los requisitos automáticamente.</p>
+                    <h4 className="text-sm font-bold text-gray-700 mb-1">
+                      Cargar Requisitos del Ayuntamiento
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-4">
+                      Sube la ordenanza o el PDF municipal para extraer los
+                      requisitos automáticamente.
+                    </p>
 
                     <input
                       type="file"
@@ -497,10 +696,11 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                         return (
                           <div
                             key={req.key}
-                            className={`flex items-center justify-between p-3 rounded-lg border ${satisfied
+                            className={`flex items-center justify-between p-3 rounded-lg border ${
+                              satisfied
                                 ? "bg-green-50 border-green-200"
                                 : "bg-white border-gray-200"
-                              }`}
+                            }`}
                           >
                             <div className="flex items-start gap-2 flex-1 min-w-0">
                               {satisfied ? (
@@ -513,7 +713,9 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                                 </div>
                               )}
                               <div className="flex-1">
-                                <p className={`text-xs font-bold ${satisfied ? "text-green-900" : "text-gray-800"}`}>
+                                <p
+                                  className={`text-xs font-bold ${satisfied ? "text-green-900" : "text-gray-800"}`}
+                                >
                                   {req.label}
                                 </p>
                                 <p className="text-[11px] text-gray-500 mt-0.5">
@@ -527,22 +729,31 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                                 <span className="inline-flex py-1 px-2 text-[10px] font-semibold bg-green-100 text-green-800 rounded">
                                   OK
                                 </span>
-                              ) : req.type === 'document' ? (
+                              ) : req.type === "document" ? (
                                 <div>
                                   <input
                                     type="file"
                                     id={`upload-req-${req.key}`}
                                     className="hidden"
-                                    onChange={(e) => handleUploadRequirement(e, req.key, req.label)}
+                                    onChange={(e) =>
+                                      handleUploadRequirement(
+                                        e,
+                                        req.key,
+                                        req.label,
+                                      )
+                                    }
                                   />
                                   <label
                                     htmlFor={`upload-req-${req.key}`}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all inline-flex items-center gap-1.5 shadow-sm ${(isUploadingReq && uploadingReqKey === req.key)
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition-all inline-flex items-center gap-1.5 shadow-sm ${
+                                      isUploadingReq &&
+                                      uploadingReqKey === req.key
                                         ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
                                         : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95"
-                                      }`}
+                                    }`}
                                   >
-                                    {isUploadingReq && uploadingReqKey === req.key ? (
+                                    {isUploadingReq &&
+                                    uploadingReqKey === req.key ? (
                                       <>
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                         <span>Subiendo...</span>
@@ -555,18 +766,28 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                                     )}
                                   </label>
                                 </div>
-                              ) : req.type === 'data' ? (
+                              ) : req.type === "data" ? (
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="text"
                                     placeholder={`Valor...`}
                                     className="w-24 px-2 py-1 text-[11px] border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     value={manualDataInputs[req.key] || ""}
-                                    onChange={(e) => setManualDataInputs(prev => ({ ...prev, [req.key]: e.target.value }))}
+                                    onChange={(e) =>
+                                      setManualDataInputs((prev) => ({
+                                        ...prev,
+                                        [req.key]: e.target.value,
+                                      }))
+                                    }
                                   />
                                   <button
-                                    onClick={() => handleSaveManualData(req.key)}
-                                    disabled={!manualDataInputs[req.key] || isSavingManualData}
+                                    onClick={() =>
+                                      handleSaveManualData(req.key)
+                                    }
+                                    disabled={
+                                      !manualDataInputs[req.key] ||
+                                      isSavingManualData
+                                    }
                                     className="p-1.5 bg-indigo-50 text-indigo-600 rounded hover:bg-indigo-100 disabled:opacity-50"
                                     title="Guardar dato"
                                   >
@@ -579,7 +800,8 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                                 </div>
                               ) : (
                                 <span className="inline-flex py-1 px-2 text-[10px] font-semibold bg-orange-100 text-orange-800 rounded items-center gap-1 border border-orange-200">
-                                  <AlertTriangle className="w-3 h-3" /> Dato Faltante
+                                  <AlertTriangle className="w-3 h-3" /> Dato
+                                  Faltante
                                 </span>
                               )}
                             </div>
@@ -594,7 +816,8 @@ const ModalLicenciaDR: React.FC<ModalLicenciaDRProps> = ({ active, setActive, bu
                           Expediente Completo
                         </h4>
                         <p className="text-xs text-green-800 mb-4">
-                          Todos los requisitos han sido validados. Ya puedes generar el borrador oficial.
+                          Todos los requisitos han sido validados. Ya puedes
+                          generar el borrador oficial.
                         </p>
                         <button
                           onClick={handleGenerateDraft}
