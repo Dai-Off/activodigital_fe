@@ -1,0 +1,105 @@
+/* Custom Styles for ARKIA Landing Page */
+
+/* ARKIA Brand Color Utilities */
+.text-arkia-cyan {
+  color: var(--arkia-cyan);
+}
+
+.bg-arkia-cyan {
+  background-color: var(--arkia-cyan);
+}
+
+.border-arkia-cyan {
+  border-color: var(--arkia-cyan);
+}
+
+.text-arkia-black {
+  color: var(--arkia-black);
+}
+
+.bg-arkia-black {
+  background-color: var(--arkia-black);
+}
+
+/* Smooth Snap Scrolling */
+html, body {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+/* Perspective for 3D transforms */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Gradient Radial Utility */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.6);
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Animation utilities */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Ensure smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Remove default margins on headings in sections */
+section h1,
+section h2,
+section h3,
+section h4 {
+  margin: 0;
+  padding: 0;
+}
+
+/* Optimize rendering for animations */
+.transform-gpu {
+  transform: translateZ(0);
+  will-change: transform;
+}
