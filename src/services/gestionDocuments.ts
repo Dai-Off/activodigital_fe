@@ -1,41 +1,51 @@
-import { createClient } from '@supabase/supabase-js';
-import { apiFetch } from './api';
+import { createClient } from "@supabase/supabase-js";
+import { apiFetch, apiFetchBlob } from "./api";
 
 // Configuración de Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Faltan las variables de entorno de Supabase. Verifica VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY');
+  throw new Error(
+    "Faltan las variables de entorno de Supabase. Verifica VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY",
+  );
 }
 
 // Función para obtener el cliente de Supabase con autenticación
 const getSupabaseClient = () => {
-  const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-  
+  const token =
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("access_token");
+
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
-        Authorization: token ? `Bearer ${token}` : '',
+        Authorization: token ? `Bearer ${token}` : "",
       },
     },
   });
-  
+
   return supabase;
 };
 
 // Tipos MIME permitidos para documentos de gestión
 export const ALLOWED_GESTION_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'application/vnd.ms-excel': ['.xls'],
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-  'application/vnd.ms-powerpoint': ['.ppt'],
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png'],
-  'text/plain': ['.txt'],
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx",
+  ],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    ".xlsx",
+  ],
+  "application/vnd.ms-powerpoint": [".ppt"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+    ".pptx",
+  ],
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "text/plain": [".txt"],
 };
 
 export interface GestionDocument {
@@ -50,6 +60,7 @@ export interface GestionDocument {
   category: string;
   buildingId: string;
   storageFileName?: string; // Nombre completo del archivo en storage
+  storagePath?: string; // Ruta completa en el bucket de storage
   // Campos adicionales de la BD
   status?: string;
   expirationDate?: string;
@@ -59,6 +70,11 @@ export interface GestionDocument {
   contractRenewal?: string;
   subcategory?: string;
   notes?: string;
+  metadata?: {
+    checklist?: Record<string, boolean>;
+    summary?: string;
+    [key: string]: any;
+  };
 }
 
 export interface GestionDocumentUploadResult {
@@ -79,7 +95,8 @@ export async function uploadGestionDocument(
   file: File,
   buildingId: string,
   category: string,
-  userId: string
+  userId: string,
+  metadata?: Record<string, any>,
 ): Promise<GestionDocumentUploadResult> {
   try {
     // Validar tipo de archivo
@@ -87,7 +104,7 @@ export async function uploadGestionDocument(
     if (!allowedTypes.includes(file.type)) {
       return {
         success: false,
-        error: `Tipo de archivo no permitido: ${file.type}`
+        error: `Tipo de archivo no permitido: ${file.type}`,
       };
     }
 
@@ -96,86 +113,96 @@ export async function uploadGestionDocument(
     if (file.size > maxSize) {
       return {
         success: false,
-        error: 'El archivo no puede superar los 10MB'
+        error: "El archivo no puede superar los 10MB",
       };
     }
 
     // Generar nombre único para el archivo
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 15);
-    const fileExtension = file.name.split('.').pop() || 'bin';
+    const fileExtension = file.name.split(".").pop() || "bin";
     // Sanitizar el nombre original para incluirlo en el nombre del archivo
-    const originalNameWithoutExt = file.name.replace(/\.[^/.]+$/, ''); // Quitar extensión
+    const originalNameWithoutExt = file.name.replace(/\.[^/.]+$/, ""); // Quitar extensión
     const sanitizedOriginalName = originalNameWithoutExt
-      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .replace(/[^a-zA-Z0-9.-]/g, "_")
       .substring(0, 100); // Permitir nombres más largos
-    
+
     // Incluir el nombre original en el nombre del archivo para poder extraerlo después
     const filename = `${buildingId}/${category}/${timestamp}_${randomId}_${sanitizedOriginalName}.${fileExtension}`;
 
     // Subir archivo a Supabase Storage
     const supabase = getSupabaseClient();
     const { error: uploadError } = await supabase.storage
-      .from('building-documents')
+      .from("building-documents")
       .upload(filename, file, {
-        cacheControl: '3600',
-        upsert: false
+        cacheControl: "3600",
+        upsert: false,
       });
 
     if (uploadError) {
-      console.error('Error subiendo documento de gestión:', uploadError);
-      
+      console.error("Error subiendo documento de gestión:", uploadError);
+
       // Mensaje más claro si el bucket no existe
-      if (uploadError.message?.includes('Bucket not found') || uploadError.message?.includes('not found')) {
+      if (
+        uploadError.message?.includes("Bucket not found") ||
+        uploadError.message?.includes("not found")
+      ) {
         return {
           success: false,
-          error: 'El bucket "building-documents" no existe en Supabase Storage. Por favor, créalo en el panel de Supabase o contacta al administrador.'
+          error:
+            'El bucket "building-documents" no existe en Supabase Storage. Por favor, créalo en el panel de Supabase o contacta al administrador.',
         };
       }
-      
+
       return {
         success: false,
-        error: `Error subiendo documento: ${uploadError.message}`
+        error: `Error subiendo documento: ${uploadError.message}`,
       };
     }
 
     // Obtener URL firmada (válida por 1 año)
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from('building-documents')
-      .createSignedUrl(filename, 60 * 60 * 24 * 365); // 1 año de validez
+    const { data: signedUrlData, error: signedUrlError } =
+      await supabase.storage
+        .from("building-documents")
+        .createSignedUrl(filename, 60 * 60 * 24 * 365); // 1 año de validez
 
     if (signedUrlError) {
-      console.error('Error generando URL firmada:', signedUrlError);
+      console.error("Error generando URL firmada:", signedUrlError);
       return {
         success: false,
-        error: `Error generando URL: ${signedUrlError.message}`
+        error: `Error generando URL: ${signedUrlError.message}`,
       };
     }
 
     // Guardar metadatos en la base de datos
-    const storageFileName = filename.split('/').pop() || filename;
-    const signedUrlExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    const storageFileName = filename.split("/").pop() || filename;
+    const signedUrlExpiresAt = new Date(
+      Date.now() + 365 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     try {
-      const dbDocument = await apiFetch('/building-documents', {
-        method: 'POST',
+      const dbDocument = await apiFetch("/building-documents", {
+        method: "POST",
         body: JSON.stringify({
           building_id: buildingId,
           file_name: file.name,
           file_size: file.size,
           mime_type: file.type,
-          storage_bucket: 'building-documents',
+          storage_bucket: "building-documents",
           storage_path: filename,
           storage_file_name: storageFileName,
           category: category,
-          subcategory: 'General',
-          status: 'activo',
+          subcategory: "General",
+          status: "activo",
           title: file.name,
           signed_url: signedUrlData.signedUrl,
           signed_url_expires_at: signedUrlExpiresAt,
+          metadata: metadata || {},
         }),
       });
-      const documentId = dbDocument?.data?.id || `${buildingId}_${category}_${timestamp}_${randomId}`;
+      const documentId =
+        dbDocument?.data?.id ||
+        `${buildingId}_${category}_${timestamp}_${randomId}`;
 
       const uploadedDocument: GestionDocument = {
         id: documentId,
@@ -188,15 +215,18 @@ export async function uploadGestionDocument(
         uploadedBy: userId,
         category,
         buildingId,
-        storageFileName: storageFileName
+        storageFileName: storageFileName,
       };
 
       return {
         success: true,
-        document: uploadedDocument
+        document: uploadedDocument,
       };
     } catch (dbError) {
-      console.error('Error guardando documento en BD (continuando con Storage):', dbError);
+      console.error(
+        "Error guardando documento en BD (continuando con Storage):",
+        dbError,
+      );
       // Si falla la BD, aún retornamos éxito porque el archivo está en Storage
       const uploadedDocument: GestionDocument = {
         id: `${buildingId}_${category}_${timestamp}_${randomId}`,
@@ -209,20 +239,19 @@ export async function uploadGestionDocument(
         uploadedBy: userId,
         category,
         buildingId,
-        storageFileName: storageFileName
+        storageFileName: storageFileName,
       };
 
       return {
         success: true,
-        document: uploadedDocument
+        document: uploadedDocument,
       };
     }
-
   } catch (error) {
-    console.error('Error inesperado subiendo documento de gestión:', error);
+    console.error("Error inesperado subiendo documento de gestión:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error inesperado'
+      error: error instanceof Error ? error.message : "Error inesperado",
     };
   }
 }
@@ -232,27 +261,29 @@ export async function uploadGestionDocument(
  * @param buildingId - ID del edificio
  * @returns Número total de documentos
  */
-export async function countBuildingDocuments(buildingId: string): Promise<number> {
+export async function countBuildingDocuments(
+  buildingId: string,
+): Promise<number> {
   try {
     const supabase = getSupabaseClient();
     let totalCount = 0;
 
     // 1. Obtenemos las carpetas (categorías) dentro del edificio
     const { data: categories, error: catError } = await supabase.storage
-      .from('building-documents')
+      .from("building-documents")
       .list(buildingId);
 
     if (catError || !categories) {
-      console.error('Error al obtener categorías para conteo:', catError);
+      console.error("Error al obtener categorías para conteo:", catError);
       return 0;
     }
 
     const { data: files, error: filesError } = await supabase.storage
-      .from('digital-book-documents')
+      .from("digital-book-documents")
       .list(buildingId);
 
     if (filesError || !files) {
-      console.error('Error al obtener categorías para conteo:', catError);
+      console.error("Error al obtener categorías para conteo:", catError);
       return 0;
     }
 
@@ -260,32 +291,32 @@ export async function countBuildingDocuments(buildingId: string): Promise<number
     for (const cat of categories) {
       // Si el nombre tiene punto, es un archivo suelto en la raíz (poco común en tu estructura)
       // Si no tiene punto, es una carpeta de categoría
-      const isFolder = !cat.name.includes('.');
-      
+      const isFolder = !cat.name.includes(".");
+
       if (isFolder) {
         const { data: files } = await supabase.storage
-          .from('building-documents')
+          .from("building-documents")
           .list(`${buildingId}/${cat.name}`);
 
         if (files) {
-          const fileCount = files.filter(f => f.name.includes('.')).length;
+          const fileCount = files.filter((f) => f.name.includes(".")).length;
           totalCount += fileCount;
         }
       } else {
         totalCount++;
       }
     }
-    
+
     for (const cat of files) {
-      const isFolder = !cat.name.includes('.');
-      
+      const isFolder = !cat.name.includes(".");
+
       if (isFolder) {
         const { data: files } = await supabase.storage
-          .from('digital-book-documents')
+          .from("digital-book-documents")
           .list(`${buildingId}/${cat.name}`);
 
         if (files) {
-          const fileCount = files.filter(f => f.name.includes('.')).length;
+          const fileCount = files.filter((f) => f.name.includes(".")).length;
           totalCount += fileCount;
         }
       } else {
@@ -295,7 +326,7 @@ export async function countBuildingDocuments(buildingId: string): Promise<number
 
     return totalCount;
   } catch (error) {
-    console.error('Error inesperado contando documentos:', error);
+    console.error("Error inesperado contando documentos:", error);
     return 0;
   }
 }
@@ -310,7 +341,7 @@ export async function countBuildingDocuments(buildingId: string): Promise<number
 export async function listGestionDocuments(
   buildingId: string,
   category?: string,
-  _uploadedBy?: string
+  _uploadedBy?: string,
 ): Promise<GestionDocument[]> {
   try {
     // Leer desde la base de datos en lugar de Storage
@@ -320,7 +351,7 @@ export async function listGestionDocuments(
     }
 
     const data = await apiFetch(url, {
-      method: 'GET',
+      method: "GET",
     });
 
     const documents = (data as any)?.data || [];
@@ -329,7 +360,7 @@ export async function listGestionDocuments(
     return documents.map((doc: any) => {
       // Regenerar URL firmada si es necesario (si expiró o no existe)
       // TODO: Implementar regeneración de URL si expiró
-      const documentUrl = doc.signed_url || '';
+      const documentUrl = doc.signed_url || "";
 
       return {
         id: doc.id,
@@ -339,24 +370,25 @@ export async function listGestionDocuments(
         mimeType: doc.mime_type,
         title: doc.title || doc.file_name,
         uploadedAt: doc.uploaded_at,
-        uploadedBy: doc.uploaded_by || '',
+        uploadedBy: doc.uploaded_by || "",
         category: doc.category,
         buildingId: doc.building_id,
         storageFileName: doc.storage_file_name,
+        storagePath: doc.storage_path,
         // Campos adicionales de la BD
-        status: doc.status || 'activo',
+        status: doc.status || "activo",
         expirationDate: doc.expiration_date || undefined,
         contractProvider: doc.contract_provider || undefined,
         contractAmount: doc.contract_amount || undefined,
         contractExpiration: doc.contract_expiration || undefined,
         contractRenewal: doc.contract_renewal || undefined,
-        subcategory: doc.subcategory || 'General',
-        notes: doc.notes || undefined
+        subcategory: doc.subcategory || "General",
+        notes: doc.notes || undefined,
+        metadata: doc.metadata || undefined,
       };
     });
-
   } catch (error) {
-    console.error('Error inesperado listando documentos de gestión:', error);
+    console.error("Error inesperado listando documentos de gestión:", error);
     // Fallback a Storage si hay error
     return await listGestionDocumentsFromStorage(buildingId, category);
   }
@@ -367,92 +399,92 @@ export async function listGestionDocuments(
  */
 async function listGestionDocumentsFromStorage(
   buildingId: string,
-  category?: string
+  category?: string,
 ): Promise<GestionDocument[]> {
   try {
     const supabase = getSupabaseClient();
-    
-    const path = category 
-      ? `${buildingId}/${category}`
-      : `${buildingId}`;
-    
+
+    const path = category ? `${buildingId}/${category}` : `${buildingId}`;
+
     const { data, error } = await supabase.storage
-      .from('building-documents')
-      .list(path, { 
-        limit: 100, 
+      .from("building-documents")
+      .list(path, {
+        limit: 100,
         offset: 0,
-        sortBy: { column: 'created_at', order: 'desc' }
+        sortBy: { column: "created_at", order: "desc" },
       });
 
     if (error || !data) {
-      console.error('Error listando documentos de Storage:', error);
+      console.error("Error listando documentos de Storage:", error);
       return [];
     }
 
     const toMime = (name: string): string => {
-      const ext = name.split('.').pop()?.toLowerCase();
-      if (!ext) return 'application/octet-stream';
+      const ext = name.split(".").pop()?.toLowerCase();
+      if (!ext) return "application/octet-stream";
       const map: Record<string, string> = {
-        pdf: 'application/pdf',
-        doc: 'application/msword',
-        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        xls: 'application/vnd.ms-excel',
-        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ppt: 'application/vnd.ms-powerpoint',
-        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        png: 'image/png',
-        txt: 'text/plain'
+        pdf: "application/pdf",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        xls: "application/vnd.ms-excel",
+        xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ppt: "application/vnd.ms-powerpoint",
+        pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        txt: "text/plain",
       };
-      return map[ext] || 'application/octet-stream';
+      return map[ext] || "application/octet-stream";
     };
 
     const results: GestionDocument[] = [];
-    
+
     if (!category) {
       const { data: categories } = await supabase.storage
-        .from('building-documents')
+        .from("building-documents")
         .list(buildingId);
-      
+
       if (categories) {
         for (const cat of categories) {
-          const hasExtension = cat.name.includes('.');
+          const hasExtension = cat.name.includes(".");
           if (!hasExtension) {
             const { data: files } = await supabase.storage
-              .from('building-documents')
+              .from("building-documents")
               .list(`${buildingId}/${cat.name}`, { limit: 100 });
-            
+
             if (files) {
               for (const file of files) {
-                const fileHasExtension = file.name.includes('.');
+                const fileHasExtension = file.name.includes(".");
                 if (!fileHasExtension) continue;
-                
+
                 const filePath = `${buildingId}/${cat.name}/${file.name}`;
                 const { data: signed } = await supabase.storage
-                  .from('building-documents')
+                  .from("building-documents")
                   .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-                
+
                 if (!signed?.signedUrl) continue;
-                
+
                 let originalFileName = file.name;
                 const match = file.name.match(/^(\d+)_([a-z0-9]+)_(.+)$/);
                 if (match) {
                   originalFileName = match[3];
                 }
-                
+
                 results.push({
                   id: `${buildingId}_${cat.name}_${file.name}`,
                   url: signed.signedUrl,
                   fileName: originalFileName,
-                  fileSize: (file as any).metadata?.size ?? (file as any).size ?? 0,
+                  fileSize:
+                    (file as any).metadata?.size ?? (file as any).size ?? 0,
                   mimeType: toMime(file.name),
                   title: originalFileName,
-                  uploadedAt: (file as any).updated_at || new Date().toISOString(),
-                  uploadedBy: '',
+                  uploadedAt:
+                    (file as any).updated_at || new Date().toISOString(),
+                  uploadedBy: "",
                   category: cat.name,
                   buildingId,
-                  storageFileName: file.name
+                  storageFileName: file.name,
                 });
               }
             }
@@ -461,22 +493,22 @@ async function listGestionDocumentsFromStorage(
       }
     } else {
       for (const file of data) {
-        const fileHasExtension = file.name.includes('.');
+        const fileHasExtension = file.name.includes(".");
         if (!fileHasExtension) continue;
-        
+
         const filePath = `${buildingId}/${category}/${file.name}`;
         const { data: signed } = await supabase.storage
-          .from('building-documents')
+          .from("building-documents")
           .createSignedUrl(filePath, 60 * 60 * 24 * 365);
-        
+
         if (!signed?.signedUrl) continue;
-        
+
         let originalFileName = file.name;
         const match = file.name.match(/^(\d+)_([a-z0-9]+)_(.+)$/);
         if (match) {
           originalFileName = match[3];
         }
-        
+
         results.push({
           id: `${buildingId}_${category}_${file.name}`,
           url: signed.signedUrl,
@@ -485,17 +517,17 @@ async function listGestionDocumentsFromStorage(
           mimeType: toMime(file.name),
           title: originalFileName,
           uploadedAt: (file as any).updated_at || new Date().toISOString(),
-          uploadedBy: '',
+          uploadedBy: "",
           category,
           buildingId,
-          storageFileName: file.name
+          storageFileName: file.name,
         });
       }
     }
 
     return results;
   } catch (error) {
-    console.error('Error en fallback a Storage:', error);
+    console.error("Error en fallback a Storage:", error);
     return [];
   }
 }
@@ -512,7 +544,7 @@ export async function deleteGestionDocument(
   _documentUrl: string,
   buildingId: string,
   category: string,
-  storageFileName: string
+  storageFileName: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Intentar extraer el ID del documento de la URL o buscar por storage_path
@@ -521,18 +553,22 @@ export async function deleteGestionDocument(
     // Si tenemos el ID en algún formato, intentar usarlo
     // Primero intentar buscar el documento en la BD por storage_path
     try {
-      const listResponse = await apiFetch(`/building-documents/building/${buildingId}?category=${encodeURIComponent(category)}`, {
-        method: 'GET',
-      });
+      const listResponse = await apiFetch(
+        `/building-documents/building/${buildingId}?category=${encodeURIComponent(category)}`,
+        {
+          method: "GET",
+        },
+      );
 
       if (listResponse.ok) {
         const listData = await listResponse.json();
         const documents = listData.data || [];
-        
+
         // Buscar el documento que coincida con storageFileName
-        const matchingDoc = documents.find((doc: any) => 
-          doc.storage_file_name === storageFileName || 
-          doc.storage_path.includes(storageFileName)
+        const matchingDoc = documents.find(
+          (doc: any) =>
+            doc.storage_file_name === storageFileName ||
+            doc.storage_path.includes(storageFileName),
         );
 
         if (matchingDoc) {
@@ -540,46 +576,58 @@ export async function deleteGestionDocument(
         }
       }
     } catch (bdError) {
-      console.warn('No se pudo buscar documento en BD, continuando con eliminación de Storage:', bdError);
+      console.warn(
+        "No se pudo buscar documento en BD, continuando con eliminación de Storage:",
+        bdError,
+      );
     }
 
     // Eliminar de la base de datos si tenemos el ID
     if (documentId) {
       try {
-        const deleteResponse = await apiFetch(`/building-documents/${documentId}`, {
-          method: 'DELETE',
-        });
+        const deleteResponse = await apiFetch(
+          `/building-documents/${documentId}`,
+          {
+            method: "DELETE",
+          },
+        );
 
         if (!deleteResponse.ok) {
-          console.warn('Error eliminando documento de BD, continuando con Storage:', await deleteResponse.text());
+          console.warn(
+            "Error eliminando documento de BD, continuando con Storage:",
+            await deleteResponse.text(),
+          );
         }
       } catch (dbError) {
-        console.warn('Error eliminando documento de BD, continuando con Storage:', dbError);
+        console.warn(
+          "Error eliminando documento de BD, continuando con Storage:",
+          dbError,
+        );
       }
     }
 
     // Eliminar de Storage
     const supabase = getSupabaseClient();
-    
+
     // Listar archivos en la categoría para encontrar el archivo correcto
     const { data: files, error: listError } = await supabase.storage
-      .from('building-documents')
+      .from("building-documents")
       .list(`${buildingId}/${category}`, { limit: 100 });
 
     if (listError) {
-      console.error('Error listando archivos:', listError);
+      console.error("Error listando archivos:", listError);
       // Si ya eliminamos de BD, consideramos éxito parcial
       if (documentId) {
         return { success: true };
       }
       return {
         success: false,
-        error: `Error listando archivos: ${listError.message}`
+        error: `Error listando archivos: ${listError.message}`,
       };
     }
 
     // Buscar el archivo que contiene el nombre original en su nombre de storage
-    const fileToDelete = files?.find(file => {
+    const fileToDelete = files?.find((file) => {
       if (file.name.includes(storageFileName)) {
         return true;
       }
@@ -597,49 +645,111 @@ export async function deleteGestionDocument(
       }
       return {
         success: false,
-        error: 'No se encontró el archivo a eliminar'
+        error: "No se encontró el archivo a eliminar",
       };
     }
 
     const filePath = `${buildingId}/${category}/${fileToDelete.name}`;
     const { error } = await supabase.storage
-      .from('building-documents')
+      .from("building-documents")
       .remove([filePath]);
 
     if (error) {
-      console.error('Error eliminando documento de Storage:', error);
+      console.error("Error eliminando documento de Storage:", error);
       // Si ya eliminamos de BD, consideramos éxito parcial
       if (documentId) {
         return { success: true };
       }
       return {
         success: false,
-        error: `Error eliminando documento: ${error.message}`
+        error: `Error eliminando documento: ${error.message}`,
       };
     }
 
     return { success: true };
-
   } catch (error) {
-    console.error('Error inesperado eliminando documento de gestión:', error);
+    console.error("Error inesperado eliminando documento de gestión:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error inesperado'
+      error: error instanceof Error ? error.message : "Error inesperado",
     };
   }
+}
+
+/**
+ * Procesa una Memoria de Calidades con IA
+ */
+export async function extractMemoriaCalidadesData(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiFetch("/ai/extract-memoria-calidades", {
+    method: "POST",
+    body: formData,
+  });
+
+  return (response as any)?.data;
 }
 
 /**
  * Formatea el tamaño del archivo
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
+/**
+ * AI Processing for Licencia/DR
+ */
+export async function extractLicenciaDRRequirements(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
 
+  const response = await apiFetch("/ai/extract-licencia-dr", {
+    method: "POST",
+    body: formData,
+  });
 
+  return (response as any)?.data;
+}
 
+export async function extractLicenciaDRDocData(file: File, requirementName: string): Promise<any> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("requirementName", requirementName);
+
+  const response = await apiFetch("/ai/extract-licencia-dr-doc", {
+    method: "POST",
+    body: formData,
+  });
+
+  return (response as any)?.data;
+}
+
+export async function generateLicenciaDraft(buildingData: any, extractedData: any): Promise<Blob> {
+  const response = await apiFetchBlob("/ai/generate-licencia-draft", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ buildingData, extractedData }),
+  });
+
+  return response;
+}
+
+export async function updateBuildingDocMetadata(documentId: string, metadata: any): Promise<any> {
+  const response = await apiFetch(`/building-documents/${documentId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ metadata }),
+  });
+
+  return (response as any)?.data;
+}

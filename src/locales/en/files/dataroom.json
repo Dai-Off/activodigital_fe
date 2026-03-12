@@ -75,6 +75,25 @@
     "queuedHint": "Waiting for analysis turn...",
     "processingHint": "Analyzing document...",
     "dataLabel": "Data:",
+    "dropHere": "Drop files here",
+    "maxFiles": "Max. 5 files",
+    "aiClassification": "AI will automatically classify your documents",
+    "uploadingBatch": "Uploading files...",
+    "uploadBatchSuccess": "Files queued for AI classification",
+    "batchJobsTitle": "Unclassified documents",
+    "unclassified": "Unclassified",
+    "classifying": "Classifying...",
+    "classifyPlaceholder": "Search document type...",
+    "classifySuccess": "Document manually classified",
+    "classifyError": "Error classifying document",
+    "uploading": "Uploading file...",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Error uploading file",
+    "errors": {
+      "noBuildingSelected": "Select a building first",
+      "tooManyFiles": "Maximum 5 files per batch",
+      "alreadyUploaded": "A file is already uploaded for this document type"
+    },
 
     "subcategories": {
       "constitucionGobernanza": "Constitution & Governance",
