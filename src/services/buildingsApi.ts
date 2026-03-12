@@ -28,6 +28,7 @@ export interface Building {
   createdAt: string;
   updatedAt: string;
   porcentBook?: number;
+  customData?: Record<string, any>;
 }
 
 export interface BuildingImage {
@@ -61,9 +62,10 @@ export interface CreateBuildingPayload {
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number; // Valor potencial (por defecto 0)
   squareMeters?: number; // Superficie en metros cuadrados
+  customData?: Record<string, any>;
 }
 
-export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> { }
+export interface UpdateBuildingPayload extends Partial<CreateBuildingPayload> {}
 
 export interface TechnicianAssignmentPayload {
   buildingId: string;
@@ -172,12 +174,19 @@ export class BuildingsApiService {
     const response = await apiFetch("/edificios", { method: "GET" });
     // La API puede devolver directamente el array o wrapped en { data: [...] }
     const buildings = Array.isArray(response) ? response : response.data || [];
-    console.log(`[BuildingsApiService.getAllBuildings] Respuesta del backend:`, {
-      isArray: Array.isArray(response),
-      hasData: !!response.data,
-      buildingsCount: buildings.length,
-      buildings: buildings.map((b: Building) => ({ id: b.id, name: b.name, owner_id: b.ownerId }))
-    });
+    console.log(
+      `[BuildingsApiService.getAllBuildings] Respuesta del backend:`,
+      {
+        isArray: Array.isArray(response),
+        hasData: !!response.data,
+        buildingsCount: buildings.length,
+        buildings: buildings.map((b: Building) => ({
+          id: b.id,
+          name: b.name,
+          owner_id: b.ownerId,
+        })),
+      },
+    );
     return buildings;
   }
 
@@ -189,7 +198,7 @@ export class BuildingsApiService {
 
   // Crear un nuevo edificio (solo PROPIETARIOS)
   static async createBuilding(
-    payload: CreateBuildingPayload
+    payload: CreateBuildingPayload,
   ): Promise<Building> {
     const response = await apiFetch("/edificios", {
       method: "POST",
@@ -201,7 +210,7 @@ export class BuildingsApiService {
   // Subir imágenes para un edificio
   static async uploadBuildingImages(
     buildingId: string,
-    images: BuildingImage[]
+    images: BuildingImage[],
   ): Promise<BuildingImage[]> {
     const response = await apiFetch(`/edificios/${buildingId}/images`, {
       method: "POST",
@@ -213,7 +222,7 @@ export class BuildingsApiService {
   // Eliminar una imagen de un edificio
   static async deleteBuildingImage(
     buildingId: string,
-    imageId: string
+    imageId: string,
   ): Promise<void> {
     await apiFetch(`/edificios/${buildingId}/images/${imageId}`, {
       method: "DELETE",
@@ -223,7 +232,7 @@ export class BuildingsApiService {
   // Actualizar un edificio existente
   static async updateBuilding(
     id: string,
-    payload: UpdateBuildingPayload
+    payload: UpdateBuildingPayload,
   ): Promise<Building> {
     const response = await apiFetch(`/edificios/${id}`, {
       method: "PUT",
@@ -240,7 +249,7 @@ export class BuildingsApiService {
 
   // Asignar técnico a un edificio (solo PROPIETARIOS)
   static async assignTechnician(
-    payload: TechnicianAssignmentPayload
+    payload: TechnicianAssignmentPayload,
   ): Promise<void> {
     await apiFetch("/users/assign-technician", {
       method: "POST",
@@ -256,7 +265,7 @@ export class BuildingsApiService {
 
   // Validar asignaciones de técnico y CFO antes de crear edificio
   static async validateUserAssignments(
-    payload: ValidateAssignmentsRequest
+    payload: ValidateAssignmentsRequest,
   ): Promise<ValidateAssignmentsResponse> {
     const response = await apiFetch("/edificios/validate-assignments", {
       method: "POST",
@@ -316,7 +325,7 @@ export const getBuildingStatusLabel = (status: Building["status"]): string => {
 };
 
 export const getBuildingTypologyLabel = (
-  typology: Building["typology"]
+  typology: Building["typology"],
 ): string => {
   switch (typology) {
     case "residential":

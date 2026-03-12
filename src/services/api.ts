@@ -288,6 +288,57 @@ export async function apiFetch(
   return payload; // devuelve payload (JSON o texto según content-type)
 }
 
+export async function apiFetchBlob(
+  path: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+): Promise<Blob> {
+  const baseUrl = await getApiBaseUrl();
+  const url = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+
+  const headers = new Headers(options.headers || {});
+  
+  const isFormData = options.body instanceof FormData;
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  try {
+    const token = getAccessToken();
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  } catch {}
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+      cache: "no-store",
+      credentials: "omit",
+    });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err?.name === "AbortError") {
+      throw new Error("Tiempo de espera agotado.");
+    }
+    throw new Error("No se pudo conectar con el servidor para descargar el archivo.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    throw new Error(response.statusText || "Request failed");
+  }
+
+  return await response.blob();
+}
+
 //
 // 4) Fetch del extractor de certificados (sin auth)
 //

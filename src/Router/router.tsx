@@ -67,6 +67,7 @@ import { Events } from "~/components/Events";
 import Expired from "~/components/Expired";
 import Configuration from "~/components/Configuration";
 import DataRoom from "~/components/dashboard/GreenFinancial/DataRoom";
+import { AssetsInformation } from "~/components/dashboard/Assets/AssetsInformation";
 
 // Componente para redirigir /building/:id a /building/:id/general-view
 const NavigateToGeneralView = () => {
@@ -410,6 +411,14 @@ export const AppRouter = () => {
               <ErrorBoundary>
                 <BuildingGestion />
               </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/information"
+          element={
+            <ProtectedRoute>
+              <AssetsInformation />
             </ProtectedRoute>
           }
         />

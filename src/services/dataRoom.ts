@@ -22,6 +22,40 @@ export async function fetchDataRoomAudit(buildingId: string) {
 }
 
 /**
+ * Sube hasta 5 archivos al Data Room para clasificación automática por IA.
+ * No requiere checklistId: la IA detecta el tipo de documento.
+ */
+export async function uploadDataRoomBatch(buildingId: string, files: File[]) {
+  const formData = new FormData();
+  formData.append("buildingId", buildingId);
+  files.forEach((file) => formData.append("files", file));
+
+  return apiFetch("/data-room/upload-batch", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+/**
+ * Obtiene los jobs de procesamiento batch de un edificio.
+ */
+export async function fetchBatchJobs(buildingId: string) {
+  const response = await apiFetch(`/data-room/batch-jobs/${buildingId}`);
+  return response.data;
+}
+
+/**
+ * Clasifica manualmente un documento batch asignándole un checklistId.
+ */
+export async function classifyBatchJob(jobId: string, checklistId: string) {
+  return apiFetch("/data-room/classify-job", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobId, checklistId }),
+  });
+}
+
+/**
  * Descarga el dossier PDF combinado de todos los documentos subidos de un edificio.
  * Dispara el diálogo de descarga del navegador.
  */

@@ -2,6 +2,7 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
+  CheckCircle2,
   CircleAlert,
   CircleCheck,
   Clock,
@@ -13,27 +14,140 @@ import {
   LucideWrench,
   TriangleAlert,
   Upload,
+  AlertCircle,
+  FileText,
 } from "lucide-react";
 import { DataRoomExportService } from "~/services/dataRoomExport";
 import { useTranslation } from "react-i18next";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import DocumentItem, { type DocumentStatus } from "./componentes/DocumentItem";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
 // import { useNavigation } from "~/contexts/NavigationContext";
 import {
   fetchDataRoomAudit,
   uploadDataRoomFile,
+  uploadDataRoomBatch,
+  fetchBatchJobs,
+  classifyBatchJob,
   downloadDossierPdf,
 } from "~/services/dataRoom";
 import { toast } from "sonner";
 import documentsData from "./documents.json";
 
+function ManualClassifyCombobox({
+  jobId,
+  options,
+  onClassify,
+  t,
+}: {
+  jobId: string;
+  options: { value: string; label: string }[];
+  onClassify: (jobId: string, checklistId: string) => Promise<void>;
+  t: any;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isClassifying, setIsClassifying] = useState(false);
+
+  const handleSelect = async (selectedValue: string) => {
+    const selectedOpt = options.find(
+      (o) =>
+        o.label.toLowerCase() === selectedValue.toLowerCase() ||
+        o.value.toLowerCase() === selectedValue.toLowerCase(),
+    );
+    if (selectedOpt) {
+      setIsClassifying(true);
+      setOpen(false);
+      await onClassify(jobId, selectedOpt.value);
+      setIsClassifying(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          disabled={isClassifying}
+          className="flex items-center justify-between ml-2 w-48 md:w-56 px-2.5 py-1.5 text-[11px] text-left text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-all font-medium"
+        >
+          <span className="truncate">
+            {isClassifying
+              ? t("dataRoom.classifying") || "Clasificando..."
+              : t("dataRoom.classifyPlaceholder") || "Buscar tipo de doc..."}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-50 shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[320px] p-0 shadow-2xl border-gray-200 bg-white z-[100]"
+        align="start"
+      >
+        <Command
+          filter={(value, search) => {
+            const normalize = (s: string) =>
+              s
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
+            return normalize(value).includes(normalize(search)) ? 1 : 0;
+          }}
+          className="bg-white"
+        >
+          <CommandInput
+            placeholder={
+              t("dataRoom.classifyPlaceholder") || "Buscar tipo de doc..."
+            }
+            className="h-9 text-[11px]"
+          />
+          <CommandList>
+            <CommandEmpty className="py-2 text-[11px] text-center text-gray-500">
+              No se encontraron resultados
+            </CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.label}
+                  onSelect={handleSelect}
+                  className="text-[11px] py-1.5 cursor-pointer"
+                >
+                  <span className="truncate">{opt.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 const DataRoom = () => {
   const { t } = useTranslation();
-  const { buildingId: selectedBuildingId } = useParams<{ buildingId: string }>();
+  const { buildingId: selectedBuildingId } = useParams<{
+    buildingId: string;
+  }>();
   const [auditData, setAuditData] = useState<Record<string, any>>({});
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
   const [isDownloadingDossier, setIsDownloadingDossier] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [batchJobs, setBatchJobs] = useState<any[]>([]);
+  const batchFileInputRef = useRef<HTMLInputElement>(null);
+  const batchPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MAX_BATCH_FILES = 5;
 
   interface Category {
     id: string;
@@ -90,39 +204,84 @@ const DataRoom = () => {
 
   const documents: Document[] = documentsData as Document[];
 
-  const loadAuditData = useCallback(async (isInitial: boolean = false) => {
-    if (!selectedBuildingId) return;
-    
-    if (isInitial) {
-      setIsLoadingAudit(true);
-    }
+  const loadAuditData = useCallback(
+    async (isInitial: boolean = false) => {
+      if (!selectedBuildingId) return;
 
+      if (isInitial) {
+        setIsLoadingAudit(true);
+      }
+
+      try {
+        const data = await fetchDataRoomAudit(selectedBuildingId);
+        const auditMap = (data || []).reduce((acc: any, audit: any) => {
+          const key = audit.checklist_id || audit.checklistId;
+          if (key) {
+            acc[key] = audit;
+          }
+          return acc;
+        }, {});
+        setAuditData(auditMap);
+      } catch (error) {
+        console.error("Error loading audit data:", error);
+      } finally {
+        setIsLoadingAudit(false);
+      }
+    },
+    [selectedBuildingId],
+  );
+
+  const loadBatchJobs = useCallback(async () => {
+    if (!selectedBuildingId) return;
     try {
-      const data = await fetchDataRoomAudit(selectedBuildingId);
-      const auditMap = (data || []).reduce((acc: any, audit: any) => {
-        const key = audit.checklist_id || audit.checklistId;
-        if (key) {
-          acc[key] = audit;
-        }
-        return acc;
-      }, {});
-      setAuditData(auditMap);
+      const jobs = await fetchBatchJobs(selectedBuildingId);
+      setBatchJobs(jobs || []);
+
+      // Auto-poll si hay jobs activos
+      const hasActive = (jobs || []).some(
+        (j: any) => j.status === "queued" || j.status === "processing",
+      );
+      if (hasActive && !batchPollRef.current) {
+        batchPollRef.current = setInterval(async () => {
+          try {
+            const updated = await fetchBatchJobs(selectedBuildingId);
+            setBatchJobs(updated || []);
+            const stillActive = (updated || []).some(
+              (j: any) => j.status === "queued" || j.status === "processing",
+            );
+            if (!stillActive && batchPollRef.current) {
+              clearInterval(batchPollRef.current);
+              batchPollRef.current = null;
+              // Recargar audit data al terminar para reflejar clasificaciones
+              loadAuditData(false);
+            }
+          } catch {
+            /* silently retry */
+          }
+        }, 5000);
+      }
     } catch (error) {
-      console.error("Error loading audit data:", error);
-    } finally {
-      setIsLoadingAudit(false);
+      console.error("Error loading batch jobs:", error);
     }
-  }, [selectedBuildingId, setAuditData]); // Eliminamos auditData de dependencias para evitar recursividad
+  }, [selectedBuildingId, loadAuditData]);
+  // Eliminamos auditData de dependencias para evitar recursividad
 
   // Carga inicial
   useEffect(() => {
     loadAuditData(true);
-  }, [loadAuditData]);
+    loadBatchJobs();
+    return () => {
+      if (batchPollRef.current) {
+        clearInterval(batchPollRef.current);
+        batchPollRef.current = null;
+      }
+    };
+  }, [selectedBuildingId, loadAuditData, loadBatchJobs]);
 
   // Polling para actualizar estados cuando hay archivos en cola o procesándose
   useEffect(() => {
     const hasActiveJobs = Object.values(auditData).some(
-      (audit) => audit.status === "queued" || audit.status === "processing"
+      (audit) => audit.status === "queued" || audit.status === "processing",
     );
 
     if (hasActiveJobs) {
@@ -167,11 +326,85 @@ const DataRoom = () => {
     }
   };
 
+  const handleBatchUpload = async (files: File[]) => {
+    if (!selectedBuildingId) {
+      toast.error(
+        t("dataRoom.errors.noBuildingSelected") ||
+          "Seleccione un edificio primero",
+      );
+      return;
+    }
 
-  const getDocumentStatus = (
-    docId: string,
-  ): DocumentStatus => {
-    // Datos reales del backend
+    if (files.length > MAX_BATCH_FILES) {
+      toast.error(
+        t("dataRoom.errors.tooManyFiles") ||
+          `Máximo ${MAX_BATCH_FILES} archivos por lote`,
+      );
+      return;
+    }
+
+    if (files.length === 0) return;
+
+    const toastId = toast.loading(
+      t("dataRoom.uploadingBatch") || `Subiendo ${files.length} archivo(s)...`,
+    );
+
+    try {
+      await uploadDataRoomBatch(selectedBuildingId, files);
+      toast.success(
+        t("dataRoom.uploadBatchSuccess") ||
+          `${files.length} archivo(s) encolado(s) para clasificación IA`,
+        { id: toastId },
+      );
+      loadAuditData(false);
+      loadBatchJobs();
+    } catch (error: any) {
+      console.error("Batch upload error:", error);
+      toast.error(
+        error.message ||
+          t("dataRoom.uploadError") ||
+          "Error al subir los archivos",
+        { id: toastId },
+      );
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const droppedFiles = Array.from(e.dataTransfer.files).slice(
+      0,
+      MAX_BATCH_FILES,
+    );
+    if (droppedFiles.length > 0) {
+      handleBatchUpload(droppedFiles);
+    }
+  };
+
+  const handleBatchFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files
+      ? Array.from(e.target.files).slice(0, MAX_BATCH_FILES)
+      : [];
+    if (selected.length > 0) {
+      handleBatchUpload(selected);
+    }
+    if (e.target) e.target.value = "";
+  };
+
+  const getDocumentStatus = (docId: string): DocumentStatus => {
     const audit = auditData[docId];
     if (!audit) return "pending";
 
@@ -182,7 +415,7 @@ const DataRoom = () => {
       audit.status === "uploaded" ||
       audit.status === "verified" ||
       audit.status === "review" ||
-      audit.status === "acepted" || // Handle typo from backend/manual entry
+      audit.status === "acepted" ||
       audit.status === "accepted"
     )
       return "verified";
@@ -190,6 +423,66 @@ const DataRoom = () => {
       return "rejected";
     return "pending";
   };
+
+  const handleManualClassify = async (jobId: string, checklistId: string) => {
+    // Validar si ya existe un archivo verificado para este checklistId
+    const existingAudit = auditData[checklistId];
+    if (
+      existingAudit &&
+      ["verified", "accepted", "acepted", "uploaded", "review"].includes(
+        existingAudit.status,
+      )
+    ) {
+      toast.error(
+        t("dataRoom.errors.alreadyUploaded") ||
+          "Ya existe un archivo verificado para este tipo de documento",
+      );
+      return;
+    }
+
+    try {
+      await classifyBatchJob(jobId, checklistId);
+      toast.success(
+        t("dataRoom.classifySuccess") || "Documento clasificado manualmente",
+      );
+      loadBatchJobs();
+      loadAuditData(false);
+    } catch (error: any) {
+      toast.error(
+        error.message ||
+          t("dataRoom.classifyError") ||
+          "Error al clasificar documento",
+      );
+    }
+  };
+
+  const allDocsOptions = useMemo(() => {
+    return documents
+      .filter((d) => {
+        const audit = auditData[d.id];
+        // Ocultar si ya está verificado o aceptado
+        if (
+          audit &&
+          ["verified", "accepted", "acepted", "uploaded", "review"].includes(
+            audit.status,
+          )
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .map((d) => {
+        const key = `dataRoom.subcategories.${d.id}`;
+        let trans = t(key);
+        if (trans === key) {
+          trans = d.name || d.id;
+        }
+        return {
+          value: d.id,
+          label: trans,
+        };
+      });
+  }, [documents, t, auditData]);
 
   // Extraer metadatos del documento (nombre de archivo, fecha, etc.)
   const getDocumentMetadata = (docId: string) => {
@@ -212,13 +505,14 @@ const DataRoom = () => {
 
     // Convertir el objeto de datos extraídos en el formato que espera DocumentItem [{label, value}]
     try {
-      const data = typeof audit.extracted_data === 'string' 
-        ? JSON.parse(audit.extracted_data) 
-        : audit.extracted_data;
-      
+      const data =
+        typeof audit.extracted_data === "string"
+          ? JSON.parse(audit.extracted_data)
+          : audit.extracted_data;
+
       return Object.entries(data).map(([key, val]) => ({
-        label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        value: String(val)
+        label: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+        value: String(val),
       }));
     } catch (e) {
       console.error("Error parsing extracted_data:", e);
@@ -232,8 +526,10 @@ const DataRoom = () => {
     const mandatoryCount = catDocs.filter((d) => d.type === "mandatory").length;
     const optionalCount = catDocs.filter((d) => d.type === "optional").length;
     const subcategoriesCount = new Set(catDocs.map((d) => d.subcategory)).size;
-    const verifiedCount = catDocs.filter((d) => getDocumentStatus(d.id) === "verified").length;
-    
+    const verifiedCount = catDocs.filter(
+      (d) => getDocumentStatus(d.id) === "verified",
+    ).length;
+
     return {
       ...cat,
       mandatory: mandatoryCount,
@@ -246,8 +542,9 @@ const DataRoom = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     categories[0].id,
   );
-  
-  const selectedCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0];
+
+  const selectedCategory =
+    categories.find((c) => c.id === selectedCategoryId) || categories[0];
 
   const handleCategorySelect = (id: string) => {
     setSelectedCategoryId(id);
@@ -388,19 +685,27 @@ const DataRoom = () => {
   ]);
   const rejectedStatuses = new Set(["rejected", "failed"]);
 
-  const verifiedCount = Object.values(auditData).filter((a: any) =>
+  // Solo contar audits que correspondan a documentos clasificados (excluir __auto__ y claves no reconocidas)
+  const knownDocIds = new Set(documents.map((d) => d.id));
+  const classifiedAudits = Object.entries(auditData).filter(([key]) =>
+    knownDocIds.has(key),
+  );
+
+  const verifiedCount = classifiedAudits.filter(([, a]: [string, any]) =>
     verifiedStatuses.has(a.status),
   ).length;
 
-  const rejectedCount = Object.values(auditData).filter((a: any) =>
+  const rejectedCount = classifiedAudits.filter(([, a]: [string, any]) =>
     rejectedStatuses.has(a.status),
   ).length;
 
-  const inReviewCount = Object.values(auditData).filter((a: any) =>
-    a.status === "queued" || a.status === "processing",
+  const inReviewCount = classifiedAudits.filter(
+    ([, a]: [string, any]) =>
+      a.status === "queued" || a.status === "processing",
   ).length;
 
-  const pendingCount = totalDocs - verifiedCount - rejectedCount - inReviewCount;
+  const pendingCount =
+    totalDocs - verifiedCount - rejectedCount - inReviewCount;
 
   const mandatoryVerifiedCount = mandatoryDocs.filter((d) => {
     const audit = auditData[d.id];
@@ -747,30 +1052,179 @@ const DataRoom = () => {
                 </div>
               </div>
             </div>
-            <div className="border-2 border-dashed rounded-xl p-4 md:p-8 mb-4 md:mb-6 transition-all border-gray-300 hover:border-gray-400 hover:bg-gray-50">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-xl p-4 md:p-8 mb-4 md:mb-6 transition-all cursor-pointer ${
+                isDragOver
+                  ? "border-blue-500 bg-blue-50 scale-[1.01] shadow-lg"
+                  : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+              }`}
+              onClick={() => batchFileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={batchFileInputRef}
+                onChange={handleBatchFileSelect}
+                className="hidden"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+              />
               <div className="flex flex-col items-center justify-center gap-2 md:gap-3">
                 <Upload
-                  className="lucide lucide-upload w-8 h-8 md:w-12 md:h-12 text-gray-400"
+                  className={`lucide lucide-upload w-8 h-8 md:w-12 md:h-12 transition-colors ${
+                    isDragOver ? "text-blue-500" : "text-gray-400"
+                  }`}
                   aria-hidden="true"
                 />
                 <div className="text-center">
-                  <p className="text-xs md:text-sm text-gray-900 mb-0.5 md:mb-1">
+                  <p
+                    className={`text-xs md:text-sm mb-0.5 md:mb-1 ${
+                      isDragOver ? "text-blue-700" : "text-gray-900"
+                    }`}
+                  >
                     <span className="hidden sm:inline">
-                      {t("dataRoom.dragAndDrop")}
+                      {isDragOver
+                        ? t("dataRoom.dropHere") || "Suelta los archivos aquí"
+                        : t("dataRoom.dragAndDrop")}
                     </span>
                     <span className="sm:hidden">
                       {t("dataRoom.dragAndDropShort")}
                     </span>
                   </p>
                   <p className="text-[10px] md:text-xs text-gray-600">
-                    {t("dataRoom.fileLimits")}
+                    {t("dataRoom.fileLimits")} •{" "}
+                    {t("dataRoom.maxFiles") || "Máx. 5 archivos"}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-blue-600 mt-1">
+                    {t("dataRoom.aiClassification") ||
+                      "La IA clasificará automáticamente tus documentos"}
                   </p>
                 </div>
-                <button className="px-3 md:px-4 py-1.5 md:py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    batchFileInputRef.current?.click();
+                  }}
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm"
+                >
                   {t("dataRoom.selectFiles")}
                 </button>
               </div>
             </div>
+
+            {/* Lista de batch jobs */}
+            {batchJobs.length > 0 && (
+              <div className="mb-4 md:mb-6">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  {t("dataRoom.batchJobsTitle") ||
+                    "Archivos subidos por Drag & Drop"}
+                </h4>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {batchJobs
+                    .filter((job: any) => job.checklistId === "__auto__")
+                    .map((job: any) => {
+                      const statusConfig: Record<
+                        string,
+                        {
+                          color: string;
+                          bg: string;
+                          icon: React.ReactNode;
+                          label: string;
+                        }
+                      > = {
+                        queued: {
+                          color: "text-yellow-700",
+                          bg: "bg-yellow-50 border-yellow-200",
+                          icon: (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ),
+                          label: t("dataRoom.queuedStatus") || "En cola",
+                        },
+                        processing: {
+                          color: "text-blue-700",
+                          bg: "bg-blue-50 border-blue-200",
+                          icon: (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ),
+                          label:
+                            t("dataRoom.processingStatus") || "Analizando...",
+                        },
+                        completed: {
+                          color: "text-green-700",
+                          bg: "bg-green-50 border-green-200",
+                          icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.verifiedStatus") || "Verificado",
+                        },
+                        failed: {
+                          color: "text-red-700",
+                          bg: "bg-red-50 border-red-200",
+                          icon: <AlertCircle className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.rejectedStatus") || "Rechazado",
+                        },
+                        rejected: {
+                          color: "text-red-700",
+                          bg: "bg-red-50 border-red-200",
+                          icon: <AlertCircle className="w-3.5 h-3.5" />,
+                          label: t("dataRoom.rejectedStatus") || "Rechazado",
+                        },
+                      };
+                      const cfg =
+                        statusConfig[job.status] || statusConfig.queued;
+                      const isAutoUnresolved = job.checklistId === "__auto__";
+
+                      return (
+                        <div
+                          key={job.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${cfg.bg}`}
+                        >
+                          <FileText
+                            className={`w-4 h-4 flex-shrink-0 ${cfg.color}`}
+                          />
+                          <span className="flex-1 truncate text-gray-800 font-medium">
+                            {job.fileName}
+                          </span>
+                          {isAutoUnresolved &&
+                            (job.status === "completed" ||
+                              job.status === "failed") && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] text-gray-500 italic">
+                                  {t("dataRoom.unclassified") ||
+                                    "No clasificado"}
+                                </span>
+                                <ManualClassifyCombobox
+                                  jobId={job.id}
+                                  options={allDocsOptions}
+                                  onClassify={handleManualClassify}
+                                  t={t}
+                                />
+                              </div>
+                            )}
+                          {!isAutoUnresolved &&
+                            job.checklistId &&
+                            job.status === "completed" && (
+                              <span className="text-[10px] text-green-600 truncate max-w-[120px]">
+                                →{" "}
+                                {job.checklistId
+                                  .replace(/_/g, " ")
+                                  .slice(0, 40)}
+                              </span>
+                            )}
+                          <span
+                            className={`flex items-center gap-1 flex-shrink-0 font-semibold ${cfg.color}`}
+                          >
+                            {cfg.icon}
+                            {cfg.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 md:space-y-3 flex-1 overflow-y-auto min-h-0 pr-1">
               {isLoadingAudit ? (
                 <div className="flex items-center justify-center h-40">
