@@ -75,6 +75,25 @@
     "queuedHint": "Esperando turno de análisis...",
     "processingHint": "Analizando documento...",
     "dataLabel": "Datos:",
+    "dropHere": "Suelta los archivos aquí",
+    "maxFiles": "Máx. 5 archivos",
+    "aiClassification": "La IA clasificará automáticamente tus documentos",
+    "uploadingBatch": "Subiendo archivos...",
+    "uploadBatchSuccess": "Archivos encolados para clasificación IA",
+    "batchJobsTitle": "Documentos sin clasificar",
+    "unclassified": "No clasificado",
+    "classifying": "Clasificando...",
+    "classifyPlaceholder": "Buscar tipo de documento...",
+    "classifySuccess": "Documento clasificado manualmente",
+    "classifyError": "Error al clasificar documento",
+    "uploading": "Subiendo archivo...",
+    "uploadSuccess": "Archivo subido correctamente",
+    "uploadError": "Error al subir el archivo",
+    "errors": {
+      "noBuildingSelected": "Seleccione un edificio primero",
+      "tooManyFiles": "Máximo 5 archivos por lote",
+      "alreadyUploaded": "Ya existe un archivo cargado para este tipo de documento"
+    },
 
     "subcategories": {
       "constitucionGobernanza": "Constitución y gobernanza",

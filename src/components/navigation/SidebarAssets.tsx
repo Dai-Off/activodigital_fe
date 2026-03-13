@@ -58,10 +58,10 @@ export function SidebarAssets() {
       loadBuildings();
     };
 
-    window.addEventListener('building-deleted', handleBuildingDeleted);
-    
+    window.addEventListener("building-deleted", handleBuildingDeleted);
+
     return () => {
-      window.removeEventListener('building-deleted', handleBuildingDeleted);
+      window.removeEventListener("building-deleted", handleBuildingDeleted);
     };
   }, []);
 
@@ -84,7 +84,7 @@ export function SidebarAssets() {
   useLayoutEffect(() => {
     // Detectar rutas de edificios
     const buildingRouteMatch = pathname.match(
-      /^\/building\/([^/]+)(?:\/(.+))?$/
+      /^\/building\/([^/]+)(?:\/(.+))?$/,
     );
     if (buildingRouteMatch) {
       const buildingId = buildingRouteMatch[1];
@@ -104,9 +104,14 @@ export function SidebarAssets() {
           // Extraemos la parte después de general-view/ (ej: financial, insurance)
           const subPart = subRoute.split("/")[1];
           expectedSection = subPart;
-        } else if (subRoute === "unidades" || subRoute.startsWith("unidades/")) {
+        } else if (
+          subRoute === "unidades" ||
+          subRoute.startsWith("unidades/")
+        ) {
           // Lista de unidades o detalle de una unidad
           expectedSection = "unidades";
+        } else if (subRoute === "information") {
+          expectedSection = "information";
         }
       } else {
         expectedSection = "todos";
@@ -141,7 +146,7 @@ export function SidebarAssets() {
           const addressParts = b.address?.split(",");
           return addressParts?.[addressParts.length - 2]?.trim() || "";
         })
-        .filter(Boolean)
+        .filter(Boolean),
     );
     return Array.from(uniqueCities).sort((a, b) => a.localeCompare(b));
   }, [buildings]);
@@ -175,10 +180,9 @@ export function SidebarAssets() {
     setExpandedBuildings((prev) =>
       prev.includes(buildingId)
         ? prev.filter((id) => id !== buildingId)
-        : [...prev, buildingId]
+        : [...prev, buildingId],
     );
   };
-
   const menuItems = [
     {
       id: "assetslist",
@@ -201,10 +205,11 @@ export function SidebarAssets() {
         <div className="px-3 mb-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${hasActiveFilters || showFilters
-              ? "bg-blue-50 text-blue-700 border border-blue-200"
-              : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
-              }`}
+            className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2 text-sm transition-colors ${
+              hasActiveFilters || showFilters
+                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+            }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span className="flex-1 text-left">{t("filters")}</span>
@@ -231,12 +236,8 @@ export function SidebarAssets() {
                   className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">{t("all")}</option>
-                  <option value="residential">
-                    {t("residential")}
-                  </option>
-                  <option value="commercial">
-                    {t("commercial")}
-                  </option>
+                  <option value="residential">{t("residential")}</option>
+                  <option value="commercial">{t("commercial")}</option>
                   <option value="mixed">{t("mixed")}</option>
                 </select>
               </div>
@@ -280,10 +281,11 @@ export function SidebarAssets() {
 
           const buttonClasses = `
               w-full px-3 py-3 rounded-md flex items-center gap-3 text-sm transition-colors
-              ${isActive
-              ? "bg-blue-600 text-white shadow-md"
-              : "text-gray-700 hover:bg-gray-50"
-            }
+              ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "text-gray-700 hover:bg-gray-50"
+              }
             `;
 
           return (
@@ -304,8 +306,9 @@ export function SidebarAssets() {
               >
                 {/* El color del ícono también cambia */}
                 <item.Icon
-                  className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-00"
-                    }`}
+                  className={`w-4 h-4 ${
+                    isActive ? "text-white" : "text-gray-00"
+                  }`}
                 />
                 <span className="flex-1 text-left leading-relaxed">
                   {item.label}
@@ -329,14 +332,16 @@ export function SidebarAssets() {
                   {/* Edificio principal */}
                   <button
                     onClick={() => toggleBuildingExpansion(building.id)}
-                    className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${isSelected
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-700 hover:bg-gray-50"
-                      }`}
+                    className={`w-full px-3 py-3 rounded-md flex items-center gap-2.5 text-sm transition-colors ${
+                      isSelected
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
                   >
                     <ChevronRight
-                      className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-90" : ""
-                        }`}
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        isExpanded ? "rotate-90" : ""
+                      }`}
                     />
                     <Building2 className="w-4 h-4" />
                     <span className="flex-1 text-left truncate leading-relaxed">
@@ -357,16 +362,38 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/general-view`);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname.startsWith(
-                          `/building/${building.id}/general-view`
-                        )
-                          ? "text-blue-600 bg-blue-50 font-medium"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname.startsWith(
+                            `/building/${building.id}/general-view`,
+                          )
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
                           {t("generalView")}
+                        </span>
+                      </button>
+
+                      {/* Información */}
+                      <button
+                        onClick={() => {
+                          setSelectedBuildingId(building.id);
+                          setActiveSection("information");
+                          setActiveTab("information");
+                          setViewMode("detail");
+                          navigate(`/building/${building.id}/information`);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname === `/building/${building.id}/information`
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Circle className="w-1.5 h-1.5 fill-current" />
+                        <span className="leading-relaxed">
+                          {t("generalInfo")}
                         </span>
                       </button>
 
@@ -379,11 +406,12 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/analysis-general`);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname ===
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname ===
                           `/building/${building.id}/analysis-general`
-                          ? "text-blue-600 bg-blue-50 font-medium"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">
@@ -400,15 +428,14 @@ export function SidebarAssets() {
                           setViewMode("detail");
                           navigate(`/building/${building.id}/gestion`);
                         }}
-                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${pathname === `/building/${building.id}/gestion`
-                          ? "text-blue-600 bg-blue-50 font-medium"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
+                        className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
+                          pathname === `/building/${building.id}/gestion`
+                            ? "text-blue-600 bg-blue-50 font-medium"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
-                        <span className="leading-relaxed">
-                          {t("gestion")}
-                        </span>
+                        <span className="leading-relaxed">{t("gestion")}</span>
                       </button>
 
                       {/* Unidades */}
@@ -421,15 +448,15 @@ export function SidebarAssets() {
                           navigate(`/building/${building.id}/unidades`);
                         }}
                         className={`w-full px-3 py-2.5 rounded-md flex items-center gap-2.5 text-xs transition-colors ${
-                          pathname.startsWith(`/building/${building.id}/unidades`)
+                          pathname.startsWith(
+                            `/building/${building.id}/unidades`,
+                          )
                             ? "text-blue-600 bg-blue-50 font-medium"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
                       >
                         <Circle className="w-1.5 h-1.5 fill-current" />
-                        <span className="leading-relaxed">
-                          {t("units")}
-                        </span>
+                        <span className="leading-relaxed">{t("units")}</span>
                       </button>
                     </div>
                   )}
