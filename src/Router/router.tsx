@@ -162,7 +162,7 @@ export const AppRouter = () => {
       <Route path="/terms" element={<TermsAndConditions />} />
 
       {/* Landing page sin Layout (tiene su propio header y footer) */}
-      <Route path="/" element={<LandingRedesignApp />} />
+      <Route path="/*" element={<LandingRedesignApp />} />
 
       {/* Ruta para la landing vieja (se mantiene de momento) */}
       <Route path="/landing-old" element={<Landing />} />
