@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Menu, X, ChevronRight, ChevronDown } from "lucide-react";
-import { navItems } from "@/app/components/BottomNav";
-import type { NavItem, SubItem } from "@/app/components/BottomNav";
+import { navItems } from "./BottomNav";
+import type { NavItem, SubItem } from "./BottomNav";
 
 interface NavigationLayoutProps {
   currentPage: string;

@@ -3,23 +3,14 @@ import arkiaLogo from "@/assets/ed148c592d76c633034c6d909cc9b5b1fc07449d.png";
 
 export function Inicio() {
   return (
-    <div className="h-screen overflow-hidden bg-white relative">
+    <div className="h-screen overflow-hidden bg-transparent relative">
       {/* Hero Section */}
-      <section className="relative h-full flex items-center justify-center bg-[#0a0a0a]">
+      <section className="relative h-full flex items-center justify-center bg-transparent">
         <div className="absolute inset-0 overflow-hidden">
-          {/* Video: Escalado para eliminar marcos negros completamente */}
-          <div className="absolute inset-0 z-0 pointer-events-none">
-             <iframe
-               className="absolute top-1/2 left-1/2 min-w-[100vw] min-h-[100vh] w-[177.77vh] h-[56.25vw] -translate-x-1/2 -translate-y-1/2 scale-[1.5]"
-               src="https://www.youtube.com/embed/JtedVugvanc?autoplay=1&mute=1&controls=0&loop=1&playlist=JtedVugvanc&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&vq=hd1080&playsinline=1"
-               allow="autoplay; encrypted-media"
-               title="Background Video"
-             />
-          </div>
-
-          {/* Capa oscura para contraste */}
-          <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 z-10 pointer-events-none" />
+          {/* 
+            El video y las capas de contraste ahora son persistentes 
+            y están en LandingRedesignApp.tsx para evitar recargas.
+          */}
         </div>
 
         {/* Logo ARKIA - Real logo image */}
