@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { motion } from "motion/react";
+import { sendContactEmail, type ContactFormData } from "../../../services/landingContact";
 
 const offices = [
+// ... (omitted for brevity, will use full content in actual call)
   {
     city: "Madrid",
     address: "Paseo de la Castellana, 123",
@@ -34,6 +37,79 @@ const contactReasons = [
 ];
 
 export function Contacto() {
+  const [formData, setFormData] = useState<ContactFormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    aumRange: "Seleccione rango",
+    reason: "Seleccione una opción",
+    message: "",
+    privacyAccepted: false,
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string | null;
+  }>({ type: null, message: null });
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validaciones básicas
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.privacyAccepted) {
+      setSubmitStatus({
+        type: "error",
+        message: "Por favor, rellene todos los campos obligatorios y acepte la política de privacidad.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: null });
+
+    try {
+      await sendContactEmail(formData);
+      setSubmitStatus({
+        type: "success",
+        message: "¡Gracias! Hemos recibido su solicitud. Nos pondremos en contacto en menos de 24 horas.",
+      });
+      // Reset form on success
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        company: "",
+        aumRange: "Seleccione rango",
+        reason: "Seleccione una opción",
+        message: "",
+        privacyAccepted: false,
+      });
+    } catch (error) {
+      setSubmitStatus({
+        type: "error",
+        message: "Hubo un error al enviar su solicitud. Por favor, inténtelo de nuevo más tarde o contáctenos directamente por email.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen overflow-y-auto bg-white relative">
       {/* Hero Header */}
@@ -71,7 +147,7 @@ export function Contacto() {
               <h2 className="text-3xl font-light text-gray-900 mb-8">
                 Formulario de Contacto
               </h2>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm uppercase tracking-[0.15em] text-gray-600 mb-3">
@@ -79,6 +155,10 @@ export function Contacto() {
                     </label>
                     <input
                       type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
                       className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
                       placeholder="Juan"
                     />
@@ -89,6 +169,10 @@ export function Contacto() {
                     </label>
                     <input
                       type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
                       className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
                       placeholder="García"
                     />
@@ -101,6 +185,10 @@ export function Contacto() {
                   </label>
                   <input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                     className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
                     placeholder="j.garcia@empresa.com"
                   />
@@ -112,6 +200,10 @@ export function Contacto() {
                   </label>
                   <input
                     type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
                     className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
                     placeholder="+34 600 123 456"
                   />
@@ -123,6 +215,10 @@ export function Contacto() {
                   </label>
                   <input
                     type="text"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleChange}
+                    required
                     className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
                     placeholder="Nombre de su empresa"
                   />
@@ -132,8 +228,13 @@ export function Contacto() {
                   <label className="block text-sm uppercase tracking-[0.15em] text-gray-600 mb-3">
                     AUM Gestionados *
                   </label>
-                  <select className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors">
-                    <option>Seleccione rango</option>
+                  <select 
+                    name="aumRange"
+                    value={formData.aumRange}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                  >
+                    <option disabled>Seleccione rango</option>
                     <option>€10M - €50M</option>
                     <option>€50M - €100M</option>
                     <option>€100M - €500M</option>
@@ -146,8 +247,13 @@ export function Contacto() {
                   <label className="block text-sm uppercase tracking-[0.15em] text-gray-600 mb-3">
                     Motivo de Contacto *
                   </label>
-                  <select className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors">
-                    <option>Seleccione una opción</option>
+                  <select 
+                    name="reason"
+                    value={formData.reason}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors"
+                  >
+                    <option disabled>Seleccione una opción</option>
                     {contactReasons.map((reason, idx) => (
                       <option key={idx}>{reason}</option>
                     ))}
@@ -160,6 +266,9 @@ export function Contacto() {
                   </label>
                   <textarea
                     rows={5}
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
                     className="w-full border border-gray-300 px-4 py-3 focus:outline-none focus:border-[#0ea5e9] transition-colors resize-none"
                     placeholder="Cuéntenos sobre sus necesidades..."
                   />
@@ -169,9 +278,12 @@ export function Contacto() {
                   <input
                     type="checkbox"
                     id="privacy"
-                    className="mt-1 w-4 h-4"
+                    name="privacyAccepted"
+                    checked={formData.privacyAccepted}
+                    onChange={handleChange}
+                    className="mt-1 w-4 h-4 cursor-pointer"
                   />
-                  <label htmlFor="privacy" className="text-sm text-gray-600">
+                  <label htmlFor="privacy" className="text-sm text-gray-600 cursor-pointer">
                     Acepto la{" "}
                     <a href="#" className="text-[#0ea5e9] underline">
                       política de privacidad
@@ -180,12 +292,36 @@ export function Contacto() {
                   </label>
                 </div>
 
+                {submitStatus.message && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 text-sm ${
+                      submitStatus.type === "success"
+                        ? "bg-green-50 text-green-800 border border-green-200"
+                        : "bg-red-50 text-red-800 border border-red-200"
+                    }`}
+                  >
+                    {submitStatus.message}
+                  </motion.div>
+                )}
+
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-[#0ea5e9] text-white py-4 text-sm uppercase tracking-[0.15em] font-semibold hover:bg-[#0ea5e9]/90 transition-colors"
+                  whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                  whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                  disabled={isSubmitting}
+                  className={`w-full bg-[#0ea5e9] text-white py-4 text-sm uppercase tracking-[0.15em] font-semibold hover:bg-[#0ea5e9]/90 transition-colors flex items-center justify-center gap-2 ${
+                    isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 >
-                  Enviar Solicitud
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar Solicitud"
+                  )}
                 </motion.button>
 
                 <p className="text-xs text-gray-500 text-center">
