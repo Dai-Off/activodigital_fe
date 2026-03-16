@@ -24,6 +24,7 @@ import CFOFinancialAnalysisDashboard from "../components/cfo/screens/CFOFinancia
 import CFOFinancialAnalysisSimulation from "../components/cfo/screens/CFOFinancialAnalysisSimulation";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ProtectedRoute from "../components/ProtectedRoute";
+import LandingRedesignApp from "../components/landing-redesign/LandingRedesignApp";
 
 // Nuevos componentes para edificios y libro del edificio
 import CreateBuildingWizard from "../components/buildings/CreateBuildingWizard";
@@ -161,7 +162,13 @@ export const AppRouter = () => {
       <Route path="/terms" element={<TermsAndConditions />} />
 
       {/* Landing page sin Layout (tiene su propio header y footer) */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/*" element={<LandingRedesignApp />} />
+
+      {/* Ruta para la landing vieja (se mantiene de momento) */}
+      <Route path="/landing-old" element={<Landing />} />
+
+      {/* Rediseño de la landing page con sus propias subrutas (ahora también responde en la raíz) */}
+      <Route path="/landing-redesign/*" element={<LandingRedesignApp />} />
 
       {/* Rutas con nuevo diseño (NewLayout) */}
       <Route element={<NewLayout />}>
@@ -467,7 +474,7 @@ export const AppRouter = () => {
       />
 
       {/* Fallback */}
-      <Route path="*" element={<Landing />} />
+      <Route path="*" element={<LandingRedesignApp />} />
     </Routes>
   );
 };
