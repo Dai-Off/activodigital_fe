@@ -448,7 +448,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           <p className="text-blue-700 font-medium">
                             ❌ Certificado Energético
                           </p>
-                          <p className="text-blue-600 text-xs">
+                          <p className="text-blue-600 text-[11px] font-normal">
                             {ceeError || "No disponible"}
                           </p>
                         </>
@@ -483,7 +483,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                           <p className="text-blue-700 font-medium">
                             ❌ Informe ITE
                           </p>
-                          <p className="text-blue-600 text-xs">
+                          <p className="text-blue-600 text-[11px] font-normal">
                             {iteError || "No disponible"}
                           </p>
                         </>
@@ -531,7 +531,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         {direccion || (
                           <button
                             onClick={() => handleGoToInformation("address")}
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -545,7 +545,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             onClick={() =>
                               handleGoToInformation("cadastralRef")
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -557,7 +557,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         {municipio || (
                           <button
                             onClick={() => handleGoToInformation("city")}
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -569,7 +569,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         {provincia || (
                           <button
                             onClick={() => handleGoToInformation("province")}
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -597,7 +597,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         ) : (
                           <button
                             onClick={() => handleGoToInformation("totalArea")}
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -609,7 +609,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                         {numViviendas || (
                           <button
                             onClick={() => handleGoToInformation("units")}
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -623,7 +623,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             onClick={() =>
                               handleGoToInformation("buildingType")
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -647,7 +647,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.calificacion",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -663,7 +663,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.proteccion",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -679,7 +679,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.ordenanza",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -697,7 +697,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.edificabilidad",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -721,7 +721,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.regimen",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -735,7 +735,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             onClick={() =>
                               handleGoToInformation("building.customData.cif")
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -751,7 +751,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.presidente",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -765,7 +765,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             onClick={() =>
                               handleGoToInformation("propertyManager")
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -831,7 +831,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.actuaciones_urgentes",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -867,7 +867,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.actuaciones_urgentes",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -894,7 +894,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.actuaciones_urgentes",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-1 transition-colors text-xs font-normal"
                           >
                             <span className="flex items-center gap-1">
                               No disponible{" "}
@@ -922,7 +922,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.coste_reparaciones",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -949,9 +949,9 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                             onClick={() =>
                               handleGoToInformation("certificate.rating")
                             }
-                            className="text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex flex-col items-center gap-1 transition-colors text-xs font-normal"
                           >
-                            <span className="text-sm">No disponible</span>
+                            <span>---</span>
                             <Pencil className="w-3 h-3 text-blue-500" />
                           </button>
                         )}
@@ -1020,7 +1020,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.demandaCalefaccion",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -1041,7 +1041,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.demandaRefrigeracion",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -1063,7 +1063,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.costeEnergetico",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex items-center gap-1 transition-colors text-xs font-normal"
                           >
                             No disponible{" "}
                             <Pencil className="w-2.5 h-2.5 text-blue-500" />
@@ -1095,7 +1095,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.envolvente",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors text-xs font-normal"
                           >
                             <span className="flex items-center gap-1">
                               No disponible{" "}
@@ -1126,7 +1126,7 @@ const ModalLEE: React.FC<ModalLEEProps> = ({
                                 "building.customData.instalaciones",
                               )
                             }
-                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors"
+                            className="text-slate-400 hover:text-blue-600 flex flex-col items-start gap-0.5 transition-colors text-xs font-normal"
                           >
                             <span className="flex items-center gap-1">
                               No disponible{" "}

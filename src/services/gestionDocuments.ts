@@ -712,7 +712,7 @@ export async function extractLicenciaDRRequirements(file: File): Promise<any> {
   const response = await apiFetch("/ai/extract-licencia-dr", {
     method: "POST",
     body: formData,
-  });
+  }, 300_000); // 5 minutos de timeout
 
   return (response as any)?.data;
 }
@@ -725,7 +725,7 @@ export async function extractLicenciaDRDocData(file: File, requirementName: stri
   const response = await apiFetch("/ai/extract-licencia-dr-doc", {
     method: "POST",
     body: formData,
-  });
+  }, 300_000); // 5 minutos de timeout
 
   return (response as any)?.data;
 }
@@ -737,7 +737,7 @@ export async function generateLicenciaDraft(buildingData: any, extractedData: an
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ buildingData, extractedData }),
-  });
+  }, 300_000); // 5 minutos de timeout
 
   return response;
 }
