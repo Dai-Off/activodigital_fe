@@ -100,7 +100,7 @@ const CreateBuildingWizard: React.FC = () => {
   const [catastroUnits, setCatastroUnits] = useState<FrontendUnit[]>([]);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isCadastreOnline, setIsCadastreOnline] = useState(false);
-  const [isCheckingCatastro, setIsCheckingCatastro] = useState(false);
+  const [isCheckingCatastro, setIsCheckingCatastro] = useState(true);
   /** Diagnóstico granular del estado de Catastro (ok, timeout, falso_200, etc.) */
   const [catastroStatus, setCatastroStatus] = useState<string>('');
 
@@ -108,12 +108,15 @@ const CreateBuildingWizard: React.FC = () => {
 
   /** Ejecuta la comprobación de estado de Catastro y actualiza el estado local. */
   const recheckCatastroStatus = async () => {
+    console.log('[CreateBuildingWizard] Iniciando verificación de salud de Catastro...');
     setIsCheckingCatastro(true);
     try {
       const resultado = await CatastroApiService.checkCatastroStatus();
+      console.log('[CreateBuildingWizard] Resultado salud Catastro:', resultado);
       setIsCadastreOnline(resultado.online);
       setCatastroStatus(resultado.status);
-    } catch {
+    } catch (error) {
+      console.error('[CreateBuildingWizard] Error llamando a checkCatastroStatus:', error);
       // Ante cualquier error se asume fuera de línea por seguridad
       setIsCadastreOnline(false);
       setCatastroStatus('error_red');
@@ -124,21 +127,7 @@ const CreateBuildingWizard: React.FC = () => {
 
   // Verificar al montar el componente
   useEffect(() => {
-    let cancelado = false;
-    CatastroApiService.checkCatastroStatus()
-      .then((resultado) => {
-        if (!cancelado) {
-          setIsCadastreOnline(resultado.online);
-          setCatastroStatus(resultado.status);
-        }
-      })
-      .catch(() => {
-        if (!cancelado) {
-          setIsCadastreOnline(false);
-          setCatastroStatus('error_red');
-        }
-      });
-    return () => { cancelado = true; };
+    recheckCatastroStatus();
   }, []);
 
   // -------------------- Steps (i18n) --------------------
@@ -632,15 +621,15 @@ const CreateBuildingWizard: React.FC = () => {
         )}
 
         {/* Wizard - Solo mostrar si ya se seleccionó un método */}
-        {selectedMethod !== null && (
           <Wizard
             steps={wizardSteps}
             currentStep={currentStep}
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-4 lg:p-6"
           >
-            <div className="relative">{renderCurrentStep()}</div>
+            <div className="relative">
+              {renderCurrentStep()}
+            </div>
           </Wizard>
-        )}
 
         {/* Footer Help */}
         {/* <div className="mt-4 md:mt-8 text-center text-xs md:text-sm text-gray-500">

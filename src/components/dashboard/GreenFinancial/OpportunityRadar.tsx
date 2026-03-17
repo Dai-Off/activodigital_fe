@@ -202,7 +202,9 @@ function BuildingOpportunityRow({ data }: { data: RegistroTable[] }) {
                     ? `${value.potencial.variacion}% ${value.potencial.is_simulated ? "est." : ""}`
                     : "-"}
                 </div>
-                {value.estado_actual === value.potencial?.letra &&
+                {value.estado_actual !== "-" &&
+                  value.potencial?.letra !== "-" &&
+                  value.estado_actual === value.potencial?.letra &&
                   Number(value.potencial?.variacion) >= 15 && (
                     <div
                       className="text-[10px] text-green-700 font-medium bg-green-100 px-1.5 py-0.5 rounded-sm mt-0.5"
