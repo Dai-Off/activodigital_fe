@@ -107,7 +107,17 @@ const CreateBuildingMethodSelection: React.FC<CreateBuildingMethodSelectionProps
       
       {/* Contenido del modal - responsive: centrado con padding adecuado */}
       <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 md:p-4 pointer-events-none">
-        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 md:p-6 pointer-events-auto max-h-[90vh] overflow-y-auto border-0">
+        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-4 md:p-6 pointer-events-auto max-h-[90vh] overflow-y-auto border-0 relative">
+          
+          {/* Spinner de carga dentro del modal */}
+          {isCheckingCatastro && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center rounded-xl">
+              <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mb-3" />
+              <p className="text-sm font-medium text-gray-700">
+                {t('verifyingCatastro', 'Verificando conexión con Catastro...')}
+              </p>
+            </div>
+          )}
         {/* Encabezado */}
         <div className="flex items-start justify-between mb-4 md:mb-6">
           <div className="flex-1 pr-2">

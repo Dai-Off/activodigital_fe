@@ -1,10 +1,12 @@
-﻿import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import { BuildingCarousel } from "../components/BuildingCarousel";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import CreateBuildingMethodSelection from "./buildings/CreateBuildingMethodSelection";
+import { CatastroApiService } from "../services/catastroApi";
 
 import {
   BuildingsApiService,
@@ -339,6 +341,36 @@ export default function CFOAssetsList() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
     null
   );
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Estado para el health check de Catastro
+  const [isCadastreOnline, setIsCadastreOnline] = useState(false);
+  const [isCheckingCatastro, setIsCheckingCatastro] = useState(false);
+  const [catastroStatus, setCatastroStatus] = useState<string>("");
+
+  /** Ejecuta la comprobación de estado de Catastro y actualiza el estado local. */
+  const recheckCatastroStatus = async () => {
+    console.log("[CFOAssetsList] Iniciando verificación de salud de Catastro...");
+    setIsCheckingCatastro(true);
+    try {
+      const resultado = await CatastroApiService.checkCatastroStatus();
+      console.log("[CFOAssetsList] Resultado salud Catastro:", resultado);
+      setIsCadastreOnline(resultado.online);
+      setCatastroStatus(resultado.status);
+    } catch (error) {
+      console.error("[CFOAssetsList] Error llamando a checkCatastroStatus:", error);
+      setIsCadastreOnline(false);
+      setCatastroStatus("error_red");
+    } finally {
+      setIsCheckingCatastro(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+    recheckCatastroStatus();
+  };
 
   const { loading, error, startLoading, stopLoading } = useLoadingState(true);
   const {
@@ -707,8 +739,8 @@ export default function CFOAssetsList() {
       <div className="pt-2 pb-8 max-w-full">
         {/* Botones de acción - Todos los roles pueden crear edificios */}
         <div className="flex justify-end gap-3 mb-6">
-          <Link
-            to="/building/create"
+          <button
+            onClick={handleOpenCreateModal}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <svg
@@ -726,8 +758,22 @@ export default function CFOAssetsList() {
               />
             </svg>
             {t("createBuilding", { defaultValue: "Crear Edificio" })}
-          </Link>
+          </button>
         </div>
+
+        {/* Modal de selección de método */}
+        <CreateBuildingMethodSelection
+          isOpen={isCreateModalOpen}
+          onSelectMethod={(method) => {
+            setIsCreateModalOpen(false);
+            navigate("/building/create", { state: { method } });
+          }}
+          onClose={() => setIsCreateModalOpen(false)}
+          isCadastreOnline={isCadastreOnline}
+          catastroStatus={catastroStatus}
+          onRetryCatastro={recheckCatastroStatus}
+          isCheckingCatastro={isCheckingCatastro}
+        />
 
         <div
           className="mb-8"

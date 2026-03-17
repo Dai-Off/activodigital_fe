@@ -9,6 +9,7 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import CreateBuildingMethodSelection from "~/components/buildings/CreateBuildingMethodSelection";
+import { CatastroApiService } from "~/services/catastroApi";
 import { useLanguage } from "~/contexts/LanguageContext";
 import {
   BuildingsApiService,
@@ -39,6 +40,34 @@ export function AssetsMain() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Estado para el health check de Catastro
+  const [isCadastreOnline, setIsCadastreOnline] = useState(false);
+  const [isCheckingCatastro, setIsCheckingCatastro] = useState(false);
+  const [catastroStatus, setCatastroStatus] = useState<string>("");
+
+  /** Ejecuta la comprobación de estado de Catastro y actualiza el estado local. */
+  const recheckCatastroStatus = async () => {
+    console.log("[AssetsMain] Iniciando verificación de salud de Catastro...");
+    setIsCheckingCatastro(true);
+    try {
+      const resultado = await CatastroApiService.checkCatastroStatus();
+      console.log("[AssetsMain] Resultado salud Catastro:", resultado);
+      setIsCadastreOnline(resultado.online);
+      setCatastroStatus(resultado.status);
+    } catch (error) {
+      console.error("[AssetsMain] Error llamando a checkCatastroStatus:", error);
+      setIsCadastreOnline(false);
+      setCatastroStatus("error_red");
+    } finally {
+      setIsCheckingCatastro(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+    recheckCatastroStatus();
+  };
 
   const [columnFilters, setColumnFilters] = useState({
     typology: [] as string[],
@@ -295,7 +324,7 @@ export function AssetsMain() {
             </div>
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
           >
             + {t("createBuilding", "Crear Edificio")}
@@ -310,6 +339,10 @@ export function AssetsMain() {
             navigate("/building/create", { state: { method } });
           }}
           onClose={() => setIsCreateModalOpen(false)}
+          isCadastreOnline={isCadastreOnline}
+          catastroStatus={catastroStatus}
+          onRetryCatastro={recheckCatastroStatus}
+          isCheckingCatastro={isCheckingCatastro}
         />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">

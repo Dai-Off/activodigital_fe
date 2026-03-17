@@ -14,6 +14,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import CreateBuildingMethodSelection from "./buildings/CreateBuildingMethodSelection";
+import { CatastroApiService } from "../services/catastroApi";
 
 import {
   BuildingsApiService,
@@ -266,6 +267,34 @@ export default function AssetsList() {
     occupationFilter: [],
     complianceFilter: [],
   });
+
+  // Estado para el health check de Catastro
+  const [isCadastreOnline, setIsCadastreOnline] = useState(false);
+  const [isCheckingCatastro, setIsCheckingCatastro] = useState(false);
+  const [catastroStatus, setCatastroStatus] = useState<string>("");
+
+  /** Ejecuta la comprobación de estado de Catastro y actualiza el estado local. */
+  const recheckCatastroStatus = async () => {
+    console.log("[AssetsList] Iniciando verificación de salud de Catastro...");
+    setIsCheckingCatastro(true);
+    try {
+      const resultado = await CatastroApiService.checkCatastroStatus();
+      console.log("[AssetsList] Resultado salud Catastro:", resultado);
+      setIsCadastreOnline(resultado.online);
+      setCatastroStatus(resultado.status);
+    } catch (error) {
+      console.error("[AssetsList] Error llamando a checkCatastroStatus:", error);
+      setIsCadastreOnline(false);
+      setCatastroStatus("error_red");
+    } finally {
+      setIsCheckingCatastro(false);
+    }
+  };
+
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+    recheckCatastroStatus();
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -607,7 +636,7 @@ export default function AssetsList() {
         {/* Botones de acción - Todos los roles pueden crear edificios */}
         <div className="flex justify-end gap-3 mb-6">
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <svg
@@ -636,6 +665,10 @@ export default function AssetsList() {
             navigate("/building/create", { state: { method } });
           }}
           onClose={() => setIsCreateModalOpen(false)}
+          isCadastreOnline={isCadastreOnline}
+          catastroStatus={catastroStatus}
+          onRetryCatastro={recheckCatastroStatus}
+          isCheckingCatastro={isCheckingCatastro}
         />
 
         <div
