@@ -1,5 +1,46 @@
-import { CircleCheckBig, CircleHelp, FileText, Lightbulb, Scale, Sparkles, TriangleAlert } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  CircleCheckBig,
+  CircleHelp,
+  FileText,
+  Lightbulb,
+  Scale,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
+import BuildingRegulatoryAuditSkeleton from "./BuildingRegulatoryAuditSkeleton";
+import { regulatoryAuditApi } from "../services/regulatoryAudit";
+import { type RegulatoryAuditResult } from "../types/regulatoryAudit";
+
 export default function BuildingRegulatoryAudit() {
+  const { id: buildingId } = useParams<{ id: string }>();
+  const [data, setData] = useState<RegulatoryAuditResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!buildingId) return;
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const result = await regulatoryAuditApi.getRegulatoryAudit(buildingId);
+        setData(result);
+      } catch (err) {
+        console.error("Error fetching regulatory audit:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [buildingId]);
+
+  if (isLoading || !data) {
+    return <BuildingRegulatoryAuditSkeleton />;
+  }
+
+  const { current_state, target_state, gap_analysis, mevs, certificates, summary } =
+    data;
+
   return (
     <div className="h-full flex flex-col gap-3 md:gap-4">
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-4 md:p-6 text-white shadow-lg flex-shrink-0">
@@ -21,7 +62,10 @@ export default function BuildingRegulatoryAudit() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-5 hover:shadow-md transition-all">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="p-1.5 md:p-2 bg-green-100 rounded-lg">
-              <CircleCheckBig className="w-4 h-4 md:w-6 md:h-6 text-green-600" aria-hidden="true" />
+              <CircleCheckBig
+                className="w-4 h-4 md:w-6 md:h-6 text-green-600"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <span className="text-xs md:text-sm text-gray-600 truncate">
@@ -29,7 +73,9 @@ export default function BuildingRegulatoryAudit() {
               </span>
             </div>
           </div>
-          <div className="text-lg md:text-2xl text-gray-900">5/8</div>
+          <div className="text-lg md:text-2xl text-gray-900">
+            {summary.normatives_compliant}/{summary.normatives_total}
+          </div>
           <div className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">
             Cumplidas
           </div>
@@ -37,7 +83,10 @@ export default function BuildingRegulatoryAudit() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-5 hover:shadow-md transition-all">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg">
-              <Sparkles className="w-4 h-4 md:w-6 md:h-6 text-blue-600" aria-hidden="true" />
+              <Sparkles
+                className="w-4 h-4 md:w-6 md:h-6 text-blue-600"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <span className="text-xs md:text-sm text-gray-600 truncate">
@@ -45,7 +94,9 @@ export default function BuildingRegulatoryAudit() {
               </span>
             </div>
           </div>
-          <div className="text-lg md:text-2xl text-gray-900">3/8</div>
+          <div className="text-lg md:text-2xl text-gray-900">
+            {summary.mevs_implemented}/{summary.mevs_total}
+          </div>
           <div className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">
             Implementadas
           </div>
@@ -53,7 +104,10 @@ export default function BuildingRegulatoryAudit() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-5 hover:shadow-md transition-all">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="p-1.5 md:p-2 bg-purple-100 rounded-lg">
-              <FileText className="w-4 h-4 md:w-6 md:h-6 text-purple-600" aria-hidden="true" />
+              <FileText
+                className="w-4 h-4 md:w-6 md:h-6 text-purple-600"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <span className="text-xs md:text-sm text-gray-600 truncate">
@@ -61,7 +115,9 @@ export default function BuildingRegulatoryAudit() {
               </span>
             </div>
           </div>
-          <div className="text-lg md:text-2xl text-gray-900">2/3</div>
+          <div className="text-lg md:text-2xl text-gray-900">
+            {summary.certificates_active}/{summary.certificates_total}
+          </div>
           <div className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1">
             Vigentes
           </div>
@@ -69,7 +125,10 @@ export default function BuildingRegulatoryAudit() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-5 hover:shadow-md transition-all">
           <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
             <div className="p-1.5 md:p-2 bg-orange-100 rounded-lg">
-              <TriangleAlert className="w-4 h-4 md:w-6 md:h-6 text-orange-600" aria-hidden="true" />
+              <TriangleAlert
+                className="w-4 h-4 md:w-6 md:h-6 text-orange-600"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <span className="text-xs md:text-sm text-gray-600 truncate">
@@ -77,9 +136,11 @@ export default function BuildingRegulatoryAudit() {
               </span>
             </div>
           </div>
-          <div className="text-lg md:text-2xl text-gray-900">1</div>
+          <div className="text-lg md:text-2xl text-gray-900">
+            {summary.pending_audits_count}
+          </div>
           <div className="text-[10px] md:text-xs text-gray-500 mt-0.5 md:mt-1 truncate">
-            Pendiente IEE
+            {summary.pending_audits_text}
           </div>
         </div>
       </div>
@@ -90,12 +151,15 @@ export default function BuildingRegulatoryAudit() {
             title="Ver explicación detallada del estado actual"
             aria-label="Ver explicación detallada del estado actual"
           >
-            <CircleHelp className="w-3 h-3 text-purple-600" aria-hidden="true" />
+            <CircleHelp
+              className="w-3 h-3 text-purple-600"
+              aria-hidden="true"
+            />
           </button>
           <div className="flex items-center justify-between mb-2 md:mb-3">
             <h3 className="text-sm md:text-base">Estado Actual</h3>
             <span className="px-2 md:px-3 py-1 rounded-full text-xs flex-shrink-0 bg-orange-100 text-orange-700">
-              Clase D
+              Clase {current_state.energy_class}
             </span>
           </div>
           <div className="space-y-2 md:space-y-3">
@@ -104,15 +168,33 @@ export default function BuildingRegulatoryAudit() {
                 Consumo energético:
               </div>
               <div className="text-lg md:text-xl">
-                85.42 kWh/m<sup>2</sup>·año
+                {current_state.consumption_kwh_m2_year || "--"} kWh/m
+                <sup>2</sup>·año
               </div>
             </div>
             <div>
               <div className="text-xs text-gray-600 mb-1">Emisiones CO₂:</div>
               <div className="text-lg md:text-xl">
-                16.74 kg CO<sub>2</sub>eq/m<sup>2</sup>·año
+                {current_state.emissions_kg_co2_m2_year || "--"} kg CO
+                <sub>2</sub>eq/m<sup>2</sup>·año
               </div>
             </div>
+            {current_state.heating_demand !== undefined && current_state.heating_demand !== null && (
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Demanda Calefacción:</div>
+                <div className="text-lg md:text-xl">
+                  {current_state.heating_demand} kWh/m<sup>2</sup>·año
+                </div>
+              </div>
+            )}
+            {current_state.cooling_demand !== undefined && current_state.cooling_demand !== null && (
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Demanda Refrigeración:</div>
+                <div className="text-lg md:text-xl">
+                  {current_state.cooling_demand} kWh/m<sup>2</sup>·año
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 relative group">
@@ -128,7 +210,7 @@ export default function BuildingRegulatoryAudit() {
               Directiva EPBD 2030 Objetivo
             </h3>
             <span className="px-2 md:px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700 flex-shrink-0">
-              Objetivo D
+              Objetivo {target_state.target_class}
             </span>
           </div>
           <div className="space-y-2 md:space-y-3">
@@ -137,7 +219,7 @@ export default function BuildingRegulatoryAudit() {
                 Consumo objetivo:
               </div>
               <div className="text-lg md:text-xl">
-                65 kWh/m<sup>2</sup>·año
+                {target_state.target_consumption} kWh/m<sup>2</sup>·año
               </div>
             </div>
             <div>
@@ -145,7 +227,8 @@ export default function BuildingRegulatoryAudit() {
                 Emisiones objetivo:
               </div>
               <div className="text-lg md:text-xl">
-                12 kg CO<sub>2</sub>eq/m<sup>2</sup>·año
+                {target_state.target_emissions} kg CO<sub>2</sub>eq/m
+                <sup>2</sup>·año
               </div>
             </div>
           </div>
@@ -159,7 +242,10 @@ export default function BuildingRegulatoryAudit() {
               title="Ver explicación detallada del análisis de brechas"
               aria-label="Ver explicación detallada del análisis de brechas"
             >
-              <CircleHelp className="w-3 h-3 text-orange-600" aria-hidden="true" />
+              <CircleHelp
+                className="w-3 h-3 text-orange-600"
+                aria-hidden="true"
+              />
             </button>
             <h3 className="text-sm md:text-base mb-4">
               Análisis de Brechas (Gap Analysis)
@@ -168,91 +254,170 @@ export default function BuildingRegulatoryAudit() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <TriangleAlert className="w-4 h-4 text-orange-600" aria-hidden="true" />
+                    {gap_analysis.consumption_gap > 0 ? (
+                      <TriangleAlert
+                        className="w-4 h-4 text-orange-600"
+                        aria-hidden="true"
+                      />
+                    ) : current_state.consumption_kwh_m2_year > 0 ? (
+                      <CircleCheckBig
+                        className="w-4 h-4 text-green-600"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <CircleHelp
+                        className="w-4 h-4 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )}
                     <span className="text-xs">Consumo energético</span>
                   </div>
-                  <span className="text-xs text-orange-600">
-                    +20.42 kWh/m²·año
+                  <span
+                    className={`text-xs ${
+                      gap_analysis.consumption_gap > 0
+                        ? "text-orange-600"
+                        : current_state.consumption_kwh_m2_year > 0
+                          ? "text-green-600"
+                          : "text-gray-400"
+                    }`}
+                  >
+                    {gap_analysis.consumption_gap > 0
+                      ? `+${gap_analysis.consumption_gap}`
+                      : current_state.consumption_kwh_m2_year > 0
+                        ? "Cumple el objetivo"
+                        : "Faltan datos"}{" "}
+                    {gap_analysis.consumption_gap > 0 && "kWh/m²·año"}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="h-2 rounded-full transition-all bg-orange-500"
-                    style={{ width: "76.0946%" }}
+                    className={`h-2 rounded-full transition-all ${gap_analysis.consumption_gap > 0 ? "bg-orange-500" : "bg-green-500"}`}
+                    style={{
+                      width: `${gap_analysis.consumption_progress_percent}%`,
+                    }}
                   ></div>
                 </div>
                 <div className="mt-1 text-xs text-gray-600">
-                  Actual: 85.42 kWh/m²·año → Objetivo: 65 kWh/m²·año
+                  Actual: {current_state.consumption_kwh_m2_year || "--"}{" "}
+                  kWh/m²·año → Objetivo: {target_state.target_consumption}{" "}
+                  kWh/m²·año
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <TriangleAlert className="w-4 h-4 text-orange-600" aria-hidden="true" />
+                    {gap_analysis.emissions_gap > 0 ? (
+                      <TriangleAlert
+                        className="w-4 h-4 text-orange-600"
+                        aria-hidden="true"
+                      />
+                    ) : current_state.emissions_kg_co2_m2_year > 0 ? (
+                      <CircleCheckBig
+                        className="w-4 h-4 text-green-600"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <CircleHelp
+                        className="w-4 h-4 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    )}
                     <span className="text-xs">Emisiones de CO₂</span>
                   </div>
-                  <span className="text-xs text-orange-600">
-                    +4.74 kg CO₂eq/m²·año
+                  <span
+                    className={`text-xs ${
+                      gap_analysis.emissions_gap > 0
+                        ? "text-orange-600"
+                        : current_state.emissions_kg_co2_m2_year > 0
+                          ? "text-green-600"
+                          : "text-gray-400"
+                    }`}
+                  >
+                    {gap_analysis.emissions_gap > 0
+                      ? `+${gap_analysis.emissions_gap}`
+                      : current_state.emissions_kg_co2_m2_year > 0
+                        ? "Cumple el objetivo"
+                        : "Faltan datos"}{" "}
+                    {gap_analysis.emissions_gap > 0 && "kg CO₂eq/m²·año"}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="h-2 rounded-full transition-all bg-orange-500"
-                    style={{ width: "71.6846%" }}
+                    className={`h-2 rounded-full transition-all ${gap_analysis.emissions_gap > 0 ? "bg-orange-500" : "bg-green-500"}`}
+                    style={{
+                      width: `${gap_analysis.emissions_progress_percent}%`,
+                    }}
                   ></div>
                 </div>
                 <div className="mt-1 text-xs text-gray-600">
-                  Actual: 16.74 kg CO₂eq/m²·año → Objetivo: 12 kg CO₂eq/m²·año
+                  Actual: {current_state.emissions_kg_co2_m2_year || "--"} kg
+                  CO₂eq/m²·año → Objetivo: {target_state.target_emissions} kg
+                  CO₂eq/m²·año
                 </div>
               </div>
             </div>
           </div>
           <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 relative group">
-            <button
-              className="absolute top-2 right-2 md:top-3 md:right-3 p-1 rounded-full bg-white hover:bg-blue-100 border border-blue-200 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title="Ver explicación detallada de la normativa aplicable"
-              aria-label="Ver explicación detallada de la normativa aplicable"
-            >
-              <CircleHelp className="w-3 h-3 text-blue-600" aria-hidden="true" />
-            </button>
-            <h3 className="text-sm md:text-base mb-3">Normativa Aplicable</h3>
+            <h3 className="text-sm md:text-base mb-3 font-medium">
+              Documentación Regulatoria Clave
+            </h3>
             <div className="space-y-2">
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                <CircleCheckBig className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                <div>
-                  <div className="text-xs text-blue-900">
-                    Directiva (UE) 2024/1275 - EPBD IV
-                  </div>
-                  <div className="text-xs text-blue-700 mt-1">
-                    Eficiencia energética de edificios - Objetivo 2030: Clase D
-                    mínima
+              {certificates.map((cert) => (
+                <div
+                  key={cert.id}
+                  className={`flex items-start gap-2 p-3 rounded-lg border ${
+                    cert.status === "valid"
+                      ? "bg-green-50 border-green-100"
+                      : "bg-red-50 border-red-100"
+                  }`}
+                >
+                  {cert.status === "valid" ? (
+                    <CircleCheckBig
+                      className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <TriangleAlert
+                      className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <div
+                        className={`text-xs font-semibold ${
+                          cert.status === "valid"
+                            ? "text-green-900"
+                            : "text-red-900"
+                        }`}
+                      >
+                        {cert.title}
+                      </div>
+                      {cert.uploaded_at && (
+                        <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                          {new Date(cert.uploaded_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`text-[11px] mt-0.5 ${
+                        cert.status === "valid"
+                          ? "text-green-700"
+                          : "text-red-700"
+                      }`}
+                    >
+                      {cert.description}
+                    </div>
+                    {cert.status === "missing" && (
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <span className="text-[10px] py-0.5 px-1.5 bg-red-100 text-red-600 rounded">
+                          Documento no detectado
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                <CircleCheckBig className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                <div>
-                  <div className="text-xs text-blue-900">
-                    Real Decreto 390/2021
-                  </div>
-                  <div className="text-xs text-blue-700 mt-1">
-                    Procedimiento básico para la certificación energética de
-                    edificios
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                <CircleCheckBig className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                <div>
-                  <div className="text-xs text-blue-900">
-                    Ley 7/2021 de Cambio Climático
-                  </div>
-                  <div className="text-xs text-blue-700 mt-1">
-                    Neutralidad climática 2050 - Reducción 23% emisiones para
-                    2030
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
@@ -265,298 +430,115 @@ export default function BuildingRegulatoryAudit() {
               </span>
             </div>
             <div className="space-y-3">
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-orange-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-01: Aislamiento Térmico de Envolvente
+              {mevs.map((mev) => (
+                <div
+                  key={mev.id}
+                  className="border border-gray-200 rounded-lg p-3"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2">
+                      {mev.status === "implementada" && (
+                        <CircleCheckBig
+                          className="w-4 h-4 text-green-600 mt-0.5"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {mev.status === "parcial" && (
+                        <CircleCheckBig
+                          className="w-4 h-4 text-orange-600 mt-0.5"
+                          aria-hidden="true"
+                        />
+                      )}
+                      {mev.status === "no_implementada" && (
+                        <TriangleAlert
+                          className="w-4 h-4 text-red-600 mt-0.5"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div>
+                        <div className="text-xs mb-1">
+                          {mev.code}: {mev.title}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {mev.description}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-600">
-                        Fachadas, cubiertas y medianeras
+                    </div>
+                    {mev.status === "implementada" && (
+                      <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded whitespace-nowrap">
+                        Implementada
+                      </span>
+                    )}
+                    {mev.status === "parcial" && (
+                      <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded whitespace-nowrap">
+                        Parcial
+                      </span>
+                    )}
+                    {mev.status === "no_implementada" && (
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded whitespace-nowrap">
+                        No implementada
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 bg-gray-50 rounded p-2">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <div className="text-gray-600">Estado actual</div>
+                        <div
+                          className={
+                            mev.status === "implementada"
+                              ? "text-green-600"
+                              : mev.status === "parcial"
+                                ? "text-orange-600"
+                                : "text-red-600"
+                          }
+                        >
+                          {mev.current_state}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">
+                          {mev.status === "implementada"
+                            ? "Ahorro logrado"
+                            : "Ahorro potencial"}
+                        </div>
+                        <div>{mev.potential_savings} kWh/m²·año</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600">Reducción CO₂</div>
+                        <div>{mev.potential_co2_reduction} kg/m²·año</div>
                       </div>
                     </div>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded whitespace-nowrap">
-                    Parcial
-                  </span>
                 </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-orange-600">
-                        Aislamiento insuficiente
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>15-25 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>3-5 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-orange-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-02: Sustitución de Carpinterías Exteriores
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Ventanas y puertas con rotura de puente térmico
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded whitespace-nowrap">
-                    No implementada
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-red-600">Carpintería antigua</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>10-18 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>2-4 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-green-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-03: Sistemas de Climatización Eficientes
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Calderas de condensación, bombas de calor, sistemas VRV
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded whitespace-nowrap">
-                    Implementada
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-green-600">Caldera condensación</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro logrado</div>
-                      <div>12 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>2.5 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-green-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-04: Iluminación LED de Alta Eficiencia
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Zonas comunes y exteriores
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded whitespace-nowrap">
-                    Implementada
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-green-600">100% LED</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro logrado</div>
-                      <div>3-5 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>0.6-1 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <TriangleAlert className="w-4 h-4 text-red-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-05: Integración de Energías Renovables
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Fotovoltaica, solar térmica, aerotermia
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded whitespace-nowrap">
-                    No implementada
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-red-600">Sin renovables</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>20-35 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>8-12 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-orange-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-06: Sistemas de Control y Gestión Energética
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Domótica, sensores, termostatos inteligentes
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded whitespace-nowrap">
-                    Parcial
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-orange-600">Control básico</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>5-10 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>1-2 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <TriangleAlert className="w-4 h-4 text-red-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-07: Ventilación Mecánica con Recuperación de Calor
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Sistemas de ventilación controlada (VMC)
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded whitespace-nowrap">
-                    No implementada
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-red-600">Ventilación natural</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>8-15 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>1.5-3 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-start gap-2">
-                    <CircleCheckBig className="w-4 h-4 text-orange-600 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <div className="text-xs mb-1">
-                        MEV-08: Protección Solar y Control de Radiación
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        Persianas, toldos, lamas, vidrios selectivos
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded whitespace-nowrap">
-                    Parcial
-                  </span>
-                </div>
-                <div className="mt-2 bg-gray-50 rounded p-2">
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <div className="text-gray-600">Estado actual</div>
-                      <div className="text-orange-600">Protección básica</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Ahorro potencial</div>
-                      <div>3-8 kWh/m²·año</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Reducción CO₂</div>
-                      <div>0.5-1.5 kg/m²·año</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
+
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                   <div className="text-xs text-gray-600 mb-1">
                     Implementadas
                   </div>
-                  <div className="text-xl text-green-600">3</div>
-                  <div className="text-xs text-gray-500">de 8 MEVs</div>
+                  <div className="text-xl text-green-600">
+                    {summary.mevs_implemented}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    de {summary.mevs_total} MEVs
+                  </div>
                 </div>
                 <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
                   <div className="text-xs text-gray-600 mb-1">Parciales</div>
-                  <div className="text-xl text-orange-600">3</div>
+                  <div className="text-xl text-orange-600">
+                    {summary.mevs_partial}
+                  </div>
                   <div className="text-xs text-gray-500">Requieren mejora</div>
                 </div>
                 <div className="bg-red-50 rounded-lg p-3 border border-red-200">
                   <div className="text-xs text-gray-600 mb-1">Pendientes</div>
-                  <div className="text-xl text-red-600">2</div>
+                  <div className="text-xl text-red-600">
+                    {summary.mevs_pending}
+                  </div>
                   <div className="text-xs text-gray-500">No implementadas</div>
                 </div>
               </div>
@@ -570,14 +552,16 @@ export default function BuildingRegulatoryAudit() {
                       Ahorro energético posible
                     </div>
                     <div className="text-sm text-blue-900">
-                      46-76 kWh/m²·año
+                      {summary.total_potential_savings}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-blue-700">
                       Reducción CO₂ posible
                     </div>
-                    <div className="text-sm text-blue-900">13-22 kg/m²·año</div>
+                    <div className="text-sm text-blue-900">
+                      {summary.total_potential_co2_reduction}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -585,16 +569,20 @@ export default function BuildingRegulatoryAudit() {
           </div>
           <div className="border-l-4 border-purple-500 bg-purple-50 rounded-r-lg p-4">
             <div className="flex items-start gap-3">
-              <Lightbulb className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" aria-hidden="true" />
+              <Lightbulb
+                className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0"
+                aria-hidden="true"
+              />
               <div className="flex-1">
                 <h4 className="text-sm text-purple-900 mb-2">
                   Recomendación IA - Cumplimiento Normativo
                 </h4>
                 <p className="text-xs text-purple-700 mb-3">
                   Para alcanzar los objetivos EPBD 2030, se requiere reducir el
-                  consumo en 20.4 kWh/m²·año y las emisiones en 4.7 kg
-                  CO₂eq/m²·año. Se recomienda priorizar intervenciones en
-                  envolvente térmica y sistemas HVAC según la auditoría técnica.
+                  consumo en {gap_analysis.consumption_gap} kWh/m²·año y las
+                  emisiones en {gap_analysis.emissions_gap} kg CO₂eq/m²·año. Se
+                  recomienda priorizar intervenciones en envolvente térmica y
+                  sistemas HVAC según la auditoría técnica.
                 </p>
                 <div className="bg-white/50 rounded-lg p-3">
                   <div className="text-xs text-purple-900 mb-2">
