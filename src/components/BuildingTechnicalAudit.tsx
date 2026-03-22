@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   Building2,
@@ -13,12 +13,36 @@ import {
 } from "lucide-react";
 import { getTechnicalAudit } from "../services/technicalAudit";
 import type { TechnicalAuditResult } from "../types/technicalAudit";
+import BuildingTechnicalAuditSkeleton from "./BuildingTechnicalAuditSkeleton";
 
 export default function BuildingTechnicalAudit() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<TechnicalAuditResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Group missing data by category (e.g., ESG)
+  const groupedMissingData = useMemo(() => {
+    const rawMissingData = data?.missingData;
+    if (!rawMissingData) return [];
+
+    const result: (string | { group: string; items: string[] })[] = [];
+    const esgItems: string[] = [];
+
+    rawMissingData.forEach((item) => {
+      if (item.startsWith("Datos ESG: ")) {
+        esgItems.push(item.replace("Datos ESG: ", ""));
+      } else {
+        result.push(item);
+      }
+    });
+
+    if (esgItems.length > 0) {
+      result.push({ group: "Datos ESG faltantes:", items: esgItems });
+    }
+
+    return result;
+  }, [data?.missingData]);
 
   useEffect(() => {
     async function loadAudit() {
@@ -37,16 +61,7 @@ export default function BuildingTechnicalAudit() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="h-full flex flex-col gap-4 animate-pulse">
-        <div className="h-24 bg-gray-200 rounded-xl"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-40 bg-gray-200 rounded-xl"></div>
-          <div className="h-40 bg-gray-200 rounded-xl"></div>
-        </div>
-        <div className="flex-1 bg-gray-200 rounded-xl"></div>
-      </div>
-    );
+    return <BuildingTechnicalAuditSkeleton />;
   }
 
   if (error || !data) {
@@ -63,7 +78,14 @@ export default function BuildingTechnicalAudit() {
     );
   }
 
-  const { isComplete, missingData, completionPercentage, tasks, energyImprovements, summary } = data;
+  const {
+    isComplete,
+    missingData: rawMissingData,
+    completionPercentage,
+    tasks,
+    energyImprovements,
+    summary,
+  } = data;
 
   // Derive "Estado Instalaciones" from pending tasks
   const hasTaskCategory = (category: string) =>
@@ -140,20 +162,52 @@ export default function BuildingTechnicalAudit() {
 
   return (
     <div className="h-full flex flex-col gap-4">
-      {!isComplete && missingData && (
+      {!isComplete && rawMissingData && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm mb-2">
           <div className="flex items-start gap-3">
             <CircleAlert className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="text-sm font-semibold text-amber-900">Datos insuficientes para auditoría completa</h3>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-amber-900">
+                Datos insuficientes para auditoría completa
+              </h3>
               <p className="text-xs text-amber-800 mt-1">
-                Para obtener un análisis técnico y financiero 100% preciso, es necesario completar la siguiente información:
+                Para obtener un análisis técnico y financiero 100% preciso, es
+                necesario completar la siguiente información:
               </p>
-              <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                {missingData.map((item, idx) => (
-                  <li key={idx} className="text-xs text-amber-700 flex items-center gap-1">
-                    <span className="w-1 h-1 bg-amber-400 rounded-full"></span>
-                    {item}
+              <ul className="mt-4 space-y-3">
+                {groupedMissingData.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="text-xs w-full text-amber-700 bg-amber-100/40 p-3 rounded-xl border border-amber-200/50 transition-all hover:bg-amber-100/60 shadow-sm"
+                  >
+                    {typeof item === "string" ? (
+                      <div className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                        <span className="leading-relaxed font-semibold">
+                          {item}
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-start gap-2 mb-2">
+                          <span className="w-1.5 h-1.5 bg-amber-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                          <span className="leading-relaxed font-bold text-amber-900">
+                            {item.group}
+                          </span>
+                        </div>
+                        <ul className="ml-5 space-y-1.5 border-l-2 border-amber-200/50 pl-4 py-1">
+                          {item.items.map((subItem, sidx) => (
+                            <li
+                              key={sidx}
+                              className="flex items-start gap-2 opacity-90 transition-opacity hover:opacity-100"
+                            >
+                              <span className="w-1 h-1 bg-amber-400 rounded-full mt-1.5 flex-shrink-0"></span>
+                              <span className="leading-relaxed">{subItem}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -206,15 +260,45 @@ export default function BuildingTechnicalAudit() {
               </div>
             </div>
             <div className="pt-3 border-t border-blue-200 space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-700">Tareas pendientes:</span>
                 <span className="text-gray-900 font-medium">
                   {summary.totalTasks}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-[10px] text-gray-500 mb-3">
                 <span>(Generadas por Análisis IA)</span>
               </div>
+
+              {tasks && tasks.length > 0 && (
+                <ul className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent">
+                  {tasks.map((task) => (
+                    <li
+                      key={task.id}
+                      className="text-xs text-gray-700 flex items-start gap-2 bg-white/60 p-2.5 rounded-lg border border-blue-200/50 shadow-sm transition-all hover:bg-white"
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                          task.priority === "high"
+                            ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                            : task.priority === "medium"
+                            ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                            : "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.4)]"
+                        }`}
+                        title={`Prioridad ${task.priority}`}
+                      ></span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-blue-900 leading-tight mb-0.5">
+                          {task.title}
+                        </p>
+                        <p className="text-[10px] text-gray-500 leading-relaxed truncate">
+                          {task.description}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
