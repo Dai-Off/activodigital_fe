@@ -2,15 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   ChartColumn,
   Plus,
-  Zap,
   Building2,
-  FileText,
   Clock,
   Download,
-  Wrench,
-  House,
   Search,
-  Euro,
   FileDown,
   FileSpreadsheet,
   Loader2,
@@ -18,16 +13,11 @@ import {
 } from 'lucide-react';
 import { useNavigation } from '../contexts/NavigationContext';
 import { ReportGeneratorModal } from './ReportGeneratorModal';
+import { REPORT_CATEGORIES } from '../constants/reports';
+import type { Report } from '../types/reports';
 import { ReportsApiService } from '../services/reportsApi';
 
-const CATEGORY_MAP: Record<string, any> = {
-  general: { label: 'General', icon: Building2, colorClass: 'bg-gray-100', iconColorClass: 'text-gray-600', badgeClass: 'bg-gray-100 text-gray-700 border-gray-200' },
-  energy: { label: 'Energía', icon: Zap, colorClass: 'bg-green-100', iconColorClass: 'text-green-600', badgeClass: 'bg-green-100 text-green-700 border-green-200' },
-  financial: { label: 'Financiero', icon: Euro, colorClass: 'bg-blue-100', iconColorClass: 'text-blue-600', badgeClass: 'bg-blue-100 text-blue-700 border-blue-200' },
-  compliance: { label: 'Cumplimiento', icon: FileText, colorClass: 'bg-purple-100', iconColorClass: 'text-purple-600', badgeClass: 'bg-purple-100 text-purple-700 border-purple-200' },
-  maintenance: { label: 'Mantenimiento', icon: Wrench, colorClass: 'bg-orange-100', iconColorClass: 'text-orange-600', badgeClass: 'bg-orange-100 text-orange-700 border-orange-200' },
-  occupancy: { label: 'Ocupación', icon: House, colorClass: 'bg-yellow-100', iconColorClass: 'text-yellow-600', badgeClass: 'bg-yellow-100 text-yellow-700 border-yellow-200' }
-};
+const CATEGORY_MAP = REPORT_CATEGORIES;
 
 export default function Reports() {
   const { activeSection, setActiveSection } = useNavigation();
@@ -36,7 +26,7 @@ export default function Reports() {
   useEffect(() => {
     setActiveSection("all");
   }, []);
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 

@@ -17,6 +17,9 @@ import {
 import { ReportsApiService } from "../services/reportsApi";
 import { BuildingsApiService } from "../services/buildingsApi";
 import { useModalScrollLock } from "./dashboard/GreenFinancial/componentes/ModalFrame";
+import { CATEGORY_LIST } from "../constants/reports";
+import type { GenerateReportPayload } from "../types/reports";
+import type { LucideIcon } from "lucide-react";
 
 interface ReportGeneratorModalProps {
   isOpen: boolean;
@@ -25,7 +28,7 @@ interface ReportGeneratorModalProps {
   buildingName?: string;
 }
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Building2,
   FileText,
   Zap,
@@ -51,6 +54,7 @@ export function ReportGeneratorModal({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [primaryColor, setPrimaryColor] = useState("#1e3a8a");
   const [secondaryColor, setSecondaryColor] = useState("#3b82f6");
+  const [selectedCategory, setSelectedCategory] = useState<string>("general");
   
   useEffect(() => {
     if (isOpen) {
@@ -125,31 +129,22 @@ export function ReportGeneratorModal({
     
     setIsGenerating(true);
     try {
-      // Inferencia de categoría: si hay campos seleccionados, usamos la categoría del primer campo.
-      // Esto es una simplificación; idealmente el usuario podría elegirla o ser "multicategoría".
-      let inferredCategory = 'general';
-      const firstFieldId = Array.from(selectedFields)[0];
-      if (firstFieldId) {
-        const cat = categories.find(c => c.fields.some((f: any) => f.id === firstFieldId));
-        if (cat) inferredCategory = cat.id;
-      }
-
-      let logoBase64 = undefined;
+      let logoBase64: string | undefined = undefined;
       if (logoFile) {
-        logoBase64 = await new Promise((resolve, reject) => {
+        logoBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(logoFile);
-          reader.onload = () => resolve(reader.result);
+          reader.onload = () => resolve(reader.result as string);
           reader.onerror = error => reject(error);
         });
       }
 
-      const payload = {
+      const payload: GenerateReportPayload = {
         title: reportName,
         buildingIds: Array.from(selectedBuildings),
         selectedFields: Array.from(selectedFields),
         format: reportType,
-        category: inferredCategory,
+        category: selectedCategory,
         config: {
           primaryColor,
           secondaryColor,
@@ -364,6 +359,37 @@ export function ReportGeneratorModal({
                     placeholder="Ej: Informe Mensual Diciembre 2024"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none transition-all shadow-sm"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
+                    Categoría del Informe *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {CATEGORY_LIST.filter(cat => cat.id !== 'all').map((cat) => {
+                      const Icon = cat.icon;
+                      const isSelected = selectedCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all text-center gap-1.5 ${
+                            isSelected
+                              ? "border-[#1e3a8a] bg-[#1e3a8a]/5 shadow-sm"
+                              : "border-gray-50 hover:border-gray-100 bg-gray-50/50"
+                          }`}
+                        >
+                          <div className={`p-1.5 rounded-lg ${isSelected ? "bg-[#1e3a8a] text-white" : "bg-white text-gray-500 shadow-sm"}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className={`text-[10px] font-bold ${isSelected ? "text-[#1e3a8a]" : "text-gray-600"}`}>
+                            {cat.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div>

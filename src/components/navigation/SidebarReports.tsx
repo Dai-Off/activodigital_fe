@@ -1,6 +1,7 @@
 import { t } from "i18next";
 import { ChartColumn } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
+import { REPORT_CATEGORIES } from "../../constants/reports";
 
 export function SidebarReports() {
   const { activeSection, setActiveSection } = useNavigation();
@@ -14,27 +15,27 @@ export function SidebarReports() {
     {
       id: "energy",
       label: t("energyEfficiency", "Eficiencia Energética"),
-      Icon: ChartColumn,
+      Icon: REPORT_CATEGORIES.energy.icon,
     },
     {
       id: "financial",
       label: t("financial", "Financiero"),
-      Icon: ChartColumn,
+      Icon: REPORT_CATEGORIES.financial.icon,
     },
     {
       id: "compliance",
       label: t("compliance", "Cumplimiento"),
-      Icon: ChartColumn,
+      Icon: REPORT_CATEGORIES.compliance.icon,
     },
     {
       id: "maintenance",
       label: t("maintenance", "Mantenimiento"),
-      Icon: ChartColumn,
+      Icon: REPORT_CATEGORIES.maintenance.icon,
     },
     {
       id: "occupancy",
       label: t("occupancy", "Ocupación"),
-      Icon: ChartColumn,
+      Icon: REPORT_CATEGORIES.occupancy.icon,
     },
   ];
 
@@ -60,7 +61,7 @@ export function SidebarReports() {
                 if (setActiveSection) setActiveSection(item.id);
               }}
             >
-              <ChartColumn
+              <item.Icon
                 className={`w-4 h-4 ${
                   isActive ? "text-white" : "text-gray-700"
                 }`}

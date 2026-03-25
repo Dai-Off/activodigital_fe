@@ -1,41 +1,9 @@
 import { apiFetch } from "./api";
-
-export interface Report {
-  id: string;
-  title: string;
-  description?: string;
-  category: string;
-  format: "pdf" | "excel";
-  status: "generating" | "completed" | "failed";
-  file_url?: string;
-  building_ids: string[];
-  selected_fields: string[];
-  created_at: string;
-  created_by: string;
-}
-
-export interface ReportField {
-  id: string;
-  label: string;
-  type: string;
-  value?: any;
-}
-
-export interface ReportCategory {
-  id: string;
-  title: string;
-  icon: string;
-  fields: ReportField[];
-}
-
-export interface GenerateReportPayload {
-  title: string;
-  buildingIds: string[];
-  selectedFields: string[];
-  format: "pdf" | "excel";
-  category?: string;
-  config?: any;
-}
+import type { 
+  Report, 
+  ReportCategory, 
+  GenerateReportPayload 
+} from "../types/reports";
 
 export class ReportsApiService {
   static async getReports(category?: string): Promise<Report[]> {
