@@ -33,6 +33,9 @@ import CreateUnitForm from "../components/units/CreateUnitForm";
 import DigitalBookHub from "../components/digitalbook/DigitalBookHub";
 import SectionEditor from "../components/digitalbook/SectionEditor";
 import TermsAndConditions from "../components/TermsAndConditions";
+import BuildingRegulatoryAudit from "../components/BuildingRegulatoryAudit";
+import BuildingTechnicalAudit from "../components/BuildingTechnicalAudit";
+import BuildingFinancialAudit from "../components/BuildingFinancialAudit";
 
 // Página de lista de secciones (opcional)
 import { AssetsDashboard } from "../components/dashboard/AssetsDashboard";
@@ -416,8 +419,32 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <BuildingGestion />
+                 <BuildingGestion />
               </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/auditorias/regulatoria"
+          element={
+            <ProtectedRoute>
+              <BuildingRegulatoryAudit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/auditorias/tecnica"
+          element={
+            <ProtectedRoute>
+              <BuildingTechnicalAudit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building/:id/auditorias/financiera"
+          element={
+            <ProtectedRoute>
+              <BuildingFinancialAudit />
             </ProtectedRoute>
           }
         />

@@ -7,6 +7,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useLayoutEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import { useNavigation } from "../../contexts/NavigationContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -27,6 +28,7 @@ export function SidebarAssets() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [expandedBuildings, setExpandedBuildings] = useState<string[]>([]);
+  const [expandedAudits, setExpandedAudits] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +112,9 @@ export function SidebarAssets() {
         ) {
           // Lista de unidades o detalle de una unidad
           expectedSection = "unidades";
+        } else if (subRoute.startsWith("auditorias/")) {
+          // Auditorias
+          expectedSection = "auditorias";
         } else if (subRoute === "information") {
           expectedSection = "information";
         }
@@ -183,6 +188,15 @@ export function SidebarAssets() {
         : [...prev, buildingId],
     );
   };
+
+  const toggleAuditsExpansion = (buildingId: string) => {
+    setExpandedAudits((prev) =>
+      prev.includes(buildingId)
+        ? prev.filter((id) => id !== buildingId)
+        : [...prev, buildingId],
+    );
+  };
+
   const menuItems = [
     {
       id: "assetslist",
@@ -458,6 +472,86 @@ export function SidebarAssets() {
                         <Circle className="w-1.5 h-1.5 fill-current" />
                         <span className="leading-relaxed">{t("units")}</span>
                       </button>
+
+                      {/* Auditorías */}
+                      <div className="w-full">
+                        <button
+                          onClick={() => toggleAuditsExpansion(building.id)}
+                          className={`w-full px-3 py-2.5 rounded-md flex items-center justify-between gap-2.5 text-xs transition-colors ${
+                            pathname.startsWith(`/building/${building.id}/auditorias`)
+                              ? "text-blue-600 bg-blue-50 font-medium"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Circle className="w-1.5 h-1.5 fill-current" />
+                            <span className="leading-relaxed">{t("auditorias", "Auditorías")}</span>
+                          </div>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 transition-transform ${
+                              expandedAudits.includes(building.id) ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        
+                        {expandedAudits.includes(building.id) && (
+                          <div className="ml-4 mt-1 space-y-1 pl-2 border-l border-gray-100">
+                            <button
+                              onClick={() => {
+                                setSelectedBuildingId(building.id);
+                                setActiveSection("auditorias");
+                                setActiveTab("auditorias");
+                                setViewMode("detail");
+                                navigate(`/building/${building.id}/auditorias/regulatoria`);
+                              }}
+                              className={`w-full px-3 py-2 rounded-md flex items-center gap-2 text-xs transition-colors ${
+                                pathname === `/building/${building.id}/auditorias/regulatoria`
+                                  ? "text-blue-600 bg-blue-50"
+                                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                              }`}
+                            >
+                              <Circle className="w-1 h-1 fill-current" />
+                              <span>{t("auditRegulatory", "Regulatoria")}</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setSelectedBuildingId(building.id);
+                                setActiveSection("auditorias");
+                                setActiveTab("auditorias");
+                                setViewMode("detail");
+                                navigate(`/building/${building.id}/auditorias/tecnica`);
+                              }}
+                              className={`w-full px-3 py-2 rounded-md flex items-center gap-2 text-xs transition-colors ${
+                                pathname === `/building/${building.id}/auditorias/tecnica`
+                                  ? "text-blue-600 bg-blue-50"
+                                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                              }`}
+                            >
+                              <Circle className="w-1 h-1 fill-current" />
+                              <span>{t("auditTechnical", "Técnica")}</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setSelectedBuildingId(building.id);
+                                setActiveSection("auditorias");
+                                setActiveTab("auditorias");
+                                setViewMode("detail");
+                                navigate(`/building/${building.id}/auditorias/financiera`);
+                              }}
+                              className={`w-full px-3 py-2 rounded-md flex items-center gap-2 text-xs transition-colors ${
+                                pathname === `/building/${building.id}/auditorias/financiera`
+                                  ? "text-blue-600 bg-blue-50"
+                                  : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                              }`}
+                            >
+                              <Circle className="w-1 h-1 fill-current" />
+                              <span>{t("auditFinancial", "Financiera")}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
