@@ -148,6 +148,16 @@ export class EnergyCertificatesService {
   }
 
   /**
+   * Alias de getByBuilding para compatibilidad con la calculadora financiera
+   * GET /certificados-energeticos/building/:buildingId
+   */
+  static async getByBuildingDirect(
+    buildingId: string,
+  ): Promise<GetEnergyCertificatesResponse> {
+    return EnergyCertificatesService.getByBuilding(buildingId);
+  }
+
+  /**
    * Obtener todos los certificados energéticos del usuario
    * GET /certificados-energeticos
    */
