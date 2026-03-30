@@ -102,7 +102,7 @@ export function Sidebar() {
       id: "reports",
       icon: ChartColumn,
       label: t ? t("reports", "Informes") : "Informes",
-      route: "/dashboard/activity", // Placeholder route
+      route: "/reports",
     },
     {
       id: "gestion",
@@ -182,10 +182,10 @@ export function Sidebar() {
         navigate("/expired");
         break;
       case "reports":
-        if (setActiveSection) setActiveSection("activity");
-        if (setActiveTab) setActiveTab("activity");
+        if (setActiveSection) setActiveSection("all");
+        if (setActiveTab) setActiveTab("all");
         if (setViewMode) setViewMode("list");
-        navigate("/dashboard/activity");
+        navigate("/reports");
         break;
       case "gestion":
         if (setActiveSection) setActiveSection("dashboard");
