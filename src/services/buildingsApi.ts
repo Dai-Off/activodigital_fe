@@ -25,8 +25,14 @@ export interface Building {
   rehabilitationCost?: number; // Coste de rehabilitación (por defecto 0)
   potentialValue?: number; // Valor potencial (por defecto 0)
   squareMeters?: number; // Superficie en metros cuadrados
+  market_price_m2?: number; // Precio de mercado actualizado por Cron
+  energy_certification?: string; // [Calculated/Fallback]
+  last_price_update?: string;
   createdAt: string;
   updatedAt: string;
+  municipality?: string; // Municipality name for stats
+  province?: string; // Province name for stats
+  postalCode?: string; // Postal code
   porcentBook?: number;
   customData?: Record<string, any>;
 }
@@ -272,6 +278,17 @@ export class BuildingsApiService {
       body: JSON.stringify(payload),
     });
     return response.data || response;
+  }
+
+  // Obtener estadísticas de unidades del edificio (Vacancia)
+  static async getBuildingUnitsStats(buildingId: string): Promise<{ totalUnits: number; vacantUnits: number; vacancyRate: number }> {
+    try {
+      const response = await apiFetch(`/edificios/${buildingId}/units/stats`, { method: "GET" });
+      return response.data || { totalUnits: 0, vacantUnits: 0, vacancyRate: 0 };
+    } catch (error) {
+      console.error("Error fetching unit stats:", error);
+      return { totalUnits: 0, vacantUnits: 0, vacancyRate: 0 };
+    }
   }
 }
 

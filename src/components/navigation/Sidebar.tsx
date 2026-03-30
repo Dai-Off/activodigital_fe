@@ -10,7 +10,8 @@ import {
   Settings, 
   MessageCircle,
   Menu,
-  X
+  X,
+  Calculator
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
@@ -116,6 +117,12 @@ export function Sidebar() {
       label: t
         ? t("green-financial", "Financiación Verde")
         : "Financiación Verde",
+    },
+    {
+      id: "financial-calculator",
+      icon: Calculator,
+      label: t ? t("financialCalculator", "Calculadora") : "Calculadora",
+      route: "/financial-calculator",
     },
     {
       id: "expired",

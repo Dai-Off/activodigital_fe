@@ -165,7 +165,7 @@ const IRRExplanationModal: React.FC<IRRExplanationModalProps> = ({
             <p className="text-xs text-blue-900">
               ¿Deseas realizar un análisis más profundo? Puedes utilizar nuestra{" "}
               <Link
-                to="/cfo-simulation"
+                to="/financial-calculator"
                 className="font-bold underline cursor-pointer hover:text-blue-700 transition-colors"
                 onClick={onClose}
               >
