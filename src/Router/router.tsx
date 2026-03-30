@@ -36,6 +36,8 @@ import TermsAndConditions from "../components/TermsAndConditions";
 import BuildingRegulatoryAudit from "../components/BuildingRegulatoryAudit";
 import BuildingTechnicalAudit from "../components/BuildingTechnicalAudit";
 import BuildingFinancialAudit from "../components/BuildingFinancialAudit";
+import Reports from "../components/Reports";
+import { FinancialCalculatorPage } from "../components/FinancialCalculator/FinancialCalculatorPage";
 
 // Página de lista de secciones (opcional)
 import { AssetsDashboard } from "../components/dashboard/AssetsDashboard";
@@ -318,6 +320,27 @@ export const AppRouter = () => {
 
         {/* Subrutas Edificios */}
 
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <Reports />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        {/* Calculadora Financiera - sin secondary sidebar */}
+        <Route
+          path="/financial-calculator"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <FinancialCalculatorPage />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/building/:id/unidades"
           element={

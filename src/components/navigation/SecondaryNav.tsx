@@ -4,6 +4,7 @@ import { SidebarAssets } from "./SidebarAssets";
 import SidebarUsers from "./SidebarUsers";
 import SidebarEvents from "./SideberEvents";
 import SidebarConfiguration from "./SidebarConfiguration";
+import { SidebarReports } from "./SidebarReports";
 
 export function SecondaryNav() {
   const location = useLocation();
@@ -22,6 +23,7 @@ export function SecondaryNav() {
     users: <SidebarUsers />,
     configuration: <SidebarConfiguration />,
     events: <SidebarEvents />,
+    reports: <SidebarReports />,
   };
 
   // Si estamos en una ruta de edificio o relacionada con edificios, mostrar AssetsComponent

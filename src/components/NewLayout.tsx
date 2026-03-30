@@ -51,6 +51,7 @@ function NewLayoutContent() {
       location.pathname.startsWith("/cfo-intake") ||
       location.pathname.startsWith("/cfo-due-diligence") ||
       location.pathname.startsWith("/cfo-simulation") ||
+      location.pathname.startsWith("/reports") ||
       location.pathname === "/assets";
 
     // if (isBuildingRelatedPath && setActiveModule) {
@@ -190,7 +191,7 @@ function NewLayoutContent() {
   };
 
   // Módulos que requieren menú secundario
-  const modulesWithSecondaryNav = ["assets", "dashboard", "users", "events"];
+  const modulesWithSecondaryNav = ["assets", "dashboard", "users", "events", "reports"];
   // Mostrar SecondaryNav siempre en el módulo de edificios, incluso en detalle
   // También mostrar si estamos en una ruta de edificio (por si activeModule no está sincronizado)
   // Incluir rutas relacionadas con edificios: digital-book, cfo-intake, etc.
@@ -204,6 +205,7 @@ function NewLayoutContent() {
     location.pathname.startsWith("/cfo-due-diligence") ||
     location.pathname.startsWith("/cfo-simulation") ||
     location.pathname.startsWith("/cfo-dashboard") ||
+    location.pathname.startsWith("/reports") ||
     location.pathname === "/assets";
 
   const showSecondaryNav =

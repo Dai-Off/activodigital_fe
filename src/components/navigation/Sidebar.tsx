@@ -10,7 +10,8 @@ import {
   Settings, 
   MessageCircle,
   Menu,
-  X
+  X,
+  Calculator
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigation } from "../../contexts/NavigationContext";
@@ -102,7 +103,7 @@ export function Sidebar() {
       id: "reports",
       icon: ChartColumn,
       label: t ? t("reports", "Informes") : "Informes",
-      route: "/dashboard/activity", // Placeholder route
+      route: "/reports",
     },
     {
       id: "gestion",
@@ -116,6 +117,12 @@ export function Sidebar() {
       label: t
         ? t("green-financial", "Financiación Verde")
         : "Financiación Verde",
+    },
+    {
+      id: "financial-calculator",
+      icon: Calculator,
+      label: t ? t("financialCalculator", "Calculadora") : "Calculadora",
+      route: "/financial-calculator",
     },
     {
       id: "expired",
@@ -182,10 +189,10 @@ export function Sidebar() {
         navigate("/expired");
         break;
       case "reports":
-        if (setActiveSection) setActiveSection("activity");
-        if (setActiveTab) setActiveTab("activity");
+        if (setActiveSection) setActiveSection("all");
+        if (setActiveTab) setActiveTab("all");
         if (setViewMode) setViewMode("list");
-        navigate("/dashboard/activity");
+        navigate("/reports");
         break;
       case "gestion":
         if (setActiveSection) setActiveSection("dashboard");
