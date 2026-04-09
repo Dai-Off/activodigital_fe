@@ -20,9 +20,9 @@ export function Inicio() {
           transition={{ duration: 1, delay: 0.2 }}
           className="absolute top-8 left-8 z-50"
         >
-          <img 
-            src={arkiaLogo} 
-            alt="ARKIA - Análisis Estructural Inteligente" 
+          <img
+            src={arkiaLogo}
+            alt="ARKIA - Análisis Estructural Inteligente"
             className="h-16 w-auto md:h-20 drop-shadow-[0_0_25px_rgba(14,165,233,0.3)]"
           />
         </motion.div>
@@ -35,14 +35,20 @@ export function Inicio() {
             className="text-center max-w-4xl"
           >
             <h1 className="text-white mb-8">
-              <span className="block text-xl md:text-2xl mb-3 text-white/80 font-light tracking-widest uppercase">Gestión Integral de</span>
-              <span className="block text-4xl md:text-6xl font-medium tracking-tight">Edificios</span>
+              <span className="block text-xl md:text-2xl mb-3 text-white/80 font-light tracking-widest uppercase">
+                Gestión Integral de
+              </span>
+              <span className="block text-4xl md:text-6xl font-medium tracking-tight">
+                Activos
+              </span>
             </h1>
 
             <div className="w-16 h-[1px] bg-[#0ea5e9]/50 mx-auto mb-8"></div>
 
             <p className="text-white/80 text-base md:text-xl font-light tracking-wide max-w-xl mx-auto leading-relaxed">
-              Plataforma unificada de auditoría técnica, financiera y regulatoria impulsada por <span className="text-[#0ea5e9]">Inteligencia Artificial</span>.
+              Plataforma unificada de auditoría técnica, financiera y
+              regulatoria impulsada por{" "}
+              <span className="text-[#0ea5e9]">Inteligencia Artificial</span>.
             </p>
           </motion.div>
         </div>
