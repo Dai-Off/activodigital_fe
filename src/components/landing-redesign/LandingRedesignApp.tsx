@@ -86,12 +86,17 @@ export default function LandingRedesignApp() {
         }`}
       >
         <div className="absolute inset-0 z-0">
-          <iframe
-            className="absolute top-1/2 left-1/2 min-w-[100vw] min-h-[100vh] w-[177.77vh] h-[56.25vw] -translate-x-1/2 -translate-y-1/2 scale-[1.5]"
-            src="https://www.youtube.com/embed/JtedVugvanc?autoplay=1&mute=1&controls=0&loop=1&playlist=JtedVugvanc&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&vq=hd1080&playsinline=1"
-            allow="autoplay; encrypted-media"
-            title="Background Video"
-          />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            disablePictureInPicture
+            className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2 object-cover"
+            poster="/heroBuilding.png"
+          >
+            <source src="/arkiaLandingVideo.mp4" type="video/mp4" />
+          </video>
         </div>
 
         {/* Capas oscuras para contraste (persistentes con el video) */}
