@@ -28,6 +28,7 @@ export default function BuildingRegulatoryAudit() {
   const { id: buildingId } = useParams<{ id: string }>();
   const [data, setData] = useState<RegulatoryAuditResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!buildingId) return;
@@ -36,8 +37,9 @@ export default function BuildingRegulatoryAudit() {
         setIsLoading(true);
         const result = await regulatoryAuditApi.getRegulatoryAudit(buildingId);
         setData(result);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error fetching regulatory audit:", err);
+        setError(err.message || "Error al cargar la auditoría regulatoria");
       } finally {
         setIsLoading(false);
       }
@@ -45,8 +47,30 @@ export default function BuildingRegulatoryAudit() {
     fetchData();
   }, [buildingId]);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return <BuildingRegulatoryAuditSkeleton />;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="bg-red-50 text-red-600 p-8 rounded-2xl max-w-lg text-center border border-red-100 shadow-sm">
+          <TriangleAlert className="w-14 h-14 mx-auto mb-4 text-red-500 opacity-80" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Error en Auditoría Regulatoria
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {error || "No se pudieron cargar los datos regulatorios para este edificio."}
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-sm"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const { current_state, target_state, gap_analysis, mevs, certificates, normatives, summary } =

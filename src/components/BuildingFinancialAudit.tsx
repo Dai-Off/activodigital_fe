@@ -8,6 +8,7 @@ import {
   Euro,
   MapPin,
   Star,
+  TriangleAlert,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -56,7 +57,7 @@ export default function BuildingFinancialAudit() {
     );
   }
 
-  const { currentState, postImprovementScenario, recommendations, scenarios } = auditData;
+  const { currentState, postImprovementScenario, recommendations, scenarios, dataCompleteness } = auditData;
 
   const formatM = (val: number | null) =>
     val ? `€${(val / 1000000).toFixed(2)}M` : "€0.00M";
@@ -80,6 +81,23 @@ export default function BuildingFinancialAudit() {
           </div>
         </div>
       </div>
+
+      {dataCompleteness?.isTechnicalAuditUnavailable && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+            <TriangleAlert className="w-5 h-5 text-amber-600" aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-semibold text-amber-900 mb-1">
+              Auditoría Técnica No Disponible
+            </h4>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              No se han podido cargar los datos de la auditoría técnica (Libro Digital o CEE incompleto). 
+              Los escenarios de inversión y ahorros energéticos se han calculado utilizando **valores estimados** basados en la tipología del activo.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex-shrink-0 relative group">
         <button
           className="absolute top-4 right-4 p-1.5 rounded-full bg-white hover:bg-green-100 border border-green-200 opacity-0 group-hover:opacity-100 transition-all shadow-sm z-10 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-green-500"
