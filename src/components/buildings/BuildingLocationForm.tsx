@@ -35,6 +35,7 @@ interface AutocompleteFieldProps {
   value: string;
   options: { id: string; label: string }[];
   onChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   error?: boolean;
@@ -46,6 +47,7 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   value,
   options,
   onChange,
+  onSearchChange,
   placeholder,
   disabled,
   error,
@@ -55,13 +57,16 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const prevValueRef = useRef(value);
+
   useEffect(() => {
     const selectedOption = options.find((opt) => opt.id === value);
     if (selectedOption) {
       setSearchTerm(selectedOption.label);
-    } else if (!value) {
+    } else if (!value && prevValueRef.current !== value) {
       setSearchTerm('');
     }
+    prevValueRef.current = value;
   }, [value, options]);
 
   useEffect(() => {
@@ -76,9 +81,9 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [value, options]);
 
-  const filteredOptions = options.filter((opt) =>
-    opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredOptions = onSearchChange
+    ? options
+    : options.filter((opt) => opt.label.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="relative" ref={containerRef}>
@@ -88,10 +93,14 @@ const AutocompleteField: React.FC<AutocompleteFieldProps> = ({
           type="text"
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
+            const val = e.target.value;
+            setSearchTerm(val);
             setIsOpen(true);
-            if (!e.target.value) {
+            if (!val) {
               onChange('');
+            }
+            if (onSearchChange) {
+              onSearchChange(val);
             }
           }}
           onFocus={() => setIsOpen(true)}
@@ -214,7 +223,7 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
 
   // Cargar vías cuando se selecciona municipio y se escribe algo
   useEffect(() => {
-    if (selectedProvince && selectedMunicipality && streetName.length >= 2 && streetType) {
+    if (selectedProvince && selectedMunicipality && streetName.length >= 2) {
       const loadStreets = async () => {
         setLoadingStreets(true);
         try {
@@ -236,15 +245,30 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
       const timer = setTimeout(loadStreets, 500);
       return () => clearTimeout(timer);
     } else {
-      setStreets([]);
+      if (!selectedStreet) {
+        setStreets([]);
+      }
     }
   }, [selectedProvince, selectedMunicipality, streetName, streetType]);
 
   // Prefill simple desde initialValue (campos directos)
   useEffect(() => {
     if (!initialValue) return;
+    if (initialValue.province) setSelectedProvince(initialValue.province);
+    if (initialValue.municipality) setSelectedMunicipality(initialValue.municipality);
     if (initialValue.streetType) setStreetType(initialValue.streetType);
-    if (initialValue.streetName) setStreetName(initialValue.streetName);
+    
+    if (initialValue.extra?.streetCode) {
+      const code = initialValue.extra.streetCode;
+      const name = initialValue.streetName || '';
+      const type = initialValue.streetType || '';
+      setSelectedStreet(code);
+      setStreetName(name);
+      setStreets([{ codigoVia: code, nombreVia: name, tipoVia: type }]);
+    } else if (initialValue.streetName) {
+      setStreetName(initialValue.streetName);
+    }
+
     if (initialValue.number) setNumber(initialValue.number);
     if (initialValue.stair) setEscalera(initialValue.stair);
     if (initialValue.floor) setPlanta(initialValue.floor);
@@ -349,6 +373,10 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
           options={provinces.map((p) => ({ id: p.codigo, label: p.nombre }))}
           onChange={(val) => {
             setSelectedProvince(val);
+            setSelectedMunicipality('');
+            setSelectedStreet('');
+            setStreetName('');
+            setStreets([]);
             setError(null);
           }}
           placeholder={t('select', 'Selecciona')}
@@ -366,6 +394,8 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
           onChange={(val) => {
             setSelectedMunicipality(val);
             setSelectedStreet('');
+            setStreetName('');
+            setStreets([]);
             setError(null);
           }}
           placeholder={t('select', 'Selecciona')}
@@ -374,7 +404,7 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
         />
       </div>
 
-      {/* Tipo de vía / Nombre de la vía */}
+      {/* Tipo de vía / Vía Autocompletable */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         <AutocompleteField
           label={t('streetType', 'Tipo de Vía')}
@@ -382,6 +412,8 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
           options={STREET_TYPES.map((st) => ({ id: st.value, label: st.label }))}
           onChange={(val) => {
             setStreetType(val);
+            setSelectedStreet('');
+            setStreets([]);
             setError(null);
           }}
           placeholder={t('streetTypePlaceholder', 'Ej: Calle')}
@@ -389,30 +421,6 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
           error={!!error}
         />
 
-        <div>
-          <label
-            htmlFor="streetName"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            {t('streetName', 'Nombre de Vía')}
-          </label>
-          <input
-            id="streetName"
-            type="text"
-            value={streetName}
-            onChange={(e) => {
-              setStreetName(e.target.value);
-              setError(null);
-            }}
-            placeholder={t('streetNamePlaceholder', 'Ej: Alcalá')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={!selectedMunicipality}
-          />
-        </div>
-      </div>
-
-      {/* Vía concreta */}
-      <div className="pt-1">
         <AutocompleteField
           label={t('street', 'Vía') + ' *'}
           value={selectedStreet}
@@ -424,10 +432,14 @@ const BuildingLocationForm: React.FC<BuildingLocationFormProps> = ({
             setSelectedStreet(val);
             setError(null);
           }}
-          placeholder={t('select', 'Selecciona')}
+          onSearchChange={(val) => {
+            setStreetName(val);
+            setError(null);
+          }}
+          placeholder={t('streetPlaceholder', 'Escribe para buscar... Ej: Alcalá')}
           disabled={!selectedMunicipality}
           error={!!error}
-          loading={loadingStreets && streets.length === 0 && streetName.length >= 2}
+          loading={loadingStreets}
         />
       </div>
 

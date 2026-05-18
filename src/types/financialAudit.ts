@@ -61,6 +61,7 @@ export interface FinancialAuditResult {
     hasEnergyImprovements: boolean;
     hasBuildingPrice: boolean;
     completenessScore: number;
+    isTechnicalAuditUnavailable?: boolean;
   };
   
   recommendations: string[];

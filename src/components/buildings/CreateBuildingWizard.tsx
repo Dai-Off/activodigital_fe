@@ -181,7 +181,10 @@ const CreateBuildingWizard: React.FC = () => {
     // el paso 0 será el formulario de datos generales con los datos de Catastro pre-rellenados.
     setSelectedMethod("manual");
 
-    setCurrentStep(1); // Ir al paso 1 (Step2)
+    // Si faltan datos numéricos obligatorios (ej: cuando se busca por dirección en lugar de RC),
+    // obligamos al usuario a pasar por el Paso 1 (Step1) para que los complete y no dé error al final.
+    const hasMissingRequiredData = !data.floors || !data.constructionYear || data.floors === '' || data.constructionYear === '';
+    setCurrentStep(hasMissingRequiredData ? 0 : 1); // Ir al paso 1 (Step2) solo si tenemos todo
   };
 
   const handleCatastroCancel = () => {

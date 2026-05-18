@@ -12,8 +12,8 @@ export const regulatoryAuditApi = {
           method: "GET",
         },
       );
-      // apiFetch ya maneja el parseo de JSON y los errores HTTP (401, 404, etc.)
-      return response as RegulatoryAuditResult;
+      // El backend ahora devuelve { data: result, message: '...' }
+      return response.data as RegulatoryAuditResult;
     } catch (error) {
       console.error("Error in regulatoryAuditApi:", error);
       throw error;
